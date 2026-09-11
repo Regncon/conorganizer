@@ -9,7 +9,7 @@ require (
 	github.com/a-h/templ v0.3.1020
 	github.com/benbjohnson/hashfs v0.2.2
 	github.com/delaneyj/toolbelt v0.9.1
-	github.com/descope/go-sdk v1.30.0
+	github.com/descope/go-sdk v1.33.0
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/gomarkdown/markdown v0.0.0-20260818103853-6d1f24fc3a11
 	github.com/google/uuid v1.6.0
@@ -153,7 +153,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
-	github.com/stretchr/testify v1.12.0 // indirect
+	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/tdewolff/parse/v2 v2.8.3 // indirect
 	github.com/u-root/u-root v0.15.1-0.20251208185023-2f8c7e763cf8 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
@@ -170,8 +170,8 @@ require (
 	go.opentelemetry.io/otel/sdk v1.40.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.40.0 // indirect
 	go.opentelemetry.io/otel/trace v1.40.0 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
 	golang.org/x/exp v0.0.0-20260820142414-ca536658362e // indirect
 	golang.org/x/mod v0.39.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
@@ -187,7 +187,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/grpc v1.77.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.75.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
