@@ -1,15 +1,29 @@
+// @ts-check
+
 /** @typedef {Window & typeof globalThis & {
  *   conorganizer: {
  *     sharedStyles: {
  *       getStyleUrls: (names?: string[]) => string[],
- *       applyStyleUrlsToShadowRoot: (shadowRoot: ShadowRoot, styleUrls: string[]) => void,
+ *       applyStyleUrlsToShadowRoot: (shadowRoot: ShadowRoot, styleUrls: string[]) => Promise<void>,
  *     },
  *   },
  * }} BannerCropperWindow
  */
 
-/** @type {BannerCropperWindow} */
-const typedWindow = window
+/**
+ * Payloads dispatched by the cropper and consumed by Datastar bindings.
+ * @typedef {{
+ *   "crop-started": Record<string, never>,
+ *   "crop-ready": { files: FileList },
+ *   "crop-error": { message: string },
+ *   "image-loading": { url: string },
+ *   "image-ready": { url: string },
+ *   "image-error": { message: string, url: string },
+ * }} BannerCropperEventDetails
+ */
+
+// The page loads conorganizer.js before this component.
+const typedWindow = /** @type {BannerCropperWindow} */ (window)
 const STYLE_URLS = typedWindow.conorganizer.sharedStyles.getStyleUrls()
 const UPLOAD_ERROR_MESSAGE = 'Klarte ikkje å lagre endringa. Prøv igjen. Kontakt styret dersom problemet held fram.'
 // ---- component --------------------------------------------------------------
@@ -206,11 +220,21 @@ class BannerCropper extends HTMLElement {
         </div>
         `
 
-        // Elements
-        this.canvas = root.getElementById("canvas")
-        this.ctx = this.canvas.getContext("2d")
-        this.zoom = root.getElementById("zoom")
-        this.headerLabelEl = root.querySelector(".banner-cropper-header-label")
+        // Validate the owned template once so handlers can use concrete DOM types.
+        const canvas = root.getElementById("canvas")
+        const zoom = root.getElementById("zoom")
+        const headerLabel = root.querySelector(".banner-cropper-header-label")
+        if (!(canvas instanceof HTMLCanvasElement) || !(zoom instanceof HTMLInputElement) || !(headerLabel instanceof HTMLHeadingElement)) {
+            throw new Error("Banner cropper template is missing its canvas, zoom input, or heading.")
+        }
+        const context = canvas.getContext("2d")
+        if (!context) {
+            throw new Error("Banner cropper requires a 2D canvas context.")
+        }
+        this.canvas = canvas
+        this.ctx = context
+        this.zoom = zoom
+        this.headerLabelEl = headerLabel
 
         // Bind handlers once
         this.handleZoomInput = this.handleZoomInput.bind(this)
@@ -241,6 +265,12 @@ class BannerCropper extends HTMLElement {
         this._clearImage()
     }
 
+    /**
+     * @param {string} name
+     * @param {string | null} oldValue
+     * @param {string | null} newValue
+     * @returns {void}
+     */
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return
 
@@ -268,12 +298,22 @@ class BannerCropper extends HTMLElement {
     }
 
     // --- UI handlers ---
-    handleZoomInput(e) {
-        const newScale = parseFloat(e.target.value)
+    /**
+     * @param {Event} event
+     * @returns {void}
+     */
+    handleZoomInput(event) {
+        const zoomInput = event.currentTarget
+        if (!(zoomInput instanceof HTMLInputElement)) return
+        const newScale = parseFloat(zoomInput.value)
         this.setScale(newScale)
         this.#updateCssForZoom()
     }
 
+    /**
+     * @param {PointerEvent} e
+     * @returns {void}
+     */
     onPointerDown(e) {
         if (!this.imageLoaded) return
         this.isDragging = true
@@ -288,6 +328,10 @@ class BannerCropper extends HTMLElement {
         this.dragScaleY = canvasBounds.height > 0 ? this.canvas.height / canvasBounds.height : 1
     }
 
+    /**
+     * @param {PointerEvent} e
+     * @returns {void}
+     */
     onPointerMove(e) {
         if (!this.isDragging) return
         const dx = (e.clientX - this.dragStartX) * this.dragScaleX
@@ -297,6 +341,10 @@ class BannerCropper extends HTMLElement {
         this.redraw()
     }
 
+    /**
+     * @param {PointerEvent} e
+     * @returns {void}
+     */
     onPointerUp(e) {
         this.isDragging = false
         try {
@@ -304,14 +352,17 @@ class BannerCropper extends HTMLElement {
         } catch { }
     }
 
-    // The page handles crop-started/crop-ready/crop-error and uploads the exported FileList.
+    /**
+     * The page handles crop-started/crop-ready/crop-error and uploads the exported FileList.
+     * @returns {Promise<void>}
+     */
     async exportImage() {
         if (this.exporting || !this.isConnected) return
 
         this.exporting = true
         const version = ++this.exportVersion
         const isCurrentExport = () => this.isConnected && version === this.exportVersion
-        this._emit("crop-started")
+        this._emit("crop-started", {})
 
         try {
             if (!isCurrentExport()) return
@@ -359,6 +410,11 @@ class BannerCropper extends HTMLElement {
         }
     }
 
+    /**
+     * @param {number} w
+     * @param {number} h
+     * @returns {void}
+     */
     setCanvasSize(w, h) {
         this.bannerWidth = w
         this.bannerHeight = h
@@ -377,6 +433,10 @@ class BannerCropper extends HTMLElement {
         this.style.setProperty("--banner-cropper-preview-height", `${ previewHeight }px`)
     }
 
+    /**
+     * @param {string} url
+     * @returns {void}
+     */
     _loadImage(url) {
         this._clearImage()
         const version = this.imageLoadVersion
@@ -419,13 +479,23 @@ class BannerCropper extends HTMLElement {
         this.redraw()
     }
 
+    /**
+     * @param {number} quality
+     * @returns {Promise<Blob | null>} Canvas encoding can fail and return null.
+     */
     _canvasToWebpBlob(quality) {
         return new Promise((resolve) => {
             this.canvas.toBlob(resolve, "image/webp", quality)
         })
     }
 
-    _emit(type, detail = {}) {
+    /**
+     * @template {keyof BannerCropperEventDetails} EventType
+     * @param {EventType} type
+     * @param {BannerCropperEventDetails[EventType]} detail
+     * @returns {void}
+     */
+    _emit(type, detail) {
         this.dispatchEvent(new CustomEvent(type, { bubbles: true, composed: true, detail }))
     }
 
@@ -463,6 +533,10 @@ class BannerCropper extends HTMLElement {
         this.zoom.style.setProperty("--range-progress", `${ clampedProgress }%`)
     }
 
+    /**
+     * @param {number} newScale
+     * @returns {void}
+     */
     setScale(newScale) {
         if (!this.imageLoaded) return
         const oldScale = this.scale
