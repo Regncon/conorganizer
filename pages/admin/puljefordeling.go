@@ -10,11 +10,10 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/varsler"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
-
-var errPuljeNotFound = errors.New("pulje not found")
 
 func getPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 	const query = `
@@ -91,26 +90,6 @@ func puljeStatusUpdateAction(
 	)
 }
 
-func updatePuljeStatus(db *sql.DB, puljeID models.Pulje, status models.PuljeStatus) error {
-	const query = `UPDATE puljer SET status = ? WHERE id = ?`
-
-	result, err := db.Exec(query, status, puljeID)
-	if err != nil {
-		return fmt.Errorf("update pulje %s status to %s: %w", puljeID, status, err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("get rows affected for pulje %s status update: %w", puljeID, err)
-	}
-
-	if rowsAffected == 0 {
-		return errPuljeNotFound
-	}
-
-	return nil
-}
-
 func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	logger = logger.With("component", "admin_puljefordeling")
 
@@ -135,8 +114,8 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.
 			return
 		}
 
-		if err := updatePuljeStatus(db, puljeID, store.PuljeStatus); err != nil {
-			if errors.Is(err, errPuljeNotFound) {
+		if err := varsler.UpdatePuljeStatus(r.Context(), db, puljeID, store.PuljeStatus); err != nil {
+			if errors.Is(err, varsler.ErrPuljeNotFound) {
 				http.Error(w, "Pulje not found", http.StatusNotFound)
 				return
 			}
@@ -147,8 +126,6 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			logger.Error(fmt.Errorf("failed to broadcast pulje status update: %w", err).Error(), "pulje_id", puljeID, "pulje_status", store.PuljeStatus)
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
-			return
 		}
 
 		w.WriteHeader(http.StatusNoContent)

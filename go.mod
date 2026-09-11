@@ -6,6 +6,7 @@ ignore ./tmp
 
 require (
 	github.com/PuerkitoBio/goquery v1.12.0
+	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/a-h/templ v0.3.1020
 	github.com/benbjohnson/hashfs v0.2.2
 	github.com/delaneyj/toolbelt v0.9.1
@@ -107,6 +108,7 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/gohugoio/hugo v0.149.1 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.3 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.7 // indirect

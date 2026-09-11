@@ -63,6 +63,55 @@ func TestLoginForm_RendersDescopeWidgetAndPostLoginRedirect(t *testing.T) {
 			t.Fatalf("inline script mismatch\nexpected script to contain: %q\nactual script:              %q", expectedInlineScriptPart, actualInlineScript)
 		}
 	}
+	if strings.Contains(actualInlineScript, "console.log('Email:'") || strings.Contains(actualInlineScript, "console.log('User:'") {
+		t.Fatal("login script must not write user identity details to the browser console")
+	}
+}
+
+func TestLoginForm_PreservesSafeProfileReturnURL(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at innlogging ble startet fra en profil-lenke.",
+		When:  "Når innloggingskomponenten rendres.",
+		Then:  "Så skal den trygge profilsiden følge med til post-login.",
+	})
+
+	// Given
+	expectedReturnURL := "/profile?b_id=123&pulje=FredagKveld#mitt-program"
+
+	// When
+	doc := templtest.Render(t, loginFormForReturnURL(expectedReturnURL))
+	wrapper := doc.Find("[data-login-return-url]")
+	actualReturnURL, exists := wrapper.Attr("data-login-return-url")
+	actualScript := doc.Find("script:not([src])").Text()
+
+	// Then
+	if !exists || actualReturnURL != expectedReturnURL {
+		t.Fatalf("login return URL mismatch\nexpected: %q\nactual:   %q", expectedReturnURL, actualReturnURL)
+	}
+	if !strings.Contains(actualScript, "encodeURIComponent(returnURL)") {
+		t.Fatalf("expected post-login script to preserve the return URL, got %q", actualScript)
+	}
+}
+
+func TestAlreadyLoggedIn_PreservesProfileReturnURLInFallbackLink(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en innlogget bruker følger en lenke til festivalprogrammet.",
+		When:  "Når siden for allerede innlogget bruker rendres.",
+		Then:  "Så skal både automatisk videresending og fallback-lenken gå til festivalprogrammet.",
+	})
+
+	// Given
+	expectedReturnURL := "/profile?pulje=FredagKveld#mitt-program"
+
+	// When
+	doc := templtest.Render(t, alreadyLogedInForReturnURL(expectedReturnURL))
+	link := doc.Find("[data-login-return-link]")
+	actualHref, hrefExists := link.Attr("href")
+
+	// Then
+	if !hrefExists || actualHref != expectedReturnURL {
+		t.Fatalf("already logged-in fallback URL mismatch\nexpected: %q\nactual:   %q", expectedReturnURL, actualHref)
+	}
 }
 
 func collectScriptSources(doc *goquery.Document) []string {

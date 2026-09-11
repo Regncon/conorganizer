@@ -154,7 +154,14 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 }
 
 func mountPublicAssetRoutes(router chi.Router, eventImageDir *string, logger *slog.Logger) {
-	router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
+	assets := static(logger)
+	router.Handle("/static/*", http.StripPrefix("/static/", assets))
+	router.Get("/varsler-sw.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+		w.Header().Set("Service-Worker-Allowed", "/")
+		assets.ServeHTTP(w, r)
+	})
 
 	if eventImageDir != nil && *eventImageDir != "" {
 		router.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))

@@ -29,7 +29,8 @@ func UserMiddleware(logger *slog.Logger, db *sql.DB) func(http.Handler) http.Han
 			if !userInfo.IsLoggedIn {
 				logger.Debug("User is not logged in", "request_id", requestID, "path", r.URL.Path)
 				w.WriteHeader(http.StatusUnauthorized)
-				if err := layouts.Base("Logg inn", requestctx.UserRequestInfo{}, db, logger, Unauthenticated()).Render(r.Context(), w); err != nil {
+				returnURL := requestctx.SafeProfileReturnURL(r.URL.RequestURI())
+				if err := layouts.Base("Logg inn", requestctx.UserRequestInfo{}, db, logger, UnauthenticatedForReturnURL(returnURL)).Render(r.Context(), w); err != nil {
 					logger.Error(fmt.Errorf("failed to render unauthenticated page: %w", err).Error(), "request_id", requestID)
 				}
 				return

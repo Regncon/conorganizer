@@ -19,6 +19,7 @@ import (
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/service/varsler"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -78,6 +79,28 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 		profilepage.SetupProfileRoute(isLoggedInRouter, liveManager, db, eventImageDir, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)
+	}
+
+	pushConfig, configErr := varsler.ConfigFromEnv()
+	if configErr != nil {
+		logger.ErrorContext(ctx, "Web Push disabled because configuration is invalid", "error", configErr)
+		pushConfig = varsler.Config{}
+	}
+	pushService, err := varsler.New(db, logger, pushConfig)
+	if err != nil {
+		return cleanup, fmt.Errorf("error setting up notifications: %w", err)
+	}
+	pushService.RegisterRoutes(isLoggedInRouter)
+	workerContext, cancelWorker := context.WithCancel(ctx)
+	workerDone := make(chan struct{})
+	go func() {
+		defer close(workerDone)
+		pushService.Run(workerContext)
+	}()
+	cleanup = func() error {
+		cancelWorker()
+		<-workerDone
+		return ns.Close()
 	}
 
 	return cleanup, nil

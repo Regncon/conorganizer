@@ -1,0 +1,62 @@
+package profilecomponent
+
+templ NotificationSettings() {
+	<div class="notification-settings-container">
+		<section class="notification-settings surface-pane" data-varsler-settings data-varsler-config-url="/api/varsler/config" aria-labelledby="notification-settings-title">
+			<div class="notification-settings-copy">
+				<h2 id="notification-settings-title" class="surface-pane-title">Varsler for festivalprogrammet</h2>
+				<p data-varsler-status role="status" aria-live="polite">Sjekker om varsler er tilgjengelige …</p>
+				<p class="notification-settings-help" data-varsler-help hidden></p>
+			</div>
+			<div class="notification-settings-actions">
+				<button class="btn btn--primary" type="button" data-varsler-enable hidden>Slå på varsler</button>
+				<button class="btn btn--outline" type="button" data-varsler-disable hidden>Slå av varsler</button>
+			</div>
+		</section>
+	</div>
+	<style>
+		.notification-settings-container {
+			container-type: inline-size;
+		}
+
+		.notification-settings {
+			display: flex;
+			gap: var(--spacing-2x);
+			place-content: space-between;
+			place-items: center;
+
+			[hidden] {
+				display: none;
+			}
+		}
+
+		.notification-settings-copy {
+			min-inline-size: 0;
+
+			p {
+				margin-block: var(--spacing-1x) 0;
+				line-height: 1.45;
+			}
+		}
+
+		.notification-settings-help {
+			color: var(--color-text-muted, currentColor);
+		}
+
+		.notification-settings-actions {
+			flex: 0 0 auto;
+		}
+
+		@container (width < 32rem) {
+			.notification-settings {
+				flex-direction: column;
+				place-items: stretch;
+			}
+
+			.notification-settings-actions .btn {
+				inline-size: 100%;
+			}
+		}
+	</style>
+	<script src="/static/varsler.js" defer></script>
+}

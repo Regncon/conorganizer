@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/varsler"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -32,25 +33,6 @@ func getProgramPublished(db *sql.DB) (bool, error) {
 	return isPublished == 1, nil
 }
 
-func updateProgramPublished(db *sql.DB, programPublished bool) error {
-	const query = `
-		INSERT INTO program_publishing_state(id, is_published)
-		VALUES(?, ?)
-		ON CONFLICT(id) DO UPDATE SET is_published = excluded.is_published
-	`
-
-	isPublished := 0
-	if programPublished {
-		isPublished = 1
-	}
-
-	if _, err := db.Exec(query, programPublishingStateID, isPublished); err != nil {
-		return fmt.Errorf("update program publishing state to %t: %w", programPublished, err)
-	}
-
-	return nil
-}
-
 func programPublishingRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	logger = logger.With("component", "admin_program_publishing")
 
@@ -65,7 +47,7 @@ func programPublishingRoute(router chi.Router, db *sql.DB, liveManager *live.Man
 			return
 		}
 
-		if err := updateProgramPublished(db, store.ProgramPublished); err != nil {
+		if err := varsler.UpdateProgramPublished(r.Context(), db, store.ProgramPublished); err != nil {
 			logger.Error(err.Error(), "program_published", store.ProgramPublished)
 			http.Error(w, "Failed to update program publishing state", http.StatusInternalServerError)
 			return
@@ -73,8 +55,6 @@ func programPublishingRoute(router chi.Router, db *sql.DB, liveManager *live.Man
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			logger.Error(fmt.Errorf("failed to broadcast program publishing update: %w", err).Error(), "program_published", store.ProgramPublished)
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
-			return
 		}
 
 		w.WriteHeader(http.StatusNoContent)

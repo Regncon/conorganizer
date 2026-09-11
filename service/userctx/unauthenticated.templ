@@ -1,5 +1,7 @@
 package userctx
 
+import "net/url"
+
 templ unauthenticatedStyles() {
 	<style>
 		.access-denied {
@@ -38,12 +40,16 @@ templ unauthenticatedStyles() {
 }
 
 templ Unauthenticated() {
+	@UnauthenticatedForReturnURL("")
+}
+
+templ UnauthenticatedForReturnURL(returnURL string) {
 	@unauthenticatedStyles()
 	<section class="access-denied" aria-labelledby="access-denied-heading">
 		<h1 id="access-denied-heading">Du må logge inn</h1>
 		<p>Logg inn for å se denne siden.</p>
 		<div class="access-denied-actions">
-			<a href="/auth" class="btn btn--primary btn-login">
+			<a href={ loginHref(returnURL) } class="btn btn--primary btn-login" data-login-link>
 				Logg inn
 			</a>
 			<a href="/" class="btn btn--outline">
@@ -51,4 +57,23 @@ templ Unauthenticated() {
 			</a>
 		</div>
 	</section>
+	<script>
+		(() => {
+			const link = document.querySelector('[data-login-link]');
+			if (!link || !window.location.hash) {
+				return;
+			}
+			const destination = new URL(link.href, window.location.origin);
+			const returnURL = window.location.pathname + window.location.search + window.location.hash;
+			destination.searchParams.set('return', returnURL);
+			link.href = destination.href;
+		})();
+	</script>
+}
+
+func loginHref(returnURL string) string {
+	if returnURL == "" {
+		return "/auth"
+	}
+	return "/auth?return=" + url.QueryEscape(returnURL)
 }
