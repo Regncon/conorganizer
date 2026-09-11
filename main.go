@@ -118,7 +118,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 			}
 			authMiddleware := authctx.AuthMiddleware(sessionValidator, baseLogger)
 			appRouter := router.With(authMiddleware)
-			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir, natsStoreDir, sessionValidator)
+			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, router, db, eventImageDir, natsStoreDir, sessionValidator)
 			if err != nil {
 				logger.Error(fmt.Errorf("error setting up routes; falling back to degraded mode: %w", err).Error())
 				readiness.MarkDegraded(notReadyApplicationReason, err)

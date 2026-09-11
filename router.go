@@ -26,7 +26,7 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 )
 
-func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB, eventImageDir *string, natsStoreDir string, sessionValidator authctx.SessionValidator) (cleanup func() error, err error) {
+func setupRoutes(ctx context.Context, logger *slog.Logger, authenticatedRouter, publicRouter chi.Router, db *sql.DB, eventImageDir *string, natsStoreDir string, sessionValidator authctx.SessionValidator) (cleanup func() error, err error) {
 	if natsStoreDir == "" {
 		return nil, fmt.Errorf("nats store directory is empty")
 	}
@@ -62,19 +62,19 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 		return cleanup, fmt.Errorf("error setting up live updates: %w", err)
 	}
 
-	isLoggedInRouter := router.With(userctx.UserMiddleware(logger, db))
+	isLoggedInRouter := authenticatedRouter.With(userctx.UserMiddleware(logger, db))
 	header.SetupMenuRoute(isLoggedInRouter, liveManager, userctx.GetUserRequestInfo, db, logger)
 	routerAdmin := isLoggedInRouter.With(
 		authctx.RequireAdmin(logger, authctx.WithForbiddenHandler(userctx.AdminForbiddenHandler(db, logger))),
 	)
 
 	if err := errors.Join(
-		root.SetupRootRoute(router, logger, liveManager, db, eventImageDir),
-		printfriendly.PrintFriendlyRoute(router, db, eventImageDir, logger),
+		root.SetupRootRoute(authenticatedRouter, logger, liveManager, db, eventImageDir),
+		printfriendly.PrintFriendlyRoute(authenticatedRouter, db, eventImageDir, logger),
 		admin.SetupAdminRoute(routerAdmin, logger, liveManager, db, eventImageDir),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, liveManager, logger, db),
-		event.SetupEventRoute(router, ns, liveManager, db, logger, eventImageDir),
-		login.SetupAuthRoute(router, db, logger, sessionValidator),
+		event.SetupEventRoute(authenticatedRouter, ns, liveManager, db, logger, eventImageDir),
+		login.SetupAuthRoute(publicRouter, authenticatedRouter, db, logger, sessionValidator),
 		profilepage.SetupProfileRoute(isLoggedInRouter, liveManager, db, eventImageDir, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)

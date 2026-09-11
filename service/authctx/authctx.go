@@ -36,9 +36,13 @@ type SessionValidator interface {
 }
 
 func NewSessionValidator(logger *slog.Logger) (SessionValidator, error) {
-	descopeClient, err := client.NewWithConfig(&client.Config{ProjectID: DescopeProjectID})
+	return newSessionValidator(&client.Config{ProjectID: DescopeProjectID}, logger)
+}
+
+func newSessionValidator(config *client.Config, logger *slog.Logger) (SessionValidator, error) {
+	descopeClient, err := client.NewWithConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Descope client for project %q: %w", DescopeProjectID, err)
+		return nil, fmt.Errorf("failed to create Descope client for project %q: %w", config.ProjectID, err)
 	}
 	return &loggingSessionValidator{
 		validator: descopeClient.Auth,

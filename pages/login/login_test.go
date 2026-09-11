@@ -59,6 +59,43 @@ func TestSessionRoute_ValidTokensStoresAuthCookies(t *testing.T) {
 	assertAuthCookie(t, recorder.Result(), authctx.RefreshCookieName, expectedRefreshJWT, true)
 }
 
+func TestSessionRoute_StaleCookiesDoNotValidateBeforeSubmittedTokens(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A login request submits valid tokens while stale authentication cookies remain in the browser.",
+		When:  "The application establishes the new session.",
+		Then:  "Only the submitted session is validated, without attempting to refresh the stale cookies first.",
+	})
+
+	// Given
+	validator := &fakeSessionValidator{
+		sessionOK:    true,
+		sessionToken: &descope.Token{JWT: "validated-session-jwt"},
+	}
+	router := authTestRouter(t, validator)
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/auth/session",
+		strings.NewReader(`{"sessionJwt":"submitted-session-jwt","refreshJwt":"submitted-refresh-jwt"}`),
+	)
+	request.AddCookie(&http.Cookie{Name: authctx.SessionCookieName, Value: "stale-session-jwt"})
+	request.AddCookie(&http.Cookie{Name: authctx.RefreshCookieName, Value: "stale-refresh-jwt"})
+	recorder := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(recorder, request)
+
+	// Then
+	if recorder.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, recorder.Code)
+	}
+	if validator.sessionCalls != 1 || validator.refreshCalls != 0 {
+		t.Fatalf("expected only the submitted session validation, got validation=%d refresh=%d", validator.sessionCalls, validator.refreshCalls)
+	}
+	if validator.validatedSessionToken != "submitted-session-jwt" {
+		t.Fatalf("expected submitted session token to be validated, got %q", validator.validatedSessionToken)
+	}
+}
+
 func TestSessionRoute_MissingTokensReturnsBadRequest(t *testing.T) {
 	// Given missing login tokens,
 	// when the login page tries to establish an application session,
@@ -291,8 +328,8 @@ func authTestRouter(t *testing.T, validator authctx.SessionValidator) chi.Router
 	t.Helper()
 	router := chi.NewRouter()
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	router.Use(authctx.AuthMiddleware(validator, logger))
-	if err := SetupAuthRoute(router, nil, logger, validator); err != nil {
+	authenticatedRouter := router.With(authctx.AuthMiddleware(validator, logger))
+	if err := SetupAuthRoute(router, authenticatedRouter, nil, logger, validator); err != nil {
 		t.Fatalf("expected auth route setup to succeed: %v", err)
 	}
 	return router

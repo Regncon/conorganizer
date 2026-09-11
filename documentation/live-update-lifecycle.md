@@ -12,7 +12,9 @@ The live update KV data is runtime-only state. NATS does not need to persist the
 
 ## Authentication before streaming
 
-Application startup creates one Descope session validator shared by page requests, mutations, live endpoints, login session establishment, and the not-found handler. The SDK retrieves signing keys automatically when needed and retains its key cache and HTTP connection pools for the application lifetime. Requests without authentication cookies do not call session validation or refresh. Login routes use the application middleware's authentication result rather than running that middleware again.
+Application startup creates one Descope session validator shared by page requests, mutations, live endpoints, login session establishment, and the not-found handler. The SDK retrieves signing keys automatically when needed and retains its key cache and HTTP connection pools for the application lifetime. Requests without authentication cookies do not call session validation or refresh.
+
+`POST /auth/session` and `GET /auth/logout` are recovery routes registered outside the authentication middleware. Session establishment validates only the tokens submitted in the request body, so stale cookies cannot trigger an upstream refresh before a new login completes. Logout clears local authentication cookies without contacting Descope. The remaining authentication routes use the application middleware's authentication result rather than running that middleware again.
 
 Authentication finishes before a live handler opens its SSE response, so a refreshed session cookie is sent before the stream headers are flushed. No authentication deadline is attached to the downstream request context.
 
