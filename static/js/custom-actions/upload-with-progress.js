@@ -1,14 +1,14 @@
-import { action, mergePatch, mergePaths } from "../datastar.js"
+import { action, mergePatch, mergePaths } from "../../datastar.js"
 
 // Fetch does not expose upload progress. Keep XHR at the transport boundary,
 // while using Datastar signals and request events for all page state.
 action({
-    name: "upload",
+    name: "uploadWithProgress",
     apply({ el, cleanups }, url, { progressSignal } = {}) {
         const form = el.closest("form")
         if (!form || (!form.noValidate && !form.reportValidity())) return
 
-        const cleanupKey = "@upload"
+        const cleanupKey = "@uploadWithProgress"
         if (cleanups.has(cleanupKey)) return
 
         // Collect files before data-indicator disables the file input.

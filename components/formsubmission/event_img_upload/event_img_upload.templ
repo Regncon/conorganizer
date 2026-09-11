@@ -244,7 +244,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	}
 	<script src="/static/web_components/banner_cropper.js"></script>
 	@toast.Render("Lagra", icons.ProgressComplete)
-	<script type="module" src="/static/js/upload.js"></script>
+	<script type="module" src="/static/js/custom-actions/upload-with-progress.js"></script>
 	<style>
 
         @keyframes cropper-loading-spin {
@@ -485,7 +485,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					enctype="multipart/form-data"
 					method="post"
 					action={ templ.SafeURL(fmt.Sprintf("/profile/api/new/%s/upload", eventId)) }
-					data-on:submit__prevent={ fmt.Sprintf("if (!$_imageBusy) @upload('/profile/api/new/%s/upload', {progressSignal: '_uploadProgress'})", eventId) }
+					data-on:submit__prevent={ fmt.Sprintf("if (!$_imageBusy) @uploadWithProgress('/profile/api/new/%s/upload', {progressSignal: '_uploadProgress'})", eventId) }
 					data-indicator="_uploading"
 					data-on:datastar-fetch__document="if (evt.detail.el === el) { if (evt.detail.type === 'started') { $_uploadError = ''; $_add_drag_over = false } if (evt.detail.type === 'error') $_uploadError = evt.detail.argsRaw.message; if (evt.detail.type === 'finished') el.reset() }"
 					class="item-card image-upload-card"
