@@ -1,4 +1,9 @@
+// @ts-check
+
 import { action, mergePatch, mergePaths } from "../../datastar.js"
+
+/** @typedef {"started" | "finished" | "error"} UploadRequestEventType */
+/** @typedef {{ message?: string, status?: string }} UploadRequestEventDetails */
 
 /**
  * Upload a source image with byte progress exposed as a Datastar signal.
@@ -42,17 +47,30 @@ action({
 
         // Keep Datastar's event field names. Indicators use detail.el to match
         // the request to its trigger; page handlers read errors from argsRaw.
+        /**
+         * @param {UploadRequestEventType} eventType
+         * @param {UploadRequestEventDetails} [eventDetails]
+         * @returns {boolean}
+         */
         const dispatchRequestEvent = (eventType, eventDetails = {}) => document.dispatchEvent(
             new CustomEvent("datastar-fetch", {
                 detail: { type: eventType, el: triggerElement, argsRaw: eventDetails },
             }),
         )
+        /**
+         * @param {number} percentComplete
+         * @returns {void}
+         */
         const updateProgressSignal = (percentComplete) => {
             if (progressSignalPath) mergePaths([[progressSignalPath, percentComplete]])
         }
 
         return new Promise((resolveUpload) => {
             let hasFinished = false
+            /**
+             * @param {string} [errorMessage] Omit when the upload succeeds.
+             * @returns {void}
+             */
             const finishUpload = (errorMessage) => {
                 // Every outcome must release the indicator exactly once. On
                 // failure, "error" precedes "finished" so handlers can suppress success feedback.
@@ -80,8 +98,15 @@ action({
                     return
                 }
                 try {
+                    /** @type {unknown} */
                     const responseSignals = JSON.parse(uploadRequest.responseText)
-                    if (!responseSignals || typeof responseSignals.sourceImageUrl !== "string" || !responseSignals.sourceImageUrl) {
+                    if (
+                        typeof responseSignals !== "object" ||
+                        responseSignals === null ||
+                        !("sourceImageUrl" in responseSignals) ||
+                        typeof responseSignals.sourceImageUrl !== "string" ||
+                        !responseSignals.sourceImageUrl
+                    ) {
                         throw new Error("Missing sourceImageUrl")
                     }
                     updateProgressSignal(100)
