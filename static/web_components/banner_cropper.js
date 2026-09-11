@@ -15,7 +15,7 @@ const UPLOAD_ERROR_MESSAGE = 'Klarte ikkje å lagre endringa. Prøv igjen. Konta
 // ---- component --------------------------------------------------------------
 class BannerCropper extends HTMLElement {
     static get observedAttributes() {
-        return ["width", "height", "preview-width", "preview-height", "image-url", "event-id", "image-kind", "label"]
+        return ["width", "height", "preview-width", "preview-height", "image-url", "label"]
     }
 
     constructor() {
@@ -28,6 +28,9 @@ class BannerCropper extends HTMLElement {
         // State
         this.image = new Image()
         this.imageLoaded = false
+        this.imageLoadVersion = 0
+        this.exportVersion = 0
+        this.exporting = false
         this.scale = 1
         this.minScale = 1
         this.drawX = 0
@@ -66,24 +69,11 @@ class BannerCropper extends HTMLElement {
                     inline-size: min(calc(100cqi - var(--both-sides)), var(--banner-cropper-preview-width));
                 }
 
-                .banner-cropper-button-error-info {
-                    display: grid;
-                    grid-template-columns: 1fr auto;
-                    place-items: center start;
-
-                    button {
-                        place-self: end;
-                    }
-                }
-
-                .banner-cropper-status-error {
-                    display: block;
-                    }
-
                 .banner-cropper-canvas {
                     inline-size: 100%;
                     block-size: var(--banner-cropper-preview-height);
                     cursor: move;
+                    touch-action: none;
                 }
 
                 input[type="range"] {
@@ -212,15 +202,7 @@ class BannerCropper extends HTMLElement {
                 <input id="zoom" class="slider" type="range" min="1" max="3" step="0.01" value="1" disabled>
             </div>
 
-            <div class="banner-cropper-button-error-info">
-                <span id="statusInline" aria-live="polite"></span>
-                <span id="statusError" class="banner-cropper-status-error" aria-live="polite"></span>
-                 <button
-                    id="exportButton"
-                    class="btn btn--outline"
-                    type="button"
-                >Lagre</button>
-            </div>
+            <slot name="actions"></slot>
         </div>
         `
 
@@ -228,17 +210,13 @@ class BannerCropper extends HTMLElement {
         this.canvas = root.getElementById("canvas")
         this.ctx = this.canvas.getContext("2d")
         this.zoom = root.getElementById("zoom")
-        this.exportButton = root.getElementById("exportButton")
         this.headerLabelEl = root.querySelector(".banner-cropper-header-label")
-        this.statusInlineEl = root.getElementById("statusInline")
-        this.statusErrorEl = root.getElementById("statusError")
 
         // Bind handlers once
         this.handleZoomInput = this.handleZoomInput.bind(this)
         this.onPointerDown = this.onPointerDown.bind(this)
         this.onPointerMove = this.onPointerMove.bind(this)
         this.onPointerUp = this.onPointerUp.bind(this)
-        this.handleExport = this.handleExport.bind(this)
     }
 
     connectedCallback() {
@@ -249,7 +227,7 @@ class BannerCropper extends HTMLElement {
         this.canvas.addEventListener("pointerdown", this.onPointerDown)
         window.addEventListener("pointermove", this.onPointerMove)
         window.addEventListener("pointerup", this.onPointerUp)
-        this.exportButton.addEventListener("click", this.handleExport)
+        window.addEventListener("pointercancel", this.onPointerUp)
 
         this.redraw()
     }
@@ -259,7 +237,8 @@ class BannerCropper extends HTMLElement {
         this.canvas.removeEventListener("pointerdown", this.onPointerDown)
         window.removeEventListener("pointermove", this.onPointerMove)
         window.removeEventListener("pointerup", this.onPointerUp)
-        this.exportButton.removeEventListener("click", this.handleExport)
+        window.removeEventListener("pointercancel", this.onPointerUp)
+        this._clearImage()
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -277,13 +256,6 @@ class BannerCropper extends HTMLElement {
 
         if (name === "label" && this.headerLabelEl) {
             this.headerLabelEl.textContent = newValue
-        }
-
-        if (name === "image-kind") {
-            const k = this._normalizedKind()
-            if (!["card", "banner"].includes(k)) {
-                console.warn('Invalid image-kind; expected "card" or "banner". Falling back to "banner".')
-            }
         }
 
         if (name === "image-url" && this.isConnected) {
@@ -332,89 +304,38 @@ class BannerCropper extends HTMLElement {
         } catch { }
     }
 
-    async handleExport() {
-        if (!this.imageLoaded) {
-            this._status("Ikkje noko bilete å lagre.", true)
-            return
-        }
+    // The page handles crop-started/crop-ready/crop-error and uploads the exported FileList.
+    async exportImage() {
+        if (this.exporting || !this.isConnected) return
 
-        const eventId = this.getAttribute("event-id")
-        if (!eventId) {
-            this._status("Manglar event-id.", true)
-            console.error("BannerCropper: missing event-id attribute.")
-            return
-        }
+        this.exporting = true
+        const version = ++this.exportVersion
+        const isCurrentExport = () => this.isConnected && version === this.exportVersion
+        this._emit("crop-started")
 
-        const kind = this._normalizedKind()
-        this.exportButton.disabled = true
-
-        const quality = 0.9
-        const blob = await this._canvasToWebpBlob(quality)
-        if (!blob) {
-            this._status("Nettlesaren kunne ikkje lage WebP-bilete.", true)
-            this.exportButton.disabled = false
-            return
-        }
-
-        // Prepare form data
-        const filename = `${ eventId }-${ kind }.webp`
-        const form = new FormData()
-        form.append("image", blob, filename)
-        form.append("kind", kind)
-
-        // Give the app a chance to modify or handle upload
-        const method = "POST"
-        const url = `/profile/api/new/${ encodeURIComponent(eventId) }/upload-cropped`
-        const detail = { url, method, formData: form, filename, contentType: "image/webp" }
-        const ev = new CustomEvent("beforeupload", { detail, cancelable: true })
-        if (!this.dispatchEvent(ev)) {
-            // The page will handle the upload
-            this.exportButton.disabled = false
-            return
-        }
-
-        // Do the upload
         try {
-            this._status("Lastar opp...")
-            console.log("Uploading to", detail.url, "with method", detail.method)
-            const res = await fetch(detail.url, {
-                method: detail.method,
-                credentials: "same-origin",
-                body: detail.formData,
-            })
-            console.log("Upload response", res)
-            if (!res.ok) {
-                const text = await res.text().catch(() => "")
-                throw new Error(`HTTP ${ res.status } ${ res.statusText }${ text ? `: ${ text }` : "" }`)
+            if (!isCurrentExport()) return
+            if (!this.imageLoaded) {
+                this._emit("crop-error", { message: "Det er ikke noe bilde å lagre." })
+                return
             }
-            this._status("Lasta opp")
-            this.dispatchEvent(
-                new CustomEvent("toast", {
-                    bubbles: true,
-                    composed: true,
-                    detail: { message: "Lagret" },
-                }),
-            )
-            this.dispatchEvent(
-                new CustomEvent("uploadsuccess", {
-                    bubbles: true,
-                    composed: true,
-                    detail: { url: detail.url, filename, kind },
-                }),
-            )
-        } catch (err) {
-            console.error("Upload failed:", err)
-            this._status(UPLOAD_ERROR_MESSAGE, true)
-            this.dispatchEvent(
-                new CustomEvent("uploaderror", {
-                    bubbles: true,
-                    composed: true,
-                    detail: { error: String(err), kind },
-                }),
-            )
+
+            const blob = await this._canvasToWebpBlob(0.9)
+            if (!isCurrentExport()) return
+            if (!blob || blob.type !== "image/webp") {
+                this._emit("crop-error", { message: "Nettleseren kunne ikke lage et WebP-bilde." })
+                return
+            }
+
+            const transfer = new DataTransfer()
+            transfer.items.add(new File([blob], "crop.webp", { type: blob.type }))
+            this._emit("crop-ready", { files: transfer.files })
+        } catch {
+            if (isCurrentExport()) {
+                this._emit("crop-error", { message: "Klarte ikke å klargjøre bildet for lagring. Prøv igjen." })
+            }
         } finally {
-            console.log("Upload complete")
-            this.exportButton.disabled = false
+            if (version === this.exportVersion) this.exporting = false
         }
     }
 
@@ -434,7 +355,7 @@ class BannerCropper extends HTMLElement {
         if (url) {
             this._loadImage(url)
         } else {
-            this.zoom.disabled = true
+            this._clearImage()
         }
     }
 
@@ -457,80 +378,55 @@ class BannerCropper extends HTMLElement {
     }
 
     _loadImage(url) {
-        this.imageLoaded = false
-        this.image.onload = () => {
+        this._clearImage()
+        const version = this.imageLoadVersion
+        const image = new Image()
+        this.image = image
+        const isCurrentImage = () => this.isConnected && version === this.imageLoadVersion
+
+        image.onload = () => {
+            if (!isCurrentImage()) return
             this.imageLoaded = true
             this.setInitialView()
+            this._emit("image-ready", { url })
         }
-        this.image.onerror = () => {
+        image.onerror = () => {
+            if (!isCurrentImage()) return
             this.imageLoaded = false
             this.zoom.disabled = true
             this.redraw()
+            this._emit("image-error", { message: "Klarte ikke å laste bildet. Prøv igjen.", url })
         }
-        this.image.src = url
+        this._emit("image-loading", { url })
+        if (isCurrentImage()) image.src = url
     }
 
     _clearImage() {
+        // Retire pending image loads and exports before replacing or disconnecting the image.
+        this.imageLoadVersion += 1
+        this.exportVersion += 1
+        this.exporting = false
         this.imageLoaded = false
+        this.image.onload = null
+        this.image.onerror = null
         this.image.removeAttribute("src")
+        this.isDragging = false
+        this.scale = 1
+        this.minScale = 1
+        this.drawX = 0
+        this.drawY = 0
         this.zoom.disabled = true
         this.redraw()
     }
 
-    async _canvasToWebpBlob(quality) {
-        const canvas = this.canvas
-        if (canvas.toBlob) {
-            return new Promise((resolve) => {
-                canvas.toBlob(resolve, "image/webp", quality)
-            })
-        }
-        try {
-            const dataUrl = canvas.toDataURL("image/webp", quality)
-            const res = await fetch(dataUrl)
-            return await res.blob()
-        } catch {
-            return null
-        }
+    _canvasToWebpBlob(quality) {
+        return new Promise((resolve) => {
+            this.canvas.toBlob(resolve, "image/webp", quality)
+        })
     }
 
-    _normalizedKind() {
-        console.log("kind", this.getAttribute("image-kind"))
-        const k = (this.getAttribute("image-kind") || "banner").toLowerCase()
-        return k === "card" ? "card" : "banner"
-    }
-
-    _computeUploadUrl(eventId, kind) {
-        const attr = this.getAttribute("upload-url")
-        if (attr && attr.trim()) return attr
-        return `/profile/api/new/${ encodeURIComponent(eventId) }/upload-cropped`
-    }
-
-    _status(msg, isError = false) {
-        const text = msg || ""
-        if (isError) {
-            if (this.statusInlineEl) {
-                this.statusInlineEl.textContent = ""
-                this.statusInlineEl.style.display = "none"
-            }
-            if (this.statusErrorEl) {
-                this.statusErrorEl.style.display = "block"
-                this.statusErrorEl.textContent = text
-                this.statusErrorEl.style.color = "var(--color-error)"
-            }
-            return
-        }
-
-        if (this.statusErrorEl) {
-            this.statusErrorEl.textContent = ""
-            this.statusErrorEl.style.display = "none"
-
-
-        }
-        if (this.statusInlineEl) {
-            this.statusInlineEl.textContent = text
-            this.statusInlineEl.style.color = "inherit"
-            this.statusInlineEl.style.display = "inline"
-        }
+    _emit(type, detail = {}) {
+        this.dispatchEvent(new CustomEvent(type, { bubbles: true, composed: true, detail }))
     }
 
     setInitialView() {

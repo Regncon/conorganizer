@@ -154,6 +154,10 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
+		if r.Header.Get("Datastar-Request") == "true" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		http.Redirect(w, r, fmt.Sprintf("/profile/new/%s/image/", eventID), http.StatusSeeOther)
 	})
 }
@@ -240,139 +244,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	}
 	<script src="/static/web_components/banner_cropper.js"></script>
 	@toast.Render("Lagra", icons.ProgressComplete)
-	if showUploadToast {
-		<script>
-			window.addEventListener("DOMContentLoaded", () => {
-				document.dispatchEvent(new CustomEvent("toast", {
-					detail: { message: "Lagra" },
-				}));
-				const url = new URL(window.location.href);
-				url.searchParams.delete("uploaded");
-				window.history.replaceState(null, "", url.pathname + url.search + url.hash);
-
-
-			});
-		</script>
-	}
-	<script>
-        const dispatchImageUploadEvent = (form, type, detail = {}) => {
-            form.dispatchEvent(new CustomEvent(type, { detail }))
-        }
-
-        let activeCropperImageObjectUrl = ""
-
-        const prepareCropperImage = async (container, blob) => {
-            if (activeCropperImageObjectUrl) {
-                URL.revokeObjectURL(activeCropperImageObjectUrl)
-            }
-
-            const imageUrl = URL.createObjectURL(blob)
-            activeCropperImageObjectUrl = imageUrl
-
-            try {
-                const image = new Image()
-                image.src = imageUrl
-                await image.decode()
-                dispatchImageUploadEvent(container, "cropper-image-ready", { imageUrl })
-            } catch (error) {
-                URL.revokeObjectURL(imageUrl)
-                activeCropperImageObjectUrl = ""
-                console.error("Could not prepare image for croppers:", error)
-                dispatchImageUploadEvent(container, "cropper-image-error", {
-                    message: "Klarte ikkje å klargjere biletet.",
-                })
-            }
-        }
-
-        const uploadImageWithProgress = (event, url) => {
-            event.preventDefault()
-
-            const form = event.currentTarget
-            const formData = new FormData(form)
-            const request = new XMLHttpRequest()
-
-            request.upload.addEventListener("progress", (progressEvent) => {
-                if (!progressEvent.lengthComputable) return
-
-                const progress = Math.min(
-                    100,
-                    Math.round((progressEvent.loaded / progressEvent.total) * 100),
-                )
-                dispatchImageUploadEvent(form, "image-upload-progress", { progress })
-            })
-
-            request.addEventListener("load", () => {
-                if (request.status < 200 || request.status >= 300) {
-                    const message = request.responseText || "Klarte ikkje å laste opp biletet."
-                    dispatchImageUploadEvent(form, "image-upload-error", { message })
-                    return
-                }
-
-                try {
-                    const response = JSON.parse(request.responseText)
-                    if (!response.sourceImageUrl) throw new Error("Response is missing sourceImageUrl")
-
-                    dispatchImageUploadEvent(form, "image-upload-success", {
-                        sourceImageUrl: response.sourceImageUrl,
-                    })
-                    initPopulateFileInfo(
-                        form.closest(".img-upload-form-content"),
-                        response.sourceImageUrl,
-                    )
-                } catch (error) {
-                    console.error("Could not read image upload response:", error)
-                    dispatchImageUploadEvent(form, "image-upload-error", {
-                        message: "Klarte ikkje å lese svaret frå opplastinga.",
-                    })
-                }
-            })
-
-            request.addEventListener("error", () => {
-                dispatchImageUploadEvent(form, "image-upload-error", {
-                    message: "Klarte ikkje å laste opp biletet. Prøv igjen.",
-                })
-            })
-
-            request.addEventListener("abort", () => {
-                dispatchImageUploadEvent(form, "image-upload-error", {
-                    message: "Opplastinga blei avbroten.",
-                })
-            })
-
-            dispatchImageUploadEvent(form, "image-upload-started")
-            request.open("POST", url)
-            request.setRequestHeader("Accept", "application/json")
-            request.setRequestHeader("Upload-Progress-Request", "true")
-            request.send(formData)
-        }
-
-        const initPopulateFileInfo = async (container, relativePath) => {
-            const uploadElement = container.querySelector('input[type="file"]')
-            const uploadedImage = uploadElement.files[0]
-            dispatchImageUploadEvent(container, "cropper-image-loading")
-
-            if (uploadedImage?.size && uploadedImage?.name) {
-                await prepareCropperImage(container, uploadedImage)
-                return
-            }
-
-            try {
-                const response = await fetch(relativePath)
-                if (!response.ok) {
-                    throw new Error(`Image request failed with status ${ response.status }`)
-                }
-
-                const blob = await response.blob()
-                await prepareCropperImage(container, blob)
-            } catch (error) {
-                console.error("Could not load the cropper image:", error)
-                dispatchImageUploadEvent(container, "cropper-image-error", {
-                    message: "Klarte ikkje å hente biletet. Prøv igjen.",
-                })
-            }
-        }
-
-    </script>
+	<script type="module" src="/static/js/upload.js"></script>
 	<style>
 
         @keyframes cropper-loading-spin {
@@ -511,6 +383,18 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
             }
 
             .banner-cropper {
+                .cropper-actions {
+                    display: grid;
+                    grid-template-columns: 1fr auto;
+                    place-items: center start;
+                    gap: var(--spacing-4x);
+
+                    button {
+                        grid-column: 2;
+                        place-self: end;
+                    }
+                }
+
                 inline-size: min-content;
                 block-size: max-content;
 
@@ -528,12 +412,12 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                     }
                 }
 
-                &.cropper-placeholder--banner {
+                &:is(.cropper-placeholder--banner) {
                     --cropper-placeholder-inline-size: 980px;
                     --cropper-placeholder-block-size: 229px;
                 }
 
-                &.cropper-placeholder--card {
+                &:is(.cropper-placeholder--card) {
                     --cropper-placeholder-inline-size: 540px;
                     --cropper-placeholder-block-size: 200px;
                 }
@@ -549,19 +433,25 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	<article
 		class="page-content-container"
 		data-signals__ifmissing={ formsubmission.DataSignals(map[string]any{
-            "_fileLoadingText": "Lastar bilete. Ver venleg og vent...",
             "_add_drag_over": false,
             "_uploading": false,
             "_uploadProgress": 0,
             "_uploadError": "",
-            "_cropperImageUrl": "",
-            "_cropperImageReady": false,
-            "_cropperImageLoading": false,
-            "_cropperImageError": "",
+            "_bannerCrop": map[string]any{"ready": false, "loading": false, "loadError": "", "exporting": false, "saveError": "", "saved": false},
+            "_cardCrop": map[string]any{"ready": false, "loading": false, "loadError": "", "exporting": false, "saveError": "", "saved": false},
+            "toastBannerImage": false,
+            "toastCardImage": false,
         }) }
+		data-computed:_cropper-image-ready="$_bannerCrop.ready && $_cardCrop.ready"
+		data-computed:_cropper-image-loading="$_bannerCrop.loading || $_cardCrop.loading"
+		data-computed:_cropper-image-error="$_bannerCrop.loadError || $_cardCrop.loadError"
+		data-computed:_image-busy="$_uploading || $_cropperImageLoading || $_bannerCrop.exporting || $_cardCrop.exporting || $toastBannerImage || $toastCardImage"
 	>
+		if showUploadToast {
+			<span hidden data-init="el.dispatchEvent(new CustomEvent('toast', { bubbles: true, detail: { message: 'Lagret' } })); const url = new URL(window.location.href); url.searchParams.delete('uploaded'); window.history.replaceState(null, '', url)"></span>
+		}
 		<a
-			href="javascript:window.history.back();"
+			href={ templ.SafeURL("/profile/new/" + eventId + "/") }
 			class="btn btn--outline back-button"
 		>
 			Tilbake
@@ -570,10 +460,6 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		<div
 			class="img-upload-form-content"
 			data-signals={ formsubmission.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
-			data-on:cropper-image-loading="$_cropperImageLoading = true; $_cropperImageReady = false; $_cropperImageError = ''; $_add_drag_over = false"
-			data-on:cropper-image-ready="$_cropperImageUrl = evt.detail.imageUrl; $_cropperImageLoading = false; $_cropperImageReady = true; $_cropperImageError = ''"
-			data-on:cropper-image-error="$_cropperImageLoading = false; $_cropperImageReady = false; $_cropperImageError = evt.detail.message"
-			data-init="$sourceImageUrl && initPopulateFileInfo(el, $sourceImageUrl)"
 		>
 			<div class="surface-pane info-text-content">
 				<div>
@@ -597,26 +483,25 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 				<h4>Last opp bilete</h4>
 				<form
 					enctype="multipart/form-data"
-					data-on:submit__prevent={ fmt.Sprintf("if (!$_uploading && !$_cropperImageLoading) uploadImageWithProgress(evt, '/profile/api/new/%s/upload')", eventId) }
-					data-on:image-upload-started="$_uploading = true; $_uploadProgress = 0; $_uploadError = ''; $_add_drag_over = false"
-					data-on:image-upload-progress="$_uploadProgress = evt.detail.progress"
-					data-on:image-upload-success="$_uploadProgress = 100; $_uploading = false; $_uploadError = ''; $sourceImageUrl = evt.detail.sourceImageUrl"
-					data-on:image-upload-error="$_uploading = false; $_uploadError = evt.detail.message"
+					method="post"
+					action={ templ.SafeURL(fmt.Sprintf("/profile/api/new/%s/upload", eventId)) }
+					data-on:submit__prevent={ fmt.Sprintf("if (!$_imageBusy) @upload('/profile/api/new/%s/upload', {progressSignal: '_uploadProgress'})", eventId) }
+					data-indicator="_uploading"
+					data-on:datastar-fetch__document="if (evt.detail.el === el) { if (evt.detail.type === 'started') { $_uploadError = ''; $_add_drag_over = false } if (evt.detail.type === 'error') $_uploadError = evt.detail.argsRaw.message; if (evt.detail.type === 'finished') el.reset() }"
 					class="item-card image-upload-card"
 					data-class:is-drag-over="$_add_drag_over"
-					data-attr:aria-busy="($_uploading || $_cropperImageLoading).toString()"
-					data-on:dragover__prevent="$_add_drag_over = !$_uploading && !$_cropperImageLoading && evt.dataTransfer.types.includes('Files'); evt.dataTransfer.dropEffect = $_add_drag_over ? 'copy' : 'none'"
+					data-attr:aria-busy="($_uploading || $_cropperImageLoading) ? 'true' : 'false'"
+					data-on:dragover__prevent="$_add_drag_over = !$_imageBusy && evt.dataTransfer.types.includes('Files'); evt.dataTransfer.dropEffect = $_add_drag_over ? 'copy' : 'none'"
 					data-on:dragleave="if (!el.contains(evt.relatedTarget)) $_add_drag_over = false"
-					data-on:drop__prevent="$_add_drag_over = false; if (!$_uploading && !$_cropperImageLoading && evt.dataTransfer.files.length) { el.elements.namedItem('image').files = evt.dataTransfer.files; el.requestSubmit() }"
+					data-on:drop__prevent="$_add_drag_over = false; if (!$_imageBusy && evt.dataTransfer.files.length) { el.elements.namedItem('image').files = evt.dataTransfer.files; el.requestSubmit() }"
 				>
 					<p
 						data-show="$_cropperImageLoading"
-						data-text="$_fileLoadingText"
 						style="display: none;"
-					></p>
+					>Lastar bilete. Ver venleg og vent...</p>
 					<input
-						data-on:change="el.closest('form').requestSubmit()"
-						data-attr:disabled="$_uploading || $_cropperImageLoading"
+						data-on:change="if (el.files.length) el.form.requestSubmit()"
+						data-attr:disabled="$_imageBusy"
 						data-show="!$_cropperImageLoading"
 						style="display: none;"
 						type="file"
@@ -642,10 +527,10 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						(Opp til YYmb)
 					</p>
 					<div class="image-upload-progress-wrapper" data-show="$_uploading" style="display: none;">
-						<div class="image-upload-progress">
+						<div class="image-upload-progress" role="progressbar" aria-label="Laster opp bilde" aria-valuemin="0" aria-valuemax="100" data-attr:aria-valuenow="$_uploadProgress">
 							<div class="progress-bar" data-style="{'--progress': $_uploadProgress}"></div>
 						</div>
-						<span data-text="$_uploadProgress === 100 ? $_fileLoadingText : ''"></span>
+						<span data-text="$_uploadProgress === 100 ? 'Lastar bilete. Ver venleg og vent...' : ''"></span>
 					</div>
 					<p class="feedback-error" data-show="$_uploadError" data-text="$_uploadError"></p>
 				</form>
@@ -680,30 +565,52 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					@icons.Icon(icons.Loading, icons.Size40)
 				</div>
 			</div>
-			<div class="surface-pane banner-cropper" data-show="$_cropperImageReady">
-				<banner-cropper
-					event-id={ eventId }
-					width="1360"
-					height="400"
-					preview-width="980"
-					preview-height="218"
-					image-kind="banner"
-					label="Bannerbilder på arrangementsiden"
-					data-attr:image-url="$_cropperImageUrl"
-				></banner-cropper>
-			</div>
-			<div class="surface-pane banner-cropper" data-show="$_cropperImageReady">
-				<banner-cropper
-					event-id={ eventId }
-					width="600"
-					height="350"
-					preview-width="540"
-					preview-height="190"
-					image-kind="card"
-					label="Thumbnail på arrangementsiden"
-					data-attr:image-url="$_cropperImageUrl"
-				></banner-cropper>
-			</div>
+			@imageCropper(eventId, "banner", "Bannerbilder på arrangementsiden", "1360", "400", "980", "218", "_bannerCrop", "toastBannerImage")
+			@imageCropper(eventId, "card", "Thumbnail på arrangementsiden", "600", "350", "540", "190", "_cardCrop", "toastCardImage")
 		</div>
 	</article>
+}
+
+// The component owns canvas operations; Datastar owns requests and feedback.
+templ imageCropper(eventID, kind, label, width, height, previewWidth, previewHeight, stateName, indicator string) {
+	{{ state := "$" + stateName }}
+	<div class="surface-pane banner-cropper" data-show="$_cropperImageReady">
+		<banner-cropper
+			width={ width }
+			height={ height }
+			preview-width={ previewWidth }
+			preview-height={ previewHeight }
+			label={ label }
+			data-on:image-loading={ fmt.Sprintf("%s.loading = true; %s.ready = false; %s.loadError = ''; %s.saved = false; %s.saveError = ''; %s.exporting = false", state, state, state, state, state, state) }
+			data-on:image-ready={ fmt.Sprintf("%s.loading = false; %s.ready = true", state, state) }
+			data-on:image-error={ fmt.Sprintf("%s.loading = false; %s.ready = false; %s.loadError = evt.detail.message", state, state, state) }
+			data-on:crop-started={ fmt.Sprintf("%s.exporting = true; %s.saveError = ''; %s.saved = false", state, state, state) }
+			data-on:crop-error={ fmt.Sprintf("%s.exporting = false; %s.saveError = evt.detail.message", state, state) }
+			data-on:crop-ready={ fmt.Sprintf("%s.exporting = false; el.querySelector('input[name=image]').files = evt.detail.files; el.querySelector('form').requestSubmit()", state) }
+			data-attr:image-url="$sourceImageUrl"
+		>
+			<form
+				slot="actions"
+				class="cropper-actions"
+				enctype="multipart/form-data"
+				data-indicator={ indicator }
+				data-on:submit__prevent={ fmt.Sprintf("if (!$%s) @post('/profile/api/new/%s/upload-cropped', {contentType: 'form', requestCancellation: 'disabled', retry: 'never', retryMaxCount: 0})", indicator, eventID) }
+				data-on:datastar-fetch__document={ fmt.Sprintf("if (evt.detail.el === el) { if (evt.detail.type === 'error' || evt.detail.type === 'retries-failed') %s.saveError = 'Kunne ikke lagre bildet. Prøv igjen.'; if (evt.detail.type === 'finished' && !%s.saveError) %s.saved = true }", state, state, state) }
+			>
+				<input type="file" name="image" hidden required/>
+				<input type="hidden" name="kind" value={ kind }/>
+				<div aria-live="polite">
+					<span data-show={ fmt.Sprintf("%s.exporting || $%s", state, indicator) } style="display: none;">Laster opp...</span>
+					<span data-show={ state + ".saved" } style="display: none;">Lastet opp</span>
+					<span class="feedback-error" data-show={ state + ".saveError" } data-text={ state + ".saveError" } style="display: none;"></span>
+				</div>
+				<button
+					type="button"
+					class="btn btn--outline"
+					data-attr:disabled={ fmt.Sprintf("$_uploading || !%s.ready || %s.exporting || $%s", state, state, indicator) }
+					data-on:click="el.closest('banner-cropper').exportImage()"
+				>Lagre</button>
+			</form>
+		</banner-cropper>
+	</div>
 }
