@@ -111,19 +111,20 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 
 		mountPublicAssetRoutes(router, eventImageDir, baseLogger)
 
-		var appRouter chi.Router = router
 		if fullMode {
-			appRouter = router.With(authctx.AuthMiddleware(baseLogger))
-		}
-
-		if fullMode {
-			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir, natsStoreDir)
+			sessionValidator, err := authctx.NewSessionValidator(baseLogger)
+			if err != nil {
+				return fmt.Errorf("initialize authentication: %w", err)
+			}
+			authMiddleware := authctx.AuthMiddleware(sessionValidator, baseLogger)
+			appRouter := router.With(authMiddleware)
+			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir, natsStoreDir, sessionValidator)
 			if err != nil {
 				logger.Error(fmt.Errorf("error setting up routes; falling back to degraded mode: %w", err).Error())
 				readiness.MarkDegraded(notReadyApplicationReason, err)
 				mountDegradedRoutes(router)
 			} else {
-				router.NotFound(authctx.AuthMiddleware(baseLogger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				router.NotFound(authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					notfound.Render(w, r, db, baseLogger, "")
 				})).ServeHTTP)
 				if cleanup != nil {

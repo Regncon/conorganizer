@@ -26,7 +26,7 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 )
 
-func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB, eventImageDir *string, natsStoreDir string) (cleanup func() error, err error) {
+func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB, eventImageDir *string, natsStoreDir string, sessionValidator authctx.SessionValidator) (cleanup func() error, err error) {
 	if natsStoreDir == "" {
 		return nil, fmt.Errorf("nats store directory is empty")
 	}
@@ -74,7 +74,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 		admin.SetupAdminRoute(routerAdmin, logger, liveManager, db, eventImageDir),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, liveManager, logger, db),
 		event.SetupEventRoute(router, ns, liveManager, db, logger, eventImageDir),
-		login.SetupAuthRoute(router, db, logger),
+		login.SetupAuthRoute(router, db, logger, sessionValidator),
 		profilepage.SetupProfileRoute(isLoggedInRouter, liveManager, db, eventImageDir, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)

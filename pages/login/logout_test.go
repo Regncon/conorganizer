@@ -33,7 +33,7 @@ func TestLogout_ClearsSessionAndRefreshCookies(t *testing.T) {
 	expectedCookiePath := "/"
 
 	router := chi.NewRouter()
-	if err := SetupAuthRoute(router, db, discardLogger()); err != nil {
+	if err := SetupAuthRoute(router, db, discardLogger(), &fakeSessionValidator{}); err != nil {
 		t.Fatalf("setup auth route: %v", err)
 	}
 	request := httptest.NewRequest(http.MethodGet, "/auth/logout", nil)

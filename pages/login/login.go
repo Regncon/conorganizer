@@ -19,15 +19,12 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-var newSessionValidator = authctx.NewSessionValidator
-
 type sessionRequest struct {
 	SessionJWT string `json:"sessionJwt"`
 	RefreshJWT string `json:"refreshJwt"`
 }
 
-func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
-	baseLogger := logger
+func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger, sessionValidator authctx.SessionValidator) error {
 	logger = logger.With("component", "auth")
 	router.Route("/auth", func(authRouter chi.Router) {
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -78,13 +75,6 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				return
 			}
 
-			sessionValidator, err := newSessionValidator()
-			if err != nil {
-				logger.Error(fmt.Errorf("failed to create auth session validator: %w", err).Error())
-				http.Error(w, "authentication unavailable", http.StatusInternalServerError)
-				return
-			}
-
 			userOK, userToken, sessionErr := sessionValidator.ValidateSessionWithToken(
 				r.Context(),
 				request.SessionJWT,
@@ -123,8 +113,6 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 		})
 
 		authRouter.Group(func(protectedRoute chi.Router) {
-			protectedRoute.Use(authctx.AuthMiddleware(baseLogger))
-
 			protectedRoute.Get("/test", func(w http.ResponseWriter, r *http.Request) {
 				userToken, userTokenErr := authctx.GetUserTokenFromContext(r.Context())
 				if userTokenErr != nil {

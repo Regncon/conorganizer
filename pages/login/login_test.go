@@ -28,8 +28,7 @@ func TestSessionRoute_ValidTokensStoresAuthCookies(t *testing.T) {
 		sessionOK:    true,
 		sessionToken: &descope.Token{JWT: expectedSessionJWT},
 	}
-	restoreSessionValidator(t, validator, nil)
-	router := authTestRouter(t)
+	router := authTestRouter(t, validator)
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/auth/session",
@@ -67,8 +66,7 @@ func TestSessionRoute_MissingTokensReturnsBadRequest(t *testing.T) {
 	// Given
 	expectedStatusCode := http.StatusBadRequest
 	validator := &fakeSessionValidator{}
-	restoreSessionValidator(t, validator, nil)
-	router := authTestRouter(t)
+	router := authTestRouter(t, validator)
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/auth/session",
@@ -110,8 +108,7 @@ func TestSessionRoute_ExpiredSessionRefreshesBeforeStoringAuthCookies(t *testing
 			JWT: expectedSessionJWT,
 		},
 	}
-	restoreSessionValidator(t, validator, nil)
-	router := authTestRouter(t)
+	router := authTestRouter(t, validator)
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/auth/session",
@@ -150,8 +147,7 @@ func TestSessionRoute_InvalidTokensReturnsUnauthorized(t *testing.T) {
 		refreshOK:  false,
 		refreshErr: errors.New("invalid refresh token"),
 	}
-	restoreSessionValidator(t, validator, nil)
-	router := authTestRouter(t)
+	router := authTestRouter(t, validator)
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/auth/session",
@@ -201,22 +197,12 @@ func (f *fakeSessionValidator) RefreshSessionWithToken(_ context.Context, refres
 	return f.refreshOK, f.refreshToken, f.refreshErr
 }
 
-func restoreSessionValidator(t *testing.T, validator authctx.SessionValidator, err error) {
-	t.Helper()
-	previous := newSessionValidator
-	newSessionValidator = func() (authctx.SessionValidator, error) {
-		return validator, err
-	}
-	t.Cleanup(func() {
-		newSessionValidator = previous
-	})
-}
-
-func authTestRouter(t *testing.T) chi.Router {
+func authTestRouter(t *testing.T, validator authctx.SessionValidator) chi.Router {
 	t.Helper()
 	router := chi.NewRouter()
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := SetupAuthRoute(router, nil, logger); err != nil {
+	router.Use(authctx.AuthMiddleware(validator, logger))
+	if err := SetupAuthRoute(router, nil, logger, validator); err != nil {
 		t.Fatalf("expected auth route setup to succeed: %v", err)
 	}
 	return router
