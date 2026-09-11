@@ -36,8 +36,8 @@ func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logge
 		if err := layouts.Base(
 			"Legg til bilete",
 			userInfo,
-            db,
-            logger,
+			db,
+			logger,
 			page(eventId, db, eventImageDir, logger, showUploadToast),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render event image page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
@@ -439,6 +439,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
             "_uploadError": "",
             "_bannerCrop": map[string]any{"ready": false, "loading": false, "loadError": "", "exporting": false, "saveError": "", "saved": false},
             "_cardCrop": map[string]any{"ready": false, "loading": false, "loadError": "", "exporting": false, "saveError": "", "saved": false},
+            "_has_current_image": imageUrl != "",
             "toastBannerImage": false,
             "toastCardImage": false,
         }) }
@@ -517,13 +518,14 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					>
 						@icons.Icon(icons.FileUpload, icons.Size20)
 					</div>
-					<p data-show="!$_uploading && !$_cropperImageLoading" data-text="$_add_drag_over ? 'Slipp bildet her' : 'Klikk her eller dra et bilde inn for å laste det opp.'" style="display: none;">
+					<p data-show="$_has_current_image" style="display: none;">Klikk eller dra og slipp for å bytte   bilete</p>
+					<p data-show="!$_has_current_image && !$_uploading && !$_cropperImageLoading" data-text="$_add_drag_over ? 'Slipp bildet her' : 'Klikk her eller dra et bilde inn for å laste det opp.'" style="display: none;">
 						Klikk her eller dra et bilde inn for å laste det opp.
 					</p>
-					<p data-show="!$_uploading && !$_cropperImageLoading" style="display: none;">
+					<p data-show="!$_has_current_image && !$_uploading && !$_cropperImageLoading" style="display: none;">
 						Støttede formater: PNG, JPG, ...
 					</p>
-					<p data-show="!$_uploading && !$_cropperImageLoading" style="display: none;">
+					<p data-show="!$_has_current_image && !$_uploading && !$_cropperImageLoading" style="display: none;">
 						(Opp til YYmb)
 					</p>
 					<div class="image-upload-progress-wrapper" data-show="$_uploading" style="display: none;">
