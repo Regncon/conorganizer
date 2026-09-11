@@ -12,6 +12,7 @@ import (
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/go-chi/chi/v5"
+	"strings"
 )
 
 templ menuStyles() {
@@ -131,6 +132,8 @@ templ menuStyles() {
 }
 
 templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+
+    {{ }}
 	@menuStyles()
 	@mainMenuButtonsStyles()
 	@menuBillettholderLiveStyles()
@@ -180,6 +183,12 @@ templ mainMenuButtonsStyles() {
 
 			.main-menu-buttons {
 				display: contents;
+
+                .main-menu-button {
+                    &.selected {
+                        color: var(--color-primary);
+                    }
+                }
 			}
 		}
 
@@ -213,15 +222,21 @@ templ mainMenuButtonsStyles() {
 }
 
 templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
+
+    {{
+        r := chi.RouteContext(ctx)
+        path := r.RoutePattern()
+    }}
+
 	<section class="main-menu-buttons">
-		<a href="/" class="main-menu-button btn btn--ghost btn-with-icon">
+		<a href="/" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", path == "/") }>
 			@icons.Icon(icons.Home, icons.Size20)
 			<span class="menu-button-text">
 				Hjem
 			</span>
 		</a>
 		if userInfo.IsLoggedIn {
-			<a href="/profile" class="main-menu-button btn btn--ghost btn-with-icon">
+			<a href="/profile" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", strings.Contains(path, "/profile")) }>
 				@icons.Icon(icons.User, icons.Size20)
 				<span class="menu-button-text">
 					Min Side
@@ -229,7 +244,7 @@ templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
 			</a>
 		}
 		if userInfo.IsLoggedIn && userInfo.IsAdmin {
-			<a href="/admin" class="main-menu-button btn btn--ghost btn-with-icon">
+			<a href="/admin" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", strings.Contains(path, "/admin")) }>
 				@icons.Icon(icons.Shield, icons.Size20)
 				<span class="menu-button-text">
 					Admin
