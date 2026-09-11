@@ -1,6 +1,11 @@
 // @ts-check
 
-/** @typedef {Window & typeof globalThis & {
+/**
+ * Source of truth: [SharedStyles](../js/conorganizer.js#L16) and
+ * [ConorganizerGlobal / ConorganizerWindow](../js/conorganizer.js#L42).
+ * Keep this local subset in sync with those definitions.
+ *
+ * @typedef {Window & typeof globalThis & {
  *   conorganizer: {
  *     sharedStyles: {
  *       getStyleUrls: (names?: string[]) => string[],
