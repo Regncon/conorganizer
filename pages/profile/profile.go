@@ -85,7 +85,7 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 			profileApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				requestLogger := logger.With("component", "profile")
 				liveManager.Stream(w, r, live.Page{
-					Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests, live.BucketBillettholders},
+					Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests, live.BucketBillettholders, live.BucketRooms},
 					Render: func(ctx context.Context, r *http.Request) templ.Component {
 						user := userctx.GetUserRequestInfo(ctx)
 						events := GetEventsByExternalID(user.Id, db, requestLogger)

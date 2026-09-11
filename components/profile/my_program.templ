@@ -6,29 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/puljer"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
-
-type UserEvent struct {
-	EventID     string
-	Title       string
-	Intro       string
-	Description string
-	UserID      int
-	EventType   models.EventType
-	PuljeID     models.Pulje
-	IsGM        bool
-}
-
-type UserProgramPulje struct {
-	Pulje     models.PuljeRow
-	Events    []UserEvent
-	Interests []UserInterest
-}
 
 func getProgramPublished(db *sql.DB) (bool, error) {
 	const query = `
@@ -52,7 +33,7 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 	{{
 		logger = logger.With("component", "profile_program")
 		events, err := GetAllEventsForUser(userInfo, selectedBillettholderID, db, logger)
-		interests, interestErr := getAllInterestsForUser(userInfo, selectedBillettholderID, db, logger)
+		interests, interestErr := getProgramWishesForUser(userInfo, selectedBillettholderID, db, logger)
 		puljeRows, puljeErr := puljerService.GetAllPuljer(db)
 		isPublished, publishErr := getProgramPublished(db)
 
@@ -95,28 +76,132 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 		}
 	}}
 	<style>
-		.program-pulje-list {
-			display: flex;
-			flex-direction: column;
-			gap: var(--responsive-pane-padding);
+		#mitt-program {
+			--program-card-border: color-mix(in srgb, var(--bg-item-border) 82%, var(--color-primary));
+			--program-card-padding: clamp(var(--spacing-3x), 5cqi, var(--spacing-5x));
+			container: mitt-program / inline-size;
+
+			.program-pulje-list {
+				display: grid;
+				gap: var(--responsive-pane-padding);
+			}
+
+			.program-pulje-container {
+				display: grid;
+				gap: var(--spacing-2x);
+				scroll-margin-block: var(--spacing-4x);
+			}
+
+			.program-pulje-heading {
+				display: grid;
+				gap: var(--spacing-1x);
+				margin: 0;
+			}
+
+			.program-pulje-name {
+				font-size: var(--text-heading-3);
+				font-weight: 700;
+				color: var(--color-text-strong);
+			}
+
+			.program-pulje-time {
+				font-size: var(--text-heading-4);
+				font-weight: 400;
+				color: var(--color-text-soft);
+			}
+
+			.program-card {
+				display: grid;
+				gap: var(--spacing-3x);
+				padding: var(--program-card-padding);
+				border: 1px solid var(--program-card-border);
+				border-radius: var(--border-radius-2x);
+				background: color-mix(in srgb, var(--bg-item) 94%, var(--color-primary));
+			}
+
+			.program-card-status {
+				font-weight: 700;
+				color: var(--color-primary);
+			}
+
+			.program-card-status-success {
+				color: var(--color-success);
+			}
+
+			.program-card-title {
+				font-size: var(--text-heading-3);
+				font-weight: 700;
+				color: var(--color-text-strong);
+				text-decoration: none;
+			}
+
+			.program-card-title:hover,
+			.program-card-title:focus-visible {
+				color: var(--color-primary);
+				text-decoration: underline;
+			}
+
+			.program-card-meta {
+				display: grid;
+				gap: var(--spacing-1x);
+				color: var(--color-text-soft);
+			}
+
+			.program-card-wishes {
+				display: grid;
+				gap: var(--spacing-2x);
+				padding: 0;
+				margin: 0;
+				list-style: none;
+			}
+
+			.program-card-wish {
+				display: grid;
+				gap: var(--spacing-1x);
+				padding-block-start: var(--spacing-2x);
+				border-block-start: 1px solid var(--bg-item-border);
+			}
+
+			.program-card-wish a {
+				font-weight: 700;
+				color: var(--color-text-strong);
+			}
+
+			.program-group {
+				border-block-start: 1px solid var(--bg-item-border);
+				padding-block-start: var(--spacing-2x);
+			}
+
+			.program-group summary {
+				cursor: pointer;
+				font-weight: 700;
+				color: var(--color-primary);
+			}
+
+			.program-group ul {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: var(--spacing-1x) var(--spacing-3x);
+				padding-inline-start: var(--spacing-4x);
+				margin-block-end: 0;
+			}
+
+			.program-group-role {
+				color: var(--color-text-soft);
+			}
+
+			.program-card-neutral {
+				color: var(--color-text-soft);
+			}
 		}
-		.program-pulje-container {
-			display: flex;
-			flex-direction: column;
-			gap: var(--spacing-2x);
-		}
-		h3.program-pulje {
-			font-size: var(--text-heading-3);
-			font-weight: bold;
-			color: var(--color-text-strong);
-		}
-		.program-pulje-time {
-			font-weight: normal;
-			font-size: var(--text-heading-4);
-			color: var(--color-text-soft-50);
+
+		@container mitt-program (width < 34rem) {
+			#mitt-program .program-group ul {
+				grid-template-columns: 1fr;
+			}
 		}
 	</style>
-	<div class="surface-pane">
+	<div class="surface-pane" id="mitt-program">
 		<h2 class="surface-pane-title">
 			Mitt festivalprogram
 		</h2>
@@ -127,62 +212,122 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 			</div>
 		} else {
 			<section class="program-pulje-list">
-				if isPublished {
-					for _, pulje := range puljer {
-						<div class="program-pulje-container">
-							<h3 class="program-pulje">
-								{ pulje.Pulje.Name }
-								<span class="program-pulje-time">({ pulje.Pulje.TimeRange() })</span>
-							</h3>
-							if len(pulje.Events) > 0 {
-								for _, event := range pulje.Events {
-									{{ imageCardUrl := eventimage.GetEventImageUrl(event.EventID, "card", eventImageDir) }}
-									{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
-									@event_components.ProgramPuljeEvent(event.EventID, imageCardUrl, imageBannerUrl, event.Title, event.Intro, event.EventType, event.IsGM)
-								}
+				for _, pulje := range puljer {
+					<section
+						class="program-pulje-container"
+						id={ fmt.Sprintf("program-%s", pulje.Pulje.ID) }
+						data-program-pulje={ string(pulje.Pulje.ID) }
+					>
+						<h3 class="program-pulje-heading">
+							<span class="program-pulje-name">{ pulje.Pulje.Name }</span>
+							<span class="program-pulje-time">{ pulje.Pulje.TimeRange() }</span>
+						</h3>
+						if !isPublished {
+							@ProgramPendingCard(pulje.Interests)
+						} else if len(pulje.Events) > 0 {
+							for _, event := range pulje.Events {
+								@ProgramEventCard(event)
 							}
-							if len(pulje.Events) == 0 && len(pulje.Interests) > 0 {
-								{{ interestList := make([]event_components.Interest, len(pulje.Interests)) }}
-								{{
-									for i, interest := range pulje.Interests {
-										interestList[i] = event_components.Interest{
-											EventID:       interest.EventID,
-											EventName:     interest.EventName,
-											InterestLevel: interest.InterestLevel,
-										}
-									}
-								}}
-								@event_components.ProgramPuljeInterests(interestList)
-							}
-							if len(pulje.Events) == 0 && len(pulje.Interests) == 0 {
-								@event_components.ProgramPuljeNoEvents(pulje.Pulje.ID)
-							}
-						</div>
-					}
-				} else {
-					<div class="program-pulje-container">
-						<h3 class="program-pulje" style="text-align: center;">Programmet for Regncon er ikkje publisert enno</h3>
-						<p>
-							Vi arbeider framleis med planlegginga og vil leggje ut programmet så snart det er klart.
-							Følg med på nettsida for oppdateringar og nyheiter.
-						</p>
-					</div>
+						} else if pulje.Pulje.Status == models.PuljeStatusCompleted && len(pulje.Interests) > 0 {
+							@ProgramUnassignedCard(pulje.Interests)
+						} else if len(pulje.Interests) > 0 {
+							@ProgramPendingCard(pulje.Interests)
+						} else {
+							<div class="program-card program-card-neutral">
+								<p>Du har ingen arrangementer eller ønsker i denne puljen.</p>
+							</div>
+						}
+					</section>
 				}
 			</section>
 		}
 	</div>
 }
 
-type UserInterest struct {
-	EventID       string
-	EventName     string
-	InterestLevel models.InterestLevel
-	PuljeID       models.Pulje
+templ ProgramEventCard(event UserEvent) {
+	<article class="program-card">
+		<p class={ "program-card-status", templ.KV("program-card-status-success", !event.IsGM) }>
+			if event.IsGM {
+				Du er GM
+			} else {
+				Du har fått plass
+			}
+		</p>
+		<a href={ templ.URL(fmt.Sprintf("/event/%s", event.EventID)) } class="program-card-title">{ event.Title }</a>
+		<div class="program-card-meta">
+			if event.RoomLabel() != "" {
+				<span>{ event.RoomLabel() }</span>
+			}
+			if len(event.GMNames) > 0 {
+				<span>GM: { event.GMLabel() }</span>
+			}
+		</div>
+		if event.PuljeStatus == models.PuljeStatusCompleted && len(event.GroupMembers) > 0 {
+			<details class="program-group" data-program-group={ string(event.PuljeID) } data-preserve-attr="open">
+				<summary>Se gruppen din</summary>
+				<ul>
+					for _, member := range event.GroupMembers {
+						<li>
+							{ member.FirstName }
+							if member.Role == models.EventPlayerRoleGM {
+								<span class="program-group-role"> (GM)</span>
+							}
+						</li>
+					}
+				</ul>
+			</details>
+		}
+	</article>
+}
+
+templ ProgramPendingCard(interests []UserInterest) {
+	<div class="program-card">
+		<p class="program-card-status">Fordelingen er ikke publisert ennå</p>
+		if len(interests) > 0 {
+			<p>Ønskene dine i denne puljen:</p>
+			@ProgramWishList(interests)
+		} else {
+			<p class="program-card-neutral">Du har ingen ønsker i denne puljen.</p>
+		}
+	</div>
+}
+
+templ ProgramUnassignedCard(interests []UserInterest) {
+	<div class="program-card">
+		<p class="program-card-status">Du fikk dessverre ikke plass i denne puljen</p>
+		<p>Ta kontakt med arrangørene dersom du har spørsmål om fordelingen.</p>
+		<p>Ønskene dine:</p>
+		@ProgramWishList(interests)
+	</div>
+}
+
+templ ProgramWishList(interests []UserInterest) {
+	<ul class="program-card-wishes">
+		for _, interest := range interests {
+			<li class="program-card-wish">
+				<a href={ templ.URL(fmt.Sprintf("/event/%s", interest.EventID)) }>{ interest.EventName }</a>
+				<span>{ interest.InterestLevel.Label() }</span>
+			</li>
+		}
+	</ul>
 }
 
 func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillettholderID int, db *sql.DB, logger *slog.Logger) ([]UserInterest, error) {
+	return queryUserProgramInterests(userInfo, selectedBillettholderID, db, logger, true)
+}
+
+func getProgramWishesForUser(userInfo requestctx.UserRequestInfo, selectedBillettholderID int, db *sql.DB, logger *slog.Logger) ([]UserInterest, error) {
+	return queryUserProgramInterests(userInfo, selectedBillettholderID, db, logger, false)
+}
+
+func queryUserProgramInterests(userInfo requestctx.UserRequestInfo, selectedBillettholderID int, db *sql.DB, logger *slog.Logger, hideCompletedResultWishes bool) ([]UserInterest, error) {
 	if selectedBillettholderID <= 0 {
 		return []UserInterest{}, nil
+	}
+
+	hideCompletedResultWishesValue := 0
+	if hideCompletedResultWishes {
+		hideCompletedResultWishesValue = 1
 	}
 
 	query := `
@@ -212,7 +357,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 			AND e.status = ?
 			AND ep.is_in_pulje = 1
 			AND ep.is_published = 1
-			AND NOT EXISTS (
+			AND (? = 0 OR NOT EXISTS (
 				SELECT 1
 				FROM relation_events_players assigned
 				JOIN events assigned_event ON assigned_event.id = assigned.event_id
@@ -228,7 +373,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 						assigned.role = ?
 						OR assigned_pulje.status = ?
 					)
-			)
+			))
 		GROUP BY i.event_id, e.title, i.pulje_id
 		ORDER BY i.pulje_id ASC,
 			MIN(CASE i.interest_level
@@ -251,6 +396,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 		selectedBillettholderID,
 		userInfo.Id,
 		models.EventStatusAnnounced,
+		hideCompletedResultWishesValue,
 		models.EventStatusAnnounced,
 		models.EventPlayerRoleGM,
 		models.PuljeStatusCompleted,
@@ -304,6 +450,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 			COALESCE(e.user_id, 0) as user_id,
 			e.event_type,
 			ep.pulje_id,
+			p.status,
 			MAX(ep.role = ?) AS is_gamemaster
 		FROM relation_events_players ep
 		JOIN relation_billettholdere_users bu ON bu.billettholder_id = ep.billettholder_id
@@ -328,7 +475,8 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 			e.description,
 			e.user_id,
 			e.event_type,
-			ep.pulje_id
+			ep.pulje_id,
+			p.status
 		ORDER BY p.start_at ASC, e.title ASC
 	`
 
@@ -359,6 +507,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 			&event.UserID,
 			&event.EventType,
 			&event.PuljeID,
+			&event.PuljeStatus,
 			&event.IsGM,
 		)
 
@@ -371,6 +520,14 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 
 	if rowsErr := rows.Err(); rowsErr != nil {
 		return nil, fmt.Errorf("error iterating event rows for user %s: %w", userInfo.Id, rowsErr)
+	}
+
+	if err := rows.Close(); err != nil {
+		return nil, fmt.Errorf("close events for user %s: %w", userInfo.Id, err)
+	}
+
+	if err := enrichUserProgramEvents(db, events); err != nil {
+		return nil, fmt.Errorf("load program event details for user %s: %w", userInfo.Id, err)
 	}
 
 	return events, nil

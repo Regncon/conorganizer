@@ -76,6 +76,9 @@ func TestMyProgram_WhenPuljeIsCompleted_RendersPlayerResult(t *testing.T) {
 	if strings.Contains(actualText, hiddenVisibleText) {
 		t.Fatalf("expected rendered profile program to hide %q\nactual text: %s", hiddenVisibleText, actualText)
 	}
+	if !strings.Contains(actualText, "Rom kommer") {
+		t.Fatalf("expected rendered profile program to explain that the room is pending\nactual text: %s", actualText)
+	}
 }
 
 func TestMyProgram_WhenGMEventIsInNotCompletedPulje_RendersGMEventOverInterests(t *testing.T) {
@@ -121,7 +124,7 @@ func TestMyProgram_WhenProgramIsNotReady_HidesPlayerResult(t *testing.T) {
 	// Given
 	expectedVisibleText := "Completed Player Result"
 	hiddenVisibleText := "Completed Wish Hidden By Result"
-	expectedStatusText := "Programmet for Regncon er ikkje publisert enno"
+	expectedStatusText := "Fordelingen er ikke publisert ennå"
 
 	db, logger := createProfileProgramTestDB(t)
 	userInfo, billettholderID := seedProfileProgramUser(t, db)

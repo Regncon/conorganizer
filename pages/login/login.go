@@ -103,6 +103,7 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
 			userToken, _ := authctx.GetUserTokenFromContext(r.Context())
+			returnURL := requestctx.SafeProfileReturnURL(r.URL.Query().Get("return"))
 
 			if userToken != nil {
 				if err := layouts.Base(
@@ -110,7 +111,7 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 					userctx.GetUserRequestInfo(ctx),
 					db,
 					logger,
-					alreadyLogedIn(),
+					alreadyLogedInForReturnURL(returnURL),
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render already loged in page: %w", err).Error())
 				}
@@ -120,7 +121,7 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 					userctx.GetUserRequestInfo(ctx),
 					db,
 					logger,
-					loginForm(),
+					loginFormForReturnURL(returnURL),
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render login page: %w", err).Error())
 				}
@@ -177,7 +178,11 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 						return
 					}
 				}
-				http.Redirect(w, r, "/", http.StatusSeeOther)
+				returnURL := requestctx.SafeProfileReturnURL(r.URL.Query().Get("return"))
+				if returnURL == "" {
+					returnURL = "/"
+				}
+				http.Redirect(w, r, returnURL, http.StatusSeeOther)
 			})
 
 		})

@@ -3,6 +3,16 @@ package login
 import "github.com/Regncon/conorganizer/service/authctx"
 
 templ alreadyLogedIn() {
+	@alreadyLogedInForReturnURL("")
+}
+
+templ alreadyLogedInForReturnURL(returnURL string) {
+	{{
+		destinationURL := returnURL
+		if destinationURL == "" {
+			destinationURL = "/"
+		}
+	}}
 	<style>
     .already-logedin-wrapper {
         display: flex;
@@ -18,11 +28,11 @@ templ alreadyLogedIn() {
         }
     }
     </style>
-	<div class="already-logedin-wrapper page-content-container">
+	<div class="already-logedin-wrapper page-content-container" data-login-return-url={ returnURL }>
 		<h1>Velkomen tilbake!</h1>
 		<p>Det ser ut til at du allereie er innlogga og du treng ikkje logge inn på nytt. </p>
-		<p>Du vert sendt vidare til framsida om <span id="countdown">5</span> sekund.</p>
-		<p>Om vidaresendinga ikkje fungerer, kan du bruke denna lenkja til <a href="/">framsida</a></p>
+		<p>Du vert sendt vidare om <span id="countdown">5</span> sekund.</p>
+		<p>Om vidaresendinga ikkje fungerer, kan du <a href={ destinationURL } data-login-return-link>gå vidare no</a>.</p>
 	</div>
 	<script>
         let remaining = 5
@@ -33,7 +43,8 @@ templ alreadyLogedIn() {
 
             if (remaining <= 0) {
                 clearInterval(interval)
-                window.location.replace('/')
+                const returnURL = document.querySelector('[data-login-return-url]')?.dataset.loginReturnUrl ?? '';
+                window.location.replace(returnURL || '/')
                 return
             }
 
@@ -43,6 +54,10 @@ templ alreadyLogedIn() {
 }
 
 templ loginForm() {
+	@loginFormForReturnURL("")
+}
+
+templ loginFormForReturnURL(returnURL string) {
 	<script src="https://descopecdn.com/npm/@descope/web-component@3.21.0/dist/index.js"></script>
 	<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
 	<script src="https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js"></script>
@@ -70,7 +85,7 @@ templ loginForm() {
             }
         }
     </style>
-	<div class="descope-login-wrapper">
+	<div class="descope-login-wrapper" data-login-return-url={ returnURL }>
 		<descope-wc
 			project-id={ authctx.DescopeProjectID }
 			flow-id="sign-up-or-in-passwords-social"
@@ -134,10 +149,6 @@ templ loginForm() {
             }
 
             const onSuccess = async (e) => {
-                console.log('Login successful');
-                console.log('User:', e.detail?.user?.name ?? '');
-                console.log('Email:', e.detail?.user?.email ?? '');
-
                 const { sessionJwt, refreshJwt } = await getTokenPair(e.detail);
                 if (!sessionJwt || !refreshJwt) {
                     console.error('Login error:', new Error('Missing session tokens'));
@@ -148,6 +159,11 @@ templ loginForm() {
                     await establishSession(sessionJwt, refreshJwt);
                     wcElement.removeEventListener('success', onSuccess);
                     wcElement.removeEventListener('error', onError);
+	                    const returnURL = wcElement.closest('[data-login-return-url]')?.dataset.loginReturnUrl ?? '';
+	                    if (returnURL) {
+	                        window.location.href = '/auth/post-login?return=' + encodeURIComponent(returnURL);
+	                        return;
+	                    }
                     window.location.href = '/auth/post-login';
                 } catch (err) {
                     console.error('Login error:', err);

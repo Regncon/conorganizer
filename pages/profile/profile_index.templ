@@ -15,8 +15,8 @@ import (
 
 templ ProfileMainColumn(user requestctx.UserRequestInfo, events []models.EventCardModel, selectedBillettholderID int, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
 	<div id="profile-main-column" class="profile-content-column">
-		@profilecomponent.MyEvents(events)
 		@profilecomponent.MyProgram(user, selectedBillettholderID, db, logger, eventImageDir)
+		@profilecomponent.MyEvents(events)
 	</div>
 }
 
@@ -31,13 +31,16 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 		data-profile-valid-billettholder-ids={ templ.JSONString(validBillettholderIDs) }
 		data-init={ live.DatastarInitExpression("'/profile/api' + window.location.search") }
 	>
-		@ProfileMainColumn(user, events, selectedBillettholderID, db, logger, eventImageDir)
+		<div class="profile-content-column">
+			@profilecomponent.NotificationSettings()
+			@ProfileMainColumn(user, events, selectedBillettholderID, db, logger, eventImageDir)
+		</div>
 		<div class="profile-content-column">
 			/* @profilecomponent.UserDetails(user) */
 			<div class="surface-pane">
 				<h2 class="surface-pane-title">Kontoadministrasjon</h2>
 				<a href="/profile/descope-profile" class="btn btn--outline" style="width: fit-content; margin-inline-end: var(--spacing-8x);">Reset passord</a>
-				<a href="/auth/logout" class="btn btn--outline" style="width: fit-content; margin-left: auto;">Logg ut</a>
+				<a href="/auth/logout" class="btn btn--outline" style="width: fit-content; margin-left: auto;" data-varsler-logout>Logg ut</a>
 			</div>
 			@profilecomponent.MyTickets(tickets)
 		</div>
@@ -96,11 +99,15 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 
 			selection.onChange(replaceWithSelectedBillettholder);
 
-			const selected = selection.get();
-			if (!selected) {
-				if (currentIDRaw && (!Number.isInteger(currentID) || !validIDSet.has(currentID))) {
+			if (currentIDRaw) {
+				if (!Number.isInteger(currentID) || !validIDSet.has(currentID)) {
 					replaceWithServerSelection();
 				}
+				return;
+			}
+
+			const selected = selection.get();
+			if (!selected) {
 				return;
 			}
 
@@ -113,7 +120,9 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 
 			replaceWithSelectedBillettholder(selected);
 		})();
+
 	</script>
+	<script src="/static/profile-program.js" defer></script>
 	<style>
 		.profile-container {
 			display: grid;
