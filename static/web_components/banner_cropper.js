@@ -10,8 +10,8 @@
 
 /** @type {BannerCropperWindow} */
 const typedWindow = window
-const STYLE_URLS = typedWindow.conorganizer.sharedStyles.getStyleUrls();
-const UPLOAD_ERROR_MESSAGE = 'Klarte ikkje å lagre endringa. Prøv igjen. Kontakt styret dersom problemet held fram.';
+const STYLE_URLS = typedWindow.conorganizer.sharedStyles.getStyleUrls()
+const UPLOAD_ERROR_MESSAGE = 'Klarte ikkje å lagre endringa. Prøv igjen. Kontakt styret dersom problemet held fram.'
 // ---- component --------------------------------------------------------------
 class BannerCropper extends HTMLElement {
     static get observedAttributes() {
@@ -46,7 +46,7 @@ class BannerCropper extends HTMLElement {
         // Shadow DOM
         const root = this.attachShadow({ mode: "open" })
 
-        window.conorganizerSharedStyles.applyStyleUrlsToShadowRoot(root, STYLE_URLS);
+        typedWindow.conorganizer.sharedStyles.applyStyleUrlsToShadowRoot(root, STYLE_URLS)
 
         root.innerHTML = `
         <style>
