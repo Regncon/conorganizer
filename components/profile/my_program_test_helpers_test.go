@@ -152,6 +152,68 @@ func insertProfileProgramInterest(t *testing.T, db *sql.DB, eventID string, pulj
 	`, billettholderID, eventID, puljeID, interestLevel)
 }
 
+func insertProfileProgramNamedPlayer(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, billettholderID int, firstName string, lastName string, role models.EventPlayerRole) {
+	t.Helper()
+
+	mustExecProfileProgramTest(t, db, `
+		INSERT INTO billettholdere(
+			id,
+			first_name,
+			last_name,
+			ticket_type_id,
+			ticket_type,
+			order_id,
+			ticket_id
+		)
+		VALUES(?, ?, ?, ?, ?, ?, ?)
+	`, billettholderID, firstName, lastName, 1, "Festivalpass", billettholderID, billettholderID)
+	insertProfileProgramPlayer(t, db, eventID, puljeID, billettholderID, role)
+}
+
+func insertProfileProgramOwnedBillettholder(t *testing.T, db *sql.DB, billettholderID int, firstName string, lastName string) int {
+	t.Helper()
+
+	mustExecProfileProgramTest(t, db, `
+		INSERT INTO billettholdere(
+			id,
+			first_name,
+			last_name,
+			ticket_type_id,
+			ticket_type,
+			order_id,
+			ticket_id
+		)
+		VALUES(?, ?, ?, ?, ?, ?, ?)
+	`, billettholderID, firstName, lastName, 1, "Festivalpass", billettholderID, billettholderID)
+	mustExecProfileProgramTest(t, db, `
+		INSERT INTO relation_billettholdere_users(billettholder_id, user_id)
+		VALUES(?, ?)
+	`, billettholderID, 501)
+
+	return billettholderID
+}
+
+func insertProfileProgramRoom(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, roomNumber string, roomName string) {
+	t.Helper()
+
+	result, err := db.Exec(`
+		INSERT INTO rooms(room_number, name, floor, max_concurrent_games)
+		VALUES(?, ?, 1, 1)
+	`, roomNumber, roomName)
+	if err != nil {
+		t.Fatalf("failed to insert room: %v", err)
+	}
+	roomID, err := result.LastInsertId()
+	if err != nil {
+		t.Fatalf("failed to read inserted room ID: %v", err)
+	}
+	mustExecProfileProgramTest(t, db, `
+		UPDATE relation_event_puljer
+		SET room_id = ?
+		WHERE event_id = ? AND pulje_id = ?
+	`, roomID, eventID, puljeID)
+}
+
 func assertProfileProgramEventTitles(t *testing.T, expectedTitles []string, events []UserEvent) {
 	t.Helper()
 

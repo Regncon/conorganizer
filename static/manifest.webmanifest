@@ -1,0 +1,15 @@
+{
+  "name": "Regncon",
+  "short_name": "Regncon",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "/static/favicon.ico",
+      "sizes": "32x32 48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

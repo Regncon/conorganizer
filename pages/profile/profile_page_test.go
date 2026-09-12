@@ -53,3 +53,31 @@ func TestProfilePage_RendersBreadcrumbAndBillettholderSelectionMetadata(t *testi
 		t.Fatalf("profile live init mismatch\nexpected data-init to contain: %q\nactual:                        %q", expectedInitPath, actualInit)
 	}
 }
+
+func TestProfilePage_RendersNotificationSettingsOutsideLiveProgramColumn(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at Min Side vises med festivalprogrammet.",
+		When:  "Når profilsiden rendres.",
+		Then:  "Så skal varselkontrollen være stabil utenfor live-kolonnen.",
+	})
+
+	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "profile_notifications")
+	user := requestctx.UserRequestInfo{IsLoggedIn: true, Id: "profile-notification-user"}
+
+	// When
+	doc := templtest.Render(t, ProfilePage(user, nil, nil, 0, nil, db, logger, nil))
+
+	// Then
+	settings := doc.Find("[data-varsler-settings]")
+	if settings.Length() != 1 {
+		t.Fatalf("expected one notification settings component, got %d", settings.Length())
+	}
+	if settings.ParentsFiltered("#profile-main-column").Length() != 0 {
+		t.Fatal("notification settings must be outside the live profile main column")
+	}
+	mainColumnText := doc.Find("#profile-main-column").Text()
+	if strings.Index(mainColumnText, "Mitt festivalprogram") > strings.Index(mainColumnText, "Mine arrangement") {
+		t.Fatal("festivalprogram must render before my events")
+	}
+}
