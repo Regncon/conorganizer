@@ -136,11 +136,16 @@ func insertProfileProgramPublishedEvent(t *testing.T, db *sql.DB, eventID string
 
 func insertProfileProgramPlayer(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, billettholderID int, role models.EventPlayerRole) {
 	t.Helper()
+	insertProfileProgramPlayerWithSource(t, db, eventID, puljeID, billettholderID, role, models.EventPlayerSourceManual)
+}
+
+func insertProfileProgramPlayerWithSource(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, billettholderID int, role models.EventPlayerRole, source models.EventPlayerSource) {
+	t.Helper()
 
 	mustExecProfileProgramTest(t, db, `
-		INSERT INTO relation_events_players(event_id, pulje_id, billettholder_id, role)
-		VALUES(?, ?, ?, ?)
-	`, eventID, puljeID, billettholderID, role)
+		INSERT INTO relation_events_players(event_id, pulje_id, billettholder_id, role, source)
+		VALUES(?, ?, ?, ?, ?)
+	`, eventID, puljeID, billettholderID, role, source)
 }
 
 func insertProfileProgramInterest(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, billettholderID int, interestLevel models.InterestLevel) {

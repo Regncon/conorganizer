@@ -145,6 +145,7 @@ type Event struct {
 	Email               string         `json:"email"`
 	PhoneNumber         string         `json:"phone_number"`
 	MaxPlayers          int            `json:"max_players"`
+	IsOpenRegistration  bool           `json:"is_open_registration"`
 	BeginnerFriendly    bool           `json:"beginner_friendly"`
 	CanBeRunInEnglish   bool           `json:"can_be_run_in_english"`
 	Notes               string         `json:"notes"`

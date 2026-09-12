@@ -9,25 +9,25 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestMyProgram_WhenPuljeIsNotCompleted_RendersInterestsAndHidesPlayerResult(t *testing.T) {
+func TestMyProgram_WhenManualAssignmentIsInOpenPulje_RendersAssignmentAndHidesInterests(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given a player assignment and a wish in an open pulje.",
+		Given: "Given a manual player assignment and a wish in an open pulje.",
 		When:  "When Mitt festivalprogram is rendered.",
-		Then:  "Then the visible HTML shows the wish and hides the player allocation.",
+		Then:  "Then the visible HTML shows the manual assignment immediately and hides interest levels.",
 	})
 
 	// Given
-	expectedVisibleText := "Visible Wish Event"
-	hiddenVisibleText := "Hidden Player Result"
+	expectedVisibleText := "Visible Manual Assignment"
+	hiddenVisibleText := "Hidden Wish Event"
 
 	db, logger := createProfileProgramTestDB(t)
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
 	insertProfileProgram(t, db, true)
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusOpen)
-	insertProfileProgramPublishedEvent(t, db, "hidden-player-result", hiddenVisibleText)
-	insertProfileProgramPublishedEvent(t, db, "visible-wish-event", expectedVisibleText)
-	insertProfileProgramPlayer(t, db, "hidden-player-result", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
-	insertProfileProgramInterest(t, db, "visible-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
+	insertProfileProgramPublishedEvent(t, db, "visible-manual-assignment", expectedVisibleText)
+	insertProfileProgramPublishedEvent(t, db, "hidden-wish-event", hiddenVisibleText)
+	insertProfileProgramPlayer(t, db, "visible-manual-assignment", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramInterest(t, db, "hidden-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When
 	doc := templtest.Render(t, MyProgram(userInfo, billettholderID, db, logger, nil))
@@ -37,8 +37,40 @@ func TestMyProgram_WhenPuljeIsNotCompleted_RendersInterestsAndHidesPlayerResult(
 	if !strings.Contains(actualText, expectedVisibleText) {
 		t.Fatalf("expected rendered profile program to contain %q\nactual text: %s", expectedVisibleText, actualText)
 	}
-	if !strings.Contains(actualText, models.InterestLevelHigh.Label()) {
-		t.Fatalf("expected rendered profile program to contain interest level %q\nactual text: %s", models.InterestLevelHigh.Label(), actualText)
+	if strings.Contains(actualText, hiddenVisibleText) {
+		t.Fatalf("expected rendered profile program to hide interest %q\nactual text: %s", hiddenVisibleText, actualText)
+	}
+	if strings.Contains(actualText, models.InterestLevelHigh.Label()) {
+		t.Fatalf("expected rendered profile program to hide interest level %q\nactual text: %s", models.InterestLevelHigh.Label(), actualText)
+	}
+}
+
+func TestMyProgram_WhenSolverAssignmentIsInOpenPulje_RendersInterestsAndHidesResult(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a solver assignment and a wish in an open pulje.",
+		When:  "When Mitt festivalprogram is rendered.",
+		Then:  "Then the visible HTML keeps the solver result hidden and shows the interest.",
+	})
+
+	// Given
+	expectedVisibleText := "Visible Wish Event"
+	hiddenVisibleText := "Hidden Solver Result"
+	db, logger := createProfileProgramTestDB(t)
+	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgram(t, db, true)
+	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusOpen)
+	insertProfileProgramPublishedEvent(t, db, "hidden-solver-result", hiddenVisibleText)
+	insertProfileProgramPublishedEvent(t, db, "visible-wish-event", expectedVisibleText)
+	insertProfileProgramPlayerWithSource(t, db, "hidden-solver-result", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, models.EventPlayerSourceSolver)
+	insertProfileProgramInterest(t, db, "visible-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
+
+	// When
+	doc := templtest.Render(t, MyProgram(userInfo, billettholderID, db, logger, nil))
+	actualText := profileProgramVisibleText(doc)
+
+	// Then
+	if !strings.Contains(actualText, expectedVisibleText) {
+		t.Fatalf("expected rendered profile program to contain %q\nactual text: %s", expectedVisibleText, actualText)
 	}
 	if strings.Contains(actualText, hiddenVisibleText) {
 		t.Fatalf("expected rendered profile program to hide %q\nactual text: %s", hiddenVisibleText, actualText)
@@ -62,7 +94,7 @@ func TestMyProgram_WhenPuljeIsCompleted_RendersPlayerResult(t *testing.T) {
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
 	insertProfileProgramPublishedEvent(t, db, "completed-player-result", expectedVisibleText)
 	insertProfileProgramPublishedEvent(t, db, "completed-wish-event", hiddenVisibleText)
-	insertProfileProgramPlayer(t, db, "completed-player-result", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramPlayerWithSource(t, db, "completed-player-result", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, models.EventPlayerSourceSolver)
 	insertProfileProgramInterest(t, db, "completed-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When

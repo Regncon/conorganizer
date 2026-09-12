@@ -1,12 +1,134 @@
 package event
 
 import (
+	"database/sql"
+	"errors"
 	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
+
+func TestUpdateInterest_WhenOpenRegistrationEvent_StoresFallbackInterest(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt eit arrangement med open påmelding og ein billettheldar utan tildeling i pulja.",
+		When:  "Når billettheldaren vel litt interessert som reserveval.",
+		Then:  "Så skal reserveinteressa lagrast på vanleg måte.",
+	})
+
+	// Given
+	expectedInterest := models.InterestLevelLow
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelMedium)
+	mustExecEventInterestTest(t, db, `UPDATE events SET is_open_registration = 1 WHERE id = ?`, fixture.eventID)
+
+	// When
+	err := updateInterest(
+		fixture.userExternalID,
+		fixture.billettholderID,
+		fixture.eventID,
+		expectedInterest,
+		string(fixture.puljeID),
+		db,
+	)
+	actualInterest := getEventInterestTestInterest(t, db, fixture.eventID, fixture.billettholderID, fixture.puljeID)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected fallback interest to succeed: %v", err)
+	}
+	if actualInterest != expectedInterest {
+		t.Fatalf("interest level mismatch\nexpected: %s\nactual:   %s", expectedInterest, actualInterest)
+	}
+}
+
+func TestUpdateInterest_WhenParticipationRuleBlocksChange_KeepsExistingInterest(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt ein billettheldar som ikkje kan endre vanleg interesse i pulja.",
+		When:  "Når billettheldaren forsøker å endre interessa.",
+		Then:  "Så skal forsøket avvisast og eksisterande interesse beholdast.",
+	})
+
+	testCases := []struct {
+		name        string
+		expectedErr error
+		choice      models.InterestLevel
+		mutate      func(t *testing.T, fixture eventInterestUpdateFixture, db *sql.DB)
+	}{
+		{
+			name:        "high interest on open registration event",
+			expectedErr: errInterestHighForOpenRegistration,
+			choice:      models.InterestLevelHigh,
+			mutate: func(t *testing.T, fixture eventInterestUpdateFixture, db *sql.DB) {
+				mustExecEventInterestTest(t, db, `UPDATE events SET is_open_registration = 1 WHERE id = ?`, fixture.eventID)
+			},
+		},
+		{
+			name:        "underage billettholder on adults-only event",
+			expectedErr: errInterestAdultsOnly,
+			choice:      models.InterestLevelLow,
+			mutate: func(t *testing.T, fixture eventInterestUpdateFixture, db *sql.DB) {
+				mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupAdultsOnly)
+				mustExecEventInterestTest(t, db, `UPDATE events SET age_group = ? WHERE id = ?`, models.AgeGroupAdultsOnly, fixture.eventID)
+				mustExecEventInterestTest(t, db, `UPDATE billettholdere SET is_over_18 = 0 WHERE id = ?`, fixture.billettholderID)
+			},
+		},
+		{
+			name:        "player assignment in same pulje",
+			expectedErr: errInterestAssignedInPulje,
+			choice:      models.InterestLevelLow,
+			mutate: func(t *testing.T, fixture eventInterestUpdateFixture, db *sql.DB) {
+				seedEventInterestBlockingEvent(t, db, "assigned-event", "Assigned Event", fixture.puljeID)
+				mustExecEventInterestTest(t, db, `
+					INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+					VALUES (?, ?, ?, ?, ?)
+				`, "assigned-event", fixture.puljeID, fixture.billettholderID, models.EventPlayerRolePlayer, models.EventPlayerSourceManual)
+			},
+		},
+		{
+			name:        "gamemaster assignment in same pulje",
+			expectedErr: errInterestGamemasterInPulje,
+			choice:      models.InterestLevelLow,
+			mutate: func(t *testing.T, fixture eventInterestUpdateFixture, db *sql.DB) {
+				seedEventInterestBlockingEvent(t, db, "gm-event", "GM Event", fixture.puljeID)
+				mustExecEventInterestTest(t, db, `
+					INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+					VALUES (?, ?, ?, ?, ?)
+				`, "gm-event", fixture.puljeID, fixture.billettholderID, models.EventPlayerRoleGM, models.EventPlayerSourceManual)
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Given
+			expectedInterest := models.InterestLevelMedium
+			db := createEventInterestTestDB(t)
+			fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, expectedInterest)
+			testCase.mutate(t, fixture, db)
+
+			// When
+			err := updateInterest(
+				fixture.userExternalID,
+				fixture.billettholderID,
+				fixture.eventID,
+				testCase.choice,
+				string(fixture.puljeID),
+				db,
+			)
+			actualInterest := getEventInterestTestInterest(t, db, fixture.eventID, fixture.billettholderID, fixture.puljeID)
+
+			// Then
+			if !errors.Is(err, testCase.expectedErr) {
+				t.Fatalf("error mismatch\nexpected: %v\nactual:   %v", testCase.expectedErr, err)
+			}
+			if actualInterest != expectedInterest {
+				t.Fatalf("interest level mismatch\nexpected: %s\nactual:   %s", expectedInterest, actualInterest)
+			}
+		})
+	}
+}
 
 func TestUpdateInterest_WhenPuljeIsOpen_UpdatesInterest(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{

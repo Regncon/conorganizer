@@ -34,8 +34,46 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 				window.addEventListener(
 					"load",
 					function () {
-						tippy("[data-tippy-content]", {
-							animation: "scale-subtle",
+						const initializeTooltips = (root) => {
+							const elements = [];
+							if (root instanceof Element && root.matches("[data-tippy-content]")) {
+								elements.push(root);
+							}
+							if (root.querySelectorAll) {
+								elements.push(...root.querySelectorAll("[data-tippy-content]"));
+							}
+
+							for (const element of elements) {
+								const content = element.getAttribute("data-tippy-content");
+								if (element._tippy) {
+									element._tippy.setContent(content);
+									continue;
+								}
+								tippy(element, {
+									animation: "scale-subtle",
+									content,
+								});
+							}
+						};
+
+						initializeTooltips(document);
+						new MutationObserver((mutations) => {
+							for (const mutation of mutations) {
+								if (mutation.type === "attributes") {
+									initializeTooltips(mutation.target);
+									continue;
+								}
+								for (const node of mutation.addedNodes) {
+									if (node instanceof Element) {
+										initializeTooltips(node);
+									}
+								}
+							}
+						}).observe(document.body, {
+							attributes: true,
+							attributeFilter: ["data-tippy-content"],
+							childList: true,
+							subtree: true,
 						});
 					},
 					false,

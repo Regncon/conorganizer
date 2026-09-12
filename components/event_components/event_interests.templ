@@ -15,6 +15,7 @@ import (
 templ EventInterests(userInfo requestctx.UserRequestInfo,
 	eventId string,
 	puljeId string,
+	isOpenRegistration bool,
 	db *sql.DB,
 	r *http.Request,
 	logger *slog.Logger) {
@@ -119,15 +120,15 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			}
 		}
 	</style>
-		<dialog
-			class="interest-dialog"
-			data-attr:open="$_interestIsOpen ? true : false"
-			data-signals:pulje-id={ fmt.Sprintf("'%s'", puljeId) }
-			data-signals:pulje-availability={ fmt.Sprintf("'%s'", selectedPuljeState.Availability) }
-			data-signals:pulje-can-edit={ fmt.Sprintf("%t", selectedPuljeState.CanEdit) }
-			data-signals:pulje-status-message={ fmt.Sprintf("%q", selectedPuljeState.Message) }
-			data-signals:pulje-show-profile-link={ fmt.Sprintf("%t", selectedPuljeState.ShowProfileLink) }
-		>
+	<dialog
+		class="interest-dialog"
+		data-attr:open="$_interestIsOpen ? true : false"
+		data-signals:pulje-id={ fmt.Sprintf("'%s'", puljeId) }
+		data-signals:pulje-availability={ fmt.Sprintf("'%s'", selectedPuljeState.Availability) }
+		data-signals:pulje-can-edit={ fmt.Sprintf("%t", selectedPuljeState.CanEdit) }
+		data-signals:pulje-status-message={ fmt.Sprintf("%q", selectedPuljeState.Message) }
+		data-signals:pulje-show-profile-link={ fmt.Sprintf("%t", selectedPuljeState.ShowProfileLink) }
+	>
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
@@ -140,8 +141,12 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
-					<p class="label">Velg interesse</p>
-					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
+					if isOpenRegistration {
+						<p class="label">Velg interesse eller påmelding</p>
+					} else {
+						<p class="label">Velg interesse</p>
+					}
+					@ticketholder.TicketHolderInterestPicker(eventId, isOpenRegistration)
 				</div>
 			</div>
 			<div class="dialog-footer">

@@ -230,6 +230,38 @@ func TestPuljefordelingTabContent_PinEmojiForManualWithoutInterest(t *testing.T)
 	}
 }
 
+func TestPuljefordelingTabContent_ShowsRegistrationAsConfirmedSeat(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en billetthelder med en åpen påmelding i puljen.",
+		When:  "Når puljefordeling-fanen rendres.",
+		Then:  "Så skal billetthelderen vises på arrangementet som påmeldt uten en manuell fjernknapp.",
+	})
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_registration_seat")
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evOpen','Open','','','','','',100)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evOpen',?,1)`, fredag)
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES ('evOpen',?,1,?,?)`, fredag, models.EventPlayerRolePlayer, models.EventPlayerSourceRegistration)
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, fredag, nil))
+	registrationTile := doc.Find(".pulje-players li.registration")
+	if registrationTile.Length() != 1 {
+		t.Fatalf("expected one registration tile, got %d", registrationTile.Length())
+	}
+	text := strings.Join(templtest.CollectTexts(doc, ".pulje-players li.registration"), " ")
+	if !strings.Contains(text, "✅") || !strings.Contains(text, "Kari Nordmann") {
+		t.Fatalf("registration tile should identify the confirmed attendee\nactual text: %s", text)
+	}
+	if registrationTile.Find(".pulje-remove-player").Length() != 0 {
+		t.Fatal("self-registration must not expose the manual-seat removal action")
+	}
+}
+
 func TestPuljeStatusToggles_ReflectLockedAndCompletedState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en pulje som er publisert (Completed).",

@@ -35,7 +35,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	if err != nil {
 		{{ logger.Error(err.Error(), "user_id", userInfo.Id) }}
 		<div class="ticket-holder-error">
-			<p>Feil ved henting av billettholdere: { err.Error() }</p>
+			<p>Kunne ikke hente deltakerne: { err.Error() }</p>
 		</div>
 		return
 	}
@@ -48,11 +48,11 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	>
 		if err != nil {
 			<div class="ticket-holder-error">
-				<p>Feil ved henting av billettholdere: { err.Error() }</p>
+				<p>Kunne ikke hente deltakerne: { err.Error() }</p>
 			</div>
 		}
 		if billettholderOptions.CanSwitchBillettholder() && len(billettholderOptions.Associated) < 4 {
-			<p class="label">Velg billettholder</p>
+			<p class="label">Hvem gjelder dette for?</p>
 			<div class="ticket-holder-picker-buttons">
 				for _, billettHolder := range billettholderOptions.Associated {
 					@TicketHolderButton(billettHolder)
@@ -60,7 +60,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			</div>
 		}
 		if len(billettholderOptions.Associated) > 3 {
-			<p class="label">Velg billettholder</p>
+			<p class="label">Hvem gjelder dette for?</p>
 			<div class="ticket-holder-picker-dropdown">
 				@TicketHolderDropDown(eventId, userInfo, billettholderOptions.Associated)
 			</div>

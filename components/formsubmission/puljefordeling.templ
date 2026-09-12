@@ -1,6 +1,7 @@
 package formsubmission
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -10,12 +11,53 @@ import (
 
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/puljer"
 	"github.com/Regncon/conorganizer/service/rooms"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
+
+func UpdateOpenRegistration(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
+	eventRouter.With(authctx.RequireAdmin(logger)).Put("/", func(w http.ResponseWriter, r *http.Request) {
+		logger := logger.With("component", "event_form")
+		type Store struct {
+			IsOpenRegistration bool `json:"isOpenRegistration"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+			return
+		}
+
+		if err := setEventOpenRegistration(r.Context(), db, logger, eventID, store.IsOpenRegistration); err != nil {
+			logger.Error(err.Error(), "event_id", eventID, "request_id", middleware.GetReqID(r.Context()))
+			http.Error(w, "Klarte ikkje å oppdatere open påmelding for arrangementet", http.StatusInternalServerError)
+			return
+		}
+
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			logger.Error(fmt.Errorf("broadcast open-registration update: %w", err).Error(), "event_id", eventID, "request_id", middleware.GetReqID(r.Context()))
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	})
+}
+
+func setEventOpenRegistration(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, isOpenRegistration bool) error {
+	return updateEventFieldWithAudit(ctx, db, logger, eventID, "is_open_registration = ?", isOpenRegistration)
+}
 
 func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
@@ -361,10 +403,37 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 	</div>
 }
 
-templ puljefordeling(eventId string, db *sql.DB) {
+templ puljefordeling(eventId string, isOpenRegistration bool, db *sql.DB) {
 	<article class="form-card">
 		<h4 class="form-card-title">Puljefordeling</h4>
 		<section class="puljefordeling-section">
+			<div class="feedback-control-group">
+				<label
+					class="checkbox-background form-group-checkbox"
+					data-signals={ dataSignals(map[string]bool{"isOpenRegistration": isOpenRegistration}) }
+				>
+					<input
+						if isOpenRegistration {
+							checked
+						}
+						name="open-registration"
+						class="checkbox input"
+						data-testid="open-registration"
+						data-bind="isOpenRegistration"
+						data-indicator="toastOpenRegistration"
+						{ errorfeedback.Attrs("openRegistration")... }
+						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/open-registration')", eventId) }
+						type="checkbox"
+					/>
+					<span>
+						<strong>Open påmelding</strong>
+						<br/>
+						Byter ut «Veldig interessert» med «Meld deg på». Påmelde får plass med ein gong,
+						og arrangementet har inga øvre spelargrense i puljefordelinga.
+					</span>
+				</label>
+				@errorfeedback.RenderMessage("openRegistration")
+			</div>
 			{{ puljer, err := puljerService.GetAllPuljer(db) }}
 			if err != nil {
 				<p>Klarte ikkje å hente puljer: { err.Error() }</p>

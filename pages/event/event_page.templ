@@ -113,7 +113,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 	}
 	@Event_mobile(event, previousNextData, puljerForEvent, puljeId, programPublished, hasTickets, showInterestControls, eventImageDir)
 	if showInterestControls {
-		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, db, r, logger)
+		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, event.IsOpenRegistration, db, r, logger)
 	}
 }
 

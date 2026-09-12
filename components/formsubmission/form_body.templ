@@ -495,7 +495,7 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
 		</style>
 	@statusCard(event, isAdmin)
 	if isAdmin {
-		@puljefordeling(event.ID, db)
+		@puljefordeling(event.ID, event.IsOpenRegistration, db)
 	}
 	@contactInfo(
 		event.ID,

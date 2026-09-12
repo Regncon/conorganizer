@@ -222,7 +222,7 @@ func seedManualSeat(t *testing.T, db *sql.DB, eventID string, pulje models.Pulje
 	_, err := db.Exec(
 		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
 		 VALUES (?, ?, ?, ?, ?)`,
-		eventID, string(pulje), bhID, string(models.EventPlayerRolePlayer), SourceManual,
+		eventID, string(pulje), bhID, string(models.EventPlayerRolePlayer), models.EventPlayerSourceManual,
 	)
 	if err != nil {
 		t.Fatalf("seed manual seat bh=%d ev=%s: %v", bhID, eventID, err)

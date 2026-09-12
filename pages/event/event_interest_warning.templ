@@ -1,0 +1,36 @@
+package event
+
+import "fmt"
+
+templ selectedInterestWarning(state selectedInterestState, puljeID string) {
+	<div id="interest-participation-warning">
+		if state.IsUnderageForEvent {
+			<section class="interest-participation-warning" role="status">
+				<p>Du kan ikke melde interesse eller melde deg på dette arrangementet fordi det har 18-årsgrense.</p>
+			</section>
+		}
+		if len(state.GamemasterAssignments) > 0 {
+			<section class="interest-participation-warning" role="status">
+				<p>Du er spilleder i denne puljen og kan derfor ikke endre påmeldinger eller interesser.</p>
+				<ul>
+					for _, assignment := range state.GamemasterAssignments {
+						<li>
+							<a href={ templ.URL(fmt.Sprintf("/event/%s?pulje=%s", assignment.EventID, puljeID)) }>{ assignment.Title }</a>
+						</li>
+					}
+				</ul>
+			</section>
+		} else if len(state.PlayerAssignments) > 0 {
+			<section class="interest-participation-warning" role="status">
+				<p>Du er allerede påmeldt eller tildelt et arrangement i puljen og blir ikke vurdert for andre arrangement gjennom den ordinære fordelingen. Du kan ikke endre vanlige interesser før du melder deg av arrangementet.</p>
+				<ul>
+					for _, assignment := range state.PlayerAssignments {
+						<li>
+							<a href={ templ.URL(fmt.Sprintf("/event/%s?pulje=%s", assignment.EventID, puljeID)) }>{ assignment.Title }</a>
+						</li>
+					}
+				</ul>
+			</section>
+		}
+	</div>
+}

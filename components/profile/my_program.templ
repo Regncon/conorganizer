@@ -226,6 +226,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 					AND assigned_event_pulje.is_published = 1
 					AND (
 						assigned.role = ?
+						OR assigned.source IN (?, ?)
 						OR assigned_pulje.status = ?
 					)
 			)
@@ -253,6 +254,8 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 		models.EventStatusAnnounced,
 		models.EventStatusAnnounced,
 		models.EventPlayerRoleGM,
+		models.EventPlayerSourceManual,
+		models.EventPlayerSourceRegistration,
 		models.PuljeStatusCompleted,
 		models.InterestLevelHigh,
 		models.InterestLevelMedium,
@@ -319,6 +322,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 			AND event_pulje.is_published = 1
 			AND (
 				ep.role = ?
+				OR ep.source IN (?, ?)
 				OR p.status = ?
 			)
 		GROUP BY
@@ -339,6 +343,8 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 		userInfo.Id,
 		models.EventStatusAnnounced,
 		models.EventPlayerRoleGM,
+		models.EventPlayerSourceManual,
+		models.EventPlayerSourceRegistration,
 		models.PuljeStatusCompleted,
 	)
 	if queryErr != nil {
