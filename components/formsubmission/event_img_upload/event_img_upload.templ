@@ -530,17 +530,19 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						</div>
 						<span data-text="$_uploadProgress === 100 ? 'Lastar bilete. Ver venleg og vent...' : ''"></span>
 					</div>
-					<p class="feedback-error" data-show="$_uploadError" data-text="$_uploadError"></p>
+					<p class="feedback-error" style="display: none;" data-show="$_uploadError" data-text="$_uploadError"></p>
 				</form>
 			</div>
 			<div
 				class="surface-pane image-upload-content"
+				style="display: none;"
 				data-show="$_cropperImageError"
 			>
-				<p class="feedback-error" data-text="$_cropperImageError"></p>
+				<p class="feedback-error" style="display: none;" data-text="$_cropperImageError"></p>
 			</div>
 			<div
 				class="surface-pane banner-cropper cropper-placeholder--banner"
+				style="display: none;"
 				data-show="$_cropperImageLoading"
 			>
 				<div
@@ -553,6 +555,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			</div>
 			<div
 				class="surface-pane banner-cropper cropper-placeholder--card"
+				style="display: none;"
 				data-show="$_cropperImageLoading"
 			>
 				<div
@@ -572,7 +575,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 // The component owns canvas operations; Datastar owns requests and feedback.
 templ imageCropper(eventID, kind, label, width, height, previewWidth, previewHeight, stateName, indicator string) {
 	{{ state := "$" + stateName }}
-	<div class="surface-pane banner-cropper" data-show="$_cropperImageReady">
+	<div class="surface-pane banner-cropper" style="display: none;" data-show="$_cropperImageReady">
 		<banner-cropper
 			width={ width }
 			height={ height }
