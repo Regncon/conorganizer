@@ -495,10 +495,6 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					data-on:dragleave="if (!el.contains(evt.relatedTarget)) $_add_drag_over = false"
 					data-on:drop__prevent="$_add_drag_over = false; if (!$_imageBusy && evt.dataTransfer.files.length) { el.elements.namedItem('image').files = evt.dataTransfer.files; el.requestSubmit() }"
 				>
-					<p
-						data-show="$_cropperImageLoading"
-						style="display: none;"
-					>Lastar bilete. Ver venleg og vent...</p>
 					<input
 						data-on:change="if (el.files.length) el.form.requestSubmit()"
 						data-attr:disabled="$_imageBusy"
@@ -517,8 +513,10 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					>
 						@icons.Icon(icons.FileUpload, icons.Size20)
 					</div>
-					<p data-show="$_has_current_image" style="display: none;">Klikk eller dra og slipp for å bytte   bilete</p>
-					<p data-show="!$_has_current_image && !$_uploading && !$_cropperImageLoading" data-text="$_add_drag_over ? 'Slipp bildet her' : 'Klikk her eller dra et bilde inn for å laste det opp.'" style="display: none;">
+					<p
+						data-show="$_cropperImageLoading"
+						style="display: none;"
+					>Lastar bilete. Ver venleg og vent...</p>
 						Klikk her eller dra et bilde inn for å laste det opp.
 					</p>
 					<p data-show="!$_has_current_image && !$_uploading && !$_cropperImageLoading" style="display: none;">
