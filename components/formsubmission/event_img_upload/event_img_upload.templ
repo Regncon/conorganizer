@@ -242,7 +242,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		<p>Fann ikkje arrangementet</p>
 		return
 	}
-	<script src="/static/web_components/banner_cropper.js"></script>
+	<script type="module" src="/static/web_components/banner_cropper.js"></script>
 	@toast.Render("Lagra", icons.ProgressComplete)
 	<script type="module" src="/static/js/custom-actions/upload-with-progress.js"></script>
 	<style>

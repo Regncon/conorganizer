@@ -1,5 +1,7 @@
 // @ts-check
 
+import { canvasToWebp } from "../js/image-to-webp.js"
+
 /**
  * Source of truth: [SharedStyles](../js/conorganizer.js#L16) and
  * [ConorganizerGlobal / ConorganizerWindow](../js/conorganizer.js#L42).
@@ -376,19 +378,17 @@ class BannerCropper extends HTMLElement {
                 return
             }
 
-            const blob = await this._canvasToWebpBlob(0.9)
+            const blob = await canvasToWebp(this.canvas)
             if (!isCurrentExport()) return
-            if (!blob || blob.type !== "image/webp") {
-                this._emit("crop-error", { message: "Nettleseren kunne ikke lage et WebP-bilde." })
-                return
-            }
 
             const transfer = new DataTransfer()
             transfer.items.add(new File([blob], "crop.webp", { type: blob.type }))
             this._emit("crop-ready", { files: transfer.files })
-        } catch {
+        } catch (error) {
             if (isCurrentExport()) {
-                this._emit("crop-error", { message: "Klarte ikke å klargjøre bildet for lagring. Prøv igjen." })
+                this._emit("crop-error", {
+                    message: error instanceof Error ? error.message : "Klarte ikke å klargjøre bildet for lagring. Prøv igjen.",
+                })
             }
         } finally {
             if (version === this.exportVersion) this.exporting = false
@@ -482,16 +482,6 @@ class BannerCropper extends HTMLElement {
         this.drawY = 0
         this.zoom.disabled = true
         this.redraw()
-    }
-
-    /**
-     * @param {number} quality
-     * @returns {Promise<Blob | null>} Canvas encoding can fail and return null.
-     */
-    _canvasToWebpBlob(quality) {
-        return new Promise((resolve) => {
-            this.canvas.toBlob(resolve, "image/webp", quality)
-        })
     }
 
     /**

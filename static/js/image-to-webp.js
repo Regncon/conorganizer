@@ -1,8 +1,25 @@
 // @ts-check
 
 /**
- * Encode the full source image using the same browser API and quality as
- * banner_cropper.js. Cropping happens later, after the source has been saved.
+ * Shared WebP encoder for source uploads and cropped images.
+ * Keeps encoding quality and output validation in one place.
+ *
+ * @param {HTMLCanvasElement} canvas
+ * @returns {Promise<Blob>} Rejects if the browser cannot produce WebP.
+ */
+export async function canvasToWebp(canvas) {
+    /** @type {Blob | null} */
+    const webpBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.9))
+    // Browsers may return null or fall back to PNG if WebP encoding fails.
+    if (!webpBlob || webpBlob.type !== "image/webp") {
+        throw new Error("Nettleseren kunne ikke lage et WebP-bilde.")
+    }
+    return webpBlob
+}
+
+/**
+ * Load the full source image onto a canvas and encode it as a WebP file.
+ * The cropper uses canvasToWebp directly because it already has a canvas.
  *
  * @param {File} sourceFile
  * @returns {Promise<File>}
@@ -21,13 +38,7 @@ export async function imageToWebp(sourceFile) {
         if (!context) throw new Error("Nettleseren kunne ikke klargjøre bildet.")
         context.drawImage(sourceImage, 0, 0)
 
-        /** @type {Blob | null} */
-        const webpBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.9))
-        // Browsers may return null or fall back to PNG if WebP encoding fails.
-        if (!webpBlob || webpBlob.type !== "image/webp") {
-            throw new Error("Nettleseren kunne ikke lage et WebP-bilde.")
-        }
-
+        const webpBlob = await canvasToWebp(canvas)
         const filename = sourceFile.name.replace(/\.[^.]*$/, "") + ".webp"
         return new File([webpBlob], filename, { type: webpBlob.type })
     } finally {
