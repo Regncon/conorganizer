@@ -437,9 +437,8 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
             "_uploading": false,
             "_uploadProgress": 0,
             "_uploadError": "",
-            "_bannerCrop": map[string]any{"ready": false, "loading": false, "loadError": "", "exporting": false, "saveError": "", "saved": false},
-            "_cardCrop": map[string]any{"ready": false, "loading": false, "loadError": "", "exporting": false, "saveError": "", "saved": false},
-            "_has_current_image": imageUrl != "",
+            "_bannerCrop": map[string]any{"ready": false, "loading": imageUrl != "", "loadError": "", "exporting": false, "saveError": "", "saved": false},
+            "_cardCrop": map[string]any{"ready": false, "loading": imageUrl != "", "loadError": "", "exporting": false, "saveError": "", "saved": false},
             "toastBannerImage": false,
             "toastCardImage": false,
         }) }
