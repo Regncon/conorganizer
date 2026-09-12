@@ -35,12 +35,19 @@ type SessionValidator interface {
 	RefreshSessionWithToken(ctx context.Context, refreshToken string) (bool, *descope.Token, error)
 }
 
-func NewSessionValidator() (SessionValidator, error) {
-	descopeClient, err := client.NewWithConfig(&client.Config{ProjectID: DescopeProjectID})
+func NewSessionValidator(logger *slog.Logger) (SessionValidator, error) {
+	return newSessionValidator(&client.Config{ProjectID: DescopeProjectID}, logger)
+}
+
+func newSessionValidator(config *client.Config, logger *slog.Logger) (SessionValidator, error) {
+	descopeClient, err := client.NewWithConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Descope client for project %q: %w", DescopeProjectID, err)
+		return nil, fmt.Errorf("failed to create Descope client for project %q: %w", config.ProjectID, err)
 	}
-	return descopeClient.Auth, nil
+	return &loggingSessionValidator{
+		validator: descopeClient.Auth,
+		logger:    logger.With("component", "auth"),
+	}, nil
 }
 
 func SetAuthCookies(w http.ResponseWriter, r *http.Request, sessionToken, refreshToken string) {
@@ -103,19 +110,11 @@ func requestIsSecure(r *http.Request) bool {
 	return strings.Contains(strings.ToLower(r.Header.Get("Forwarded")), "proto=https")
 }
 
-func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
+func AuthMiddleware(sessionValidator SessionValidator, logger *slog.Logger) func(http.Handler) http.Handler {
 	logger = logger.With("component", "auth")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requestID := middleware.GetReqID(r.Context())
-			sessionValidator, descopeClientError := NewSessionValidator()
-			if descopeClientError != nil {
-				logger.Error(descopeClientError.Error(), "request_id", requestID)
-				ctx := context.WithValue(r.Context(), ctxSessionError, descopeClientError)
-				next.ServeHTTP(w, r.WithContext(ctx))
-				return
-			}
-
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, ctxSessionError, nil)
 			ctx = context.WithValue(ctx, ctxUserToken, nil)

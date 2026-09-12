@@ -33,7 +33,10 @@ func TestLogout_ClearsSessionAndRefreshCookies(t *testing.T) {
 	expectedCookiePath := "/"
 
 	router := chi.NewRouter()
-	if err := SetupAuthRoute(router, db, discardLogger()); err != nil {
+	logger := discardLogger()
+	validator := &fakeSessionValidator{}
+	authenticatedRouter := router.With(authctx.AuthMiddleware(validator, logger))
+	if err := SetupAuthRoute(router, authenticatedRouter, db, logger, validator); err != nil {
 		t.Fatalf("setup auth route: %v", err)
 	}
 	request := httptest.NewRequest(http.MethodGet, "/auth/logout", nil)
@@ -65,6 +68,9 @@ func TestLogout_ClearsSessionAndRefreshCookies(t *testing.T) {
 		if cookie.SameSite != http.SameSiteLaxMode {
 			t.Fatalf("%s SameSite mismatch\nexpected: %v\nactual:   %v", cookieName, http.SameSiteLaxMode, cookie.SameSite)
 		}
+	}
+	if validator.sessionCalls != 0 || validator.refreshCalls != 0 {
+		t.Fatalf("logout called Descope: validation=%d refresh=%d", validator.sessionCalls, validator.refreshCalls)
 	}
 }
 

@@ -10,6 +10,18 @@ When a mutation changes content, the server broadcasts to the affected bucket by
 
 The live update KV data is runtime-only state. NATS does not need to persist these connection keys across process restarts. After a restart, clients reconnect through Datastar, the server recreates the KV key from the existing Gorilla session cookie when possible, and the SSE endpoint sends a full content patch again.
 
+## Authentication before streaming
+
+Application startup creates one Descope session validator shared by page requests, mutations, live endpoints, login session establishment, and the not-found handler. The SDK retrieves signing keys automatically when needed and retains its key cache and HTTP connection pools for the application lifetime. Requests without authentication cookies do not call session validation or refresh.
+
+`POST /auth/session` and `GET /auth/logout` are recovery routes registered outside the authentication middleware. Session establishment validates only the tokens submitted in the request body, so stale cookies cannot trigger an upstream refresh before a new login completes. Logout clears local authentication cookies without contacting Descope. The remaining authentication routes use the application middleware's authentication result rather than running that middleware again.
+
+Authentication finishes before a live handler opens its SSE response, so a refreshed session cookie is sent before the stream headers are flushed. No authentication deadline is attached to the downstream request context.
+
+Authentication timing logs use `component=auth`, `operation=session_validation` or `operation=session_refresh`, `duration_ms`, `succeeded`, and `request_id`. Normal timings are debug-level; operations taking at least one second produce a warning, including slow operations that eventually succeed. Timing logs do not include tokens or cookies. `session_validation` includes signing-key retrieval on a cache miss; it is not necessarily local-only work.
+
+Client reuse mitigates repeated key retrieval but does not remove the upstream dependency for refresh or an uncached signing key. Descope Go SDK v1.30.0 uses a background context for key retrieval, so a caller context timeout alone would not bound the complete authentication operation. This change preserves existing authentication failure responses and Datastar retry behavior.
+
 ## Decisions
 
 - Keep the existing Gorilla session cookie named `connections`.

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/descope/go-sdk/descope"
 	"github.com/go-chi/chi/v5"
 )
@@ -28,8 +29,7 @@ func TestSessionRoute_ValidTokensStoresAuthCookies(t *testing.T) {
 		sessionOK:    true,
 		sessionToken: &descope.Token{JWT: expectedSessionJWT},
 	}
-	restoreSessionValidator(t, validator, nil)
-	router := authTestRouter(t)
+	router := authTestRouter(t, validator)
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/auth/session",
@@ -59,6 +59,43 @@ func TestSessionRoute_ValidTokensStoresAuthCookies(t *testing.T) {
 	assertAuthCookie(t, recorder.Result(), authctx.RefreshCookieName, expectedRefreshJWT, true)
 }
 
+func TestSessionRoute_StaleCookiesDoNotValidateBeforeSubmittedTokens(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A login request submits valid tokens while stale authentication cookies remain in the browser.",
+		When:  "The application establishes the new session.",
+		Then:  "Only the submitted session is validated, without attempting to refresh the stale cookies first.",
+	})
+
+	// Given
+	validator := &fakeSessionValidator{
+		sessionOK:    true,
+		sessionToken: &descope.Token{JWT: "validated-session-jwt"},
+	}
+	router := authTestRouter(t, validator)
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/auth/session",
+		strings.NewReader(`{"sessionJwt":"submitted-session-jwt","refreshJwt":"submitted-refresh-jwt"}`),
+	)
+	request.AddCookie(&http.Cookie{Name: authctx.SessionCookieName, Value: "stale-session-jwt"})
+	request.AddCookie(&http.Cookie{Name: authctx.RefreshCookieName, Value: "stale-refresh-jwt"})
+	recorder := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(recorder, request)
+
+	// Then
+	if recorder.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, recorder.Code)
+	}
+	if validator.sessionCalls != 1 || validator.refreshCalls != 0 {
+		t.Fatalf("expected only the submitted session validation, got validation=%d refresh=%d", validator.sessionCalls, validator.refreshCalls)
+	}
+	if validator.validatedSessionToken != "submitted-session-jwt" {
+		t.Fatalf("expected submitted session token to be validated, got %q", validator.validatedSessionToken)
+	}
+}
+
 func TestSessionRoute_MissingTokensReturnsBadRequest(t *testing.T) {
 	// Given missing login tokens,
 	// when the login page tries to establish an application session,
@@ -67,8 +104,7 @@ func TestSessionRoute_MissingTokensReturnsBadRequest(t *testing.T) {
 	// Given
 	expectedStatusCode := http.StatusBadRequest
 	validator := &fakeSessionValidator{}
-	restoreSessionValidator(t, validator, nil)
-	router := authTestRouter(t)
+	router := authTestRouter(t, validator)
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/auth/session",
@@ -110,8 +146,7 @@ func TestSessionRoute_ExpiredSessionRefreshesBeforeStoringAuthCookies(t *testing
 			JWT: expectedSessionJWT,
 		},
 	}
-	restoreSessionValidator(t, validator, nil)
-	router := authTestRouter(t)
+	router := authTestRouter(t, validator)
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/auth/session",
@@ -150,8 +185,7 @@ func TestSessionRoute_InvalidTokensReturnsUnauthorized(t *testing.T) {
 		refreshOK:  false,
 		refreshErr: errors.New("invalid refresh token"),
 	}
-	restoreSessionValidator(t, validator, nil)
-	router := authTestRouter(t)
+	router := authTestRouter(t, validator)
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/auth/session",
@@ -174,6 +208,95 @@ func TestSessionRoute_InvalidTokensReturnsUnauthorized(t *testing.T) {
 		t.Fatalf("expected refresh validator to be called once, got %d", validator.refreshCalls)
 	}
 	assertNoAuthCookies(t, recorder.Result())
+}
+
+func TestPostLogin_ExpiredSessionIsRefreshedOnlyOnce(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "The post-login request has an expired session and a valid refresh token.",
+		When:  "It passes through application authentication and the login route.",
+		Then:  "Authentication runs once and the refreshed session is preserved through the redirect.",
+	})
+
+	// Given
+	expectedSessionJWT := "new-session"
+	validator := &fakeSessionValidator{
+		sessionErr: errors.New("expired session"),
+		refreshOK:  true,
+		refreshToken: &descope.Token{
+			ID:  "user-123",
+			JWT: expectedSessionJWT,
+		},
+	}
+	router := authTestRouter(t, validator)
+	request := httptest.NewRequest(http.MethodGet, "/auth/post-login", nil)
+	request.AddCookie(&http.Cookie{Name: authctx.SessionCookieName, Value: "expired-session"})
+	request.AddCookie(&http.Cookie{Name: authctx.RefreshCookieName, Value: "refresh-token"})
+	recorder := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(recorder, request)
+
+	// Then
+	if recorder.Code != http.StatusSeeOther || recorder.Header().Get("Location") != "/" {
+		t.Fatalf("expected redirect to home, got status=%d location=%q", recorder.Code, recorder.Header().Get("Location"))
+	}
+	if validator.sessionCalls != 1 || validator.refreshCalls != 1 {
+		t.Fatalf("expected one validation and one refresh, got validation=%d refresh=%d", validator.sessionCalls, validator.refreshCalls)
+	}
+	assertAuthCookie(t, recorder.Result(), authctx.SessionCookieName, expectedSessionJWT, false)
+	if len(recorder.Result().Cookies()) != 1 {
+		t.Fatal("expected only one refreshed session cookie")
+	}
+}
+
+func TestPostLogin_AnonymousRequestStillRedirectsToLogin(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A post-login request has no authentication cookies.",
+		When:  "It reaches the login route.",
+		Then:  "It redirects to login without calling Descope.",
+	})
+
+	// Given
+	expectedLocation := "/auth"
+	validator := &fakeSessionValidator{}
+	router := authTestRouter(t, validator)
+	recorder := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/auth/post-login", nil))
+
+	// Then
+	if recorder.Code != http.StatusSeeOther || recorder.Header().Get("Location") != expectedLocation {
+		t.Fatalf("expected login redirect, got status=%d location=%q", recorder.Code, recorder.Header().Get("Location"))
+	}
+	if validator.sessionCalls != 0 || validator.refreshCalls != 0 {
+		t.Fatalf("anonymous request called Descope: validation=%d refresh=%d", validator.sessionCalls, validator.refreshCalls)
+	}
+}
+
+func TestAuthTest_AnonymousRequestStillReturnsUnauthorized(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "The auth test endpoint receives no authentication cookies.",
+		When:  "Application authentication passes the anonymous request to the endpoint.",
+		Then:  "The endpoint still returns unauthorized after redundant middleware is removed.",
+	})
+
+	// Given
+	expectedStatus := http.StatusUnauthorized
+	validator := &fakeSessionValidator{}
+	router := authTestRouter(t, validator)
+	recorder := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/auth/test", nil))
+
+	// Then
+	if recorder.Code != expectedStatus {
+		t.Fatalf("expected status %d, got %d", expectedStatus, recorder.Code)
+	}
+	if validator.sessionCalls != 0 || validator.refreshCalls != 0 {
+		t.Fatalf("anonymous request called Descope: validation=%d refresh=%d", validator.sessionCalls, validator.refreshCalls)
+	}
 }
 
 type fakeSessionValidator struct {
@@ -201,22 +324,12 @@ func (f *fakeSessionValidator) RefreshSessionWithToken(_ context.Context, refres
 	return f.refreshOK, f.refreshToken, f.refreshErr
 }
 
-func restoreSessionValidator(t *testing.T, validator authctx.SessionValidator, err error) {
-	t.Helper()
-	previous := newSessionValidator
-	newSessionValidator = func() (authctx.SessionValidator, error) {
-		return validator, err
-	}
-	t.Cleanup(func() {
-		newSessionValidator = previous
-	})
-}
-
-func authTestRouter(t *testing.T) chi.Router {
+func authTestRouter(t *testing.T, validator authctx.SessionValidator) chi.Router {
 	t.Helper()
 	router := chi.NewRouter()
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := SetupAuthRoute(router, nil, logger); err != nil {
+	authenticatedRouter := router.With(authctx.AuthMiddleware(validator, logger))
+	if err := SetupAuthRoute(router, authenticatedRouter, nil, logger, validator); err != nil {
 		t.Fatalf("expected auth route setup to succeed: %v", err)
 	}
 	return router

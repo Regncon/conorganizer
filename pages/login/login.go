@@ -17,19 +17,89 @@ import (
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
-
-var newSessionValidator = authctx.NewSessionValidator
 
 type sessionRequest struct {
 	SessionJWT string `json:"sessionJwt"`
 	RefreshJWT string `json:"refreshJwt"`
 }
 
-func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
-	baseLogger := logger
+func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, logger *slog.Logger, sessionValidator authctx.SessionValidator) error {
 	logger = logger.With("component", "auth")
-	router.Route("/auth", func(authRouter chi.Router) {
+	publicRouter.Post("/auth/session", func(w http.ResponseWriter, r *http.Request) {
+		request := sessionRequest{}
+		decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&request); err != nil {
+			http.Error(w, "invalid session request", http.StatusBadRequest)
+			return
+		}
+		if err := decoder.Decode(&struct{}{}); err != io.EOF {
+			http.Error(w, "invalid session request", http.StatusBadRequest)
+			return
+		}
+		request.SessionJWT = normalizeToken(request.SessionJWT)
+		request.RefreshJWT = normalizeToken(request.RefreshJWT)
+		if request.SessionJWT == "" || request.RefreshJWT == "" {
+			http.Error(w, "missing session tokens", http.StatusBadRequest)
+			return
+		}
+
+		userOK, userToken, sessionErr := sessionValidator.ValidateSessionWithToken(
+			r.Context(),
+			request.SessionJWT,
+		)
+		if sessionErr == nil && (!userOK || userToken == nil) {
+			sessionErr = fmt.Errorf("session token rejected")
+		}
+		if sessionErr != nil || !userOK || userToken == nil {
+			refreshedOK, refreshedToken, refreshErr := sessionValidator.RefreshSessionWithToken(
+				r.Context(),
+				request.RefreshJWT,
+			)
+			if refreshErr == nil && (!refreshedOK || refreshedToken == nil) {
+				refreshErr = fmt.Errorf("refresh token rejected")
+			}
+			if refreshErr != nil || !refreshedOK || refreshedToken == nil {
+				logger.Warn("failed to validate login session",
+					"session_error", sessionErr,
+					"refresh_error", refreshErr,
+					"request_id", middleware.GetReqID(r.Context()),
+				)
+				http.Error(w, "invalid session", http.StatusUnauthorized)
+				return
+			}
+
+			userToken = refreshedToken
+		}
+
+		sessionJWT := request.SessionJWT
+		if userToken.JWT != "" {
+			sessionJWT = userToken.JWT
+		}
+
+		authctx.SetAuthCookies(w, r, sessionJWT, request.RefreshJWT)
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	publicRouter.Get("/auth/logout", func(w http.ResponseWriter, r *http.Request) {
+		authctx.ClearAuthCookies(w, r)
+		requestctx.ClearBillettholderSelectionCookie(w)
+
+		redirectUrl := "/"
+		var ctx = r.Context()
+		if err := layouts.Base("Logging you out",
+			requestctx.UserRequestInfo{},
+			db,
+			logger,
+			redirect.Redirect(redirectUrl),
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render logout page: %w", err).Error())
+		}
+	})
+
+	authenticatedRouter.Route("/auth", func(authRouter chi.Router) {
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
 			userToken, _ := authctx.GetUserTokenFromContext(r.Context())
@@ -59,72 +129,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 
 		})
 
-		authRouter.Post("/session", func(w http.ResponseWriter, r *http.Request) {
-			request := sessionRequest{}
-			decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
-			decoder.DisallowUnknownFields()
-			if err := decoder.Decode(&request); err != nil {
-				http.Error(w, "invalid session request", http.StatusBadRequest)
-				return
-			}
-			if err := decoder.Decode(&struct{}{}); err != io.EOF {
-				http.Error(w, "invalid session request", http.StatusBadRequest)
-				return
-			}
-			request.SessionJWT = normalizeToken(request.SessionJWT)
-			request.RefreshJWT = normalizeToken(request.RefreshJWT)
-			if request.SessionJWT == "" || request.RefreshJWT == "" {
-				http.Error(w, "missing session tokens", http.StatusBadRequest)
-				return
-			}
-
-			sessionValidator, err := newSessionValidator()
-			if err != nil {
-				logger.Error(fmt.Errorf("failed to create auth session validator: %w", err).Error())
-				http.Error(w, "authentication unavailable", http.StatusInternalServerError)
-				return
-			}
-
-			userOK, userToken, sessionErr := sessionValidator.ValidateSessionWithToken(
-				r.Context(),
-				request.SessionJWT,
-			)
-			if sessionErr == nil && (!userOK || userToken == nil) {
-				sessionErr = fmt.Errorf("session token rejected")
-			}
-			if sessionErr != nil || !userOK || userToken == nil {
-				refreshedOK, refreshedToken, refreshErr := sessionValidator.RefreshSessionWithToken(
-					r.Context(),
-					request.RefreshJWT,
-				)
-				if refreshErr == nil && (!refreshedOK || refreshedToken == nil) {
-					refreshErr = fmt.Errorf("refresh token rejected")
-				}
-				if refreshErr != nil || !refreshedOK || refreshedToken == nil {
-					if sessionErr != nil || refreshErr != nil {
-						logger.Warn("failed to validate login session", "session_error", sessionErr, "refresh_error", refreshErr)
-					} else {
-						logger.Warn("login session was rejected")
-					}
-					http.Error(w, "invalid session", http.StatusUnauthorized)
-					return
-				}
-
-				userToken = refreshedToken
-			}
-
-			sessionJWT := request.SessionJWT
-			if userToken.JWT != "" {
-				sessionJWT = userToken.JWT
-			}
-
-			authctx.SetAuthCookies(w, r, sessionJWT, request.RefreshJWT)
-			w.WriteHeader(http.StatusNoContent)
-		})
-
 		authRouter.Group(func(protectedRoute chi.Router) {
-			protectedRoute.Use(authctx.AuthMiddleware(baseLogger))
-
 			protectedRoute.Get("/test", func(w http.ResponseWriter, r *http.Request) {
 				userToken, userTokenErr := authctx.GetUserTokenFromContext(r.Context())
 				if userTokenErr != nil {
@@ -175,22 +180,6 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 			})
 
-		})
-
-		authRouter.Get("/logout", func(w http.ResponseWriter, r *http.Request) {
-			authctx.ClearAuthCookies(w, r)
-			requestctx.ClearBillettholderSelectionCookie(w)
-
-			redirectUrl := "/"
-			var ctx = r.Context()
-			if err := layouts.Base("Logging you out",
-				requestctx.UserRequestInfo{},
-				db,
-				logger,
-				redirect.Redirect(redirectUrl),
-			).Render(ctx, w); err != nil {
-				logger.Error(fmt.Errorf("failed to render logout page: %w", err).Error())
-			}
 		})
 	})
 
