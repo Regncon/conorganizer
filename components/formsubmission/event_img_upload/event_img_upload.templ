@@ -515,12 +515,14 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						data-show="$_cropperImageLoading"
 						style="display: none;"
 					>Lastar bilete. Ver venleg og vent...</p>
+					<p style="display: none; margin: 0px;" data-show="$sourceImageUrl !== '' && !$_uploading  && !$_cropperImageLoading">Klikk eller dra og slipp for å bytte bilete</p>
+					<p style="display: none;" data-show="$sourceImageUrl === '' && !$_uploading && !$_cropperImageLoading" data-text="$_add_drag_over ? 'Slipp bildet her' : 'Klikk her eller dra et bilde inn for å laste det opp.'">
 						Klikk her eller dra et bilde inn for å laste det opp.
 					</p>
-					<p data-show="!$_has_current_image && !$_uploading && !$_cropperImageLoading" style="display: none;">
+					<p style="display: none;" data-show="$sourceImageUrl === '' && !$_uploading && !$_cropperImageLoading">
 						Støttede formater: PNG, JPG, ...
 					</p>
-					<div class="image-upload-progress-wrapper" data-show="$_uploading" style="display: none;">
+					<div class="image-upload-progress-wrapper" style="display: none;" data-show="$_uploading">
 						<div class="image-upload-progress" role="progressbar" aria-label="Laster opp bilde" aria-valuemin="0" aria-valuemax="100" data-attr:aria-valuenow="$_uploadProgress">
 							<div class="progress-bar" data-style="{'--progress': $_uploadProgress}"></div>
 						</div>
