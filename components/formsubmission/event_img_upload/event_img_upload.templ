@@ -2,6 +2,7 @@ package eventimgupload
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/toast"
@@ -34,10 +34,10 @@ func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logge
 		userInfo := userctx.GetUserRequestInfo(ctx)
 		showUploadToast := r.URL.Query().Get("uploaded") == "source"
 		if err := layouts.Base(
-			"Last opp bilete",
+			"Legg til bilete",
 			userInfo,
-            db,
-            logger,
+			db,
+			logger,
 			page(eventId, db, eventImageDir, logger, showUploadToast),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render event image page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
@@ -88,10 +88,18 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
+		sourceImageURL := cacheBustedImageURL(getUploadedSourceImageURL(eventID, eventImageDir))
+
+		if r.Header.Get("Upload-Progress-Request") == "true" {
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(map[string]string{"sourceImageUrl": sourceImageURL}); err != nil {
+				logger.Error("Failed to encode source image upload response", "error", err, "event_id", eventID)
+			}
+			return
+		}
 
 		if r.Header.Get("Datastar-Request") == "true" {
 			sse := datastar.NewSSE(w, r)
-			sourceImageURL := cacheBustedImageURL(getUploadedSourceImageURL(eventID, eventImageDir))
 			if err := sse.MarshalAndPatchSignals(map[string]string{"sourceImageUrl": sourceImageURL}); err != nil {
 				logger.Error("Failed to patch source image URL after upload", "error", err, "event_id", eventID)
 			}
@@ -146,6 +154,10 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
+		if r.Header.Get("Datastar-Request") == "true" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		http.Redirect(w, r, fmt.Sprintf("/profile/new/%s/image/", eventID), http.StatusSeeOther)
 	})
 }
@@ -208,70 +220,16 @@ func cacheBustedImageURL(imageURL string) string {
 }
 
 templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
-	<style>
-		.img-upload-form-content {
-			display: flex;
-			flex-direction: column;
-			gap: var(--responsive-pane-column-spacing);
-		}
-		.back-button-container {
-			display: flex;
-			align-items: flex-start;
-		}
-		.image-upload-container {
-			display: flex;
-			flex-direction: column;
-			gap: var(--spacing-5x);
-		}
-
-		.image-upload-info-label {
-			font-size: 14px;
-			font-weight: 600;
-		}
-		.image-upload-file-form {
-			display: grid;
-			grid-template-columns: minmax(0, 1fr) auto;
-			place-items: center end;
-			gap: var(--spacing-2x);
-            margin-inline-start: auto;
-		}
-		.image-upload-file-form .feedback-error {
-			grid-column: 1 / -1;
-			justify-self: end;
-		}
-		.event-image-thumbnail-display {
-			max-width: 600px;
-			margin: auto;
-		}
-		.event-image-banner-display {
-			position: relative;
-			border-radius: var(--border-radius-2x);
-		}
-		.event-image-title-preview {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			text-align: center;
-			gap: var(--spacing-4x);
-			padding: var(--spacing-4x);
-			background-color: var(--bg-base);
-			border-bottom-right-radius: var(--border-radius-2x);
-			border-bottom-left-radius: var(--border-radius-2x);
-		}
-		.event-image-title-preview.banner-image {
-			position: relative;
-			margin: -56px 80px 0; /* negative margin here should be updated, probably won't be 100% accurate */
-			border-radius: var(--border-radius-2x);
-			z-index: 2;
-		}
-	</style>
 	{{
 		event, eventErr := eventservice.GetEventById(eventId, db)
-		var title, intro string
+		var title string
 		imageUrl := getUploadedSourceImageURL(eventId, eventImageDir)
 		if eventErr == nil && event != nil {
 			title = event.Title
-			intro = event.Intro
+		}
+
+		if title == "" {
+			title = "Mangler navn"
 		}
 	}}
 	if eventErr != nil {
@@ -284,111 +242,374 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		<p>Fann ikkje arrangementet</p>
 		return
 	}
-	<script src="/static/web_components/banner_cropper.js"></script>
+	<script type="module" src="/static/web_components/banner_cropper.js"></script>
 	@toast.Render("Lagra", icons.ProgressComplete)
-	if showUploadToast {
-		<script>
-			window.addEventListener("DOMContentLoaded", () => {
-				document.dispatchEvent(new CustomEvent("toast", {
-					detail: { message: "Lagra" },
-				}));
-				const url = new URL(window.location.href);
-				url.searchParams.delete("uploaded");
-				window.history.replaceState(null, "", url.pathname + url.search + url.hash);
-			});
-		</script>
-	}
+	<script type="module" src="/static/js/custom-actions/upload-with-progress.js"></script>
+	<style>
+
+        @keyframes cropper-loading-spin {
+            to {
+                rotate: 1turn;
+            }
+        }
+        .page-content-container {
+            max-width: 1020px;
+        }
+
+        .back-button {
+            font-size: unset;
+            margin-block-start: var(--spacing-10x);
+        }
+
+        h1 {
+            margin-block: var(--spacing-5x) var(--spacing-10x);
+        }
+
+        .img-upload-form-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--responsive-pane-column-spacing);
+
+            .info-text-content {
+                display: flex;
+                flex-direction: column;
+                gap: var(--spacing-5x);
+
+                .image-upload-info-label {
+                    font-weight: 700;
+                }
+            }
+
+            .image-upload-content {
+                display: flex;
+                flex-direction: column;
+                gap: var(--spacing-5x);
+
+                .image-upload-card {
+                    display: flex;
+                    flex-direction: column;
+                    place-items: center;
+                    place-content: center;
+                    height: 208px;
+                    position: relative;
+                    text-align: center;
+                    outline: 2px dashed transparent;
+                    outline-offset: -8px;
+                    transition: background-color 0.2s, outline-color 0.2s, box-shadow 0.2s;
+
+                    &:is(.is-drag-over) {
+                        background-color: color-mix(in srgb, var(--color-primary) 12%, var(--bg-item));
+                        outline-color: var(--color-primary);
+                        box-shadow: inset 0 0 32px color-mix(in srgb, var(--color-primary) 10%, transparent);
+
+                        .image-upload-icon-wrapper {
+                            translate: 0 -4px;
+                            scale: 1.1;
+                        }
+                    }
+
+                    &:is([aria-busy="true"]) {
+                        cursor: progress;
+                    }
+
+                    p+p {
+                        margin-block-start: var(--spacing-3x)
+                    }
+                    p:last-child {
+                        margin:0;
+                    }
+
+                    input[type="file"] {
+                        block-size: 100%;
+                        inline-size: 100%;
+                        position: absolute;
+                        inset: 0;
+                        z-index: 1;
+                        opacity: 0;
+                        cursor: pointer;
+
+                        &:disabled {
+                            pointer-events: none;
+                        }
+                    }
+
+                    .image-upload-icon-wrapper {
+                        height: 40px;
+                        width: 40px;
+                        border-radius: 100vw;
+                        background-color: var(--color-primary-hover);
+                        display: grid;
+                        place-content: center;
+                        margin-block-end: var(--spacing-5x);
+                        transition: translate 0.2s, scale 0.2s;
+                    }
+
+                }
+
+                .image-upload-progress-wrapper {
+                    display: grid;
+                    padding-inline: var(--spacing-4x);
+                    inline-size: 100%;
+                    gap: var(--spacing-3x);
+                    text-align: center;
+
+                    .image-upload-progress {
+                        position: relative;
+                        height: 8px;
+                        background-color: var(--bg-item-hover);
+                        border: 1px solid var(--bg-item-focus-visible);
+                        border-radius: var(--border-radius-2x);
+
+                        .progress-bar {
+                            position: absolute;
+                            inset: 0;
+                            width: calc(var(--progress) * 1%);
+                            background-color: var(--color-primary);
+                            border-radius: var(--border-radius-2x);
+
+                            transition: width 0.4s ease-out;
+                        }
+
+                        span {
+                            text-align: center;
+                        }
+                    }
+                }
+                .item-card:is(:not(.file-info)) {
+                    padding: 0;
+                    border-radius: var(--border-radius-1x);
+                    border: 1px solid var(--bg-item-border)
+                }
+            }
+
+            .banner-cropper {
+                .cropper-actions {
+                    display: grid;
+                    grid-template-columns: 1fr auto;
+                    place-items: center start;
+                    gap: var(--spacing-4x);
+
+                    button {
+                        grid-column: 2;
+                        place-self: end;
+                    }
+                }
+
+                inline-size: min-content;
+                block-size: max-content;
+
+                .cropper-placeholder-canvas {
+                    display: grid;
+                    place-content: center;
+                    inline-size: var(--cropper-placeholder-inline-size);
+                    block-size: var(--cropper-placeholder-block-size);
+                    color: var(--color-primary);
+                    background: var(--bg-item);
+                    border-radius: var(--border-radius-2x);
+
+                    .inline-icon {
+                        animation: cropper-loading-spin 1s linear infinite;
+                    }
+                }
+
+                &:is(.cropper-placeholder--banner) {
+                    --cropper-placeholder-inline-size: 980px;
+                    --cropper-placeholder-block-size: 229px;
+                }
+
+                &:is(.cropper-placeholder--card) {
+                    --cropper-placeholder-inline-size: 540px;
+                    --cropper-placeholder-block-size: 200px;
+                }
+            }
+        }
+    </style>
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Heim", Url: "/"},
 		{Name: "Mine arrangement", Url: "/profile/"},
-		{Name: "Nytt arrangement", Url: "/profile/new/" + eventId + "/"},
-		{Name: "Last opp bilete", Url: ""},
+		{Name: title, Url: "/profile/new/" + eventId + "/"},
+		{Name: "Legg til bilete", Url: ""},
 	})
-	<article class="page-content-container">
-		<h1 class="page-heading">Last opp bilete</h1>
+	<article
+		class="page-content-container"
+		data-signals__ifmissing={ formsubmission.DataSignals(map[string]any{
+            "_add_drag_over": false,
+            "_uploading": false,
+            "_uploadProgress": 0,
+            "_uploadError": "",
+            "_bannerCrop": map[string]any{"ready": false, "loading": imageUrl != "", "loadError": "", "exporting": false, "saveError": "", "saved": false},
+            "_cardCrop": map[string]any{"ready": false, "loading": imageUrl != "", "loadError": "", "exporting": false, "saveError": "", "saved": false},
+            "toastBannerImage": false,
+            "toastCardImage": false,
+        }) }
+		data-computed:_cropper-image-ready="$_bannerCrop.ready && $_cardCrop.ready"
+		data-computed:_cropper-image-loading="$_bannerCrop.loading || $_cardCrop.loading"
+		data-computed:_cropper-image-error="$_bannerCrop.loadError || $_cardCrop.loadError"
+		data-computed:_image-busy="$_uploading || $_cropperImageLoading || $_bannerCrop.exporting || $_cardCrop.exporting || $toastBannerImage || $toastCardImage"
+	>
+		if showUploadToast {
+			<span hidden data-init="el.dispatchEvent(new CustomEvent('toast', { bubbles: true, detail: { message: 'Lagret' } })); const url = new URL(window.location.href); url.searchParams.delete('uploaded'); window.history.replaceState(null, '', url)"></span>
+		}
+		<a
+			href={ templ.SafeURL("/profile/new/" + eventId + "/") }
+			class="btn btn--outline back-button"
+		>
+			Tilbake
+		</a>
+		<h1>Legg til bilete</h1>
 		<div
 			class="img-upload-form-content"
 			data-signals={ formsubmission.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
 		>
-			<div class="back-button-container">
-				<a
-					href="javascript:window.history.back();"
-					class="btn btn--outline"
-				>
-					Tilbake til arrangementssida
-				</a>
-			</div>
-			<div class="surface-pane image-upload-container">
-				<div class="item-card">
+			<div class="surface-pane info-text-content">
+				<div>
 					<p class="image-upload-info-label">
 						Ver venleg og ikkje bruk AI/KI-genererte bilete
 					</p>
 					<p>
 						Sidan AI/KI-genererte bilete er eit betent tema, ønskjer vi i RegnCon ikkje
 						at arrangørar skal bruke slike bilete som hovudbilete for arrangementet sitt.
+					</p>
+					<p>
 						Om du er i tvil om bruk av bilete, anbefaler vi å finne bilete som er ope
 						tilgjengelege for bruk, eller bilete som elles blir brukte til å demonstrere
 						og promotere spelet/systemet du skal bruke på arrangementet.
 					</p>
 				</div>
+			</div>
+			<div
+				class="surface-pane image-upload-content"
+			>
+				<h4>Last opp bilete</h4>
 				<form
-					method="post"
-					action={ "/profile/api/new/" + eventId + "/upload" }
 					enctype="multipart/form-data"
-					class="image-upload-file-form"
-					{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(false))... }
-					data-indicator="toastSourceImage"
-					{ errorfeedback.Attrs("sourceImage")... }
-					data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/upload', {contentType: 'form'})", eventId) }
+					method="post"
+					action={ templ.SafeURL(fmt.Sprintf("/profile/api/new/%s/upload", eventId)) }
+					data-on:submit__prevent={ fmt.Sprintf("if (!$_imageBusy) @uploadWithProgress('/profile/api/new/%s/upload', {progressSignal: '_uploadProgress', convertToWebp: true})", eventId) }
+					data-indicator="_uploading"
+					data-on:datastar-fetch__document="if (evt.detail.el === el) { if (evt.detail.type === 'started') { $_uploadError = ''; $_add_drag_over = false } if (evt.detail.type === 'error') $_uploadError = evt.detail.argsRaw.message; if (evt.detail.type === 'finished') el.reset() }"
+					class="item-card image-upload-card"
+					data-class:is-drag-over="$_add_drag_over"
+					data-attr:aria-busy="($_uploading || $_cropperImageLoading) ? 'true' : 'false'"
+					data-on:dragover__prevent="$_add_drag_over = !$_imageBusy && evt.dataTransfer.types.includes('Files'); evt.dataTransfer.dropEffect = $_add_drag_over ? 'copy' : 'none'"
+					data-on:dragleave="if (!el.contains(evt.relatedTarget)) $_add_drag_over = false"
+					data-on:drop__prevent="$_add_drag_over = false; if (!$_imageBusy && evt.dataTransfer.files.length) { el.elements.namedItem('image').files = evt.dataTransfer.files; el.requestSubmit() }"
 				>
-					<label>
-						Vel bilete:
-						<input
-							type="file"
-							name="image"
-							accept="image/*"
-							required
-						/>
-					</label>
-					<button
-						class="btn btn--primary"
-						type="submit"
-					>Last opp</button>
-					@errorfeedback.RenderMessage("sourceImage")
+					<input
+						data-on:change="if (el.files.length) el.form.requestSubmit()"
+						data-attr:disabled="$_imageBusy"
+						data-show="!$_cropperImageLoading"
+						style="display: none;"
+						type="file"
+						name="image"
+						accept="image/*"
+						aria-label="Last opp bilde"
+						required
+					/>
+					<div
+						class="image-upload-icon-wrapper"
+					>
+						@icons.Icon(icons.FileUpload, icons.Size20)
+					</div>
+					<p
+						data-show="$_cropperImageLoading"
+						style="display: none;"
+					>Lastar bilete. Ver venleg og vent...</p>
+					<p style="display: none; margin: 0px;" data-show="$sourceImageUrl !== '' && !$_uploading  && !$_cropperImageLoading">Klikk eller dra og slipp for å bytte bilete</p>
+					<p style="display: none;" data-show="$sourceImageUrl === '' && !$_uploading && !$_cropperImageLoading" data-text="$_add_drag_over ? 'Slipp bildet her' : 'Klikk her eller dra et bilde inn for å laste det opp.'">
+						Klikk her eller dra et bilde inn for å laste det opp.
+					</p>
+					<p style="display: none;" data-show="$sourceImageUrl === '' && !$_uploading && !$_cropperImageLoading">
+						Støttede formater: PNG, JPG, ...
+					</p>
+					<div class="image-upload-progress-wrapper" style="display: none;" data-show="$_uploading">
+						<div class="image-upload-progress" role="progressbar" aria-label="Laster opp bilde" aria-valuemin="0" aria-valuemax="100" data-attr:aria-valuenow="$_uploadProgress">
+							<div class="progress-bar" data-style="{'--progress': $_uploadProgress}"></div>
+						</div>
+						<span data-text="$_uploadProgress === 100 ? 'Lastar bilete. Ver venleg og vent...' : ''"></span>
+					</div>
+					<p class="feedback-error" style="display: none;" data-show="$_uploadError" data-text="$_uploadError"></p>
 				</form>
 			</div>
-			<section class="surface-pane">
-				<h4 class="surface-pane-title">Mobil og gruppevisning</h4>
-				<div class="event-image-thumbnail-display">
-					<banner-cropper
-						event-id={ eventId }
-						width="600"
-						height="350"
-						image-kind="card"
-						data-attr:image-url="$sourceImageUrl"
-					></banner-cropper>
-					<div class="event-image-title-preview">
-						<h1>{ title }</h1>
-						<i>{ intro }</i>
-					</div>
+			<div
+				class="surface-pane image-upload-content"
+				style="display: none;"
+				data-show="$_cropperImageError"
+			>
+				<p class="feedback-error" style="display: none;" data-text="$_cropperImageError"></p>
+			</div>
+			<div
+				class="surface-pane banner-cropper cropper-placeholder--banner"
+				style="display: none;"
+				data-show="$_cropperImageLoading"
+			>
+				<div
+					class="cropper-placeholder-canvas"
+					role="status"
+					aria-label="Lastar bilete"
+				>
+					@icons.Icon(icons.Loading, icons.Size40)
 				</div>
-			</section>
-			<section class="surface-pane">
-				<h4 class="surface-pane-title">Desktopbanner</h4>
-				<div class="event-image-banner-display">
-					<banner-cropper
-						event-id={ eventId }
-						width="1360"
-						height="400"
-						image-kind="banner"
-						data-attr:image-url="$sourceImageUrl"
-					></banner-cropper>
-					<div class="event-image-title-preview banner-image">
-						<h1>{ title }</h1>
-						<i>{ intro }</i>
-					</div>
+			</div>
+			<div
+				class="surface-pane banner-cropper cropper-placeholder--card"
+				style="display: none;"
+				data-show="$_cropperImageLoading"
+			>
+				<div
+					class="cropper-placeholder-canvas "
+					role="status"
+					aria-label="Lastar bilete"
+				>
+					@icons.Icon(icons.Loading, icons.Size40)
 				</div>
-			</section>
+			</div>
+			@imageCropper(eventId, "banner", "Bannerbilder på arrangementsiden", "1360", "400", "980", "218", "_bannerCrop", "toastBannerImage")
+			@imageCropper(eventId, "card", "Thumbnail på arrangementsiden", "600", "350", "540", "190", "_cardCrop", "toastCardImage")
 		</div>
 	</article>
+}
+
+// The component owns canvas operations; Datastar owns requests and feedback.
+templ imageCropper(eventID, kind, label, width, height, previewWidth, previewHeight, stateName, indicator string) {
+	{{ state := "$" + stateName }}
+	<div class="surface-pane banner-cropper" style="display: none;" data-show="$_cropperImageReady">
+		<banner-cropper
+			width={ width }
+			height={ height }
+			preview-width={ previewWidth }
+			preview-height={ previewHeight }
+			label={ label }
+			data-on:image-loading={ fmt.Sprintf("%s.loading = true; %s.ready = false; %s.loadError = ''; %s.saved = false; %s.saveError = ''; %s.exporting = false", state, state, state, state, state, state) }
+			data-on:image-ready={ fmt.Sprintf("%s.loading = false; %s.ready = true", state, state) }
+			data-on:image-error={ fmt.Sprintf("%s.loading = false; %s.ready = false; %s.loadError = evt.detail.message", state, state, state) }
+			data-on:crop-started={ fmt.Sprintf("%s.exporting = true; %s.saveError = ''; %s.saved = false", state, state, state) }
+			data-on:crop-error={ fmt.Sprintf("%s.exporting = false; %s.saveError = evt.detail.message", state, state) }
+			data-on:crop-ready={ fmt.Sprintf("%s.exporting = false; el.querySelector('input[name=image]').files = evt.detail.files; el.querySelector('form').requestSubmit()", state) }
+			data-attr:image-url="$sourceImageUrl"
+		>
+			<form
+				slot="actions"
+				class="cropper-actions"
+				enctype="multipart/form-data"
+				data-indicator={ indicator }
+				data-on:submit__prevent={ fmt.Sprintf("if (!$%s) @post('/profile/api/new/%s/upload-cropped', {contentType: 'form', requestCancellation: 'disabled', retry: 'never', retryMaxCount: 0})", indicator, eventID) }
+				data-on:datastar-fetch__document={ fmt.Sprintf("if (evt.detail.el === el) { if (evt.detail.type === 'error' || evt.detail.type === 'retries-failed') %s.saveError = 'Kunne ikke lagre bildet. Prøv igjen.'; if (evt.detail.type === 'finished' && !%s.saveError) %s.saved = true }", state, state, state) }
+			>
+				<input type="file" name="image" hidden required/>
+				<input type="hidden" name="kind" value={ kind }/>
+				<div aria-live="polite">
+					<span data-show={ fmt.Sprintf("%s.exporting || $%s", state, indicator) } style="display: none;">Laster opp...</span>
+					<span data-show={ state + ".saved" } style="display: none;">Lastet opp</span>
+					<span class="feedback-error" data-show={ state + ".saveError" } data-text={ state + ".saveError" } style="display: none;"></span>
+				</div>
+				<button
+					type="button"
+					class="btn btn--outline"
+					data-attr:disabled={ fmt.Sprintf("$_uploading || !%s.ready || %s.exporting || $%s", state, state, indicator) }
+					data-on:click="el.closest('banner-cropper').exportImage()"
+				>Lagre</button>
+			</form>
+		</banner-cropper>
+	</div>
 }

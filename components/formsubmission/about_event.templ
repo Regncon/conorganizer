@@ -174,8 +174,9 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 
 templ aboutEvent(eventId string, eventImageDir *string, title string, intro string, eventType models.EventType, system string, description string) {
 	{{
-		imgurl := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir)
-		hasUploadedImage := imgurl != "/static/placeholder_banner.svg"
+		imgUrlBanner := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir)
+		imgUrlCard := eventimage.GetEventImageUrl(eventId, "card", eventImageDir)
+		hasUploadedImage := imgUrlBanner != "/static/placeholder_banner.svg" && imgUrlCard != "/static/placeholder_card.svg"
 	}}
 	<article class="form-card">
 		<h4 class="form-card-title">Om arrangementet</h4>
@@ -237,11 +238,14 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 				</select>
 				@errorfeedback.RenderMessage("type")
 			</label>
-			<section class="form-group img image-upload">
+			<section
+				class="form-group img image-upload"
+				style={ templ.KV(templ.SafeCSS(fmt.Sprintf("--image-upload-background-image-banner: url(%s);", imgUrlBanner)), hasUploadedImage),
+                    templ.KV(templ.SafeCSS(fmt.Sprintf("--image-upload-background-image-card: url(%s);", imgUrlCard)), hasUploadedImage) }
+			>
 				<p class="label-small color-strong">Arrangementbilete</p>
 				<div
 					class={ "image-upload__panel", templ.KV("image-upload__panel--has-image", hasUploadedImage) }
-					style={ templ.KV(templ.SafeCSS(fmt.Sprintf("--image-upload-background-image: url(%s);", imgurl)), hasUploadedImage) }
 				>
 					<div class="image-upload__content">
 						<span class="image-upload__icon" aria-hidden="true">

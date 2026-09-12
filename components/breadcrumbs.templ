@@ -1,8 +1,6 @@
 package components
 
-import (
-    "github.com/Regncon/conorganizer/components/icons"
-)
+import "github.com/Regncon/conorganizer/components/icons"
 
 type BreadcrumbPath struct {
 	Name string
@@ -44,6 +42,10 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			.breadcrumb-separator {
 					color: var(--color-text-strong);
 			}
+
+            .breadcrumb-step {
+                max-width: 22ch;
+            }
 
 			.breadcrumb-end {
 					color: var(--color-text-soft-50);
@@ -104,7 +106,7 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 						</a>
 					}
 					if path.Url != "" {
-						<a class="breadcrumb-step" href={ templ.URL(path.Url) }>{ path.Name }</a>
+						<a class="breadcrumb-step ellipsis-overflow" href={ templ.URL(path.Url) }>{ path.Name }</a>
 						<span class="breadcrumb-separator">/</span>
 					} else {
 						<span class="breadcrumb-end ellipsis-overflow">{ path.Name }</span>
