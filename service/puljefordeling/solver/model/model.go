@@ -11,13 +11,13 @@ const (
 )
 
 // Event is a game session within a slot with a fixed seat count.
-// DMID is the player ID running this event; that player cannot also be
+// DMIDs are the player IDs running this event; none can also be
 // assigned as a participant in any event during the same slot.
 type Event struct {
 	ID       string
 	Name     string
 	Capacity int
-	DMID     string
+	DMIDs    []string
 
 	// AdultsOnly marks an 18+ game: a player who is not over 18 is never
 	// seated here by the solver. Only an admin pin can place a minor here.

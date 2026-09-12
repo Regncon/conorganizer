@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/puljefordeling/solver"
@@ -41,8 +42,8 @@ type EmulatedEvent struct {
 	EventID           string
 	Title             string
 	Capacity          int
-	GMName            string           // empty if the event has no GM assigned
-	GMIsOver18        bool             // the GM's age flag, so an under-18 GM of an 18+ game can be marked
+	GMName            string           // sorted GM names, empty if the event has no GM assigned
+	GMIsOver18        bool             // true when all GMs are adults; any minor keeps the 18+ warning visible
 	AssignedPlayers   []AssignedPlayer // sorted by name
 	Undersubscribed   bool             // fewer than the solver's viable-player threshold
 	EventType         models.EventType
@@ -96,7 +97,7 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	if err != nil {
 		return Emulation{}, err
 	}
-	gms, err := loadGMs(db) // [eventPuljeKey] -> billettholderID
+	gms, err := loadGMs(db) // [eventPuljeKey] -> billettholder IDs
 	if err != nil {
 		return Emulation{}, err
 	}
@@ -131,8 +132,8 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 				// admin pin can put one there.
 				AdultsOnly: e.ageGroup == models.AgeGroupAdultsOnly,
 			}
-			if gmID, ok := gms[eventPuljeKey(eid, p.ID)]; ok {
-				ev.DMID = strconv.Itoa(gmID)
+			for _, gmID := range gms[eventPuljeKey(eid, p.ID)] {
+				ev.DMIDs = append(ev.DMIDs, strconv.Itoa(gmID))
 			}
 			slot.Events = append(slot.Events, ev)
 		}
@@ -152,8 +153,10 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 
 	// Players who run any game in the weekend carry the DM bump.
 	dmSet := make(map[int]bool, len(gms))
-	for _, bhID := range gms {
-		dmSet[bhID] = true
+	for _, gmIDs := range gms {
+		for _, bhID := range gmIDs {
+			dmSet[bhID] = true
+		}
 	}
 
 	year := puljer[0].StartAt.TimeOrZero().Year()
@@ -180,7 +183,7 @@ func shapePulje(
 	pulje models.PuljeRow,
 	slot smodel.Slot,
 	res smodel.SlotResult,
-	gms map[string]int,
+	gms map[string][]int,
 	names map[int]string,
 	over18 map[int]bool,
 	prefs map[int]map[string]map[string]smodel.Score,
@@ -221,9 +224,15 @@ func shapePulje(
 			emEv.BeginnerFriendly = m.beginnerFriendly
 			emEv.CanBeRunInEnglish = m.canBeRunInEnglish
 		}
-		if gmID, ok := gms[eventPuljeKey(ev.ID, pulje.ID)]; ok {
-			emEv.GMName = names[gmID]
-			emEv.GMIsOver18 = over18[gmID]
+		if gmIDs := gms[eventPuljeKey(ev.ID, pulje.ID)]; len(gmIDs) > 0 {
+			gmNames := make([]string, 0, len(gmIDs))
+			emEv.GMIsOver18 = true
+			for _, gmID := range gmIDs {
+				gmNames = append(gmNames, names[gmID])
+				emEv.GMIsOver18 = emEv.GMIsOver18 && over18[gmID]
+			}
+			sort.Strings(gmNames)
+			emEv.GMName = strings.Join(gmNames, ", ")
 		}
 		out.Events = append(out.Events, emEv)
 	}
@@ -397,7 +406,7 @@ func loadManualPins(db *sql.DB) (map[models.Pulje]map[string]string, error) {
 	return out, rows.Err()
 }
 
-func loadGMs(db *sql.DB) (map[string]int, error) {
+func loadGMs(db *sql.DB) (map[string][]int, error) {
 	const query = `
 		SELECT event_id, pulje_id, billettholder_id
 		FROM relation_events_players
@@ -409,7 +418,7 @@ func loadGMs(db *sql.DB) (map[string]int, error) {
 	}
 	defer rows.Close()
 
-	out := make(map[string]int)
+	out := make(map[string][]int)
 	for rows.Next() {
 		var eventID string
 		var pulje models.Pulje
@@ -417,7 +426,8 @@ func loadGMs(db *sql.DB) (map[string]int, error) {
 		if err := rows.Scan(&eventID, &pulje, &bhID); err != nil {
 			return nil, fmt.Errorf("scan GM row: %w", err)
 		}
-		out[eventPuljeKey(eventID, pulje)] = bhID
+		key := eventPuljeKey(eventID, pulje)
+		out[key] = append(out[key], bhID)
 	}
 	return out, rows.Err()
 }
