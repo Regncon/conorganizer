@@ -350,14 +350,32 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 
-						// Assign room
-						query := `
-                            UPDATE relation_event_puljer
-                            SET room_id = ?
-                            WHERE event_id = ? AND pulje_id = ? AND is_in_pulje = 1
-                        `
+						// Only approved events belong in the room assignment flow.
+						var eventStatus models.EventStatus
+						err = db.QueryRowContext(r.Context(), `SELECT status FROM events WHERE id = ?`, eventQuery).Scan(&eventStatus)
+						if err == sql.ErrNoRows {
+							http.Error(w, "Arrangementet ble ikke funnet.", http.StatusConflict)
+							return
+						}
+						if err != nil {
+							http.Error(w, fmt.Sprintf("Unable to check event: %v", err), http.StatusInternalServerError)
+							return
+						}
+						if eventStatus != models.EventStatusApproved && eventStatus != models.EventStatusAnnounced {
+							http.Error(w, "Arrangementet er ikke godkjent.", http.StatusConflict)
+							return
+						}
 
-						result, err := db.Exec(query, roomID, eventQuery, puljeID)
+						// Assign the event to this pulje even when it has no active
+						// relation here yet. Room assignment also publishes it.
+						result, err := db.ExecContext(r.Context(), `
+							INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published, room_id)
+							VALUES (?, ?, 1, 1, ?)
+							ON CONFLICT(event_id, pulje_id) DO UPDATE SET
+								is_in_pulje = 1,
+								is_published = 1,
+								room_id = excluded.room_id
+						`, eventQuery, puljeID, roomID)
 						if err != nil {
 							http.Error(w, fmt.Sprintf("Unable to assign room: %v", err.Error()), http.StatusBadRequest)
 							return

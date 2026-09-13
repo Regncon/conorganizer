@@ -49,27 +49,26 @@ func getRoomsPuljeByFloor(db *sql.DB, logger *slog.Logger, pulje models.Pulje) [
 	return result
 }
 
-func getEventInPulje(db *sql.DB, logger *slog.Logger, pulje models.Pulje, isMissingRoom bool) []models.RoomEventPuljeSummaryJson {
+func getApprovedEventsForPulje(db *sql.DB, logger *slog.Logger, pulje models.Pulje) []models.RoomEventPuljeSummaryJson {
 	query := `
         SELECT
             e.title,
             e.max_players,
-            rep.event_id,
-            rep.pulje_id,
+            e.id,
+            COALESCE(rep.pulje_id, ''),
             rep.room_id
-        FROM relation_event_puljer rep
-        JOIN events e ON e.id = rep.event_id
-        WHERE rep.pulje_id = ?
-        AND rep.is_in_pulje = 1
+        FROM events e
+        LEFT JOIN relation_event_puljer rep
+            ON rep.event_id = e.id
+            AND rep.pulje_id = ?
+            AND rep.is_in_pulje = 1
+        WHERE e.status IN (?, ?)
+        ORDER BY e.title ASC;
     `
-	if isMissingRoom {
-		query += "\nAND rep.room_id IS NULL"
-	}
-	query += "\nORDER BY e.title ASC;"
 
-	rows, err := db.Query(query, pulje)
+	rows, err := db.Query(query, pulje, models.EventStatusApproved, models.EventStatusAnnounced)
 	if err != nil {
-		logger.Error(fmt.Errorf("failed to get events without room: %w", err).Error())
+		logger.Error(fmt.Errorf("failed to get approved events: %w", err).Error())
 		return nil
 	}
 	defer rows.Close()
@@ -120,13 +119,13 @@ templ assignEventModal(events []models.RoomEventPuljeSummaryJson, pulje models.P
 		aria-labelledby="assignment-dialog-title"
 	>
 		<h2 id="assignment-dialog-title">Legg til arrangement i rom <span data-text="$_roomNumber"></span></h2>
-		<p>Velg et arrangement. Arrangementer som har rom, flyttes til dette rommet.</p>
+		<p>Velg et godkjent arrangement. Arrangementer fra andre puljer blir lagt til og publisert i denne puljen.</p>
 		@errorfeedback.RenderMessage("room-picker")
 		<div
 			class="room-event-container"
 		>
 			if len(events) == 0 {
-				<p>Ingen arrangementer i denne puljen.</p>
+				<p>Ingen godkjente arrangementer.</p>
 			}
 			for _, event := range events {
 				{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
@@ -151,7 +150,9 @@ templ assignEventModal(events []models.RoomEventPuljeSummaryJson, pulje models.P
 					<span>
 						<strong>{ event.Title }</strong>
 						<small>
-							if !event.RoomID.Valid {
+							if event.EventPuljeID != string(pulje) {
+								Ikke i denne puljen
+							} else if !event.RoomID.Valid {
 								Mangler rom
 							} else {
 								Har rom – flyttes ved valg
@@ -418,15 +419,15 @@ templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.P
 		data-signals:dragged-event-id="''"
 		data-signals:drag-over-room="0"
 		data-signals__ifmissing="{room: 0, _roomNumber: '', _roomSaving: false, _roomAssignmentStatus: ''}"
-		data-on:room-saved__window="$draggedEventId = ''; $_roomAssignmentStatus = 'Romtildelingen er lagret.'"
+		data-on:room-saved__window="$draggedEventId = ''; $_roomSaving = false; $_roomAssignmentStatus = 'Romtildelingen er lagret.'"
 	>
 		@errorfeedback.RenderMessage("room-assignment")
 		<p role="status" data-text="$_roomAssignmentStatus"></p>
 		{{
-			allEvents := getEventInPulje(db, logger, pulje, false)
+			allEvents := getApprovedEventsForPulje(db, logger, pulje)
 			var events []models.RoomEventPuljeSummaryJson
 			for _, event := range allEvents {
-				if !event.RoomID.Valid {
+				if event.EventPuljeID == string(pulje) && !event.RoomID.Valid {
 					events = append(events, event)
 				}
 			}

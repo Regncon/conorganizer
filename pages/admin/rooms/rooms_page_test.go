@@ -218,8 +218,8 @@ func TestRoomsAssignmentMap_UsesDatabaseIDsAndCurrentPuljeAssignments(t *testing
 	if len(mappedRooms[0].AssignedEventsID) != 1 || mappedRooms[0].AssignedEventsID[0].EventID != "friday-event" {
 		t.Fatalf("expected only Friday assignments, got %+v", mappedRooms[0].AssignedEventsID)
 	}
-	if doc.Find(`#assignment-dialog button[data-event-id="friday-event"]`).Length() != 1 || doc.Find(`#assignment-dialog button[data-event-id="saturday-event"]`).Length() != 0 {
-		t.Fatal("map event picker must contain only the current pulje's events")
+	if doc.Find(`#assignment-dialog button[data-event-id="friday-event"]`).Length() != 1 || doc.Find(`#assignment-dialog button[data-event-id="saturday-event"]`).Length() != 1 {
+		t.Fatal("map event picker must contain approved events from other puljer")
 	}
 	if doc.Find(".rooms-container .room").Length() != 1 || doc.Find("room-map .room").Length() != 1 {
 		t.Fatal("rooms outside the map must remain in the assignment list")
@@ -278,8 +278,25 @@ func TestRoomAssignmentPicker_ExistsWhenPuljeHasNoEvents(t *testing.T) {
 	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
 
 	// Then
-	if doc.Find("#assignment-dialog").Length() != 1 || !strings.Contains(doc.Find("#assignment-dialog").Text(), "Ingen arrangementer i denne puljen.") {
+	if doc.Find("#assignment-dialog").Length() != 1 || !strings.Contains(doc.Find("#assignment-dialog").Text(), "Ingen godkjente arrangementer.") {
 		t.Fatal("add button must open a dialog with an empty state, even without events")
+	}
+}
+
+func TestRoomAssignmentPicker_IncludesApprovedEventsOutsidePulje(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "approved_events_outside_pulje")
+	seedRoomsPageLookups(t, db)
+	room := createRoomsPageRoom(t, db, "Amalie", "705", 7)
+	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
+	insertRoomsPagePulje(t, db, models.PuljeLordagKveld)
+	insertRoomsPageEvent(t, db, "approved-outside", "Approved Outside", 4)
+	testutil.MustExec(t, db, `UPDATE events SET status=? WHERE id=?`, models.EventStatusApproved, "approved-outside")
+	insertRoomsPageEventPulje(t, db, "approved-outside", models.PuljeLordagKveld, room.ID)
+
+	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	pickerEvent := doc.Find(`#assignment-dialog button[data-event-id="approved-outside"]`)
+	if pickerEvent.Length() != 1 || !strings.Contains(pickerEvent.Text(), "Ikke i denne puljen") {
+		t.Fatal("approved events from other puljer should be available in the picker")
 	}
 }
 
@@ -300,7 +317,7 @@ func createRoomsPageRoom(t *testing.T, db *sql.DB, name string, roomNumber strin
 func seedRoomsPageLookups(t *testing.T, db *sql.DB) {
 	t.Helper()
 
-	testutil.MustExec(t, db, `INSERT INTO event_statuses(status) VALUES (?) ON CONFLICT(status) DO NOTHING`, models.EventStatusAnnounced)
+	testutil.MustExec(t, db, `INSERT INTO event_statuses(status) VALUES (?), (?) ON CONFLICT(status) DO NOTHING`, models.EventStatusAnnounced, models.EventStatusApproved)
 	testutil.MustExec(t, db, `INSERT INTO events_types(event_type) VALUES (?) ON CONFLICT(event_type) DO NOTHING`, models.EventTypeOther)
 	testutil.MustExec(t, db, `INSERT INTO age_groups(age_group) VALUES (?) ON CONFLICT(age_group) DO NOTHING`, models.AgeGroupDefault)
 	testutil.MustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES (?) ON CONFLICT(runtime) DO NOTHING`, models.RunTimeNormal)

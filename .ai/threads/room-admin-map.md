@@ -345,3 +345,34 @@ Validation passed with `go test ./...`.
 Time: 2026-09-13 20:25:54
 --- Next Prompt ---
 
+The page becomes unresponsive after an even it chosen from the "+" button. Perhaps the modal is not closing properly? 
+Also, let's show all approved events in the dropdown, not just the ones in the current pulje. If an event is already assigned to a room, and it's not already in the current pulje, it should still be assigned and pubmished to the room and the pulje.
+
+Time: 2026-09-13 20:50:47
+--- Codex Run ---
+
+Codex output:
+I’ll trace the “+” modal request from the picker through the assignment handler and live update, then inspect how approved events and pulje relations are stored. I’ll fix the stuck state first, then expand the picker and make cross-pulje assignment explicit in the backend so the selected event is added to and published in the active pulje.
+The “unresponsive” case is explained by the current POST handler: it only updates an existing relation row and returns a conflict when the selected approved event has no relation in the active pulje. I’m changing assignment to an upsert that creates or reactivates the relation, sets the room, marks it in the pulje, and publishes it. The picker will load approved/announced events independently of current-pulje membership.
+The new behavior is now exercised by the existing tests, and two expectations correctly need updating: a room picker should include an event that belongs only to another pulje, and an inactive relation should be reactivated when assigned. I’m updating those assertions and adding coverage for creating a missing pulje relation with publication enabled.
+I’ve also made the success path explicitly clear the room-saving signal when the server announces `room-saved`. That gives the page a deterministic recovery even if the live refresh replaces the modal/button while the request is finishing, which is the likely source of the “unresponsive” state.
+The data flow is now complete: the picker loads approved/announced events regardless of membership, while the unassigned list still only counts events already in the current pulje. I’m removing the old “missing room” query flag now that this helper has one clear purpose, then I’ll do the final test and diff review.
+The room assignment flow is fixed.
+
+- The picker now lists all approved and announced events, including events from other puljer.
+- Selecting one creates or reactivates its relation in the current pulje.
+- The event is assigned to the selected room and marked published.
+- The modal success event now explicitly clears the saving signal, preventing the page from remaining disabled.
+- The picker explains when an event belongs to another pulje.
+
+Updated:
+
+- [admin.go](/home/cinmay/Documents/conorganizer/pages/admin/admin.go:350)
+- [rooms_assignment_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_assignment_page.templ:49)
+- Related route and picker tests.
+
+`go test ./...` passes.
+
+Time: 2026-09-13 20:50:47
+--- Next Prompt ---
+
