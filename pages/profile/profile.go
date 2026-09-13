@@ -204,6 +204,7 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 
 				newIdRoute.Route("/image", func(imageRouter chi.Router) {
 					eventimgupload.EventImageRoute(imageRouter, db, eventImageDir, logger)
+
 				})
 			})
 		})
