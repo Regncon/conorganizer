@@ -19,6 +19,7 @@
 
     &:not(.selected):focus-visible {
         outline: 3px solid;
+        outline-offset: 0;
     }
 
     &.selected {
@@ -26,7 +27,6 @@
         border-color: var(--color-primary);
         color: var(--color-primary);
     }
-
 }
 
 .card-clickable-surface {

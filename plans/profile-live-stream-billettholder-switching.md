@@ -1,82 +1,330 @@
-# Profile Live-Stream Billettholder Switching Implementation Plan
+# Profile Cookie Selection and Live Billettholder Switching Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Update the profile page for a newly selected billettholder without reloading the document, while ensuring only the selected billettholder's live stream can patch the profile.
+**Status:** Deferred. Implement after the current branch is finished. Saving this plan does not start implementation.
 
-**Architecture:** Keep the menu-owned `$billettHolderId` signal as the only live selection input, using numeric `0` when no billettholder exists. A small profile Datastar effect mirrors that ID into the visible `b_id`, cancels the old SSE request, and opens a new `/profile/api` stream without reloading the document. The backend validates the automatically sent signal, while the existing `service/live.Manager` and NATS buckets continue updating the replacement stream unchanged.
+**Goal:** Open `/profile` with the saved billettholder already rendered, then update `#profile-main-column` when `$billettHolderId` changes without reloading the document or using `b_id` in the URL.
 
-**Tech Stack:** Go, templ, Datastar signals/actions, server-sent events, and the existing `service/live.Manager`.
+**Architecture:** The existing `selectedBillettholderId` cookie supplies the initial server-rendered selection through `requestctx.SelectedBillettholderID(ctx)`. A profile-owned Datastar effect observes the menu's `$billettHolderId`, replaces the previous `GET /profile/api` stream, and lets that stream patch the main column. Each stream captures the signal from its request and validates it against the user's current billettholdere on every render.
 
-**Spec:** `plans/profile-live-stream-billettholder-switching.md#requirements`
+**Tech Stack:** Go, templ, the bundled `static/datastar.js`, `datastar-go v1.2.2`, existing `service/live.Manager`, and existing NATS buckets.
+
+**Spec:** The Requirements and Selection Rules sections in this document. Updated from the earlier switching plan on 2026-09-11 to include the cookie middleware and current menu wiring.
 
 ## Global Constraints
 
-- Do not add a profile endpoint to the global menu.
-- Do not persist the selected billettholder in a second client-side store; continue using `window.conorganizer.billettholderSelection` and `$billettHolderId`.
-- Do not add server-side session or connection state for the selection; local storage persists it in the browser and the Datastar signal carries it into each new SSE request.
-- Do not publish the selection change through NATS or add a new NATS subject/bucket; NATS continues notifying the replacement stream about ordinary application-data changes.
-- Change only the menu's empty signal fallback from `""` to numeric `0`; `billettholderSelection.initialize(...)` already normalizes and validates selected IDs.
-- Do not override the Datastar request payload; `/profile/api` must consume the public `$billettHolderId` signal sent by default.
-- Do not duplicate the menu's associated-billettholder validation in the profile template; authorization remains mandatory in `/profile/api`.
-- Preserve every query parameter except the `b_id` value being updated.
-- Use `history.replaceState`; billettholder switches must not add browser-history entries.
-- Keep the Datastar action URI exactly `/profile/api` and use `requestCancellation: "auto"` so a new request cancels its predecessor.
-- Keep the current infinite-retry behavior for an active profile stream.
-- Do not manually run templ generation; the existing server watcher owns generation.
-- Do not create or run automated tests unless the user removes that constraint. Use source inspection and the manual verification checklist in this plan.
-
----
+- This is a plan for later implementation; change no application code or run application tests while saving it.
+- At execution time, reread the current branch's instructions and relevant files. The current branch may change before this plan is started.
+- Use the names in `domeneordbok.md`, including billettholder, billettholdere, interesse, and pulje.
+- Keep `window.conorganizer.billettholderSelection` as the existing browser selection store. Add no cookie, localStorage key, session selection store, or NATS subject.
+- JavaScript already writes the cookie; the middleware reads it. Do not add a request merely to update the cookie or refresh DevTools.
+- Keep the global menu independent of profile URLs and requests. The profile owns its stream.
+- Validate every cookie and signal ID against the authenticated user's associated billettholdere. Neither the cookie nor the signal grants access.
+- Billettholder selection scopes only Mitt festivalprogram. The profile, account controls, and Mine arrangementer remain available based on the authenticated user, including when no billettholder exists.
+- Patch `#profile-main-column` only. Preserve the menu/dialog, account controls, ticket summary, document, and scroll position during selection changes.
+- Keep the current buckets: `live.BucketEvents`, `live.BucketInterests`, and `live.BucketBillettholders`.
+- Use the fixed action URI `/profile/api`. Do not put the selected ID into the action URI; Datastar sends the public signal automatically.
+- Remove all profile selection reads and writes of `b_id`. Do not add URL synchronization, redirects, or history API calls. Existing links containing `b_id` still open the profile, but that parameter is ignored and need not be stripped from the address bar.
+- Selection changes leave the visible URL, query parameters, fragment, and history state untouched. The `datastar` query parameter on the API request remains the SDK's signal transport; it is not a visible profile URL selection parameter.
+- Use the existing templ watcher when it is running. Do not hand-edit generated `*_templ.go` files or run competing generators.
+- During later implementation, follow AGENTS.md's behavior-focused Go test structure. Keep fixture setup in test helpers.
+- No shared live-service refactor, dependency upgrade, or CSS change is needed.
 
 ## Requirements
 
-1. Selecting a billettholder from the global menu while `/profile` is open must update `#profile-main-column` without a document navigation.
-2. The browser URL must reflect the active billettholder as `b_id=<id>` so an ordinary refresh retains the same server-side selection.
-3. Starting a new `/profile/api` request must automatically cancel the previous same-URL request. An old stream must not patch the profile after a newer selection.
-4. Rapid selection changes must converge on the final billettholder with at most one active profile stream.
-5. Existing query parameters and URL fragments must survive a selection change.
-6. Users without billettholdere must use numeric signal value `0`, retain a live `/profile/api` connection, and have no visible `b_id` parameter.
-7. The backend must validate query `b_id` for full-page requests and signal `billettHolderId` for live requests against the authenticated user's billettholdere; client validation is a UX guard, not authorization.
-8. A server restart or transient network failure must reconnect the currently selected billettholder's stream.
-9. After switching, existing NATS broadcasts must rerender the replacement stream with the new billettholder, never revive the cancelled stream or its old selection.
+1. Opening `/profile` with a valid selection cookie renders that billettholder's program in the first HTML response.
+2. Neither opening the profile nor switching billettholder triggers the current `window.location.replace` navigation.
+3. Switching billettholder updates the main column using the newly selected ID. A changing cookie alone does not change an already-open stream.
+4. At most one profile stream remains active after initialization or a switch; cancelled streams cannot later restore an earlier selection.
+5. Existing NATS notifications continue updating the active stream. Revalidate its captured ID on each render in case the user's relation is removed.
+6. Missing, malformed, stale, or unrelated IDs never expose another user's profile data.
+7. A user with no billettholdere still receives a working profile and live updates for account-owned content; only Mitt festivalprogram shows its empty state. A missing cookie or missing/zero signal is not an error.
+8. A transient connection failure reconnects the current selection. Clean server-side stream closure also reconnects.
+9. Menu selection and displayed program agree after normal initialization and switches, with no `b_id` dependency or URL mutation. Cookies remain browser-wide, while an open stream follows its own request's signal.
+10. Switching on `/` and `/event/{id}` continues working after the small menu fallback change.
 
-## File Structure
+## Selection Rules
 
-- Modify `components/header/menu.templ`: replace only the signal's empty fallback with numeric `0`.
-- Modify `pages/profile/profile_index.templ`: remove the duplicate client validation and reload script, then inline the URL/SSE effect on the profile container.
-- Modify `pages/profile/profile.go`: read and validate `billettHolderId` for `/profile/api`, retain query-based `b_id` for full-page rendering, and remove the valid-ID list used only by the deleted script.
-- Read only `service/live/live.go`: rely on `Manager.Stream` stopping the cancelled stream's NATS bucket watchers and creating fresh watchers for the replacement stream.
+| Situation | Selection order |
+| --- | --- |
+| Initial `GET /profile` | Associated cookie ID; otherwise existing email match / first billettholder / zero fallback |
+| An old link includes `b_id` | Ignore it, whether or not a selection cookie exists |
+| New `GET /profile/api` | Associated `billettHolderId` from Datastar signals; otherwise existing email match / first billettholder / zero fallback |
+| Malformed JSON, or a string, boolean, object, array, or fractional signal value | HTTP 400 before opening an SSE stream |
+| Later NATS update | Recheck the captured signal ID against freshly loaded associations; use the normal fallback if it is no longer associated |
 
-## Selected Design
+The cookie is a hint for the first render. The live request's signal is authoritative for selecting among authorized billettholdere; do not let a cookie override that signal. Neither handler reads `b_id`. This also avoids depending on whether a request starts before or after the browser writes the cookie during a click.
 
-The menu already calls `billettholderSelection.initialize(...)`, which normalizes stored IDs and rejects selections that are no longer associated with the user. The profile therefore consumes `$billettHolderId` directly instead of receiving another JSON list and repeating the same validation.
+The menu already validates localStorage during initialization. If cookies are unavailable, or localStorage differs from the cookie, the first live patch reconciles the profile to the menu without navigation. No query parameter selects the billettholder for the initial page render.
 
-```text
-menu selection
-    -> billettholderSelection.set(...) persists local storage
-    -> menu event updates numeric $billettHolderId
-    -> history.replaceState updates visible b_id
-    -> Datastar cancels the old SSE and opens a new /profile/api SSE
-    -> live.Manager attaches the replacement stream to existing NATS buckets
-    -> later NATS broadcasts rerender the replacement stream
+For example, with associated IDs 101 and 202:
+
+- Cookie 202 and URL `?b_id=101`: first render uses 202.
+- No cookie and URL `?b_id=202`: ignore the query and use the existing authorized default.
+- Live signal 101 and cookie 202: that stream renders 101.
+- Live signal 999: render the authorized default, never 999.
+- No associated billettholdere: selection is zero.
+
+## Files and Responsibilities
+
+| File | Planned change |
+| --- | --- |
+| `pages/profile/profile.go` | Cookie/default initial selection; remove `b_id` parsing; decode live signals once; validate captured ID on each render; remove client-only valid-ID plumbing |
+| `pages/profile/profile_index.templ` | Replace reload script and initial stream owner with one reactive profile stream; remove all selection URL handling |
+| `components/header/menu.templ` | Use numeric zero in the menu's three empty-selection assignments |
+| `pages/profile/profile_selection_test.go` | Cookie/default selection, ignored legacy query, and live selection authorization regressions |
+| `pages/profile/profile_page_test.go` | Update the existing rendering test for the changed template contract |
+| `documentation/testing/profile.md` | Add the browser acceptance checklist |
+| `service/requestctx/billettholder_selection.go` | Read only: existing middleware and accessor |
+| `static/js/conorganizer.js` | Read only: storage, cookie writes, and selection event |
+| `service/live/live.go` | Read only: stream cancellation, watcher cleanup, and current request options |
+| `static/datastar.js` | Read only: verify the shipped action and retry behavior |
+
+## Task 1: Render the Initial Profile From the Cookie
+
+**Files:** `pages/profile/profile.go`, `pages/profile/profile_selection_test.go`.
+
+**Interfaces:**
+- Consumes `requestctx.SelectedBillettholderID(r.Context()) int`.
+- Preserves `selectedBillettholderIDFromRequest(r *http.Request, user requestctx.UserRequestInfo, billettholdere []models.Billettholder, logger *slog.Logger) int`.
+- Preserves only the existing email match / first billettholder / zero fallback after cookie validation; removes the query fallback.
+
+- [ ] **Step 1: Add a regression test exercising the real middleware and initial selector.**
+
+Replace the three existing query-specific tests in `profile_selection_test.go` with this test matrix, reusing its current imports and fixture helpers. Retain the existing email-match, first-billettholder, and no-billettholdere tests.
+
+```go
+func TestSelectedBillettholderIDFromRequest_UsesCookieOrDefaultAndIgnoresQuery(t *testing.T) {
+    cases := []struct {
+        name string
+        cookie string
+        target string
+        expectedID int
+    }{
+        {"cookie without query", "202", "/profile", 202},
+        {"old query ignored with cookie", "202", "/profile?b_id=101", 202},
+        {"invalid query ignored with cookie", "202", "/profile?b_id=invalid", 202},
+        {"missing cookie ignores old query", "", "/profile?b_id=202", 101},
+        {"unrelated cookie ignores old query", "999", "/profile?b_id=202", 101},
+        {"invalid cookie ignores old query", "invalid", "/profile?b_id=202", 101},
+        {"negative cookie uses default", "-1", "/profile", 101},
+        {"unrelated cookie uses default", "999", "/profile", 101},
+    }
+    for _, tc := range cases {
+        t.Run(tc.name, func(t *testing.T) {
+            bdd.Behavior(t, bdd.BDD{
+                Given: "An authenticated user with two associated billettholdere and an optional selection cookie.",
+                When: "The profile resolves its initial selection.",
+                Then: "The cookie or authorized default selects the billettholder; the URL never does.",
+            })
+
+            // Given
+            expectedID := tc.expectedID
+            user := profileSelectionUser("owner@example.com")
+            billettholdere := []models.Billettholder{
+                profileSelectionBillettholder(101, user.Email),
+                profileSelectionBillettholder(202, "other@example.com"),
+            }
+            request := profileSelectionRequest(t, tc.target)
+            if tc.cookie != "" {
+                request.AddCookie(&http.Cookie{
+                    Name: requestctx.SelectedBillettholderCookieName,
+                    Value: tc.cookie,
+                })
+            }
+            var actualID int
+            handler := requestctx.BillettholderSelectionMiddleware(
+                http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                    actualID = selectedBillettholderIDFromRequest(
+                        r, user, billettholdere, testutil.NewTestLogger(),
+                    )
+                }),
+            )
+
+            // When
+            handler.ServeHTTP(httptest.NewRecorder(), request)
+
+            // Then
+            if actualID != expectedID {
+                t.Fatalf("expected billettholder %d; got %d", expectedID, actualID)
+            }
+        })
+    }
+}
 ```
 
-Only the SSE connection is replaced. There is no document navigation, no `window.location.replace(...)`, and no attempt to make NATS read browser local storage.
+- [ ] **Step 2: Run the focused test and confirm that cookie selection and ignored-query cases fail for the expected reasons.**
 
-The profile container needs only this effect:
+```powershell
+go test ./pages/profile -run '^TestSelectedBillettholderIDFromRequest_' -count=1
+```
+
+- [ ] **Step 3: Replace `selectedBillettholderIDFromRequest` with cookie/default selection only.**
+
+```go
+func selectedBillettholderIDFromRequest(r *http.Request, user requestctx.UserRequestInfo, billettholdere []models.Billettholder, logger *slog.Logger) int {
+    cookieID := requestctx.SelectedBillettholderID(r.Context())
+    if cookieID > 0 && hasBillettholderID(billettholdere, cookieID) {
+        return cookieID
+    }
+    return defaultSelectedBillettholderID(user, billettholdere, logger)
+}
+```
+
+Delete the previous `b_id` parsing and query-specific logging. Remove the now-unused `strconv` import from `profile.go`; keep `strings`, which is still used elsewhere. Keep `defaultSelectedBillettholderID` unchanged.
+
+- [ ] **Step 4: Rerun the same focused test command.** Existing default-selection tests and the new cookie/ignored-query tests must pass.
+
+## Task 2: Capture and Validate the Live Selection
+
+**Files:** `components/header/menu.templ`, `pages/profile/profile.go`, `pages/profile/profile_selection_test.go`.
+
+**Interfaces:**
+- Consumes the existing public `$billettHolderId` signal.
+- Produces a captured integer per `/profile/api` request.
+- Adds `selectedBillettholderIDFromSignal(id int, user requestctx.UserRequestInfo, billettholdere []models.Billettholder, logger *slog.Logger) int`.
+
+- [ ] **Step 1: Add the signal authorization test.**
+
+```go
+func TestSelectedBillettholderIDFromSignal_OnlySelectsAssociatedBillettholdere(t *testing.T) {
+    cases := []struct {
+        name string
+        signalID int
+        expectedID int
+        noBillettholdere bool
+    }{
+        {"associated selection", 202, 202, false},
+        {"unrelated selection", 999, 101, false},
+        {"cleared selection", 0, 101, false},
+        {"negative selection", -1, 101, false},
+        {"removed association", 202, 0, true},
+        {"no billettholdere", 0, 0, true},
+    }
+    for _, tc := range cases {
+        t.Run(tc.name, func(t *testing.T) {
+            bdd.Behavior(t, bdd.BDD{
+                Given: "A live profile selection and the user's current associated billettholdere.",
+                When: "The profile resolves the live selection.",
+                Then: "Only an associated billettholder or the authorized fallback is rendered.",
+            })
+
+            // Given
+            expectedID := tc.expectedID
+            user := profileSelectionUser("owner@example.com")
+            billettholdere := []models.Billettholder{
+                profileSelectionBillettholder(101, user.Email),
+                profileSelectionBillettholder(202, "other@example.com"),
+            }
+            if tc.noBillettholdere {
+                billettholdere = nil
+            }
+
+            // When
+            actualID := selectedBillettholderIDFromSignal(
+                tc.signalID, user, billettholdere, testutil.NewTestLogger(),
+            )
+
+            // Then
+            if actualID != expectedID {
+                t.Fatalf("expected billettholder %d; got %d", expectedID, actualID)
+            }
+        })
+    }
+}
+```
+
+- [ ] **Step 2: Run the new test and confirm the missing helper fails compilation.**
+
+```powershell
+go test ./pages/profile -run '^TestSelectedBillettholderIDFromSignal_' -count=1
+```
+
+- [ ] **Step 3: Add the live selection helper to `profile.go`.**
+
+```go
+func selectedBillettholderIDFromSignal(id int, user requestctx.UserRequestInfo, billettholdere []models.Billettholder, logger *slog.Logger) int {
+    if id > 0 && hasBillettholderID(billettholdere, id) {
+        return id
+    }
+    return defaultSelectedBillettholderID(user, billettholdere, logger)
+}
+```
+
+- [ ] **Step 4: Change the menu's three empty fallbacks to numeric zero.**
+
+Use the current window event, not the old plan's removed `menu-billettholder-change` handler:
+
+```templ
+data-signals:billett-holder-id="0"
+data-on:billettholder-selection-change__window="$_menuBillettholder = evt.detail; $billettHolderId = evt.detail?.Id ?? 0; $_menuBillettholderReady = true"
+```
+
+In `menuBillettholderSelectionEffect`, change only the assignment to:
+
+```javascript
+$billettHolderId = selected?.Id ?? 0;
+```
+
+Keep the existing cookie, pending/skeleton behavior, initialization, and selection event. These menu assignments supply an integer on the profile, where there is no event interest picker. Do not expand this into an unrelated rewrite of every selection component.
+
+- [ ] **Step 5: Read signals once, before `liveManager.Stream` in the profile API GET handler.**
+
+Add the same Go SDK import already used by `pages/event/event.go`:
+
+```go
+datastar "github.com/starfederation/datastar-go/datastar"
+```
+
+Insert:
+
+```go
+signals := struct {
+    BillettHolderID int `json:"billettHolderId"`
+}{}
+if err := datastar.ReadSignals(r, &signals); err != nil {
+    http.Error(w, "Ugyldig profilvalg.", http.StatusBadRequest)
+    return
+}
+requestedBillettholderID := signals.BillettHolderID
+```
+
+Inside the existing `Render` callback, after fetching current billettholdere, replace the call to `selectedBillettholderIDFromRequest` with:
+
+```go
+selectedBillettholderID := selectedBillettholderIDFromSignal(
+    requestedBillettholderID, user, billettholdere, requestLogger,
+)
+```
+
+Keep the existing `ProfileMainColumn(...)` return and buckets. Only the raw requested ID is captured; association checks remain inside `Render`. Missing or null signal values decode as zero and use the authorized default. Malformed JSON and incompatible JSON types receive 400.
+
+- [ ] **Step 6: Rerun the selection tests and existing menu tests.**
+
+After the existing watcher regenerates changed templates:
+
+```powershell
+go test ./pages/profile ./components/header -count=1
+```
+
+## Task 3: Replace Navigation With One Profile Stream Effect
+
+**Files:** `pages/profile/profile_index.templ`, `pages/profile/profile.go`, `pages/profile/profile_page_test.go`.
+
+**Interfaces:**
+- Consumes `$billettHolderId` and fixed action URI `GET /profile/api`.
+- Keeps `ProfileMainColumn` and its root ID `profile-main-column`.
+- Changes `ProfilePage` to remove only the `validBillettholderIDs []int` parameter.
+
+- [ ] **Step 1: Replace the profile container's selection metadata and `data-init` with this effect.**
 
 ```templ
 data-effect="
-    const selectedID = Number($billettHolderId ?? 0);
-    const profileURL = new URL(window.location.href);
-    if (selectedID > 0) {
-        profileURL.searchParams.set('b_id', String(selectedID));
-    } else {
-        profileURL.searchParams.delete('b_id');
-    }
-    window.history.replaceState(null, '', profileURL);
+    $billettHolderId;
     @get('/profile/api', {
         requestCancellation: 'auto',
+        retry: 'always',
         retryMaxCount: Infinity,
         retryInterval: 1000,
         retryMaxWait: 30000,
@@ -84,291 +332,153 @@ data-effect="
 "
 ```
 
-The client produces only associated IDs during normal use. `/profile/api` remains authoritative: a manually altered or stale signal falls back to a billettholder related to the authenticated user rather than bypassing authorization.
+The standalone `$billettHolderId;` read makes the effect depend on that signal; `@get` sends its value automatically. Keep that read even though it does not assign a variable. This element stays outside `#profile-main-column`, so incoming patches do not recreate the effect. Opening the menu, closing the dialog, and unrelated signal changes must not replace this stream. There is no URL or history synchronization.
 
-The fixed action URI is intentional. Datastar sends public signals automatically, so `/profile/api` receives `billettHolderId` without a payload override. Repeating the same action URI with `requestCancellation: "auto"` lets Datastar cancel the previous request before opening the replacement stream: [Datastar actions reference](https://data-star.dev/reference/actions#request-cancellation).
+Use `retry: 'always'` deliberately: the shared manager can close a stream cleanly when a watcher closes, and the bundled client's default `auto` retries network errors but not a clean EOF. Keep the option spelled `retryMaxWait`; the shared helper currently uses `retryMaxWaitMs`, which is not the shipped action option. Do not modify that shared helper in this task.
 
----
+- [ ] **Step 2: Delete the old inline reload script and unused plumbing.**
 
-### Task 1: Use a Numeric Empty Selection in the Menu
+Remove:
 
-**Files:**
-- Modify: `components/header/menu.templ:314-318`
+- The entire profile selection `<script>` with `selection.onChange`, `selection.get`, and `window.location.replace`.
+- Both `data-profile-*` attributes used by that script.
+- The now-unused `fmt` and `service/live` imports from `profile_index.templ`.
+- `validBillettholderIDs := billettholderIDs(billettholdere)` and that argument from the GET handler's `ProfilePage` call.
+- The `billettholderIDs` helper from `profile.go` and its template parameter.
 
-**Interfaces:**
-- Consumes: `window.conorganizer.billettholderSelection.initialize(...)`.
-- Produces: menu-owned signal `$billettHolderId`, using numeric `0` only when initialization returns no billettholder.
-
-- [ ] **Step 1: Replace the menu's empty fallback**
-
-Keep the existing event handler and initialization logic; change only both empty-string fallbacks to zero:
-
-```templ
-data-signals:billett-holder-id="0"
-data-on:menu-billettholder-change="$billettHolderId = evt.detail.id"
-data-init={ fmt.Sprintf("const selectedBillettholder = window.conorganizer.billettholderSelection.initialize(%s, %s); $billettHolderId = selectedBillettholder?.Id ?? 0;", associatedBillettholdereJSON, currentBillettholderJSON) }
-```
-
-- [ ] **Step 2: Inspect the menu signal assignment**
-
-```powershell
-rg -n "data-signals:billett-holder-id|menu-billettholder-change|selectedBillettholder\?\.Id" components/header/menu.templ
-git diff --check -- components/header/menu.templ
-```
-
-Expected: the menu uses `0` for both empty fallbacks; the event continues assigning the already-normalized numeric `evt.detail.id`.
-
----
-
-### Task 2: Read and Validate the Signal in the Profile Live Endpoint
-
-**Files:**
-- Modify: `pages/profile/profile.go:3-23`
-- Modify: `pages/profile/profile.go:35-65`
-- Modify: `pages/profile/profile.go:84-100`
-- Modify: `pages/profile/profile.go:281-287`
-
-**Interfaces:**
-- Consumes: Datastar request signal `billettHolderId: number`.
-- Produces: `/profile/api` renders with a captured, relation-validated billettholder ID; the full-page route continues using query `b_id`.
-
-- [ ] **Step 1: Import the Datastar Go SDK**
-
-Add:
+Retain `selectedBillettholderID int` for the initial server render. The resulting call is:
 
 ```go
-datastar "github.com/starfederation/datastar-go/datastar"
+ProfilePage(user, events, tickets, selectedBillettholderID, db, requestLogger, eventImageDir)
 ```
 
-- [ ] **Step 2: Read the selection before opening the live stream**
+- [ ] **Step 3: Update the existing profile rendering test to the new template contract.**
 
-At the beginning of the `/profile/api` GET handler, read the public signal once. The value is then fixed for that stream; a later selection opens a replacement request.
+Replace `TestProfilePage_RendersBreadcrumbAndBillettholderSelectionMetadata` with the following test. Remove the obsolete `slices` import; `strings`, `testing`, and the existing project imports remain.
 
 ```go
-var signals struct {
-	BillettHolderID int `json:"billettHolderId"`
-}
+func TestProfilePage_RendersOverviewWithLiveMainColumn(t *testing.T) {
+    bdd.Behavior(t, bdd.BDD{
+        Given: "An authenticated user opening the profile.",
+        When: "The profile overview renders.",
+        Then: "The overview has a stable main column and an initialized reactive live update.",
+    })
 
-if err := datastar.ReadSignals(r, &signals); err != nil {
-	http.Error(w, "Ugyldig profilvalg.", http.StatusBadRequest)
-	return
+    // Given
+    expectedMainColumns := 1
+    db, logger := testutil.CreateTestDBAndLogger(t, "profile_page")
+    user := requestctx.UserRequestInfo{
+        IsLoggedIn: true,
+        Id: "profile-page-user",
+        Email: "profile-page-user@example.com",
+    }
+
+    // When
+    doc := templtest.Render(t, ProfilePage(user, nil, nil, 22, db, logger, nil))
+
+    // Then
+    if actual := doc.Find("#profile-main-column").Length(); actual != expectedMainColumns {
+        t.Fatalf("expected %d main column; got %d", expectedMainColumns, actual)
+    }
+    if doc.Find(".breadcrumb-end").Text() != "Min Side" {
+        t.Fatal("expected Min Side breadcrumb")
+    }
+    effect, exists := doc.Find(".profile-container").Attr("data-effect")
+    if !exists || !strings.Contains(effect, "@get('/profile/api'") {
+        t.Fatal("expected the profile container to own its reactive live request")
+    }
 }
 ```
 
-Keep the existing `requestLogger`; signal decoding does not require a logging refactor. A malformed Datastar request returns `400`, which the existing HTTP middleware records.
+This maintains the existing render-level coverage; the browser checks below verify actual reactivity and cancellation.
 
-- [ ] **Step 3: Validate the captured signal on every live render**
-
-Replace the live endpoint's call to `selectedBillettholderIDFromRequest` with the existing relation and fallback helpers:
-
-```go
-selectedBillettholderID := signals.BillettHolderID
-if !hasBillettholderID(billettholdere, selectedBillettholderID) {
-	selectedBillettholderID = defaultSelectedBillettholderID(user, billettholdere, requestLogger)
-}
-```
-
-The captured signal stays fixed for that SSE connection. A selection change opens a replacement request with a new captured value. Keep `selectedBillettholderIDFromRequest` unchanged for full-page requests and refreshes that use visible `b_id`.
-
-- [ ] **Step 4: Remove the client-only valid-ID plumbing**
-
-Delete this full-page handler line:
-
-```go
-validBillettholderIDs := billettholderIDs(billettholdere)
-```
-
-Remove `validBillettholderIDs` from the `ProfilePage(...)` call, and delete the now-unused `billettholderIDs(...)` helper. Task 3 removes the matching template parameter and data attribute.
-
-- [ ] **Step 5: Inspect the two server selection entry points**
+- [ ] **Step 4: Let the templ watcher regenerate, then run the focused suite and source checks.**
 
 ```powershell
-rg -n -C 4 "ReadSignals|signals.BillettHolderID|selectedBillettholderIDFromRequest|hasBillettholderID" pages/profile/profile.go
-rg -n "validBillettholderIDs|billettholderIDs" pages/profile/profile.go
-git diff --check -- pages/profile/profile.go
+go test ./pages/profile ./components/header ./service/requestctx ./service/live -count=1
+git diff --check
+rg -n 'b_id|window.location|history\.|searchParams|selection.onChange|DatastarInitExpression|validBillettholderIDs|billettholderIDs' pages/profile/profile.go pages/profile/profile_index.templ
 ```
 
-Expected: `/profile/api` reads and validates the signal inline; the full `/profile` handler continues using the query helper; the second `rg` prints no matches.
+Expected: tests pass, diff check is clean, and the final search has no matches (rg exit code 1 means no matches).
 
----
+## Task 4: Verify the Full Browser Flow and Record It
 
-### Task 3: Replace Reload-Based Profile Synchronization With One Fixed-URL Effect
-
-**Files:**
-- Modify: `pages/profile/profile_index.templ:3-13`
-- Modify: `pages/profile/profile_index.templ:23-119`
+**Files:** `documentation/testing/profile.md`; verify the implementation files without broadening scope.
 
 **Interfaces:**
-- Consumes: menu-owned Datastar signal `$billettHolderId`; fixed action URI `GET /profile/api`.
-- Produces: a URL whose visible `b_id` mirrors the signal and one automatically managed same-URL SSE request.
+- Consumes a running app and an authenticated user with two associated billettholdere whose programs differ.
+- Produces evidence for initial HTML selection, live updates, cancellation, retries, and access checks.
 
-- [ ] **Step 1: Remove parameters and imports used only by duplicate client validation**
+- [ ] **Step 1: Check first render from the cookie and ignored legacy URLs.**
 
-Remove `validBillettholderIDs []int` from the `ProfilePage` signature. Keep `selectedBillettholderID int`, because the server still uses it for the initial `ProfileMainColumn` render.
+Select billettholder B on `/`, then navigate normally to `/profile`. Inspect the initial document response, not only the patched DOM. It must already show B's program. There must be one document navigation for entering the page and no selection-driven second document request.
 
-Remove both now-unused imports:
+Repeat with a URL containing A's old `b_id`, another query parameter, and a fragment. The B cookie determines the first render and the address stays untouched. Repeat the initial request without a cookie: the old `b_id` must not override the existing authorized default. A later patch may reconcile to the menu's saved localStorage selection.
 
-```go
-"fmt"
-"github.com/Regncon/conorganizer/service/live"
-```
+- [ ] **Step 2: Check switching and unrelated interactions.**
 
-- [ ] **Step 2: Replace the profile attributes with one inline effect**
+With Network filtered to `/profile/api`, switch from B to A and back:
 
-Replace these section attributes:
+- Each new request carries the selected numeric `billettHolderId` in its `datastar` query parameter.
+- The preceding request is cancelled; one profile request remains active.
+- The main column shows the final selected billettholder's program.
+- Menu/dialog, account controls, ticket summary, and scroll position remain stable.
+- Opening/closing the menu without changing the ID creates no replacement profile request.
+- The entire visible URL and history state stay unchanged. Opening `/profile` and switching must never add `b_id`; an old link's existing `b_id` stays inert.
+- Back does not cycle through billettholder choices.
 
-```templ
-data-profile-selected-billettholder-id={ fmt.Sprintf("%d", selectedBillettholderID) }
-data-profile-valid-billettholder-ids={ templ.JSONString(validBillettholderIDs) }
-data-init={ live.DatastarInitExpression("'/profile/api' + window.location.search") }
-```
+- [ ] **Step 3: Check rapid switching and NATS updates.**
 
-with:
+Throttle the browser connection and switch A/B several times quickly. After settling on B, only B may remain displayed. Trigger an ordinary interesse or event update and confirm B's stream receives it. No response from a cancelled A request may overwrite B.
 
-```templ
-data-effect="
-	const selectedID = Number($billettHolderId ?? 0);
-	const profileURL = new URL(window.location.href);
-	if (selectedID > 0) {
-		profileURL.searchParams.set('b_id', String(selectedID));
-	} else {
-		profileURL.searchParams.delete('b_id');
-	}
-	window.history.replaceState(null, '', profileURL);
-	@get('/profile/api', {
-		requestCancellation: 'auto',
-		retryMaxCount: Infinity,
-		retryInterval: 1000,
-		retryMaxWait: 30000,
-	})
-"
-```
+Inspect the request-context cancellation and deferred watcher cleanup in `service/live/live.go` if a superseded stream remains active. Do not create additional selection state or NATS buckets.
 
-The effect intentionally has one reactive input and no helper function, duplicate signal declaration, data attributes, JSON parsing, or payload override.
+- [ ] **Step 4: Check reconnects and tab isolation.**
 
-- [ ] **Step 3: Remove the old reload synchronization**
+Interrupt connectivity briefly, restore it, and confirm the current selection reconnects. Also restart the development server or close the active watcher connection to exercise clean EOF handling.
 
-Delete the entire inline `<script>` immediately after the profile `</section>`. It currently reads local storage, mutates `b_id`, subscribes with `selection.onChange`, and calls `window.location.replace`.
+Open another profile tab and select a different billettholder there. An existing stream must still follow its own captured signal on subsequent updates, even though the shared browser cookie has changed.
 
-The menu continues owning local storage and `$billettHolderId`; the profile owns only URL synchronization and its SSE request.
+- [ ] **Step 5: Check invalid and missing selections.**
 
-- [ ] **Step 4: Inspect the completed source for competing stream owners**
+Exercise each of these cases using test accounts/data:
 
-Run these source-only checks:
+- Missing cookie with valid localStorage: the live patch reconciles to the menu without document navigation.
+- Cookie containing malformed, negative, zero, or unrelated ID: authorized initial fallback.
+- A numeric but unrelated live signal: authorized live fallback, never another user's program.
+- Malformed `datastar` JSON or a string/object instead of integer `billettHolderId`: HTTP 400 with no SSE stream.
+- No associated billettholdere: numeric zero on the profile, an empty Mitt festivalprogram, and a working profile/main-column stream. No cookie or ID is required to use the profile.
+- Remove the selected association while the profile is open and broadcast the change: the next render must not expose that billettholder's data.
 
-```powershell
-rg -n "window\.location\.replace|DatastarInitExpression|selection\.onChange" pages/profile/profile_index.templ
-rg -n "data-effect|@get|requestCancellation" pages/profile/profile_index.templ
-rg -n "AbortController|profileStreamController|payload:" pages/profile/profile_index.templ
-git diff --check -- pages/profile/profile_index.templ
-```
+Use the Cookies table refresh or a read of `document.cookie` to inspect actual stored values. A stale DevTools display is not evidence that the cookie write failed.
 
-Expected results:
+- [ ] **Step 6: Check adjacent pages.**
 
-- The first `rg` prints no matches.
-- The second `rg` shows one effect, one fixed `/profile/api` action, and `requestCancellation: "auto"`.
-- The third `rg` prints no matches; the effect has no manual request controller or payload override.
-- `git diff --check` prints nothing.
+Switch billettholder on `/` and `/event/{id}`. Verify the menu, interest picker, selected interests, and cookie still agree. The home page should not gain any profile or cookie-update request.
 
-- [ ] **Step 5: Review the server cancellation path without changing it**
+- [ ] **Step 7: Update the manual checklist and record verification.**
 
-Confirm these existing behaviors remain intact:
+Add entries under `documentation/testing/profile.md` for:
 
-```powershell
-rg -n -C 3 "case <-ctx.Done\(\)|watcher\.watcher\.Stop" service/live/live.go
-rg -n -C 3 "ReadSignals|signals.BillettHolderID|selectedBillettholderIDFromRequest|hasBillettholderID" pages/profile/profile.go
-```
+- Initial render from the selection cookie.
+- Legacy `b_id` parameters have no effect, and selection changes do not modify the URL.
+- Live billettholder switching without navigation.
+- Rapid switching with only the final stream active.
+- Reconnect behavior and missing/invalid selections.
 
-Expected results:
+Use its existing Given/When/Then format and Bokmål for user-facing text. Record the commands run, browser scenarios checked, and any remaining limitation in the implementation handoff. Commit the verified implementation on its later branch using the normal repository workflow.
 
-- `Manager.Stream` exits on request-context cancellation and stops every bucket watcher in its deferred cleanup.
-- The replacement `Manager.Stream` call creates new watchers for the existing events, interests, and billettholdere buckets; no NATS subject or selection-state change is required.
-- `/profile/api` validates the signal ID, while the full-page handler validates query `b_id`; both require a billettholder related to the authenticated user.
+## Execution Handoff
 
----
+When this branch is finished, start the implementation from the completed branch state, using a fresh `codex/` branch or worktree as appropriate. First confirm that the cookie middleware, current menu wiring, profile handlers, and bundled Datastar options still match this plan. Do not apply the earlier plan's obsolete menu event names.
 
-### Task 4: Verify No-Reload Switching and Stream Ownership in the Browser
+Suggested later task prompt:
 
-**Files:**
-- Verify only: `pages/profile/profile_index.templ`
-- Verify only: `pages/profile/profile.go`
-- Verify only: `service/live/live.go`
+> Implement plans/profile-live-stream-billettholder-switching.md. Use the existing cookie for the profile's initial selection and the menu's billettHolderId signal for live updates. Remove b_id parsing and URL synchronization. Keep the profile working without a billettholder; the selection scopes Mitt festivalprogram only. Complete the focused tests and browser acceptance checks, including cancellation of superseded streams.
 
-**Interfaces:**
-- Consumes: the managed profile effect from Task 3 and two billettholdere with distinguishable profile data.
-- Produces: evidence that URL state, rendered data, connection cancellation, retries, and browser history behave as required.
+## References
 
-- [ ] **Step 1: Establish the initial connection**
+The shipped `static/datastar.js` is the compatibility reference for this repository. The public [Datastar actions reference](https://data-star.dev/reference/actions#request-cancellation) documents automatic same-method/same-URI cancellation, signal transport, and retry options. Verify these against the bundled implementation again when executing the plan.
 
-Open `/profile` while signed in as a user related to at least two billettholdere. In browser developer tools, filter Network requests by `/profile/api`.
-
-Expected:
-
-- The address bar contains the active `b_id` after initialization.
-- There is one pending `/profile/api` SSE request whose Datastar signal envelope contains the numeric active `billettHolderId`.
-- The profile main column shows that billettholder's program and interests.
-
-- [ ] **Step 2: Switch billettholder without a document navigation**
-
-Keep the Network panel open, switch to a second billettholder from the menu modal, and observe the request list and address bar.
-
-Expected:
-
-- No new `document` request occurs.
-- The old `/profile/api` request becomes cancelled.
-- Exactly one new `/profile/api` request remains pending, and its Datastar signal envelope contains the second `billettHolderId`.
-- The visible URL contains the second billettholder as `b_id=<id>`.
-- `#profile-main-column` changes to the second billettholder's data.
-- Other query parameters and the URL fragment are unchanged.
-
-- [ ] **Step 3: Verify rapid changes cannot leave stale streams**
-
-Switch between the two billettholdere several times quickly and stop on the second one.
-
-Expected:
-
-- Every superseded request is cancelled.
-- At most one `/profile/api` request remains pending after interaction settles.
-- The address bar and profile data both represent the final selection.
-- A subsequent interest or event NATS broadcast patches the replacement stream without a document request and does not restore data from an earlier selection.
-
-- [ ] **Step 4: Verify history and refresh behavior**
-
-After switching, press Back once, then return to the profile and refresh normally.
-
-Expected:
-
-- Back does not cycle through prior billettholder selections because the URL was changed with `replaceState`.
-- Refresh renders the same billettholder on the server because the current `b_id` is present in the URL.
-- Local storage, the menu highlight, and profile data agree after refresh.
-
-- [ ] **Step 5: Verify retry behavior**
-
-With one billettholder selected, temporarily restart the development server and leave the profile tab open.
-
-Expected:
-
-- The active request retries after the connection failure.
-- It reconnects with the same selected `b_id`.
-- Only the final selected billettholder's stream resumes patching the profile.
-
-- [ ] **Step 6: Verify the zero-billettholder fallback**
-
-Open `/profile` as a valid user with no related billettholdere.
-
-Expected:
-
-- The URL has no `b_id` parameter.
-- `$billettHolderId` is numeric `0`.
-- One `/profile/api` request remains active with `billettHolderId: 0` in its Datastar signal envelope.
-- The rest of the profile, including data not scoped to a billettholder, continues receiving live updates.
-
----
-
-## Completion Criteria
-
-- Changing billettholder on `/profile` performs no document reload.
-- During normal switcher use, URL `b_id`, local storage, menu selection, rendered profile data, and active SSE request agree.
-- Only one profile stream remains active after initialization or any number of selection changes.
-- Automatically cancelled streams stop their server-side bucket watchers through request-context cancellation.
-- Refresh, retry, browser history, backend fallback for an invalid signal, and zero-billettholder behavior match this plan.
+The existing `service/live/live.go` captures its request context, patches the component returned by `Page.Render`, and stops watchers when the request is cancelled. Reuse that lifecycle.

@@ -4,12 +4,11 @@
     width: 100%;
     padding-inline: 0.3rem;
 
-
     .name-initials {
         display: inline-flex;
         place-items: center;
         gap: var(--spacing-2x);
-        width: 100%;;
+        width: 100%;
         max-width: 28.375rem;
 
         .name {
@@ -59,7 +58,6 @@
 
         &:focus,
         &:focus-visible {
-            outline: 1px solid var(--color-primary);
             color: var(--btn-primary-active-text);
             box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
         }
@@ -78,15 +76,15 @@
         overflow-y: auto;
         scrollbar-width: thin;
         z-index: 1;
-        padding:0;
+        padding: 0;
         display: grid;
         grid-template-columns:
-        [outer-start] var(--spacing-1x)
-        [select-start] 12px
-        [content-start] 1fr
-        [content-end] 12px
-        [select-end] var(--spacing-1x)
-        [outer-end];
+            [outer-start] var(--spacing-1x)
+            [select-start] 12px
+            [content-start] 1fr
+            [content-end] 12px
+            [select-end] var(--spacing-1x)
+            [outer-end];
 
         &.hidden {
             display: none;
@@ -103,7 +101,9 @@
             display: grid;
             grid-template-columns: subgrid;
 
-            &:has(.selected), &:hover, &:focus-visible {
+            &:has(.selected),
+            &:hover,
+            &:focus-visible {
                 grid-column: select-start / select-end;
                 border-radius: var(--border-radius-1x);
                 outline: 0;
@@ -116,7 +116,6 @@
                 grid-template-columns: subgrid;
                 grid-column: content-start / select-end;
             }
-
         }
     }
 }
