@@ -151,3 +151,104 @@ text
 Time: 2026-09-13 17:14:23
 --- Next Prompt ---
 
+
+Let's continue the discussion on the map feature. How can we match the room maps to the rooms data? 
+I don't want to migrate the database schema or add new columns for this feature. Perhaps we can simply match the room number in the room data to the corresponding SVG file name? Perhaps with a small reusable helper function that returns the correct SVG path based on the room number? 
+We need this in other places as well later so it's not yagni to add a helper function now.
+What do you suggest? Are there any other ways we could match the room maps to the rooms data without changing the database schema?
+
+Time: 2026-09-13 17:23:01
+--- Codex Run ---
+
+Codex output:
+Yes, matching by room number is the simplest and most appropriate solution here.
+
+I suggest a small pure helper in `service/rooms/maps.go`:
+
+```go
+func MapPathForRoom(roomNumber string) (string, bool)
+```
+
+Internally it would use an allowlist:
+
+```go
+var roomMaps = map[string]string{
+    "705": "/static/rooms/terminus-7-etasje-705.svg",
+    "706": "/static/rooms/terminus-7-etasje-706.svg",
+    "707": "/static/rooms/terminus-7-etasje-707.svg",
+    "709": "/static/rooms/terminus-7-etasje-709.svg",
+    // ...
+}
+```
+
+This is preferable to constructing arbitrary paths because:
+
+- unknown rooms return `(empty, false)` instead of a broken image;
+- filenames are not treated as user-controlled paths;
+- missing maps such as room `716` can be handled explicitly;
+- the mapping is easy to test and update;
+- it works with production’s embedded static assets without checking the filesystem.
+
+Usage would be:
+
+```go
+if mapPath, ok := roomService.MapPathForRoom(room.RoomNumber); ok {
+    // render map
+}
+```
+
+The filename convention then becomes the contract:
+
+```text
+room_number = 705
+→ /static/rooms/terminus-7-etasje-705.svg
+```
+
+The tradeoff is that map selection becomes automatic rather than configurable. If room `705` should use a different SVG, we would rename the asset or update the helper. That seems reasonable while there is exactly one canonical map per room.
+
+Other possibilities are:
+
+- a static JSON manifest mapping room numbers to files;
+- a configuration file outside the database;
+- matching by room name;
+- storing the selected asset in the database.
+
+I would avoid the latter three for now. Room names can change, a JSON manifest adds another source of truth, and a database field is explicitly out of scope.
+
+One important distinction: the helper should only resolve room-specific map assets. For the assignment map, the overview SVG is a separate fixed asset:
+
+```text
+/static/rooms/terminus-7-etasje.svg
+```
+
+Its embedded `data-room-number` values can identify the visible room regions. However, the assignment flow must still resolve room number to the actual database room ID; room number must never be confused with the database ID.
+
+I’d start with the allowlisted helper plus table-driven tests for known and unknown room numbers. If we later support multiple buildings or floors, the helper can evolve to accept `(floor, roomNumber)` without changing the database schema.
+
+Time: 2026-09-13 17:23:01
+--- Next Prompt ---
+If you are ready, and have no further questions, please go ahead and implement the map feature for the room administration.
+
+Time: 2026-09-13 17:29:24
+--- Codex Run ---
+
+Codex output:
+I’ll add room-map previews to the administration page, using a shared helper that matches room numbers to the available SVGs. Rooms without a map will still render normally. I’ll keep the interactive assignment map for the next step.
+
+Done reading AGENTS.MD file.
+
+The cleanup is committed, and the room cards are ready for previews. I’ll make each preview open the full-size map, with a separate “Rediger rom” button so viewing a map doesn’t also open the edit dialog. Matching will use the room number, regardless of its database ID or display name.
+
+Implemented automatic room maps on the administration page.
+
+- Shared `MapPathForRoom` helper matches room numbers to the nine available SVGs.
+- Cards show previews with full-size links.
+- Unknown rooms show a “map unavailable” message.
+- Separate “Rediger rom” buttons handle editing.
+- No database changes.
+
+Focused room tests pass, including asset checks. Changes are ready for review and uncommitted.
+
+Time: 2026-09-13 17:29:24
+--- Next Prompt ---
+

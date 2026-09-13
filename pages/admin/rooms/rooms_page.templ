@@ -120,9 +120,16 @@ templ formModal() {
 templ roomCard(room models.Room) {
 	<div
 		class="room"
-		data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d'); document.getElementById('room-dialog').showModal()", room.ID) }
 	>
 		<h3>{ room.RoomNumber }</h3>
+		if mapPath, ok := roomService.MapPathForRoom(room.RoomNumber); ok {
+			<a class="room-map" href={ templ.SafeURL(mapPath) } target="_blank" rel="noopener">
+				<img src={ mapPath } alt={ "Kart med veien til rom " + room.RoomNumber } loading="lazy"/>
+				<p>Åpne kart for rom { room.RoomNumber } i ny fane</p>
+			</a>
+		} else {
+			<p class="room-map-missing">Kart er ikke tilgjengelig for dette rommet.</p>
+		}
 		<span>
 			<p>Romnavn på døren</p>
 			if room.Name == "" {
@@ -135,6 +142,11 @@ templ roomCard(room models.Room) {
 			<p style="border-bottom: 1px solid var(--bg-item-border);">Notater</p>
 			<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
 		}
+		<button
+			type="button"
+			class="btn btn--outline room-edit"
+			data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d'); document.getElementById('room-dialog').showModal()", room.ID) }
+		>Rediger rom</button>
 	</div>
 }
 
@@ -218,6 +230,26 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
             background-color: var(--bg-item-hover);
             border-color: var(--bg-item-border-hover);
         }
+        .room-map {
+            display: block;
+
+            img {
+                display: block;
+                inline-size: 100%;
+                block-size: 16rem;
+                object-fit: contain;
+                background-color: white;
+                border-radius: var(--border-radius-1x);
+            }
+
+            p {
+                margin-block-start: var(--spacing-1x);
+            }
+        }
+
+        .room-edit {
+            margin-block-start: auto;
+        }
         @media screen and (width > 600px) {
             .rooms-container {
                 grid-template-columns: repeat(2, 1fr);
@@ -247,7 +279,7 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
 
 templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
 	<section id="room-administration" class="rooms-section" data-init={ live.DatastarInit("/admin/rooms/api/") }>
-		<p>Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom for konvensjonen. Hovedsakelig brukt for å endre detaljer som maksimum spill for et rom eller detaljer som romnummer og romnavn som vises på dører og branninstruksjoner.</p>
+		<p>Her kan du legge til og redigere rom for konvensjonen. Kart vises automatisk ut fra romnummeret. Åpne et kart for å se veien til rommet i full størrelse.</p>
 		{{ floors := getRoomsByFloor(db, logger) }}
 		if len(floors) > 0 {
 			<div class="rooms-container">

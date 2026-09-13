@@ -30,6 +30,11 @@ Denne sjekklisten dekker `/admin/rooms` og `/admin/rooms/assignment/{pulje}`, de
   **Når** handlingen bekreftes.<br>
   **Så** skal bare riktig rom fjernes fra oversikten.
 
+- [ ] **Romkart følger romnummeret**<br>
+  **Gitt** at rom 705 og et rom uten kart er registrert.<br>
+  **Når** admin åpner romoversikten.<br>
+  **Så** vises kartet til rom 705 og en melding for rommet uten kart. Kartlenken åpner kartet i en ny fane, mens «Rediger rom» åpner skjemaet. Etter endring av romnummer og lagring vises kartet som hører til det nye nummeret.
+
 ### Romfordeling
 
 - [ ] **Romfordeling viser riktig pulje**<br>

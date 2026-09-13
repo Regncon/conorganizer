@@ -141,6 +141,45 @@ func TestCalculatePopulation_CountsPlayersAndGMs(t *testing.T) {
 	}
 }
 
+func TestRoomCard_ResolvesMapByRoomNumber(t *testing.T) {
+	for _, tc := range []struct {
+		number string
+		path   string
+	}{
+		{number: "705", path: "/static/rooms/terminus-7-etasje-705.svg"},
+		{number: "716"},
+		{number: "../705"},
+	} {
+		t.Run(tc.number, func(t *testing.T) {
+			// Given
+			room := models.Room{ID: 42, Name: "Et annet navn", RoomNumber: tc.number, Floor: 7}
+
+			// When
+			doc := templtest.Render(t, roomCard(room))
+
+			// Then
+			if tc.path == "" {
+				if doc.Find("img, a.room-map").Length() != 0 || doc.Find(".room-map-missing").Length() != 1 {
+					t.Fatal("expected an unavailable-map message without a broken image or link")
+				}
+			} else {
+				if got := doc.Find(".room-map img").AttrOr("src", ""); got != tc.path {
+					t.Fatalf("expected map %q, got %q", tc.path, got)
+				}
+				if got := doc.Find("a.room-map").AttrOr("href", ""); got != tc.path {
+					t.Fatalf("expected full-size link %q, got %q", tc.path, got)
+				}
+			}
+			if !strings.Contains(doc.Find("button.room-edit").AttrOr("data-on:click", ""), "/admin/rooms/api/42") {
+				t.Fatal("editing must still use the database room ID")
+			}
+			if _, exists := doc.Find(".room").Attr("data-on:click"); exists {
+				t.Fatal("opening a map must not also open the edit dialog")
+			}
+		})
+	}
+}
+
 func roomPageFloorIDs(floorGroups []FloorGroup) []int {
 	floors := make([]int, 0, len(floorGroups))
 	for _, floorGroup := range floorGroups {
