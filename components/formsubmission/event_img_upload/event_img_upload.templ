@@ -426,7 +426,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
     </style>
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Heim", Url: "/"},
-		{Name: "Mine arrangement", Url: "/profile/"},
+		{Name: "Min Side", Url: "/profile/"},
 		{Name: title, Url: "/profile/new/" + eventId + "/"},
 		{Name: "Legg til bilete", Url: ""},
 	})
