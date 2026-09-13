@@ -2,6 +2,8 @@ package rooms
 
 import (
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -110,10 +112,10 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 	if got := roomDropTarget.AttrOr("data-on:drop__prevent", ""); !strings.Contains(got, wantDrop) {
 		t.Fatalf("room drop handler mismatch\nexpected to contain: %s\nactual:              %s", wantDrop, got)
 	}
-	if got := doc.Find(`.room-event[draggable="true"]`).AttrOr("data-on:dragstart", ""); got != "$draggedEventId = 'assigned-room-event'" {
+	if got := doc.Find(`.room .room-event[draggable="true"]`).AttrOr("data-on:dragstart", ""); got != "$draggedEventId = 'assigned-room-event'" {
 		t.Fatalf("assigned room event card should set the dragged signal on dragstart\nactual: %s", got)
 	}
-	if got := doc.Find(`.event-list a[draggable="true"]`).AttrOr("data-on:dragstart", ""); got != "$draggedEventId = 'missing-room-event'" {
+	if got := doc.Find(`.event-list .room-event[draggable="true"]`).AttrOr("data-on:dragstart", ""); got != "$draggedEventId = 'missing-room-event'" {
 		t.Fatalf("missing-room event link should set the dragged signal on dragstart\nactual: %s", got)
 	}
 }
@@ -186,6 +188,99 @@ func roomPageFloorIDs(floorGroups []FloorGroup) []int {
 		floors = append(floors, floorGroup.Floor)
 	}
 	return floors
+}
+
+func TestRoomsAssignmentMap_UsesDatabaseIDsAndCurrentPuljeAssignments(t *testing.T) {
+	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "assignment_map")
+	seedRoomsPageLookups(t, db)
+	room := createRoomsPageRoom(t, db, "Amalie", "705", 7)
+	createRoomsPageRoom(t, db, "Annet rom", "201", 2)
+	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
+	insertRoomsPagePulje(t, db, models.PuljeLordagKveld)
+	insertRoomsPageEvent(t, db, "friday-event", "Fredag", 4)
+	insertRoomsPageEvent(t, db, "saturday-event", "Lørdag", 4)
+	insertRoomsPageEventPulje(t, db, "friday-event", models.PuljeFredagKveld, room.ID)
+	insertRoomsPageEventPulje(t, db, "saturday-event", models.PuljeLordagKveld, room.ID)
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	var mappedRooms []models.RoomByPulje
+	err := json.Unmarshal([]byte(doc.Find("room-map").AttrOr("rooms", "")), &mappedRooms)
+
+	// Then
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(mappedRooms) != 1 || mappedRooms[0].ID != int64(room.ID) || mappedRooms[0].RoomNumber != "705" {
+		t.Fatalf("expected the seventh-floor room with its database ID, got %+v", mappedRooms)
+	}
+	if len(mappedRooms[0].AssignedEventsID) != 1 || mappedRooms[0].AssignedEventsID[0].EventID != "friday-event" {
+		t.Fatalf("expected only Friday assignments, got %+v", mappedRooms[0].AssignedEventsID)
+	}
+	if doc.Find(`#assignment-dialog button[data-event-id="friday-event"]`).Length() != 1 || doc.Find(`#assignment-dialog button[data-event-id="saturday-event"]`).Length() != 0 {
+		t.Fatal("map event picker must contain only the current pulje's events")
+	}
+	if doc.Find(".rooms-container .room").Length() != 1 || doc.Find("room-map .room").Length() != 1 {
+		t.Fatal("rooms outside the map must remain in the assignment list")
+	}
+	if doc.Find("#map-event").Length() != 0 {
+		t.Fatal("map must use per-room add buttons, not the old dropdown")
+	}
+	if doc.Find(`room-map .room-add-event[aria-label="Legg til arrangement i rom 705"]`).Length() != 1 {
+		t.Fatal("mapped room must have an accessible add button")
+	}
+	if got := doc.Find("room-map .room-event-count").Text(); got != "1" {
+		t.Fatalf("expected one assigned event in the room counter, got %q", got)
+	}
+}
+
+func TestRoomEventCard_IsSharedAcrossAssignedAndUnassignedLocations(t *testing.T) {
+	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "shared_room_cards")
+	seedRoomsPageLookups(t, db)
+	mapped := createRoomsPageRoom(t, db, "Amalie", "705", 7)
+	unmapped := createRoomsPageRoom(t, db, "Utenfor kartet", "716", 7)
+	otherFloor := createRoomsPageRoom(t, db, "Annen etasje", "201", 2)
+	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
+	for _, roomID := range []int{0, mapped.ID, unmapped.ID, otherFloor.ID} {
+		id := fmt.Sprintf("event-%d", roomID)
+		insertRoomsPageEvent(t, db, id, "Et arrangement", 4)
+		insertRoomsPageEventPulje(t, db, id, models.PuljeFredagKveld, roomID)
+	}
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+
+	// Then
+	for _, roomID := range []int{0, mapped.ID, unmapped.ID, otherFloor.ID} {
+		card := doc.Find(fmt.Sprintf(`.room-event[data-event-id="event-%d"]`, roomID))
+		if card.Length() != 1 || card.Find("img").AttrOr("src", "") != "/static/placeholder_banner.svg" || !strings.Contains(card.Text(), "Et arrangement") {
+			t.Fatalf("event in room %d should render once with an image and title", roomID)
+		}
+		remove := card.Find(".room-event-remove")
+		if roomID == 0 {
+			if remove.Length() != 0 {
+				t.Fatal("unassigned event must not offer removal")
+			}
+		} else if got := remove.AttrOr("data-on:click", ""); got != fmt.Sprintf("@delete('/admin/rooms/api/assignment/FredagKveld/event-%d/%d')", roomID, roomID) {
+			t.Fatalf("removal must target the current pulje and room, got %q", got)
+		}
+	}
+}
+
+func TestRoomAssignmentPicker_ExistsWhenPuljeHasNoEvents(t *testing.T) {
+	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "empty_room_picker")
+	createRoomsPageRoom(t, db, "Amalie", "705", 7)
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+
+	// Then
+	if doc.Find("#assignment-dialog").Length() != 1 || !strings.Contains(doc.Find("#assignment-dialog").Text(), "Ingen arrangementer i denne puljen.") {
+		t.Fatal("add button must open a dialog with an empty state, even without events")
+	}
 }
 
 func createRoomsPageRoom(t *testing.T, db *sql.DB, name string, roomNumber string, floor int) models.Room {

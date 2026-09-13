@@ -252,3 +252,43 @@ Focused room tests pass, including asset checks. Changes are ready for review an
 Time: 2026-09-13 17:29:24
 --- Next Prompt ---
 
+Please continue.
+
+Time: 2026-09-13 18:33:08
+--- Codex Run ---
+
+Codex output:
+I’ll continue with the interactive assignment map. I’ll connect its room numbers to database room IDs, reuse the existing assignment endpoint, and support both dropping an event onto a room and selecting an event followed by a room click.
+
+The SVG’s room groups contain wall lines, so they don’t yet cover the room interiors for dropping. I’ll add transparent room areas to the SVG itself and use those for clicks, keyboard activation, and drops.
+
+The component will receive current room IDs and assignment counts from the server. The existing room list will remain available for rooms outside this map.
+
+The map is wired into each pulje’s assignment page. It shows assignment counts, accepts drops from the existing event cards, and has an event selector for click and keyboard use.
+
+I also fixed two issues in that flow: the event picker now refreshes with live updates, and the server rejects assignments when an event has been removed from the selected pulje. Next I’ll verify the browser interactions and room-ID matching.
+
+The Go checks pass. Browser verification is blocked in this session: no connected browser is available, and Chromium cannot start under the sandbox’s socket restrictions. I’ll check the component’s event handling and live-data updates in a DOM test harness, alongside route tests for persistence. Visual and real-pointer checks will remain unverified.
+
+The checks confirm that map assignments use database room IDs, affect only the selected pulje, and preserve publishing state. Component logic checks also pass for click, keyboard, drop, refreshed counts, missing rooms, and map-load failures.
+
+I’m finishing the full test run and diff review. The remaining verification gap is visual layout and real pointer/touch behavior in a browser.
+
+Added the interactive assignment map:
+
+- Drag events onto rooms, or select an event and click/keyboard-activate a room.
+- Room numbers resolve to database IDs.
+- Assignment counts update live.
+- Existing room lists remain available.
+
+No schema changes; changes are uncommitted.
+
+All Go tests and component logic checks pass. Visual and real-pointer browser checks remain unverified because browser access was blocked.
+
+text
+2026-09-13T16:29:35.576116Z ERROR codex_core::tools::router: error=exec_command failed: ProcessFailed { message: "Network access to \"registry.npmjs.org\" was blocked: domain is not on the allowlist for the current sandbox mode." }
+
+Time: 2026-09-13 18:33:08
+--- Next Prompt ---
+One note, you may be able to access the site via localhost:8080 It has hot reload enabled. 
+I can see the map. I don't really like the drop-down event selector. Perhaps it's more user friendly if each room has a small "Add Event" or "+" button that opens a modal with the event selector? Also, we should see the events assigned to each room directly on the map, rather than just the count. The counter is nice, let's keep it, but we should also see the event names. The mini event cars should have the image and name of the event, a small "x" button to remove the event from the room. Let's also add image to the event that are not yet assigned to a room or perhaps use the same small event cards for the unassigned events. In fact, perhaps we can use the same small event cards for all three use cases: unassigned events, events assigned to a room, and the events assigned to a room not on the map.
