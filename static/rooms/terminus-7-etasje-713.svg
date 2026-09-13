@@ -1,0 +1,253 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="950" height="580" viewBox="0 0 950 580" role="img" aria-labelledby="room-713-map-title room-713-map-description" lang="nb">
+  <title id="room-713-map-title">Anne Gullestad – rom 713, Grand Hotel Terminus, 7. etasje</title>
+  <desc id="room-713-map-description">Veien fra fellesområdet ved hovedtrappen og heisene til Anne Gullestad, rom 713. Startpunktet er markert med en sirkel og «Start her». Følg den stiplede linjen gjennom korridoren til pilen ved døren. Rommet har lys blå bakgrunn og en tydelig blå ramme. Kartets retning følger hovedkartet.</desc>
+  <metadata>
+    Plassering og romnumre: brukerens foto, origin.webp.
+    Romnavn og nummer for rom 709: mapping fra Regncons styre, oppgitt av brukeren.
+    Stavemåten på romnavnene følger den oppgitte listen.
+    WC og nødutganger er identifisert av brukeren.
+    Rom 716 og rommet mellom 705 og heisene er antatt boder eller tekniske rom.
+    Ubrukt nedre dør på rom 709 og ubrukt høyre dør på rom 714 er utelatt etter brukerens opplysninger.
+    Dørblad og åpningsbuer er skjematiske; slagretning er ikke verifisert.
+  </metadata>
+  <defs>
+    <g id="room-713-stair-symbol" fill="none" stroke="black" stroke-width="3">
+      <path d="M 0,32 H 12 V 24 H 24 V 16 H 36 V 8 H 48 V 0 H 60" />
+    </g>
+    <g id="room-713-lift-symbol" fill="none" stroke="black" stroke-width="2">
+      <rect width="38" height="38" />
+      <path d="M 12,28 V 10 M 6,16 L 12,10 L 18,16                M 26,10 V 28 M 20,22 L 26,28 L 32,22" />
+    </g>
+    <clipPath id="room-713-map-crop">
+      <rect x="0" y="110" width="950" height="470" />
+    </clipPath>
+    <marker id="room-713-route-arrow" markerUnits="userSpaceOnUse" markerWidth="13" markerHeight="13" viewBox="0 0 13 13" refX="12" refY="6.5" orient="auto">
+      <path d="M 0,0 L 13,6.5 L 0,13 Z" fill="#1759a6" />
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="white" />
+  <g font-family="Arial, Helvetica, sans-serif" fill="black">
+    <text x="20" y="34" font-size="27" font-weight="bold">Anne Gullestad</text>
+    <text x="20" y="61" font-size="17">7. etasje · Rom 713 · Grand Hotel Terminus</text>
+    <text x="20" y="87" font-size="17">Følg den stiplede linjen til døren.</text>
+  </g>
+  <g clip-path="url(#room-713-map-crop)">
+    <g font-family="Arial, Helvetica, sans-serif" fill="black" transform="translate(-220 -410)">
+      <g id="room-713-service-room-fills" fill="#dddddd">
+        <rect x="585" y="590" width="160" height="170" />
+        <rect x="320" y="475" width="175" height="60" />
+      </g>
+      <g id="room-713-emergency-stairwell-fills" fill="#eeeeee">
+        <rect x="320" y="110" width="175" height="80" />
+        <rect x="1000" y="590" width="150" height="170" />
+      </g>
+      <rect id="room-713-destination-fill" x="950" y="820" width="200" height="150" fill="#dbeafe" />
+      <path id="room-713-outer-walls" d="M 50,110 H 495 V 590 H 1150 V 970 H 50 Z" fill="none" stroke="black" stroke-width="4" />
+      <g fill="none" stroke="black" stroke-width="3">
+        <g id="room-713-room-707" data-room-number="707">
+          <title>Torborg Nedraas – rom 707</title>
+          <path d="M 240,110 V 268 M 240,310 V 460 H 50" />
+        </g>
+        <g id="room-713-room-706" data-room-number="706">
+          <title>Marie Monsen – rom 706</title>
+          <path d="M 495,190 H 320 V 268 M 320,310 V 345 H 495" />
+        </g>
+        <g id="room-713-room-705" data-room-number="705">
+          <title>Amalie Hansen – rom 705</title>
+          <path d="M 320,345 V 388 M 320,430 V 475 H 495" />
+        </g>
+        <g id="room-713-room-710" data-room-number="710">
+          <title>Lucie Wolf – rom 710</title>
+          <path d="M 240,970 V 820 H 262 M 304,820 H 430 V 970" />
+        </g>
+        <g id="room-713-room-711" data-room-number="711">
+          <title>Fanny Schnelle – rom 711</title>
+          <path d="M 430,820 H 459 M 501,820 H 690 V 970" />
+        </g>
+        <g id="room-713-room-712" data-room-number="712">
+          <title>Amalie Skram – rom 712</title>
+          <path d="M 690,820 H 810 M 852,820 H 950 V 970" />
+        </g>
+        <g id="room-713-room-713" data-room-number="713">
+          <title>Anne Gullestad – rom 713</title>
+          <path d="M 950,820 H 978 M 1020,820 H 1150" />
+        </g>
+        <g id="room-713-room-714" data-room-number="714">
+          <title>Valborg Platou – rom 714</title>
+          <path d="M 745,590 V 760 H 793 M 835,760 H 1000 V 590" />
+        </g>
+        <g id="room-713-room-716" data-room-number="716">
+          <title>Rom 716 – navn og funksjon ukjent</title>
+          <path d="M 585,590 V 760 H 596 M 626,760 H 641 V 700                  H 623 V 653 H 665 V 590" />
+        </g>
+        <g id="room-713-room-709" data-room-number="709">
+          <title>Kim Friele – rom 709</title>
+          <path d="M 240,565 V 662 M 240,704 V 820" />
+        </g>
+        <g id="room-713-wc-area">
+          <title>WC – samlet toalettområde</title>
+          <path d="M 240,460 V 511 M 240,549 V 565 H 50" />
+        </g>
+        <g id="room-713-unlabelled-areas">
+          <path d="M 320,475 V 499 M 320,529 V 535 H 495" />
+          <path d="M 665,590 V 700 H 681 V 760 H 688 M 724,760 H 745" />
+        </g>
+        <g id="room-713-main-stairwell">
+          <path d="M 429,590 H 585 M 320,590 V 622                  M 320,719 V 760 H 585" />
+        </g>
+        <g id="room-713-lift-area">
+          <path d="M 320,535 V 590 H 335 M 365,590 H 391                  M 421,590 H 429 V 535 M 377,535 V 590" />
+        </g>
+        <g id="room-713-upper-stairwell">
+          <path d="M 320,110 V 145 M 320,179 V 190" />
+        </g>
+        <g id="room-713-right-stairwell">
+          <path d="M 1000,760 H 1079 M 1121,760 H 1150" />
+        </g>
+      </g>
+      <g id="room-713-doors" fill="none">
+        <g id="room-713-door-707" transform="translate(240 268) rotate(90)">
+          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-706" transform="translate(320 310) rotate(-90)">
+          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-705" transform="translate(320 430) rotate(-90)">
+          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-709-upper" transform="translate(240 662) rotate(90)">
+          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-wc" transform="translate(240 511) rotate(90)">
+          <path d="M 0,0 V 38" stroke="#444444" stroke-width="2" />
+          <path d="M 0,38 A 38,38 0 0 0 38,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-710" transform="translate(262 820) rotate(0)">
+          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-711" transform="translate(459 820) rotate(0)">
+          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-712" transform="translate(810 820) rotate(0)">
+          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-713" transform="translate(978 820) rotate(0)">
+          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-714-left" transform="translate(835 760) rotate(180)">
+          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-716" transform="translate(626 760) rotate(180)">
+          <path d="M 0,0 V 30" stroke="#444444" stroke-width="2" />
+          <path d="M 0,30 A 30,30 0 0 0 30,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-service-by-714" transform="translate(724 760) rotate(180)">
+          <path d="M 0,0 V 36" stroke="#444444" stroke-width="2" />
+          <path d="M 0,36 A 36,36 0 0 0 36,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-service-by-705" transform="translate(320 529) rotate(-90)">
+          <path d="M 0,0 V 30" stroke="#444444" stroke-width="2" />
+          <path d="M 0,30 A 30,30 0 0 0 30,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-upper-emergency" transform="translate(320 179) rotate(-90)">
+          <path d="M 0,0 V 34" stroke="#444444" stroke-width="2" />
+          <path d="M 0,34 A 34,34 0 0 0 34,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-door-right-emergency" transform="translate(1121 760) rotate(180)">
+          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+        </g>
+        <g id="room-713-main-stairwell-double-door">
+          <path d="M 320,622 H 368.5 M 320,719 H 368.5" stroke="#444444" stroke-width="2" />
+          <path d="M 368.5,622 A 48.5,48.5 0 0 1 320,670.5 M 368.5,719 A 48.5,48.5 0 0 0 320,670.5" stroke="#999999" stroke-width="1" />
+        </g>
+      </g>
+      <path id="room-713-destination-outline" d="M 978,820 H 950 V 970 H 1150 V 820 H 1020" fill="none" stroke="#1759a6" stroke-width="5" stroke-linejoin="round" />
+      <g id="room-713-room-labels" font-size="21" text-anchor="middle" fill="#777777">
+        <g id="room-713-label-707">
+          <text x="145" y="266" font-weight="bold">
+            <tspan x="145" dy="0">Torborg</tspan>
+            <tspan x="145" dy="27">Nedraas</tspan>
+          </text>
+          <text x="145" y="324" font-size="17">707</text>
+        </g>
+        <g id="room-713-label-706">
+          <text x="408" y="247" font-weight="bold">
+            <tspan x="408" dy="0">Marie</tspan>
+            <tspan x="408" dy="27">Monsen</tspan>
+          </text>
+          <text x="408" y="305" font-size="17">706</text>
+        </g>
+        <g id="room-713-label-705">
+          <text x="408" y="385" font-weight="bold">
+            <tspan x="408" dy="0">Amalie</tspan>
+            <tspan x="408" dy="27">Hansen</tspan>
+          </text>
+          <text x="408" y="443" font-size="17">705</text>
+        </g>
+        <g id="room-713-label-710">
+          <text x="335" y="890" font-weight="bold">
+            <tspan x="335" dy="0">Lucie Wolf</tspan>
+          </text>
+          <text x="335" y="921" font-size="17">710</text>
+        </g>
+        <g id="room-713-label-711">
+          <text x="560" y="890" font-weight="bold">
+            <tspan x="560" dy="0">Fanny Schnelle</tspan>
+          </text>
+          <text x="560" y="921" font-size="17">711</text>
+        </g>
+        <g id="room-713-label-712">
+          <text x="820" y="890" font-weight="bold">
+            <tspan x="820" dy="0">Amalie Skram</tspan>
+          </text>
+          <text x="820" y="921" font-size="17">712</text>
+        </g>
+        <g id="room-713-label-713" fill="#1759a6" font-size="25">
+          <text x="1050" y="890" font-weight="bold">
+            <tspan x="1050" dy="0">Anne Gullestad</tspan>
+          </text>
+          <text x="1050" y="921" font-size="17">713</text>
+        </g>
+        <g id="room-713-label-714">
+          <text x="873" y="671" font-weight="bold">
+            <tspan x="873" dy="0">Valborg Platou</tspan>
+          </text>
+          <text x="873" y="702" font-size="17">714</text>
+        </g>
+        <text id="room-713-label-716" x="624" y="631" font-size="17" fill="#777777">716</text>
+      </g>
+      <g id="room-713-stairs-and-lifts" font-size="20" text-anchor="middle">
+        <g id="room-713-upper-emergency-exit" opacity="0.55">
+          <use xlink:href="#room-713-stair-symbol" x="379" y="121" />
+          <text x="408" y="179" font-size="17">Nødutgang</text>
+        </g>
+        <use xlink:href="#room-713-lift-symbol" x="330" y="543" />
+        <use xlink:href="#room-713-lift-symbol" x="386" y="543" />
+        <text x="461" y="571" font-size="17">Heis</text>
+        <use xlink:href="#room-713-stair-symbol" x="422" y="645" />
+        <text x="452" y="711">Trapp</text>
+        <g id="room-713-right-emergency-exit" opacity="0.55">
+          <use xlink:href="#room-713-stair-symbol" x="1045" y="625" />
+          <text x="1075" y="698" font-size="17">Nødutgang</text>
+        </g>
+      </g>
+      <g id="room-713-route" fill="none" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 350,683 H 280 V 790 H 999 V 813" stroke="white" stroke-width="8" />
+        <path d="M 350,683 H 280 V 790 H 999 V 813" stroke="#1759a6" stroke-width="4" stroke-dasharray="9 6" marker-end="url(#room-713-route-arrow)" />
+        <circle cx="350" cy="683" r="7" fill="#1759a6" stroke="white" stroke-width="2" />
+        <text x="350" y="650" font-size="19" font-weight="bold" fill="#1759a6" stroke="white" stroke-width="3" paint-order="stroke fill">Start her</text>
+      </g>
+    </g>
+  </g>
+</svg>
