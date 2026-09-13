@@ -67,21 +67,6 @@ templ formModal() {
 				@errorfeedback.RenderMessage("floor")
 			</label>
 			<label class="label color-strong form-group">
-				<p>Maks eventer i en pulje</p>
-				<input
-					type="number"
-					name="max_concurrent_games"
-					title="Hvor mangen spill kan forekomme parallelt på et rom i en pulje"
-					placeholder="Max spill på et rom"
-					required
-					pattern=".{1,}"
-					class="input"
-					data-bind="max_concurrent_games"
-					{ errorfeedback.Attrs("max_concurrent_games")... }
-				/>
-				@errorfeedback.RenderMessage("max_concurrent_games")
-			</label>
-			<label class="label color-strong form-group">
 				<p>Notater</p>
 				<textarea
 					name="notes"
@@ -94,18 +79,6 @@ templ formModal() {
 				></textarea>
 				@errorfeedback.RenderMessage("notes")
 			</label>
-			<label class="label color-strong form-group flex input" style="gap: var(--spacing-2x); align-items: center;">
-				<input
-					name="isDisabled"
-					type="checkbox"
-					title="Skjul synlighet i puljefordeling for rommet"
-					class="checkbox input"
-					data-bind="is_disabled"
-					{ errorfeedback.Attrs("is_disabled")... }
-				/>
-				<p>Skal rom være skjult i puljefordeling?</p>
-			</label>
-			@errorfeedback.RenderMessage("is_disabled")
 			<span class="button-group">
 				<button
 					type="button"
@@ -147,7 +120,6 @@ templ formModal() {
 templ roomCard(room models.Room) {
 	<div
 		class="room"
-		style={ templ.KV("opacity: 0.5; border-color: gray;", room.IsDisabled) }
 		data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d'); document.getElementById('room-dialog').showModal()", room.ID) }
 	>
 		<h3>{ room.RoomNumber }</h3>
@@ -157,18 +129,6 @@ templ roomCard(room models.Room) {
 				<p style="font-style: italic; color: gray;">Ikke oppgitt</p>
 			} else {
 				<p>{ room.Name }</p>
-			}
-		</span>
-		<span>
-			<p>Maks aktive spill</p>
-			<p>{ room.MaxConcurrentGames }</p>
-		</span>
-		<span>
-			<p>Er rommet tilgjengelig?</p>
-			if room.IsDisabled {
-				<p style="color: var(--color-error);">Nei</p>
-			} else {
-				<p>Ja</p>
 			}
 		</span>
 		if room.Notes != "" {

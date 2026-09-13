@@ -18,23 +18,21 @@ func CreateRoom(db *sql.DB, data models.Room) (*models.Room, models.RoomFormErro
 
 	query := `
         INSERT INTO rooms (
-            name,
+			name,
 			room_number,
 			floor,
-			max_concurrent_games,
 			notes,
+			max_concurrent_games,
 			is_disabled
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, 0, 0)
     `
 
 	result, err := db.Exec(query,
 		data.Name,
 		data.RoomNumber,
 		data.Floor,
-		data.MaxConcurrentGames,
 		data.Notes,
-		data.IsDisabled,
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed: rooms.room_number") {
@@ -95,18 +93,14 @@ func UpdateRoom(db *sql.DB, data models.Room) (*models.Room, models.RoomFormErro
 			name = ?,
 			room_number = ?,
 			floor = ?,
-			max_concurrent_games = ?,
-			notes = ?,
-			is_disabled = ?
+			notes = ?
 		WHERE id = ?
 		RETURNING
 			id,
 			name,
 			room_number,
 			floor,
-			max_concurrent_games,
-			notes,
-			is_disabled
+			notes
 	`
 
 	var updated models.Room
@@ -116,18 +110,14 @@ func UpdateRoom(db *sql.DB, data models.Room) (*models.Room, models.RoomFormErro
 		data.Name,
 		data.RoomNumber,
 		data.Floor,
-		data.MaxConcurrentGames,
 		data.Notes,
-		data.IsDisabled,
 		data.ID,
 	).Scan(
 		&updated.ID,
 		&updated.Name,
 		&updated.RoomNumber,
 		&updated.Floor,
-		&updated.MaxConcurrentGames,
 		&updated.Notes,
-		&updated.IsDisabled,
 	)
 
 	if err != nil {
@@ -173,23 +163,9 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.
 		args = append(args, *data.Floor)
 	}
 
-	if data.MaxConcurrentGames != nil {
-		if *data.MaxConcurrentGames < 0 {
-			errors.AddError(models.RoomErrorMaxConcurrent, "max concurrent games cannot be negative")
-		}
-
-		setParts = append(setParts, "max_concurrent_games = ?")
-		args = append(args, *data.MaxConcurrentGames)
-	}
-
 	if data.Notes != nil {
 		setParts = append(setParts, "notes = ?")
 		args = append(args, *data.Notes)
-	}
-
-	if data.IsDisabled != nil {
-		setParts = append(setParts, "is_disabled = ?")
-		args = append(args, *data.IsDisabled)
 	}
 
 	// Check if any data was being updated
@@ -212,9 +188,7 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.
 			name,
 			room_number,
 			floor,
-			max_concurrent_games,
-			notes,
-			is_disabled;
+			notes;
 	`, strings.Join(setParts, ", "))
 
 	// Add ID to constructed args
@@ -227,9 +201,7 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.
 		&updated.Name,
 		&updated.RoomNumber,
 		&updated.Floor,
-		&updated.MaxConcurrentGames,
 		&updated.Notes,
-		&updated.IsDisabled,
 	)
 
 	if err != nil {
@@ -252,9 +224,7 @@ func GetRoomByID(db *sql.DB, roomID int) (*models.Room, error) {
 			name,
 			room_number,
 			floor,
-			max_concurrent_games,
-			notes,
-			is_disabled
+			notes
 		FROM rooms
 		WHERE id = ?
 	`
@@ -266,9 +236,7 @@ func GetRoomByID(db *sql.DB, roomID int) (*models.Room, error) {
 		&room.Name,
 		&room.RoomNumber,
 		&room.Floor,
-		&room.MaxConcurrentGames,
 		&room.Notes,
-		&room.IsDisabled,
 	)
 
 	if err != nil {
@@ -291,9 +259,7 @@ func GetAllRooms(db *sql.DB) ([]models.Room, error) {
 			name,
 			room_number,
 			floor,
-			max_concurrent_games,
-			notes,
-			is_disabled
+			notes
 		FROM rooms
 		ORDER BY floor ASC, room_number ASC
 	`
@@ -315,9 +281,7 @@ func GetAllRooms(db *sql.DB) ([]models.Room, error) {
 			&room.Name,
 			&room.RoomNumber,
 			&room.Floor,
-			&room.MaxConcurrentGames,
 			&room.Notes,
-			&room.IsDisabled,
 		)
 
 		if err != nil {
@@ -346,8 +310,6 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
             r.name,
             r.room_number,
             r.floor,
-            r.max_concurrent_games,
-            r.is_disabled,
             r.notes,
 
             e.id,
@@ -385,8 +347,6 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 			&row.RoomName,
 			&row.RoomNumber,
 			&row.Floor,
-			&row.MaxConcurrentGames,
-			&row.IsDisabled,
 			&row.RoomNotes,
 
 			&row.EventID,
@@ -406,14 +366,12 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 		room, exists := result[row.PuljeID][row.RoomID]
 		if !exists {
 			room = models.RoomByPulje{
-				ID:                 row.RoomID,
-				Name:               row.RoomName,
-				RoomNumber:         row.RoomNumber,
-				Floor:              row.Floor,
-				MaxConcurrentGames: row.MaxConcurrentGames,
-				Notes:              row.RoomNotes,
-				IsDisabled:         row.IsDisabled,
-				AssignedEventsID:   []models.RoomEventPuljeSummary{},
+				ID:               row.RoomID,
+				Name:             row.RoomName,
+				RoomNumber:       row.RoomNumber,
+				Floor:            row.Floor,
+				Notes:            row.RoomNotes,
+				AssignedEventsID: []models.RoomEventPuljeSummary{},
 			}
 		}
 

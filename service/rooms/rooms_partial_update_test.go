@@ -18,22 +18,18 @@ func TestUpdateRoomPartial_UpdatesProvidedFields(t *testing.T) {
 	db := createRoomsTestDB(t)
 	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
 	expectedRoom := models.Room{
-		ID:                 existingRoom.ID,
-		Name:               "Tangerud",
-		RoomNumber:         "303",
-		Floor:              3,
-		MaxConcurrentGames: 3,
-		Notes:              "",
-		IsDisabled:         true,
+		ID:         existingRoom.ID,
+		Name:       "Tangerud",
+		RoomNumber: "303",
+		Floor:      3,
+		Notes:      "",
 	}
 	input := models.RoomInput{
-		ID:                 existingRoom.ID,
-		Name:               ptr(expectedRoom.Name),
-		RoomNumber:         ptr(expectedRoom.RoomNumber),
-		Floor:              ptr(expectedRoom.Floor),
-		MaxConcurrentGames: ptr(expectedRoom.MaxConcurrentGames),
-		Notes:              ptr(expectedRoom.Notes),
-		IsDisabled:         ptr(expectedRoom.IsDisabled),
+		ID:         existingRoom.ID,
+		Name:       ptr(expectedRoom.Name),
+		RoomNumber: ptr(expectedRoom.RoomNumber),
+		Floor:      ptr(expectedRoom.Floor),
+		Notes:      ptr(expectedRoom.Notes),
 	}
 
 	// When
@@ -129,27 +125,6 @@ func TestUpdateRoomPartial_WhenRoomNumberIsEmpty_ReturnsError(t *testing.T) {
 	// When
 	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1, RoomNumber: ptr("")})
 	actualError := err.HasError(models.RoomErrorRoomNumber)
-
-	// Then
-	if expectedError != actualError {
-		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
-	}
-}
-
-func TestUpdateRoomPartial_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "Given partial room input with invalid event capacity.",
-		When:  "When the partial update runs.",
-		Then:  "Then validation rejects it.",
-	})
-
-	// Given
-	expectedError := true
-	db := createRoomsTestDB(t)
-
-	// When
-	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1, MaxConcurrentGames: ptr(-1)})
-	actualError := err.HasError(models.RoomErrorMaxConcurrent)
 
 	// Then
 	if expectedError != actualError {

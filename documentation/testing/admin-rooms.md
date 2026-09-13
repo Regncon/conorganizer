@@ -47,11 +47,6 @@ Denne sjekklisten dekker `/admin/rooms` og `/admin/rooms/assignment/{pulje}`, de
   **Når** handlingen lykkes.<br>
   **Så** skal arrangementet vises under riktig rom og ikke fortsatt som manglende rom.
 
-- [ ] **Deaktivert rom med tildelinger varsles tydelig**<br>
-  **Gitt** at et deaktivert rom har tildelte arrangementer.<br>
-  **Når** romfordelingen vises.<br>
-  **Så** skal advarselen være tydelig nok til at admin kan rette opp fordelingen.
-
 ### Mobil
 
 - [ ] **Romadministrasjon fungerer på smal skjerm**<br>

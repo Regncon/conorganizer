@@ -48,9 +48,6 @@ func TestRoomsPageContent_RendersRoomDetailsAndCreateAction(t *testing.T) {
 	expectedTextParts := []string{
 		"201",
 		"Tangerud",
-		"Maks aktive spill",
-		"2",
-		"Ja",
 		"Ligg til nytt rom",
 	}
 	db, logger := testutil.CreateTestDBAndLogger(t, "rooms_page_content")
@@ -156,10 +153,9 @@ func createRoomsPageRoom(t *testing.T, db *sql.DB, name string, roomNumber strin
 	t.Helper()
 
 	room, err := roomService.CreateRoom(db, models.Room{
-		Name:               name,
-		RoomNumber:         roomNumber,
-		Floor:              floor,
-		MaxConcurrentGames: 2,
+		Name:       name,
+		RoomNumber: roomNumber,
+		Floor:      floor,
 	})
 	if err.HasErrors() {
 		t.Fatalf("failed to create room: %v", err)
