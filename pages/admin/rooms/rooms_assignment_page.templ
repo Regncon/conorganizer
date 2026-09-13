@@ -206,6 +206,7 @@ mapped = mapped && room.Floor == 7 }}
 			slot={ fmt.Sprintf("room-%d", room.ID) }
 		}
 		data-room-number={ room.RoomNumber }
+		aria-label={ fmt.Sprintf("Rom %s", room.RoomNumber) }
 		data-on:dragover__prevent={ fmt.Sprintf("$dragOverRoom = %d", room.ID) }
 		data-on:dragleave="$dragOverRoom = 0"
 		data-on:drop__prevent={ fmt.Sprintf("$dragOverRoom = 0; !$_roomSaving && $draggedEventId && @post('/admin/rooms/api/assignment/%s/' + $draggedEventId + '/%d')", string(pulje), room.ID) }
@@ -214,7 +215,9 @@ mapped = mapped && room.Floor == 7 }}
 		{ errorfeedback.Attrs("room-assignment", "Klarte ikkje å tildele rommet. Prøv igjen.")... }
 	>
 		<header class="room-heading">
-			<h3 title={ room.Name }>{ room.RoomNumber }</h3>
+			if !mapped {
+				<h3 title={ room.Name }>{ room.RoomNumber }</h3>
+			}
 			<span class="room-event-count" aria-label={ fmt.Sprintf("%d tildelte arrangementer", len(room.AssignedEventsID)) }>{ len(room.AssignedEventsID) }</span>
 			<button
 				type="button"
@@ -327,9 +330,29 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
         }
         .room-empty { font-size: 12px; opacity: 0.7; }
         .room--map {
-            padding: 6px;
+            position: relative;
+            padding: 8px;
             gap: 6px;
-            .room-event-container { overflow-y: auto; overscroll-behavior: contain; }
+            border-color: color-mix(in srgb, var(--bg-item-border) 75%, transparent);
+            border-radius: 8px;
+            background: color-mix(in srgb, var(--bg-item) 28%, transparent);
+            box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+
+            .room-heading {
+                position: absolute;
+                inset: 6px 6px auto;
+                justify-content: flex-end;
+                z-index: 2;
+                pointer-events: none;
+            }
+            .room-heading .room-event-count,
+            .room-heading .room-add-event { pointer-events: auto; }
+            .room-event-container {
+                padding-block-start: 30px;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+            }
+            .room-empty { display: none; }
         }
         .room-event {
             display: flex;

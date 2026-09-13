@@ -388,6 +388,7 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 					EventID:    row.EventID.String,
 					Title:      row.EventTitle.String,
 					MaxPlayers: int(row.EventMaxPlayers.Int32),
+					RoomID:     row.RoomID,
 				},
 			)
 		}
