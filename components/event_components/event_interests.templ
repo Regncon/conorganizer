@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
@@ -26,7 +27,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		if puljerErr != nil {
 			logger.Error(puljerErr.Error(), "event_id", eventId)
 		}
-		// imgURL := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir)
+		imgURL := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir)
 		selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
 	}}
 	<style>
@@ -145,8 +146,8 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
 					<p class="label">Velg interesse</p>
-					<!-- @InterestAlreadyAssigned(title, system, imgURL, eventId) -->
-					@interestUnder18()
+					@InterestAlreadyAssigned(title, system, imgURL, eventId)
+					@interestUnder18(title)
 					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
 				</div>
 			</div>
@@ -218,7 +219,7 @@ templ InterestAlreadyAssigned(title string, system string, imgURL string, eventI
 		<h3>Du har allerede blitt tildelt denne puljen.</h3>
 		<p>
 			Du har allerede plass på et annet arrangement i denne puljen.
-			Du kan melde deg av det arrangementet om du heller ønsker å være med på “Arrangementnavn”.
+			Du kan melde deg av det arrangementet om du heller ønsker å være med på <i>{ title }</i>.
 		</p>
 		<!-- use correct data (current assigned event) not current event data -->
 		@ClickableEventCard(
@@ -230,7 +231,7 @@ templ InterestAlreadyAssigned(title string, system string, imgURL string, eventI
 	</section>
 }
 
-templ interestUnder18() {
+templ interestUnder18(title string) {
 	<style>
         .interest-under-18 {
             padding: var(--spacing-5x);
@@ -245,7 +246,7 @@ templ interestUnder18() {
     </style>
 	<section class="interest-under-18">
 		<h3>Dette er et 18-års arrangement!</h3>
-		<p>Arrangementet “Arrangementnavn” er satt opp med 18-års aldersgrense.</p>
+		<p>Arrangementet <i>{ title }</i> er satt opp med 18-års aldersgrense.</p>
 		<p>Billetterholdere under 18 år kan ikke melde seg på.</p>
 	</section>
 }
