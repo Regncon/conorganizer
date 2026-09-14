@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="t0-002-title t0-002-desc" lang="nb">
+<title id="t0-002-title">Grand Hotel Terminus – Dorothe Engelbretsdatter · 0. etasje</title>
+<desc id="t0-002-desc">Kart over tre rom langs en felles gang. Foreløpige romnumre: 001 Inger Haldorsen, 002 Dorothe Engelbretsdatter, 003 Søstrene Hagelin. Trapp og antatte heiser på oversiden av gangen. Markert rom: Dorothe Engelbretsdatter.</desc>
+<metadata>Basert på brukerens skisse. Romnumrene er midlertidige, ikke hotellets bekreftede romnumre. To umerkede bokser er tolket som heiser. Dørslag er skjematiske og ikke verifisert. Åpningen øverst til høyre i rom 002 er bevart fra skissen; tilstøtende areal er ikke tegnet.</metadata>
+<rect width="1200" height="680" fill="white"/>
+<g font-family="Arial, Helvetica, sans-serif">
+<text x="40" y="43" font-size="28">Grand Hotel Terminus</text>
+<text x="40" y="77" font-size="22">Dorothe Engelbretsdatter · 0. etasje</text>
+<rect x="373" y="443" width="744" height="184" fill="#dbeafe"/>
+<g fill="#eee" stroke="black" stroke-width="3"><path d="M 80,240 V 145 H 300 V 240 Z M 190,145 V 240"/><path d="M 560,240 V 110 H 640 V 240"/></g>
+<g fill="none" stroke="black" stroke-width="3"><path d="M 25,240 H 640 M 950,240 V 440 M 25,440 H 80"/></g>
+<g fill="none" stroke="#444" stroke-width="2">
+<path d="M 120,184 V 160 M 114,166 L 120,160 L 126,166 M 145,160 V 184 M 139,178 L 145,184 L 151,178"/>
+<path d="M 230,184 V 160 M 224,166 L 230,160 L 236,166 M 255,160 V 184 M 249,178 L 255,184 L 261,178"/>
+<path d="M 574,175 H 586 V 165 H 598 V 155 H 610 V 145 H 622"/>
+</g>
+<g text-anchor="middle" font-size="18"><text x="135" y="216">Heis</text><text x="245" y="216">Heis</text><text x="600" y="213">Trapp</text></g>
+
+<g id="t0-002-room-001" data-room-number="001" data-room-name="Inger Haldorsen"><path d="M 80,440 V 630 H 370 V 440 M 80,440 H 110 M 160,440 H 290 M 340,440 H 370" fill="none" stroke="black" stroke-width="3"/>
+<g text-anchor="middle" fill="#777">
+<text x="225" y="529" font-size="24" font-weight="bold">Inger</text>
+<text x="225" y="558" font-size="24" font-weight="bold">Haldorsen</text>
+<text x="225" y="585" font-size="17">001</text></g></g>
+<g id="t0-002-room-002" data-room-number="002" data-room-name="Dorothe Engelbretsdatter"><path d="M 370,440 V 630 H 1120 V 440 H 1075 M 1040,440 H 470 M 420,440 H 370" fill="none" stroke="#1759a6" stroke-width="5"/>
+<g text-anchor="middle" fill="#1759a6">
+<text x="745" y="514" font-size="24" font-weight="bold">Dorothe</text>
+<text x="745" y="543" font-size="24" font-weight="bold">Engelbretsdatter</text>
+<text x="745" y="570" font-size="17">002</text></g></g>
+<g id="t0-002-room-003" data-room-number="003" data-room-name="Søstrene Hagelin"><path d="M 640,240 V 110 H 950 V 240 H 835 M 785,240 H 640" fill="none" stroke="black" stroke-width="3"/>
+<g text-anchor="middle" fill="#777">
+<text x="735" y="153" font-size="24" font-weight="bold">Søstrene</text>
+<text x="735" y="182" font-size="24" font-weight="bold">Hagelin</text>
+<text x="735" y="209" font-size="17">003</text></g></g>
+<g fill="none"><path d="M 110,440 v 50" stroke="#444" stroke-width="2"/><path d="M 160,440 A 50,50 0 0 1 110,490" stroke="#999" stroke-width="1"/></g>
+<g fill="none"><path d="M 290,440 v 50" stroke="#444" stroke-width="2"/><path d="M 340,440 A 50,50 0 0 1 290,490" stroke="#999" stroke-width="1"/></g>
+<g fill="none"><path d="M 420,440 v 50" stroke="#444" stroke-width="2"/><path d="M 470,440 A 50,50 0 0 1 420,490" stroke="#999" stroke-width="1"/></g>
+<g fill="none"><path d="M 1040,440 v 35" stroke="#444" stroke-width="2"/><path d="M 1075,440 A 35,35 0 0 1 1040,475" stroke="#999" stroke-width="1"/></g>
+<g fill="none"><path d="M 785,240 v -50" stroke="#444" stroke-width="2"/><path d="M 835,240 A 50,50 0 0 0 785,190" stroke="#999" stroke-width="1"/></g>
+</g></svg>

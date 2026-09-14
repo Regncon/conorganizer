@@ -137,8 +137,6 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 								store.Name = room.Name
 								store.RoomNumber = room.RoomNumber
 								store.Floor = room.Floor
-								store.MaxConcurrentGames = room.MaxConcurrentGames
-								store.IsDisabled = room.IsDisabled
 								store.Notes = room.Notes
 							}
 						}
@@ -178,13 +176,11 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 						room := models.Room{
-							ID:                 int(roomID),
-							Name:               store.Name,
-							RoomNumber:         store.RoomNumber,
-							Floor:              store.Floor,
-							MaxConcurrentGames: store.MaxConcurrentGames,
-							IsDisabled:         store.IsDisabled,
-							Notes:              store.Notes,
+							ID:         int(roomID),
+							Name:       store.Name,
+							RoomNumber: store.RoomNumber,
+							Floor:      store.Floor,
+							Notes:      store.Notes,
 						}
 
 						// Decide between create and update based on room ID
@@ -265,6 +261,44 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 				})
 
 				roomsApiRouter.Route("/assignment/{pulje}", func(roomsAssignmentRouter chi.Router) {
+					roomsAssignmentRouter.Delete("/{event}/{room}", func(w http.ResponseWriter, r *http.Request) {
+						puljeID, valid := models.ParsePulje(chi.URLParam(r, "pulje"))
+						roomID, err := strconv.ParseInt(chi.URLParam(r, "room"), 10, 64)
+						if !valid || err != nil || roomID <= 0 {
+							http.Error(w, "Ugyldig pulje eller rom.", http.StatusBadRequest)
+							return
+						}
+						eventID := chi.URLParam(r, "event")
+						logger := logger.With("component", "room_assignment", "event_id", eventID, "pulje_id", puljeID, "room_id", roomID)
+						// Match the old room too: a stale card must not undo another admin's move.
+						result, err := db.ExecContext(r.Context(), `
+							UPDATE relation_event_puljer SET room_id = NULL
+							WHERE event_id = ? AND pulje_id = ? AND room_id = ? AND is_in_pulje = 1
+						`, eventID, puljeID, roomID)
+						if err != nil {
+							logger.Error(fmt.Errorf("failed to remove room assignment: %w", err).Error())
+							http.Error(w, "Klarte ikke å fjerne romtildelingen.", http.StatusInternalServerError)
+							return
+						}
+						changed, err := result.RowsAffected()
+						if err != nil {
+							logger.Error(fmt.Errorf("failed to verify room removal: %w", err).Error())
+							http.Error(w, "Klarte ikke å bekrefte romendringen.", http.StatusInternalServerError)
+							return
+						}
+						if changed == 0 {
+							http.Error(w, "Romtildelingen er endret. Last siden på nytt.", http.StatusConflict)
+							return
+						}
+						if err := liveManager.Broadcast(r.Context(), live.BucketRooms, live.BucketEvents); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast room removal: %w", err).Error())
+							http.Error(w, "Romtildelingen ble fjernet, men visningen kunne ikke oppdateres. Last siden på nytt.", http.StatusInternalServerError)
+							return
+						}
+						sse := datastar.NewSSE(w, r)
+						_ = sse.ExecuteScript(`window.dispatchEvent(new Event('room-saved'))`)
+					})
+
 					roomsAssignmentRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 						puljeQuery := chi.URLParam(r, "pulje")
 						puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
@@ -276,6 +310,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						liveManager.Stream(w, r, live.Page{
 							Buckets: []live.Bucket{
 								live.BucketRooms,
+								live.BucketEvents,
 							},
 							Render: func(ctx context.Context, r *http.Request) templ.Component {
 								return rooms.RoomsAssignmentPageContent(db, logger, puljeID, eventImageDir)
@@ -315,21 +350,48 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 
-						// Assign room
-						query := `
-                            UPDATE relation_event_puljer
-                            SET room_id = ?
-                            WHERE event_id = ? AND pulje_id = ?
-                        `
+						// Only approved events belong in the room assignment flow.
+						var eventStatus models.EventStatus
+						err = db.QueryRowContext(r.Context(), `SELECT status FROM events WHERE id = ?`, eventQuery).Scan(&eventStatus)
+						if err == sql.ErrNoRows {
+							http.Error(w, "Arrangementet ble ikke funnet.", http.StatusConflict)
+							return
+						}
+						if err != nil {
+							http.Error(w, fmt.Sprintf("Unable to check event: %v", err), http.StatusInternalServerError)
+							return
+						}
+						if eventStatus != models.EventStatusApproved && eventStatus != models.EventStatusAnnounced {
+							http.Error(w, "Arrangementet er ikke godkjent.", http.StatusConflict)
+							return
+						}
 
-						_, err = db.Exec(query, roomID, eventQuery, puljeID)
+						// Assign the event to this pulje even when it has no active
+						// relation here yet. Room assignment also publishes it.
+						result, err := db.ExecContext(r.Context(), `
+							INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published, room_id)
+							VALUES (?, ?, 1, 1, ?)
+							ON CONFLICT(event_id, pulje_id) DO UPDATE SET
+								is_in_pulje = 1,
+								is_published = 1,
+								room_id = excluded.room_id
+						`, eventQuery, puljeID, roomID)
 						if err != nil {
 							http.Error(w, fmt.Sprintf("Unable to assign room: %v", err.Error()), http.StatusBadRequest)
 							return
 						}
+						rowsAffected, err := result.RowsAffected()
+						if err != nil {
+							http.Error(w, "Unable to verify room assignment", http.StatusInternalServerError)
+							return
+						}
+						if rowsAffected == 0 {
+							http.Error(w, "Arrangementet er ikke lenger i denne puljen. Last siden på nytt.", http.StatusConflict)
+							return
+						}
 
 						// Stream update
-						if err := liveManager.Broadcast(r.Context(), live.BucketRooms); err != nil {
+						if err := liveManager.Broadcast(r.Context(), live.BucketRooms, live.BucketEvents); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast update: %w", err).Error())
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
@@ -337,7 +399,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 
 						// Close modal on success
 						sse := datastar.NewSSE(w, r)
-						_ = sse.ExecuteScript(`document.getElementById('assignment-dialog').close()`)
+						_ = sse.ExecuteScript(`document.getElementById('assignment-dialog')?.close(); window.dispatchEvent(new Event('room-saved'))`)
 					})
 				})
 			})

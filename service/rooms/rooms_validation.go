@@ -34,12 +34,5 @@ func ValidateRooms(room models.Room) models.RoomFormErrors {
 		)
 	}
 
-	if room.MaxConcurrentGames < 0 {
-		errors.AddError(
-			models.RoomErrorMaxConcurrent,
-			"Maks samtidige spel kan ikkje vere negativt",
-		)
-	}
-
 	return errors
 }
