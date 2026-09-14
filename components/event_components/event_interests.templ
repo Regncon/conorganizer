@@ -145,7 +145,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
 					<p class="label">Velg interesse</p>
-					@ClickableEventCard(title, imgURL)
+					@InterestAlreadyAssigned(title, imgURL)
 					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
 				</div>
 			</div>
