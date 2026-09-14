@@ -153,7 +153,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				<div>
 					<p class="label">Velg interesse</p>
 					if showAssignedEvent {
-						@InterestAlreadyAssigned(assignedEvent.Title, assignedEvent.System, imgURL, assignedEvent.EventID)
+						@InterestAlreadyAssigned(assignedEvent.Title, assignedEvent.System, assignedEvent.Role, imgURL, assignedEvent.EventID)
 					}
 					if showUnder18 {
 						@interestUnder18(title)
@@ -187,7 +187,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	</script>
 }
 
-templ InterestAlreadyAssigned(title string, system string, imgURL string, eventId string) {
+templ InterestAlreadyAssigned(title string, system string, role string, imgURL string, eventId string) {
 	<style>
         .interest-already-assigned {
             padding: var(--spacing-5x);
@@ -228,10 +228,21 @@ templ InterestAlreadyAssigned(title string, system string, imgURL string, eventI
 
     </style>
 	<section class="interest-already-assigned">
-		<h3>Du har allerede blitt tildelt denne puljen.</h3>
+		<h3>
+			Du
+			if role == "GM" {
+				er arrangør i på et annet arrangement i denne puljen.
+			} else {
+				har allerede blitt tildelt denne puljen.
+			}
+		</h3>
 		<p>
-			Du har allerede plass på et annet arrangement i denne puljen.
-			Du kan melde deg av det arrangementet om du heller ønsker å være med på <i>{ title }</i>.
+			if role == "GM" {
+				<i>{ title }</i> er satt opp med deg som arrangør.
+			} else {
+				Du har allerede plass på et annet arrangement i denne puljen.
+				Du kan melde deg av det arrangementet om du heller ønsker å være med på <i>{ title }</i>.
+			}
 		</p>
 		<!-- use correct data (current assigned event) not current event data -->
 		@ClickableEventCard(
