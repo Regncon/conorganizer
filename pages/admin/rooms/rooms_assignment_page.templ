@@ -49,27 +49,26 @@ func getRoomsPuljeByFloor(db *sql.DB, logger *slog.Logger, pulje models.Pulje) [
 	return result
 }
 
-func getEventInPulje(db *sql.DB, logger *slog.Logger, pulje models.Pulje, isMissingRoom bool) []models.RoomEventPuljeSummaryJson {
+func getApprovedEventsForPulje(db *sql.DB, logger *slog.Logger, pulje models.Pulje) []models.RoomEventPuljeSummaryJson {
 	query := `
         SELECT
             e.title,
             e.max_players,
-            rep.event_id,
-            rep.pulje_id,
+            e.id,
+            COALESCE(rep.pulje_id, ''),
             rep.room_id
-        FROM relation_event_puljer rep
-        JOIN events e ON e.id = rep.event_id
-        WHERE rep.pulje_id = ?
-        AND rep.is_in_pulje = 1
+        FROM events e
+        LEFT JOIN relation_event_puljer rep
+            ON rep.event_id = e.id
+            AND rep.pulje_id = ?
+            AND rep.is_in_pulje = 1
+        WHERE e.status IN (?, ?)
+        ORDER BY e.title ASC;
     `
-	if isMissingRoom {
-		query += "\nAND rep.room_id IS NULL"
-	}
-	query += "\nORDER BY e.title ASC;"
 
-	rows, err := db.Query(query, pulje)
+	rows, err := db.Query(query, pulje, models.EventStatusApproved, models.EventStatusAnnounced)
 	if err != nil {
-		logger.Error(fmt.Errorf("failed to get events without room: %w", err).Error())
+		logger.Error(fmt.Errorf("failed to get approved events: %w", err).Error())
 		return nil
 	}
 	defer rows.Close()
@@ -113,137 +112,138 @@ func calculatePopulation(rooms []models.RoomEventPuljeSummary) int {
 	return 0
 }
 
-// todo: does data become stale? if so, change to load via datastar instead of props
-templ assignEventModal(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
-	{{ events := getEventInPulje(db, logger, pulje, false) }}
-	if len(events) > 0 {
-		<dialog
-			id="assignment-dialog"
-			closedBy="any"
-			data-on:room-saved.window="this.close()"
+templ assignEventModal(events []models.RoomEventPuljeSummaryJson, pulje models.Pulje, eventImageDir *string) {
+	<dialog
+		id="assignment-dialog"
+		closedBy="any"
+		aria-labelledby="assignment-dialog-title"
+	>
+		<h2 id="assignment-dialog-title">Legg til arrangement i rom <span data-text="$_roomNumber"></span></h2>
+		<p>Velg et godkjent arrangement. Arrangementer fra andre puljer blir lagt til og publisert i denne puljen.</p>
+		@errorfeedback.RenderMessage("room-picker")
+		<div
+			class="room-event-container"
 		>
-			<div
-				class="room-event-container"
-				data-signals:room="0"
-			>
-				for _, event := range events {
-					{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
-					<button
-						type="button"
-						class="room-event"
-						data-on:click={ fmt.Sprintf(
+			if len(events) == 0 {
+				<p>Ingen godkjente arrangementer.</p>
+			}
+			for _, event := range events {
+				{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
+				<button
+					type="button"
+					class="room-event-option"
+					data-event-id={ event.EventID }
+					data-indicator="_roomSaving"
+					data-attr:disabled={ fmt.Sprintf("$_roomSaving || $room === %d", event.RoomID.Int64) }
+					{ errorfeedback.Attrs("room-picker", "Klarte ikke å tildele rommet. Prøv igjen.")... }
+					data-on:click={ fmt.Sprintf(
                             "@post('/admin/rooms/api/assignment/%s/%s/' + $room)",
                             string(pulje),
                             event.EventID,
                         ) }
-					>
-						<img
-							src={ imageBannerUrl }
-							alt={ event.Title }
-						/>
-						<h4>{ event.Title }</h4>
-						<span>
-							<p>
-								if !event.RoomID.Valid {
-									Mangler rom
-								}
-							</p>
-							<p>{ event.MaxPlayers } Spillere</p>
-						</span>
-					</button>
-				}
-			</div>
-			<button class="modal-close-button icon-size-24" commandfor="room-dialog" command="close">
-				@icons.Icon(icons.Close, icons.Size24)
-			</button>
-		</dialog>
-	}
+				>
+					<img
+						src={ imageBannerUrl }
+						alt=""
+						loading="lazy"
+					/>
+					<span>
+						<strong>{ event.Title }</strong>
+						<small>
+							if event.EventPuljeID != string(pulje) {
+								Ikke i denne puljen
+							} else if !event.RoomID.Valid {
+								Mangler rom
+							} else {
+								Har rom – flyttes ved valg
+							}
+							· { event.MaxPlayers } spillere
+						</small>
+					</span>
+				</button>
+			}
+		</div>
+		<button type="button" aria-label="Lukk" class="modal-close-button icon-size-24" data-on:click="document.getElementById('assignment-dialog').close()">
+			@icons.Icon(icons.Close, icons.Size24)
+		</button>
+	</dialog>
 }
 
-templ roomEventCard(event models.RoomEventPuljeSummary, eventImageDir *string) {
+templ roomEventCard(event models.RoomEventPuljeSummary, pulje models.Pulje, eventImageDir *string) {
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
-	<a
-		role="button"
-		href={ "/admin/approval/edit/" + event.EventID }
+	<div
 		class="room-event"
+		data-event-id={ event.EventID }
 		draggable="true"
 		data-on:dragstart={ fmt.Sprintf("$draggedEventId = '%s'", event.EventID) }
 		data-on:dragend="$draggedEventId = ''; $dragOverRoom = 0"
 		data-class:is-dragging={ fmt.Sprintf("$draggedEventId === '%s'", event.EventID) }
 	>
-		<img
-			src={ imageBannerUrl }
-			alt={ event.Title }
-		/>
-		<h4>{ event.Title }s</h4>
-		<p>{ event.MaxPlayers } Spillere</p>
-	</a>
+		<a href={ "/admin/approval/edit/" + event.EventID } draggable="false" title={ event.Title }>
+			<img src={ imageBannerUrl } alt="" loading="lazy" draggable="false"/>
+			<span>{ event.Title }</span>
+		</a>
+		if event.RoomID != 0 {
+			<button
+				type="button"
+				class="room-event-remove"
+				aria-label={ "Fjern " + event.Title + " fra rommet" }
+				title="Fjern fra rommet"
+				data-indicator="_roomSaving"
+				data-attr:disabled="$_roomSaving"
+				data-on:click={ fmt.Sprintf("@delete('/admin/rooms/api/assignment/%s/%s/%d')", pulje, event.EventID, event.RoomID) }
+				{ errorfeedback.Attrs("room-assignment", "Klarte ikke å fjerne romtildelingen. Prøv igjen.")... }
+			>×</button>
+		}
+	</div>
 }
 
 templ roomPuljeContainer(room models.RoomByPulje, pulje models.Pulje, eventImageDir *string) {
+	{{ _, hasRoomMap := roomService.MapPathForRoom(room.RoomNumber)
+	_, hasFloorMap := roomService.MapPathForFloor(room.Floor)
+	mapped := hasRoomMap && hasFloorMap }}
 	<div
-		class="room"
-		data-on:dragover__prevent={ fmt.Sprintf("$dragOverRoom = %d", room.ID) }
-		data-on:drop__prevent={ fmt.Sprintf("$dragOverRoom = 0; $draggedEventId && @post('/admin/rooms/api/assignment/%s/' + $draggedEventId + '/%d')", string(pulje), room.ID) }
-		data-class:is-drag-over={ fmt.Sprintf("$dragOverRoom === %d", room.ID) }
-		{ errorfeedback.Attrs("room-assignment", "Klarte ikkje å tildele rommet. Prøv igjen.")... }
-		style={ templ.KV("background-color: var(--bg-surface)", room.IsDisabled),
-        templ.KV("border-color: var(--color-error)", room.IsDisabled && len(room.AssignedEventsID)>0) }
-	>
-		<h3>{ room.RoomNumber }</h3>
-		<span>
-			<p>Romnavn på døren</p>
-			if room.Name == "" {
-				<p style="font-style: italic; color: gray;">Ikke oppgitt</p>
-			} else {
-				<p>{ room.Name }</p>
-			}
-		</span>
-		<span>
-			<p>Anbefalt max spill</p>
-			<p>{ room.MaxConcurrentGames }</p>
-		</span>
-		<span>
-			<p>
-				Tildelte spill
-			</p>
-			<p
-				style={
-					templ.KV("color: var(--color-error);", len(room.AssignedEventsID) > room.MaxConcurrentGames),
-					templ.KV("color: var(--color-warning);", len(room.AssignedEventsID) == room.MaxConcurrentGames),
-					templ.KV("color: var(--color-disabled);", len(room.AssignedEventsID) == 0),
-				}
-			>
-				{ len(room.AssignedEventsID) }
-			</p>
-		</span>
-		if len(room.AssignedEventsID) > 0 {
-			<span>
-				<p>Spillere og GMs</p>
-				<p>&#126;{ calculatePopulation(room.AssignedEventsID) }</p>
-			</span>
-			if room.IsDisabled {
-				<p style="color: var(--color-error); text-align: center; padding: 1rem 0">
-					Rommet er satt til ikke tilgjengelig, men har blitt tildelt eventer!
-					<br/>
-					Du kan trykke inn på eventene under for å skifte rom.
-				</p>
-			}
-			<div class="room-event-container">
-				for _, event := range room.AssignedEventsID {
-					@roomEventCard(event, eventImageDir)
-				}
-			</div>
-		} else {
-			<p style="margin:auto; padding: var(--spacing-2x) 0; font-style: italic; color: gray;">Ingen tildelte spill</p>
+		class={ "room", templ.KV("room--map", mapped) }
+		if mapped {
+			slot={ fmt.Sprintf("room-%d", room.ID) }
 		}
-		<button
-			class="btn btn--outline"
-			data-on:click={ fmt.Sprintf("$room = %d;document.getElementById('assignment-dialog').showModal()", room.ID) }
-		>
-			+
-		</button>
-		if room.Notes != "" {
+		data-room-number={ room.RoomNumber }
+		aria-label={ fmt.Sprintf("Rom %s", room.RoomNumber) }
+		data-on:dragover__prevent={ fmt.Sprintf("$dragOverRoom = %d", room.ID) }
+		data-on:dragleave="$dragOverRoom = 0"
+		data-on:drop__prevent={ fmt.Sprintf("$dragOverRoom = 0; !$_roomSaving && $draggedEventId && @post('/admin/rooms/api/assignment/%s/' + $draggedEventId + '/%d')", string(pulje), room.ID) }
+		data-class:is-drag-over={ fmt.Sprintf("$dragOverRoom === %d", room.ID) }
+		data-indicator="_roomSaving"
+		{ errorfeedback.Attrs("room-assignment", "Klarte ikkje å tildele rommet. Prøv igjen.")... }
+	>
+		<header class="room-heading">
+			if !mapped {
+				<h3 title={ room.Name }>{ room.RoomNumber }</h3>
+			}
+			<span class="room-event-count" aria-label={ fmt.Sprintf("%d tildelte arrangementer", len(room.AssignedEventsID)) }>{ len(room.AssignedEventsID) }</span>
+			<button
+				type="button"
+				class="room-add-event"
+				aria-label={ "Legg til arrangement i rom " + room.RoomNumber }
+				title="Legg til arrangement"
+				data-attr:disabled="$_roomSaving"
+				data-on:click={ fmt.Sprintf("$room = %d; $_roomNumber = %q; document.getElementById('assignment-dialog').showModal()", room.ID, room.RoomNumber) }
+			>+</button>
+		</header>
+		if !mapped {
+			<p>{ room.Name }</p>
+			<p>Spillere og GMs: &#126;{ calculatePopulation(room.AssignedEventsID) }</p>
+		}
+		<div class="room-event-container">
+			if len(room.AssignedEventsID) > 0 {
+				for _, event := range room.AssignedEventsID {
+					@roomEventCard(event, pulje, eventImageDir)
+				}
+			} else {
+				<p class="room-empty">Ingen tildelte spill</p>
+			}
+		</div>
+		if !mapped && room.Notes != "" {
 			<p style="border-bottom: 1px solid var(--bg-item-border);">Notater på rom</p>
 			<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
 		}
@@ -252,153 +252,163 @@ templ roomPuljeContainer(room models.RoomByPulje, pulje models.Pulje, eventImage
 
 templ floorPuljeContainer(floor int, rooms []models.RoomByPulje, pulje models.Pulje, eventImageDir *string) {
 	for index, room := range rooms {
-		if !room.IsDisabled || len(room.AssignedEventsID) > 0 {
-			if index == 0 {
-				<h2>{ floor }. Etg</h2>
-			}
-			@roomPuljeContainer(room, pulje, eventImageDir)
+		if index == 0 {
+			<h2>{ floor }. Etg</h2>
 		}
+		@roomPuljeContainer(room, pulje, eventImageDir)
 	}
 }
 
 templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
+	<script type="module" src="/static/web_components/room_map.js"></script>
 	<style>
+        #room-assignment { container-type: inline-size; min-inline-size: 0; }
+        .assignment-map-panel { display: grid; gap: var(--spacing-2x); min-inline-size: 0; }
         .event-list {
-            display: flex;
-            flex-flow: row wrap;
-            gap: var(--spacing-2x)
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+            gap: var(--spacing-1x);
         }
-        .rooms-container{
-			display: grid;
+        .rooms-container {
+            display: grid;
             grid-template-columns: 1fr;
-			gap: var(--responsive-page-section-spacing);
-
-            h2 {
-                grid-column: 1/-1;
-                border-bottom: 2px solid var(--bg-item-border);
-            }
-		}
+            gap: var(--spacing-2x);
+            h2 { grid-column: 1/-1; }
+        }
+        @container (width > 700px) {
+            .rooms-container { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
         .room {
             display: flex;
-            flex-flow: column nowrap;
-            gap: var(--spacing-1x);
-            padding: var(--spacing-2x);
+            flex-direction: column;
+            gap: 8px;
+            min-inline-size: 0;
+            padding: 12px;
             border: 1px solid var(--bg-item-border);
-            border-radius: var(--border-radius-1x);
-            background-color: var(--bg-item);
-
-            transition: border-color 300ms ease-in-out;
-
-            h3 {
-                text-align: center;
-            }
-
-            p+p {
-                margin-top: auto;
-            }
-
-            span {
-                display: flex;
-                justify-content: space-between;
-                gap: var(--spacing-1x)
-            }
+            border-radius: 6px;
+            background: var(--bg-item);
+            &.is-drag-over { outline: 3px solid var(--color-primary); }
         }
-
-        .room:hover {
-            border-color: var(--bg-item-border-hover);
+        .room-heading {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            h3 { margin: 0; font-size: 16px; }
         }
-        .room.is-drag-over {
-            border-color: var(--color-primary);
-            background-color: var(--bg-item-hover);
+        .room-event-count {
+            display: inline-grid;
+            place-items: center;
+            min-inline-size: 24px;
+            block-size: 24px;
+            border-radius: 12px;
+            background: var(--bg-item-hover);
+            font-size: 12px;
         }
-
-        @media screen and (width > 1200px) {
-            .rooms-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .room-add-event, .room-event-remove {
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            inline-size: 28px;
+            block-size: 28px;
+            padding: 0;
+            border: 1px solid var(--bg-item-border);
+            border-radius: 4px;
+            background: var(--bg-item);
+            color: var(--color-primary-text);
+            font-size: 20px;
+            cursor: pointer;
+            &:hover { background: var(--bg-item-hover); }
+            &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+            &:disabled { opacity: 0.5; cursor: wait; }
         }
-
-        @media screen and (width > 1800px) {
-            .rooms-container {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
+        .room-add-event { margin-inline-start: auto; }
         .room-event-container {
             display: flex;
-            flex-flow: column nowrap;
-            gap: var(--spacing-1x);
+            flex-direction: column;
+            gap: 6px;
+            min-block-size: 0;
             margin: 0;
-            padding: var(--spacing-2x) 0;
+            padding: 0;
+        }
+        .room-empty { font-size: 12px; opacity: 0.7; }
+        .room--map {
+            position: relative;
+            padding: 8px;
+            gap: 6px;
+            border-color: color-mix(in srgb, var(--bg-item-border) 75%, transparent);
+            border-radius: 8px;
+            background: color-mix(in srgb, var(--bg-item) 28%, transparent);
+            box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+
+            .room-heading {
+                position: absolute;
+                inset: 6px 6px auto;
+                justify-content: flex-end;
+                z-index: 2;
+                pointer-events: none;
+            }
+            .room-heading .room-event-count,
+            .room-heading .room-add-event { pointer-events: auto; }
+            .room-event-container {
+                padding-block-start: 30px;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+            }
+            .room-empty { display: none; }
         }
         .room-event {
-            position: relative;
-            overflow: hidden;
-
             display: flex;
-            flex-flow: column nowrap;
-            justify-content: center;
-
-            padding: var(--spacing-1x);
-            border: 2px solid var(--bg-item-border);
-            border-radius: var(--border-radius-2x);
-            text-decoration: none;
-            color: var(--color-primary-text);
-
-            transition: border-color 300ms ease-in-out;
-
-            img {
-                position: absolute;
-                inset: 0;
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-
-            h4 {
-                font-size: medium;
-                font-weight: bold;
-                text-align: center;
-                z-index: 3;
-            }
-
-            >p {
-                font-size: small;
-                text-align: end;
-                z-index: 3;
-            }
-            span {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-end;
-                z-index: 3;
-            }
-        }
-
-        .room-event::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-
-            background: linear-gradient(
-                to right,
-                rgba(53, 57, 74, 0.5) 0%,
-                rgba(53, 57, 74, 0.8) 20%,
-                rgba(53, 57, 74, 1) 50%
-            );
-        }
-        .room-event:hover {
-            border-color: var(--color-primary);
-        }
-        .room-event[draggable="true"] {
+            align-items: center;
+            flex: 0 0 auto;
+            gap: 4px;
+            min-inline-size: 0;
+            padding: 4px;
+            border: 1px solid var(--bg-item-border);
+            border-radius: 4px;
+            background: var(--bg-main, var(--bg-item));
             cursor: grab;
+            a {
+                display: flex;
+                align-items: center;
+                flex: 1;
+                gap: 6px;
+                min-inline-size: 0;
+                color: var(--color-primary-text);
+                text-decoration: none;
+                font-size: 12px;
+                line-height: 1.25;
+                overflow-wrap: anywhere;
+            }
+            img { inline-size: 36px; block-size: 36px; object-fit: cover; border-radius: 3px; flex: 0 0 auto; }
+            &:hover { border-color: var(--color-primary); }
+            &.is-dragging { opacity: 0.5; }
         }
-        .room-event.is-dragging {
-            opacity: 0.5;
+        #assignment-dialog {
+            inline-size: min(560px, calc(100% - 32px));
+            max-block-size: calc(100dvh - 32px);
+            padding: 24px;
+            overflow-y: auto;
+            h2 { padding-inline-end: 24px; }
+            .room-event-container { margin-block-start: 16px; }
+        }
+        .room-event-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            text-align: start;
+            border: 1px solid var(--bg-item-border);
+            border-radius: 6px;
+            background: var(--bg-item);
+            color: var(--color-primary-text);
+            cursor: pointer;
+            img { inline-size: 64px; block-size: 48px; object-fit: cover; border-radius: 4px; }
+            span { display: grid; gap: 4px; }
+            small { opacity: 0.7; }
+            &:hover { border-color: var(--color-primary); }
+            &:disabled { opacity: 0.5; cursor: default; }
         }
 	</style>
-	@assignEventModal(db, logger, pulje, eventImageDir)
 	@RoomsAssignmentPageContent(db, logger, pulje, eventImageDir)
 }
 
@@ -409,30 +419,50 @@ templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.P
 		data-init={ live.DatastarInit(fmt.Sprintf("/admin/rooms/api/assignment/%s", pulje)) }
 		data-signals:dragged-event-id="''"
 		data-signals:drag-over-room="0"
+		data-signals__ifmissing="{room: 0, _roomNumber: '', _roomSaving: false, _roomAssignmentStatus: ''}"
+		data-on:room-saved__window="$draggedEventId = ''; $_roomSaving = false; $_roomAssignmentStatus = 'Romtildelingen er lagret.'"
 	>
 		@errorfeedback.RenderMessage("room-assignment")
-		{{ events := getEventInPulje(db, logger, pulje, true) }}
+		<p role="status" data-text="$_roomAssignmentStatus"></p>
+		{{
+			allEvents := getApprovedEventsForPulje(db, logger, pulje)
+			var events []models.RoomEventPuljeSummaryJson
+			for _, event := range allEvents {
+				if event.EventPuljeID == string(pulje) && !event.RoomID.Valid {
+					events = append(events, event)
+				}
+			}
+		}}
+		@assignEventModal(allEvents, pulje, eventImageDir)
 		if len(events) > 0 {
 			<h2>{ len(events) } Eventer i pulje uten tildelt rom</h2>
 			<div class="event-list">
 				for _, event := range events {
-					<a
-						role="button"
-						href={ "/admin/approval/edit/" + event.EventID }
-						class="btn btn--outline"
-						draggable="true"
-						data-on:dragstart={ fmt.Sprintf("$draggedEventId = '%s'", event.EventID) }
-						data-on:dragend="$draggedEventId = ''; $dragOverRoom = 0"
-					>{ event.Title } ({ event.MaxPlayers })</a>
+					@roomEventCard(models.RoomEventPuljeSummary{EventID: event.EventID, Title: event.Title, MaxPlayers: event.MaxPlayers}, pulje, eventImageDir)
 				}
 			</div>
 		}
 		<h2>Romfordelig for { pulje }</h2>
 		{{ floors := getRoomsPuljeByFloor(db, logger, pulje) }}
+		for _, floorGroup := range floors {
+			if mapPath, hasMap := roomService.MapPathForFloor(floorGroup.Floor); hasMap {
+				<div class="assignment-map-panel">
+					<h2>Romkart – Terminus, { floorGroup.Floor }. etasje</h2>
+					<p>Bruk + for å legge til et arrangement, eller dra et kort til rommet. Bruk × for å fjerne romtildelingen. På smale skjermer kan kartet rulles sidelengs.</p>
+					<room-map id={ fmt.Sprintf("assignment-room-map-%d", floorGroup.Floor) } map-path={ mapPath } rooms={ templ.JSONString(floorGroup.Rooms) }>
+						for _, room := range floorGroup.Rooms {
+							@roomPuljeContainer(room, pulje, eventImageDir)
+						}
+					</room-map>
+				</div>
+			}
+		}
 		if len(floors) > 0 {
 			<div class="rooms-container">
 				for _, floorGroup := range floors {
-					@floorPuljeContainer(floorGroup.Floor, floorGroup.Rooms, pulje, eventImageDir)
+					if _, hasMap := roomService.MapPathForFloor(floorGroup.Floor); !hasMap {
+						@floorPuljeContainer(floorGroup.Floor, floorGroup.Rooms, pulje, eventImageDir)
+					}
 				}
 			</div>
 		} else {

@@ -341,13 +341,8 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 									for _, room := range floor.Rooms {
 										<option
 											value={ fmt.Sprintf("%d", room.ID) }
-											if room.IsDisabled {
-												disabled
-											} else {
-												style={ templ.KV("color: var(--color-warning);", room.IsFull()), templ.KV("color: var(--color-error)", room.CurrentOccupancy()>room.MaxConcurrentGames) }
-											}
 										>
-											{ room.RoomNumber } ({ room.CurrentOccupancy() }/{ room.MaxConcurrentGames })
+											{ room.RoomNumber }
 										</option>
 									}
 								</optgroup>

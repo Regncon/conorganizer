@@ -30,7 +30,27 @@ Denne sjekklisten dekker `/admin/rooms` og `/admin/rooms/assignment/{pulje}`, de
   **Når** handlingen bekreftes.<br>
   **Så** skal bare riktig rom fjernes fra oversikten.
 
+- [ ] **Romkart følger romnummeret**<br>
+  **Gitt** at rom 705 og et rom uten kart er registrert.<br>
+  **Når** admin åpner romoversikten.<br>
+  **Så** vises kartet til rom 705 og en melding for rommet uten kart. Kartlenken åpner kartet i en ny fane, mens «Rediger rom» åpner skjemaet. Etter endring av romnummer og lagring vises kartet som hører til det nye nummeret.
+
 ### Romfordeling
+
+- [ ] **Kartet tildeler rom i valgt pulje**<br>
+  **Gitt** at rom på Terminus, 7. etasje, og arrangementer i flere puljer er registrert.<br>
+  **Når** admin drar et arrangement til et rom på kartet, eller velger et arrangement og klikker på rommet.<br>
+  **Så** lagres tildelingen bare i valgt pulje, antallet i rommet oppdateres, og arrangementet flyttes i romlisten. Romnummeret kobles til riktig rom-ID.
+
+- [ ] **Kartet fungerer med tastatur og på mobil**<br>
+  **Gitt** at admin har valgt et arrangement i nedtrekkslisten.<br>
+  **Når** admin aktiverer et rom med Enter/mellomrom eller trykker på rommet på mobil.<br>
+  **Så** tildeles arrangementet rommet uten at dra-og-slipp er nødvendig.
+
+- [ ] **Manglende og utdaterte romtildelinger håndteres**<br>
+  **Gitt** et rom som ikke er registrert, et arrangement som fjernes fra puljen, eller et kart som ikke lastes.<br>
+  **Når** admin bruker romfordelingen.<br>
+  **Så** kan uregistrerte rom ikke velges på kartet, fjernede arrangementer avvises med en feil, og romlisten er fortsatt tilgjengelig hvis kartet ikke lastes. Endringer fra en annen admin oppdaterer kartets antall og hendelsesvelgeren.
 
 - [ ] **Romfordeling viser riktig pulje**<br>
   **Gitt** at admin åpner romfordeling for en pulje.<br>
@@ -46,11 +66,6 @@ Denne sjekklisten dekker `/admin/rooms` og `/admin/rooms/assignment/{pulje}`, de
   **Gitt** at admin tildeler et arrangement til et rom.<br>
   **Når** handlingen lykkes.<br>
   **Så** skal arrangementet vises under riktig rom og ikke fortsatt som manglende rom.
-
-- [ ] **Deaktivert rom med tildelinger varsles tydelig**<br>
-  **Gitt** at et deaktivert rom har tildelte arrangementer.<br>
-  **Når** romfordelingen vises.<br>
-  **Så** skal advarselen være tydelig nok til at admin kan rette opp fordelingen.
 
 ### Mobil
 
