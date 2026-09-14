@@ -199,11 +199,12 @@ templ roomEventCard(event models.RoomEventPuljeSummary, pulje models.Pulje, even
 }
 
 templ roomPuljeContainer(room models.RoomByPulje, pulje models.Pulje, eventImageDir *string) {
-	{{ _, mapped := roomService.MapPathForRoom(room.RoomNumber)
-mapped = mapped && room.Floor == 7 }}
+	{{ _, hasRoomMap := roomService.MapPathForRoom(room.RoomNumber)
+	_, hasFloorMap := roomService.MapPathForFloor(room.Floor)
+	mapped := hasRoomMap && hasFloorMap }}
 	<div
 		class={ "room", templ.KV("room--map", mapped) }
-		if room.Floor == 7 {
+		if mapped {
 			slot={ fmt.Sprintf("room-%d", room.ID) }
 		}
 		data-room-number={ room.RoomNumber }
@@ -444,11 +445,11 @@ templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.P
 		<h2>Romfordelig for { pulje }</h2>
 		{{ floors := getRoomsPuljeByFloor(db, logger, pulje) }}
 		for _, floorGroup := range floors {
-			if floorGroup.Floor == 7 {
+			if mapPath, hasMap := roomService.MapPathForFloor(floorGroup.Floor); hasMap {
 				<div class="assignment-map-panel">
-					<h2>Romkart – Terminus, 7. etasje</h2>
+					<h2>Romkart – Terminus, { floorGroup.Floor }. etasje</h2>
 					<p>Bruk + for å legge til et arrangement, eller dra et kort til rommet. Bruk × for å fjerne romtildelingen. På smale skjermer kan kartet rulles sidelengs.</p>
-					<room-map id="assignment-room-map" rooms={ templ.JSONString(floorGroup.Rooms) }>
+					<room-map id={ fmt.Sprintf("assignment-room-map-%d", floorGroup.Floor) } map-path={ mapPath } rooms={ templ.JSONString(floorGroup.Rooms) }>
 						for _, room := range floorGroup.Rooms {
 							@roomPuljeContainer(room, pulje, eventImageDir)
 						}
@@ -459,7 +460,7 @@ templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.P
 		if len(floors) > 0 {
 			<div class="rooms-container">
 				for _, floorGroup := range floors {
-					if floorGroup.Floor != 7 {
+					if _, hasMap := roomService.MapPathForFloor(floorGroup.Floor); !hasMap {
 						@floorPuljeContainer(floorGroup.Floor, floorGroup.Rooms, pulje, eventImageDir)
 					}
 				}

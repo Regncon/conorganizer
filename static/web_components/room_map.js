@@ -1,6 +1,6 @@
 // SVG supplies geometry; slotted server-rendered rooms own cards and Datastar actions.
 class RoomMap extends HTMLElement {
-    static observedAttributes = ['rooms']
+    static observedAttributes = ['rooms', 'map-path']
 
     #svg
     #controller
@@ -26,7 +26,7 @@ class RoomMap extends HTMLElement {
                 p { margin-block: 0.5rem; }
             </style>
             <p role="status">Laster kart …</p>
-            <div class="scroll" tabindex="0" role="region" aria-label="Romkart – Terminus, 7. etasje">
+            <div class="scroll" tabindex="0" role="region" aria-label="Romkart">
                 <div class="stage"></div>
             </div>
             <div class="outside"></div>`
@@ -41,7 +41,12 @@ class RoomMap extends HTMLElement {
         this.#controller?.abort()
     }
 
-    attributeChangedCallback() {
+    attributeChangedCallback(name) {
+        if (name === 'map-path' && this.isConnected) {
+            this.#svg?.remove()
+            this.#svg = null
+            this.#load()
+        }
         this.#renderRooms()
     }
 
@@ -50,7 +55,8 @@ class RoomMap extends HTMLElement {
         const controller = new AbortController()
         this.#controller = controller
         try {
-            const response = await fetch('/static/rooms/terminus-7-etasje.svg', { signal: controller.signal })
+            const mapPath = this.getAttribute('map-path') || '/static/rooms/terminus-7-etasje.svg'
+            const response = await fetch(mapPath, { signal: controller.signal })
             if (!response.ok) throw new Error('Map unavailable')
             const parsed = new DOMParser().parseFromString(await response.text(), 'image/svg+xml')
             if (controller.signal.aborted) return
@@ -76,6 +82,9 @@ class RoomMap extends HTMLElement {
         outside.replaceChildren()
         const targets = new Map(Array.from(this.#svg?.querySelectorAll('[data-room-target]') || [],
             target => [target.dataset.roomTarget, target]))
+        for (const target of this.#svg?.querySelectorAll('[data-room-number]') || []) {
+            if (!targets.has(target.dataset.roomNumber)) targets.set(target.dataset.roomNumber, target)
+        }
         const viewBox = this.#svg?.viewBox.baseVal
         let hasOutside = false
 
@@ -83,24 +92,39 @@ class RoomMap extends HTMLElement {
             const slot = document.createElement('slot')
             slot.name = `room-${room.ID}`
             const target = targets.get(room.RoomNumber)
-            if (target) {
-                const overlay = document.createElement('div')
-                overlay.className = 'map-room'
-                overlay.style.left = `${(target.x.baseVal.value - viewBox.x) / viewBox.width * 100}%`
-                overlay.style.top = `${(target.y.baseVal.value - viewBox.y) / viewBox.height * 100}%`
-                overlay.style.width = `${target.width.baseVal.value / viewBox.width * 100}%`
-                overlay.style.height = `${target.height.baseVal.value / viewBox.height * 100}%`
-                overlay.append(slot)
-                stage.append(overlay)
-            } else {
-                if (!hasOutside) {
-                    const heading = document.createElement('h3')
-                    heading.textContent = this.#svg ? 'Rom utenfor kartet' : 'Rom'
-                    outside.append(heading)
-                    hasOutside = true
+            if (target && viewBox) {
+                let box
+                try {
+                    box = target.hasAttribute('data-room-target')
+                        ? {
+                            x: target.x.baseVal.value,
+                            y: target.y.baseVal.value,
+                            width: target.width.baseVal.value,
+                            height: target.height.baseVal.value,
+                        }
+                        : target.getBBox()
+                } catch {
+                    box = null
                 }
-                outside.append(slot)
+                if (box && box.width > 0 && box.height > 0) {
+                    const overlay = document.createElement('div')
+                    overlay.className = 'map-room'
+                    overlay.style.left = `${(box.x - viewBox.x) / viewBox.width * 100}%`
+                    overlay.style.top = `${(box.y - viewBox.y) / viewBox.height * 100}%`
+                    overlay.style.width = `${box.width / viewBox.width * 100}%`
+                    overlay.style.height = `${box.height / viewBox.height * 100}%`
+                    overlay.append(slot)
+                    stage.append(overlay)
+                    continue
+                }
             }
+            if (!hasOutside) {
+                const heading = document.createElement('h3')
+                heading.textContent = this.#svg ? 'Rom utenfor kartet' : 'Rom'
+                outside.append(heading)
+                hasOutside = true
+            }
+            outside.append(slot)
         }
         this.shadowRoot.querySelector('.scroll').hidden = !this.#svg
     }
