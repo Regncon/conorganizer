@@ -175,6 +175,18 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 }
 
 templ InterestAlreadyAssigned(title string, system string, imgURL string) {
+	<style>
+        .interest-already-assigned {
+            padding: var(--spacing-5x);
+
+            p {
+                margin: revert;
+            }
+
+
+        }
+
+    </style>
 	<section class="interest-already-assigned">
 		<h3>Du har allerede blitt tildelt denne puljen.</h3>
 		<p>
