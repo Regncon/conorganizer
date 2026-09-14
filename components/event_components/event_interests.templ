@@ -119,15 +119,15 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			}
 		}
 	</style>
-		<dialog
-			class="interest-dialog"
-			data-attr:open="$_interestIsOpen ? true : false"
-			data-signals:pulje-id={ fmt.Sprintf("'%s'", puljeId) }
-			data-signals:pulje-availability={ fmt.Sprintf("'%s'", selectedPuljeState.Availability) }
-			data-signals:pulje-can-edit={ fmt.Sprintf("%t", selectedPuljeState.CanEdit) }
-			data-signals:pulje-status-message={ fmt.Sprintf("%q", selectedPuljeState.Message) }
-			data-signals:pulje-show-profile-link={ fmt.Sprintf("%t", selectedPuljeState.ShowProfileLink) }
-		>
+	<dialog
+		class="interest-dialog"
+		data-attr:open="$_interestIsOpen ? true : false"
+		data-signals:pulje-id={ fmt.Sprintf("'%s'", puljeId) }
+		data-signals:pulje-availability={ fmt.Sprintf("'%s'", selectedPuljeState.Availability) }
+		data-signals:pulje-can-edit={ fmt.Sprintf("%t", selectedPuljeState.CanEdit) }
+		data-signals:pulje-status-message={ fmt.Sprintf("%q", selectedPuljeState.Message) }
+		data-signals:pulje-show-profile-link={ fmt.Sprintf("%t", selectedPuljeState.ShowProfileLink) }
+	>
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
@@ -166,4 +166,14 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			ev.stopPropagation();
 		});
 	</script>
+}
+
+templ InterestAlreadyAssigned() {
+	<section class="interest-already-assigned">
+		<h3>Du har allerede blitt tildelt denne puljen.</h3>
+		<p>
+			Du har allerede plass på et annet arrangement i denne puljen.
+			Du kan melde deg av det arrangementet om du heller ønsker å være med på “Arrangementnavn”.
+		</p>
+	</section>
 }
