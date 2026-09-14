@@ -30,7 +30,9 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		imgURL := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir)
 		selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
 		billettholderID := requestctx.SelectedBillettholderID(r.Context())
+		assignedEvent, _ := getAssignedEventForBillettholder(billettholderID, db, logger)
 		isOver18, _ := getBillettholderIsOver18(billettholderID, db, logger)
+		showAssignedEvent := assignedEvent.EventID != "" || assignedEvent.Role == "GM"
 	}}
 	<style>
 		.dialog-container {
@@ -148,8 +150,9 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
 					<p class="label">Velg interesse</p>
-					@InterestAlreadyAssigned(title, system, imgURL, eventId)
-					if isOver18 == 0 {
+					if showAssignedEvent {
+						@InterestAlreadyAssigned(assignedEvent.Title, assignedEvent.System, imgURL, assignedEvent.EventID)
+					}
 						@interestUnder18(title)
 					}
 					if isOver18 == 1 {
