@@ -17,6 +17,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	eventId string,
 	puljeId string,
 	title string,
+	system string,
 	eventImageDir *string,
 	db *sql.DB,
 	r *http.Request,
@@ -145,7 +146,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
 					<p class="label">Velg interesse</p>
-					@InterestAlreadyAssigned(title, imgURL)
+					@InterestAlreadyAssigned(title, system, imgURL)
 					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
 				</div>
 			</div>
@@ -173,7 +174,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	</script>
 }
 
-templ InterestAlreadyAssigned(title string, imgURL string) {
+templ InterestAlreadyAssigned(title string, system string, imgURL string) {
 	<section class="interest-already-assigned">
 		<h3>Du har allerede blitt tildelt denne puljen.</h3>
 		<p>
@@ -182,12 +183,13 @@ templ InterestAlreadyAssigned(title string, imgURL string) {
 		</p>
 		@ClickableEventCard(
 			title,
+			system,
 			imgURL,
 		)
 	</section>
 }
 
-templ ClickableEventCard(title string, imgURL string) {
+templ ClickableEventCard(title string, system string, imgURL string) {
 	<section class="prev-next-button-container no-print">
 		<div class="previous-next-buttons">
 			<div style="display: grid; grid-template-rows: 1fr; height: 100%;">
