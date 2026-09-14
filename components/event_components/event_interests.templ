@@ -146,7 +146,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
 					<p class="label">Velg interesse</p>
-					@InterestAlreadyAssigned(title, system, imgURL)
+					@InterestAlreadyAssigned(title, system, imgURL, eventId)
 					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
 				</div>
 			</div>
@@ -174,34 +174,36 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	</script>
 }
 
-templ InterestAlreadyAssigned(title string, system string, imgURL string) {
+templ InterestAlreadyAssigned(title string, system string, imgURL string, eventId string) {
 	<style>
         .interest-already-assigned {
             padding: var(--spacing-5x);
             background-color: var(--level-2-background);
-            &.surface {
-                background-color: var(--bg-surface);
-                border-radius: var(--border-radius-1x);
-            }
+            border-radius: var(--border-radius-1x);
 
-            &p {
+            & > p {
                 margin: revert;
-            }
-
-            .text-container {
-                p {
-                    font-size: 12px;
-                    color: var(--color-primary);
-                }
             }
 
             .clickable-event-card{
                 background-color: var(--level-3-background);
                 border-radius: var(--border-radius-2x);
                 border: 1px solid var(--level-3-border);
+
+
+                .previous-next-buttons {
+                    text-decoration: none;
+                    color: inherit;
+                    display: block;
+
+                    .text-container {
+                        p {
+                            font-size: 12px;
+                            color: var(--color-primary);
+                        }
+                    }
+                }
             }
-
-
         }
 
     </style>
@@ -215,13 +217,14 @@ templ InterestAlreadyAssigned(title string, system string, imgURL string) {
 			title,
 			system,
 			imgURL,
+			eventId,
 		)
 	</section>
 }
 
-templ ClickableEventCard(title string, system string, imgURL string) {
+templ ClickableEventCard(title string, system string, imgURL string, eventId string) {
 	<section class="prev-next-button-container no-print clickable-event-card">
-		<div class="previous-next-buttons">
+		<a class="previous-next-buttons" href={ fmt.Sprintf("%s", templ.URL("/event/"+eventId)) }>
 			<div style="display: grid; grid-template-rows: 1fr; height: 100%;">
 				<div class="text-container" style="display: flex; align-items: center; grid-row: 1 / 2; grid-column: 1 / 2;">
 					<div
@@ -241,7 +244,7 @@ templ ClickableEventCard(title string, system string, imgURL string) {
 						<p>{ system }</p>
 					</div>
 				</div>
-				if  imgURL != "" {
+				if imgURL != "" {
 					<img
 						src={ imgURL }
 						title={ title }
@@ -258,6 +261,6 @@ templ ClickableEventCard(title string, system string, imgURL string) {
 					/>
 				}
 			</div>
-		</div>
+		</a>
 	</section>
 }
