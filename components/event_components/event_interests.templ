@@ -42,7 +42,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			--dialog-width: min(32.5rem, calc(100% - 16px));
 			visibility: visible;
 			width: var(--dialog-width);
-			background-color: var(--bg-surface);
+			background-color: var(--level-1-background);
 			border: none;
 			border-radius: var(--border-radius-2x);
 			padding: var(--responsive-pane-padding);
@@ -178,16 +178,34 @@ templ InterestAlreadyAssigned(title string, system string, imgURL string) {
 	<style>
         .interest-already-assigned {
             padding: var(--spacing-5x);
+            background-color: var(--level-2-background);
+            &.surface {
+                background-color: var(--bg-surface);
+                border-radius: var(--border-radius-1x);
+            }
 
-            p {
+            &p {
                 margin: revert;
+            }
+
+            .text-container {
+                p {
+                    font-size: 12px;
+                    color: var(--color-primary);
+                }
+            }
+
+            .clickable-event-card{
+                background-color: var(--level-3-background);
+                border-radius: var(--border-radius-2x);
+                border: 1px solid var(--level-3-border);
             }
 
 
         }
 
     </style>
-	<section class="interest-already-assigned">
+	<section class="interest-already-assigned surface">
 		<h3>Du har allerede blitt tildelt denne puljen.</h3>
 		<p>
 			Du har allerede plass på et annet arrangement i denne puljen.
@@ -202,7 +220,7 @@ templ InterestAlreadyAssigned(title string, system string, imgURL string) {
 }
 
 templ ClickableEventCard(title string, system string, imgURL string) {
-	<section class="prev-next-button-container no-print">
+	<section class="prev-next-button-container no-print clickable-event-card">
 		<div class="previous-next-buttons">
 			<div style="display: grid; grid-template-rows: 1fr; height: 100%;">
 				<div class="text-container" style="display: flex; align-items: center; grid-row: 1 / 2; grid-column: 1 / 2;">
@@ -220,6 +238,7 @@ templ ClickableEventCard(title string, system string, imgURL string) {
                                 word-break: break-all;
                             "
 						>{ title }</strong>
+						<p>{ system }</p>
 					</div>
 				</div>
 				if  imgURL != "" {

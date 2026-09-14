@@ -48,6 +48,13 @@
     --bg-item-border-hover: #7f8198;
     --bg-item-border: #494D62;
     --item-flat-active: hsl(230deg 40% 86% / 20%);
+    
+    --level-1-background: #1B1E2C;
+    
+    --level-2-background: #232638;
+    
+    --level-3-background: #2B3045;
+    --level-3-border: #495174;
 
     --bg-backdrop: #11111B;
     --bg-indent: #15161E;
