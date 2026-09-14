@@ -29,6 +29,8 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		}
 		imgURL := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir)
 		selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
+		billettholderID := requestctx.SelectedBillettholderID(r.Context())
+		isOver18, _ := getBillettholderIsOver18(billettholderID, db, logger)
 	}}
 	<style>
 		.dialog-container {
@@ -147,8 +149,12 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				<div>
 					<p class="label">Velg interesse</p>
 					@InterestAlreadyAssigned(title, system, imgURL, eventId)
-					@interestUnder18(title)
-					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
+					if isOver18 == 0 {
+						@interestUnder18(title)
+					}
+					if isOver18 == 1 {
+						@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
+					}
 				</div>
 			</div>
 			<div class="dialog-footer">
@@ -292,4 +298,17 @@ templ ClickableEventCard(title string, system string, imgURL string, eventId str
 			</div>
 		</a>
 	</section>
+}
+
+func getBillettholderIsOver18(billettholderId int, db *sql.DB, log *slog.Logger) (int, error) {
+	query := "SELECT is_over_18 FROM billettholdere WHERE id = ?"
+	var isOver18 int
+
+	err := db.QueryRow(query, billettholderId).Scan(&isOver18)
+	if err != nil {
+		log.Error(fmt.Errorf("Error occurred while fetching billettholder age: %w", err).Error())
+		return 0, err
+	}
+
+	return isOver18, nil
 }
