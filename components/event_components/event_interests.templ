@@ -312,3 +312,40 @@ func getBillettholderIsOver18(billettholderId int, db *sql.DB, log *slog.Logger)
 
 	return isOver18, nil
 }
+
+type AssignedEvent struct {
+	Title   string
+	System  string
+	Role    string
+	Source  string
+	EventID string
+}
+
+func getAssignedEventForBillettholder(billettholderId int, db *sql.DB, log *slog.Logger) (AssignedEvent, error) {
+	query := `
+        SELECT e.title, e.system, bp.role, bp.source, e.id as event_id
+        FROM billettholdere b
+        JOIN relation_events_players bp ON b.id = bp.billettholder_id
+        JOIN events e ON bp.event_id = e.id
+        WHERE (b.id = ?1 AND bp.source = 'manual') or (b.id = ?1 AND bp.role = 'GM')
+    `
+	var assignedEventTitle string
+	var assignedEventSystem string
+	var assignedEventRole string
+	var assignedEventSource string
+	var assignedEventId string
+
+	err := db.QueryRow(query, billettholderId).Scan(&assignedEventTitle, &assignedEventSystem, &assignedEventRole, &assignedEventSource, &assignedEventId)
+	if err != nil {
+		log.Error(fmt.Errorf("Error occurred while fetching assigned event for billettholder: %w", err).Error())
+		return AssignedEvent{}, err
+	}
+
+	return AssignedEvent{
+		Title:   assignedEventTitle,
+		System:  assignedEventSystem,
+		Role:    assignedEventRole,
+		Source:  assignedEventSource,
+		EventID: assignedEventId,
+	}, nil
+}
