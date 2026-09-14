@@ -195,11 +195,17 @@ templ InterestAlreadyAssigned(title string, system string, imgURL string, eventI
                     text-decoration: none;
                     color: inherit;
                     display: block;
+                    padding: 0;
 
                     .text-container {
-                        p {
-                            font-size: 12px;
-                            color: var(--color-primary);
+                        div {
+                            padding: var(--spacing-4x);
+
+                            p {
+
+                                font-size: 12px;
+                                color: var(--color-primary);
+                            }
                         }
                     }
                 }
@@ -213,6 +219,7 @@ templ InterestAlreadyAssigned(title string, system string, imgURL string, eventI
 			Du har allerede plass på et annet arrangement i denne puljen.
 			Du kan melde deg av det arrangementet om du heller ønsker å være med på “Arrangementnavn”.
 		</p>
+		<!-- use correct data (current assigned event) not current event data -->
 		@ClickableEventCard(
 			title,
 			system,
@@ -231,7 +238,7 @@ templ ClickableEventCard(title string, system string, imgURL string, eventId str
 						style="
                             display: flex;
                             flex-direction: column;
-                            gap: 0.25rem;
+                            gap: var(--spacing-1x);
                             overflow: clip;
                             "
 					>
@@ -248,7 +255,7 @@ templ ClickableEventCard(title string, system string, imgURL string, eventId str
 					<img
 						src={ imgURL }
 						title={ title }
-						height="70px"
+						height="75px"
 						style="
                                 grid-row: 1 / 2;
                                 grid-column: 1 / 2;
