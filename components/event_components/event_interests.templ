@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
@@ -17,7 +18,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	eventId string,
 	puljeId string,
 	title string,
-	system string,
+	ageGroup models.AgeGroup,
 	eventImageDir *string,
 	db *sql.DB,
 	r *http.Request,
@@ -27,12 +28,13 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		if puljerErr != nil {
 			logger.Error(puljerErr.Error(), "event_id", eventId)
 		}
-		imgURL := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir)
 		selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
 		billettholderID := requestctx.SelectedBillettholderID(r.Context())
 		assignedEvent, _ := getAssignedEventForBillettholder(billettholderID, db, logger)
 		isOver18, _ := getBillettholderIsOver18(billettholderID, db, logger)
+		showUnder18 := isOver18 == 0 && ageGroup == models.AgeGroupAdultsOnly
 		showAssignedEvent := assignedEvent.EventID != "" || assignedEvent.Role == "GM"
+		imgURL := eventimage.GetEventImageUrl(assignedEvent.EventID, "banner", eventImageDir)
 	}}
 	<style>
 		.dialog-container {
@@ -153,9 +155,10 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					if showAssignedEvent {
 						@InterestAlreadyAssigned(assignedEvent.Title, assignedEvent.System, imgURL, assignedEvent.EventID)
 					}
+					if showUnder18 {
 						@interestUnder18(title)
 					}
-					if isOver18 == 1 {
+					if isOver18 == 1 && !showAssignedEvent {
 						@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
 					}
 				</div>
