@@ -42,6 +42,41 @@ func TestEmulateSeatings_AllGMsExcludedFromTheirPulje(t *testing.T) {
 	}
 }
 
+func TestEmulateSeatings_GMOnUnplacedEventIsExcludedFromPulje(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "a billettholder is GM on a legacy event row that is no longer eligible in the pulje", When: "the pulje is emulated", Then: "the GM is still excluded from automatic Player allocation"})
+
+	// Given
+	expectedPlayers := []string{"Player Regular"}
+	db, _ := testutil.CreateTestDBAndLogger(t, "unplaced_event_gm_excluded")
+	const fredag = models.PuljeFredagKveld
+	seedPulje(t, db, fredag, "Fredag", "2026-09-04T18:00:00Z")
+	seedEvent(t, db, "run", "Run", 4, fredag)
+	seedEvent(t, db, "play", "Play", 4, fredag)
+	if _, err := db.Exec(`UPDATE relation_event_puljer SET is_in_pulje = 0 WHERE event_id = 'run' AND pulje_id = ?`, fredag); err != nil {
+		t.Fatalf("mark GM event outside pulje: %v", err)
+	}
+	seedParticipant(t, db, 1, "Game", "Master")
+	seedParticipant(t, db, 2, "Player", "Regular")
+	seedInterest(t, db, 1, "play", fredag, models.InterestLevelHigh)
+	seedInterest(t, db, 2, "play", fredag, models.InterestLevelHigh)
+	seedGM(t, db, "run", fredag, 1)
+
+	// When
+	emulation, err := EmulateSeatings(db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("emulate seating: %v", err)
+	}
+	play, ok := findEvent(emulation.Puljer[0], "play")
+	if !ok {
+		t.Fatal("eligible Player event missing")
+	}
+	if got := playerNames(play.AssignedPlayers); !slices.Equal(got, expectedPlayers) {
+		t.Fatalf("automatic players: got %v, want %v", got, expectedPlayers)
+	}
+}
+
 func TestEmulateSeatings_EachGMReceivesWeekendPriority(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{Given: "two GMs share an event and later contend for a seat", When: "the weekend is emulated", Then: "each GM receives priority over an equally interested regular player"})
 	for _, gmID := range []int{1, 2} {
