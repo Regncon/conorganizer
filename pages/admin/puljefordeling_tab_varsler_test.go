@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -9,6 +10,39 @@ import (
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
+
+func TestPuljefordeling_CapacityWarningListsEveryPlayer(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "Et arrangement med fire plasser har fem manuelt tildelte spillere.", When: "En administrator åpner puljefordelingen.", Then: "Et utvidbart kapasitetsvarsel viser fem av fire plasser og alle spillerne."})
+	// Given
+	expectedPlayers := 5
+	db, _ := tildelingsFixture(t)
+	for id := 1; id <= expectedPlayers; id++ {
+		if id > 1 {
+			testutil.MustExec(t, db, `INSERT INTO billettholdere(id,first_name,last_name,ticket_type_id,ticket_type,order_id,ticket_id,is_over_18) VALUES (?,?,'Nordmann',0,'',0,?,1)`, id, fmt.Sprintf("Spiller %d", id), id)
+		}
+		testutil.MustExec(t, db, `INSERT INTO relation_events_players(event_id,pulje_id,billettholder_id,role,source) VALUES ('evA','FredagKveld',?,'Player','manual')`, id)
+	}
+
+	// When
+	doc := templtest.Render(t, PuljefordelingTabContent(db, testutil.NewTestLogger(), models.PuljeFredagKveld, nil))
+
+	// Then
+	warning := doc.Find("details[data-kapasitetsvarsel='evA']")
+	if warning.Length() != 1 {
+		t.Fatalf("forventet ett kapasitetsvarsel, fikk %d", warning.Length())
+	}
+	for _, text := range []string{"Arrangement X", "5 / 4 spillerplasser"} {
+		if !strings.Contains(warning.Find("summary").Text(), text) {
+			t.Errorf("kapasitetsvarselet mangler %q", text)
+		}
+	}
+	if got := warning.Find("li").Length(); got != expectedPlayers {
+		t.Errorf("kapasitetsvarselet viser %d spillere, vil ha %d", got, expectedPlayers)
+	}
+	if preserve, _ := warning.Attr("data-preserve-attr"); preserve != "open" {
+		t.Error("åpnet kapasitetsvarsel må beholdes under oppdatering")
+	}
+}
 
 func TestPuljefordeling_OverlapWarningListsEveryAssignment(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{Given: "Kari is GM for three arrangementer and pinned as Player on one of them.", When: "An admin views the pulje distribution.", Then: "One expandable warning names Kari and lists all four roles."})

@@ -284,9 +284,13 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		result, hasResult := findEmulatedPulje(em, pulje)
 		unsatisfied, hasUnsatisfied := unsatisfiedAfter(em, pulje)
 		var fordelingsvarsler []puljefordeling.Fordelingsvarsel
+		var kapasitetsvarsler []puljefordeling.Kapasitetsvarsel
 		var varslerErr error
 		if emErr == nil && hasResult {
 			fordelingsvarsler, varslerErr = puljefordeling.FinnFordelingsvarsler(db, result)
+			if varslerErr == nil {
+				kapasitetsvarsler, varslerErr = puljefordeling.FinnKapasitetsvarsler(db, result)
+			}
 			if varslerErr != nil {
 				logger.Error(varslerErr.Error(), "component", "puljefordeling", "pulje_id", pulje)
 			}
@@ -585,9 +589,9 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			<p class="pulje-empty">Ingen fordeling å vise for denne puljen ennå.</p>
 		} else {
 			if varslerErr != nil {
-				<p class="pulje-error">Kunne ikke kontrollere overlappende tildelinger.</p>
+				<p class="pulje-error">Kunne ikke kontrollere tildelinger og kapasitet.</p>
 			} else {
-				@puljeFordelingsvarsler(pulje, fordelingsvarsler)
+				@puljeFordelingsvarsler(pulje, fordelingsvarsler, kapasitetsvarsler)
 			}
 			<div class="pulje-event-grid">
 				for _, ev := range result.Events {
