@@ -229,7 +229,7 @@ func TestRoomsAssignmentMap_UsesDatabaseIDsAndCurrentPuljeAssignments(t *testing
 	if len(mappedRooms[0].AssignedEventsID) != 1 || mappedRooms[0].AssignedEventsID[0].EventID != "friday-event" {
 		t.Fatalf("expected only Friday assignments, got %+v", mappedRooms[0].AssignedEventsID)
 	}
-	if doc.Find(`#assignment-dialog button[data-event-id="friday-event"]`).Length() != 1 || doc.Find(`#assignment-dialog button[data-event-id="saturday-event"]`).Length() != 1 {
+	if doc.Find(`#assignment-dialog .room-event-option[data-event-id="friday-event"]`).Length() != 1 || doc.Find(`#assignment-dialog .room-event-option[data-event-id="saturday-event"]`).Length() != 1 {
 		t.Fatal("map event picker must contain approved events from other puljer")
 	}
 	if doc.Find(".rooms-container .room").Length() != 1 || doc.Find("room-map .room").Length() != 1 {
@@ -320,12 +320,16 @@ func TestRoomAssignmentPicker_IncludesApprovedEventsOutsidePulje(t *testing.T) {
 	insertRoomsPageEventPulje(t, db, "approved-outside", models.PuljeLordagKveld, room.ID)
 
 	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
-	pickerEvent := doc.Find(`#assignment-dialog button[data-event-id="approved-outside"]`)
+	pickerEvent := doc.Find(`#assignment-dialog .room-event-option[data-event-id="approved-outside"]`)
 	if pickerEvent.Length() != 1 || !strings.Contains(pickerEvent.Text(), "Ikke i denne puljen") {
 		t.Fatal("approved events from other puljer should be available in the picker")
 	}
-	if pickerEvent.Parent().Find("details.event-notes").Length() != 1 || !strings.Contains(pickerEvent.Parent().Find("details.event-notes").Text(), "Velg riktig bord først") {
+	if pickerEvent.Find("details.event-notes").Length() != 1 || !strings.Contains(pickerEvent.Find("details.event-notes").Text(), "Velg riktig bord først") {
 		t.Fatal("event picker should show event notes in an accordion")
+	}
+	addButton := pickerEvent.Find("button.room-event-option-add")
+	if addButton.Length() != 1 || !strings.Contains(addButton.AttrOr("data-on:click", ""), "@post('/admin/rooms/api/assignment/FredagKveld/approved-outside/' + $room)") {
+		t.Fatal("event picker should provide a dedicated add button")
 	}
 }
 

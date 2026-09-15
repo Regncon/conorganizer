@@ -589,4 +589,50 @@ Updated [rooms_assignment_page.templ](/home/cinmay/Documents/conorganizer/pages/
 
 Time: 2026-09-15 21:01:17
 --- Next Prompt ---
+What if the cards inside the modal had a small button to add the event to the room? That way the note accordion could be inside the card?  
+
+Time: 2026-09-15 21:05:29
+--- Codex Run ---
+
+Codex output:
+Yes, I think that would be a better interaction.
+
+The modal card could become:
+
+- event image, title, status, and player count;
+- a small `+`/“Legg til” button on the right;
+- the notes accordion inside the same card below;
+- no longer make the entire card clickable.
+
+That solves the invalid nested-interactive-element problem cleanly: the card is a normal container, while the add action and notes accordion are separate controls.
+
+I’d keep the button clearly labelled for accessibility, for example `Legg til «Eventnavn» i rommet`, while displaying only `+`. The card should remain disabled only when the event is already assigned to the selected room. Events assigned elsewhere can still show “flyttes ved valg”.
+
+Implementation-wise, this is a small modal-only layout change. We can reuse the existing notes accordion and leave the room cards untouched. I recommend this approach.
+
+Time: 2026-09-15 21:05:29
+--- Next Prompt ---
+
+Okay, let's implement that change.
+
+Time: 2026-09-15 21:17:08
+--- Codex Run ---
+
+Codex output:
+I agree with that interaction, and I’ll implement it now: modal rows will become non-interactive cards, with a dedicated accessible add button and the notes accordion inside the card. I’ll preserve the existing assignment endpoint and disabled-state behavior, then update the picker tests and run the full suite.
+The modal card conversion is working in the focused tests. The event information is now passive content, the notes accordion sits inside the card, and only the small `+` button triggers assignment. I’m running the full suite and doing the final diff check.
+Implemented.
+
+- Modal event rows are now cards instead of full-row buttons.
+- Each card has a dedicated `+` button with an accessible label.
+- The notes accordion is now inside the card.
+- Assignment behavior and disabled-state logic remain unchanged.
+- Added test coverage for the add button and notes placement.
+
+Updated [rooms_assignment_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_assignment_page.templ:135) and [rooms_page_test.go](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_page_test.go:323).
+
+`go test ./...` passes.
+
+Time: 2026-09-15 21:17:08
+--- Next Prompt ---
 

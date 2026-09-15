@@ -132,20 +132,8 @@ templ assignEventModal(events []models.RoomEventPuljeSummaryJson, pulje models.P
 			}
 			for _, event := range events {
 				{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
-				<div class="room-event-option-group">
-					<button
-						type="button"
-						class="room-event-option"
-						data-event-id={ event.EventID }
-						data-indicator="_roomSaving"
-						data-attr:disabled={ fmt.Sprintf("$_roomSaving || $room === %d", event.RoomID.Int64) }
-						{ errorfeedback.Attrs("room-picker", "Klarte ikke å tildele rommet. Prøv igjen.")... }
-						data-on:click={ fmt.Sprintf(
-                                "@post('/admin/rooms/api/assignment/%s/%s/' + $room)",
-                                string(pulje),
-                                event.EventID,
-                            ) }
-					>
+				<div class="room-event-option" data-event-id={ event.EventID }>
+					<div class="room-event-option-main">
 						<img
 							src={ imageBannerUrl }
 							alt=""
@@ -164,7 +152,21 @@ templ assignEventModal(events []models.RoomEventPuljeSummaryJson, pulje models.P
 								· { event.MaxPlayers } spillere
 							</small>
 						</span>
-					</button>
+					</div>
+					<button
+						type="button"
+						class="room-event-option-add"
+						aria-label={ "Legg til " + event.Title + " i rommet" }
+						title="Legg til i rommet"
+						data-indicator="_roomSaving"
+						data-attr:disabled={ fmt.Sprintf("$_roomSaving || $room === %d", event.RoomID.Int64) }
+						{ errorfeedback.Attrs("room-picker", "Klarte ikke å tildele rommet. Prøv igjen.")... }
+						data-on:click={ fmt.Sprintf(
+                                "@post('/admin/rooms/api/assignment/%s/%s/' + $room)",
+                                string(pulje),
+                                event.EventID,
+                            ) }
+					>+</button>
 					@eventNotesAccordion(event.Notes)
 				</div>
 			}
@@ -346,11 +348,6 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             margin: 0;
             padding: 0;
         }
-        .room-event-option-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
         .room-empty { font-size: 12px; opacity: 0.7; }
         .room--map {
             position: relative;
@@ -437,6 +434,7 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
         }
         .room-event-option {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             gap: 12px;
             padding: 8px;
@@ -445,14 +443,40 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             border-radius: 6px;
             background: var(--bg-item);
             color: var(--color-primary-text);
-            cursor: pointer;
+            .room-event-option-main {
+                display: flex;
+                align-items: center;
+                flex: 1;
+                gap: 12px;
+                min-inline-size: 0;
+            }
             img { inline-size: 64px; block-size: 48px; object-fit: cover; border-radius: 4px; }
             span { display: grid; gap: 4px; }
             small { opacity: 0.7; }
             &:hover { border-color: var(--color-primary); }
-            &:disabled { opacity: 0.5; cursor: default; }
         }
-        .room-event-option-group .event-notes {
+        .room-event-option-add {
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            inline-size: 32px;
+            block-size: 32px;
+            padding: 0;
+            border: 1px solid var(--bg-item-border);
+            border-radius: 4px;
+            background: var(--bg-item-hover);
+            color: var(--color-primary-text);
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            &:hover { background: var(--bg-main, var(--bg-item)); }
+            &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+            &:disabled { opacity: 0.5; cursor: wait; }
+        }
+        .room-event-option .event-notes {
+            flex: 0 0 100%;
+            border-block-start: 1px solid var(--bg-item-border);
+            padding-block-start: 4px;
             padding-inline: 8px;
         }
 	</style>
