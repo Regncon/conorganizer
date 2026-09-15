@@ -11,6 +11,7 @@ import (
 	roomService "github.com/Regncon/conorganizer/service/rooms"
 	"log/slog"
 	"sort"
+	"strings"
 )
 
 type FloorGroupPulje struct {
@@ -55,6 +56,7 @@ func getApprovedEventsForPulje(db *sql.DB, logger *slog.Logger, pulje models.Pul
             e.title,
             e.max_players,
             e.id,
+            COALESCE(e.notes, ''),
             COALESCE(rep.pulje_id, ''),
             rep.room_id
         FROM events e
@@ -81,6 +83,7 @@ func getApprovedEventsForPulje(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			&event.Title,
 			&event.MaxPlayers,
 			&event.EventID,
+			&event.Notes,
 			&event.EventPuljeID,
 			&event.RoomID,
 		)
@@ -194,6 +197,12 @@ templ roomEventCard(event models.RoomEventPuljeSummary, pulje models.Pulje, even
 				data-on:click={ fmt.Sprintf("@delete('/admin/rooms/api/assignment/%s/%s/%d')", pulje, event.EventID, event.RoomID) }
 				{ errorfeedback.Attrs("room-assignment", "Klarte ikke å fjerne romtildelingen. Prøv igjen.")... }
 			>×</button>
+		}
+		if strings.TrimSpace(event.Notes) != "" {
+			<details class="room-event-notes" data-preserve-attr="open" draggable="false">
+				<summary>Notater</summary>
+				<p>{ event.Notes }</p>
+			</details>
 		}
 	</div>
 }
@@ -358,6 +367,7 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
         }
         .room-event {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             flex: 0 0 auto;
             gap: 4px;
@@ -380,6 +390,26 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
                 overflow-wrap: anywhere;
             }
             img { inline-size: 36px; block-size: 36px; object-fit: cover; border-radius: 3px; flex: 0 0 auto; }
+            .room-event-notes {
+                flex: 0 0 100%;
+                min-inline-size: 0;
+                border-block-start: 1px solid var(--bg-item-border);
+                padding-block-start: 4px;
+                font-size: 11px;
+                line-height: 1.35;
+            }
+            .room-event-notes summary {
+                inline-size: fit-content;
+                color: var(--color-primary-text);
+                cursor: pointer;
+            }
+            .room-event-notes p {
+                max-block-size: 8rem;
+                margin: 4px 0 0;
+                overflow-y: auto;
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+            }
             &:hover { border-color: var(--color-primary); }
             &.is-dragging { opacity: 0.5; }
         }
@@ -438,7 +468,7 @@ templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.P
 			<h2>{ len(events) } Eventer i pulje uten tildelt rom</h2>
 			<div class="event-list">
 				for _, event := range events {
-					@roomEventCard(models.RoomEventPuljeSummary{EventID: event.EventID, Title: event.Title, MaxPlayers: event.MaxPlayers}, pulje, eventImageDir)
+					@roomEventCard(models.RoomEventPuljeSummary{EventID: event.EventID, Title: event.Title, Notes: event.Notes, MaxPlayers: event.MaxPlayers}, pulje, eventImageDir)
 				}
 			</div>
 		}

@@ -466,3 +466,103 @@ mapped = mapped && room.Floor == 7 }}
 Time: 2026-09-14 16:58:04
 --- Next Prompt ---
 
+We got some feedback. First, the bug with the page becoming unresponsive after selecting an event from the "+" button still persists. 
+Diagnose the issue and leg's discuss how to fix it before changing the code.
+
+Time: 2026-09-15 20:26:29
+--- Codex Run ---
+
+Codex output:
+I’ll trace the `+` button flow end-to-end without modifying anything: opening the dialog, selecting an event, the assignment request, the server response, and Datastar’s signal/DOM replacement behavior. I’ll also inspect the live page if the local session is available, then report the most likely root cause and a small fix strategy for discussion.
+The server-side path is succeeding in tests, but those tests only verify the database mutation and that the response contains `room-saved`; they do not exercise the browser race. The code shows two concurrent Datastar flows updating the same subtree, so I’m narrowing down whether the stuck state is the shared loading signal or the dialog/listener being morphed while the POST response is still in flight.
+I found a likely root cause. The backend assignment itself succeeds; the problem is the interaction between two concurrent Datastar requests:
+
+1. The event button starts a short-lived `@post` request and sets `$_roomSaving`.
+2. The same `#room-assignment` subtree owns a long-lived live-update `@get`.
+3. The POST handler broadcasts the update before sending the modal-close script.
+
+That broadcast can morph the open dialog and the button that owns the loading indicator while the POST is still running. The later `room-saved` event and Datastar cleanup then race with that DOM replacement. If the dialog remains open, the browser makes the rest of the page inert, which looks like an unresponsive page. If the indicator state remains true, all `+` buttons appear disabled.
+
+The current tests don’t catch this: they verify the database update and that the response contains `room-saved`, but they don’t run an active live stream or inspect browser state.
+
+My preferred fix is to move the assignment dialog outside the live-patched `#room-assignment` subtree. The room board can continue updating live, while the dialog and its request state remain stable. Successful assignments can then close the stable dialog reliably; failed assignments can leave it open and show the existing error feedback.
+
+A smaller but less robust alternative is to close the dialog synchronously before starting `@post`, and reorder the broadcast after the success response. Separate HTTP streams still make that susceptible to ordering races, so I prefer the stable-dialog approach.
+
+No code has been changed in this turn. The local site was not available for browser reproduction: there was no active browser session and localhost returned `401`.
+
+Time: 2026-09-15 20:26:29
+--- Next Prompt ---
+
+We are waiting for confirmation of the bug from the admin team. In the meantime, one request is to be able to see the notes for each event, for example via an accordion on the mini even cards. Let's discuss how we can implement this feature.
+
+Time: 2026-09-15 20:35:13
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the event model/query and the existing mini-card and accordion patterns so we can add notes without duplicating data access or making the cards too dense. I’ll keep this discussion-only and won’t change the code yet.
+The notes are already stored on `events.notes`, so this does not require a schema change. The missing piece is carrying them through the lightweight room-event summary used by the assignment page.
+
+I recommend:
+
+- Add `Notes` to the existing room-event summary models.
+- Include `e.notes` in the existing queries—avoiding extra queries per card.
+- Extend the shared `roomEventCard`, so notes automatically work for:
+  - unassigned events;
+  - events assigned to mapped rooms;
+  - events assigned to rooms outside the map.
+- Render notes with native `<details>/<summary>`:
+  - collapsed by default;
+  - hidden entirely when an event has no notes;
+  - keyboard accessible;
+  - preserve line breaks;
+  - limit the expanded area with scrolling for unusually long notes.
+- Add `data-preserve-attr="open"` so live Datastar updates do not unexpectedly collapse an accordion an admin is reading.
+
+I would leave the event-selection modal unchanged initially. It is a separate control, and adding notes there would duplicate information without being necessary for the requested mini-card workflow.
+
+One consideration is map layout: expanding notes inside a mapped room may make that room overlay taller. A constrained, scrollable notes area should prevent it from obscuring too much of the map.
+
+This keeps the implementation small: one data-field extension, one shared card change, and focused tests for notes-present, notes-empty, and live-update behavior.
+
+Time: 2026-09-15 20:35:13
+--- Next Prompt ---
+
+Ok, let's implement the notes feature and see what it looks like.
+
+Time: 2026-09-15 20:45:38
+--- Codex Run ---
+
+Codex output:
+I’ll implement this through the existing lightweight room-event .ummaries and shared mini-card, so all three card locations get the same behavior. I’ll keep the picker unchanged, use native `<details>` for the accordion, preserve its open state across live updates, and add focused tests before checking the full suite.
+The data path is as expected: notes exist on the event model, but the room-assignment summaries omit them. I’m going to extend those summaries and the two existing queries, then render the notes in the shared card. This avoids a per-card database lookup and means the same implementation covers mapped, unmapped, and unassigned cards.
+The first pass is in place, including null-safe note loading and a compact, scrollable expanded area so long notes do not distort the map. I’m adding a regression test that verifies notes arrive through both data paths: assigned cards come from the room-status query, while unassigned cards come from the approved-event query.
+The focused tests pass, including the new accordion coverage for assigned and unassigned cards. I’m reviewing the generated output and running the full Go suite now; after that I’ll check whether the local site is reachable for a quick visual sanity check.
+The full test suite passes. The local server is reachable, but the assignment route returns `401`, and no browser session is connected, so I couldn’t inspect the authenticated page visually here. The rendered/tested layout is a compact card with a collapsed “Notater” disclosure beneath the title row; I’m doing the final diff check now.
+Implemented the event notes feature.
+
+- Added notes to the room-event summary data.
+- Loaded notes through the existing queries.
+- Added a native `<details>` accordion labelled “Notater” to the shared mini event cards.
+- Notes appear for assigned, unassigned, mapped, and unmapped events.
+- Empty notes do not show an accordion.
+- Preserves expanded state during live Datastar updates.
+- Long notes retain line breaks and scroll within a constrained area.
+
+Updated:
+
+- [models/rooms.go](/home/cinmay/Documents/conorganizer/models/rooms.go:30)
+- [rooms.go](/home/cinmay/Documents/conorganizer/service/rooms/rooms.go:305)
+- [rooms_assignment_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_assignment_page.templ:175)
+- [rooms_page_test.go](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_page_test.go:249)
+
+`go test ./...` passes. The local route was reachable but required authentication (`401`), so visual browser verification remains unavailable in this session.
+
+text
+2026-09-15T18:42:24.887575Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid patch: multiple operations target /home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_assignment_page.templ
+2026-09-15T18:45:16.470095Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/models/rooms.go:
+                width: fit-content;
+
+Time: 2026-09-15 20:45:38
+--- Next Prompt ---
+

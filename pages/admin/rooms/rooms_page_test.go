@@ -259,6 +259,8 @@ func TestRoomEventCard_IsSharedAcrossAssignedAndUnassignedLocations(t *testing.T
 		insertRoomsPageEvent(t, db, id, "Et arrangement", 4)
 		insertRoomsPageEventPulje(t, db, id, models.PuljeFredagKveld, roomID)
 	}
+	testutil.MustExec(t, db, `UPDATE events SET notes=? WHERE id=?`, "Notat for det ledige arrangementet", fmt.Sprintf("event-%d", 0))
+	testutil.MustExec(t, db, `UPDATE events SET notes=? WHERE id=?`, "Notat for det tildelte arrangementet", fmt.Sprintf("event-%d", mapped.ID))
 
 	// When
 	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
@@ -276,6 +278,18 @@ func TestRoomEventCard_IsSharedAcrossAssignedAndUnassignedLocations(t *testing.T
 			}
 		} else if got := remove.AttrOr("data-on:click", ""); got != fmt.Sprintf("@delete('/admin/rooms/api/assignment/FredagKveld/event-%d/%d')", roomID, roomID) {
 			t.Fatalf("removal must target the current pulje and room, got %q", got)
+		}
+
+		notes := card.Find(".room-event-notes")
+		if roomID == 0 || roomID == mapped.ID {
+			if notes.Length() != 1 || !strings.Contains(notes.Text(), "Notat for det") {
+				t.Fatalf("event in room %d should render its notes in an accordion", roomID)
+			}
+			if got := notes.Find("summary").Text(); got != "Notater" {
+				t.Fatalf("notes accordion should have a clear label, got %q", got)
+			}
+		} else if notes.Length() != 0 {
+			t.Fatalf("event in room %d without notes should not render an empty accordion", roomID)
 		}
 	}
 }
