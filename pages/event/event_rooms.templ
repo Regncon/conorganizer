@@ -1,0 +1,195 @@
+package event
+
+import (
+	"fmt"
+	"github.com/Regncon/conorganizer/components/icons"
+)
+
+templ eventRoomLocations(eventID string, assignments []eventRoom, showPuljeName bool) {
+	{{
+		// Clear a withdrawn map selection so publishing it again does not reopen it.
+		availableDialogIDs := []string{}
+		for _, assignment := range assignments {
+			if assignment.MapPath != "" {
+				availableDialogIDs = append(availableDialogIDs, eventRoomDialogID(eventID, assignment.PuljeID))
+			}
+		}
+		availableDialogIDsJSON, err := templ.JSONString(availableDialogIDs)
+		if err != nil {
+			return err
+		}
+	}}
+	<div
+		id="event-room-locations"
+		data-signals__ifmissing="{_eventRoomMapDialog: ''}"
+		data-effect={ fmt.Sprintf("if (!%s.includes($_eventRoomMapDialog)) { $_eventRoomMapDialog = ''; }", availableDialogIDsJSON) }
+	>
+		if len(assignments) > 0 {
+			@eventRoomStyles()
+			<div class="event-room-list">
+				for _, assignment := range assignments {
+					{{ dialogID := eventRoomDialogID(eventID, assignment.PuljeID) }}
+					if assignment.MapPath != "" {
+						<button
+							type="button"
+							id={ dialogID + "-button" }
+							class="event-room-button"
+							aria-haspopup="dialog"
+							aria-controls={ dialogID }
+							data-on:click={ fmt.Sprintf("$_eventRoomMapDialog = %q", dialogID) }
+						>
+							@eventRoomLabel(assignment, showPuljeName)
+							<span class="event-room-action">
+								Se rommet
+								<span aria-hidden="true">
+									@icons.Icon(icons.Map, icons.Size20)
+								</span>
+							</span>
+						</button>
+						@eventRoomDialog(dialogID, assignment)
+					} else {
+						<div class="event-room-unmapped">
+							@eventRoomLabel(assignment, showPuljeName)
+						</div>
+					}
+				}
+			</div>
+		}
+	</div>
+}
+
+templ eventRoomLabel(assignment eventRoom, showPuljeName bool) {
+	<span class="event-room-label">
+		<span class="event-room-caption">Tildelt rom</span>
+		if showPuljeName {
+			<span class="event-room-caption">{ assignment.PuljeName }</span>
+		}
+		<span>{ assignment.Room.Name }</span>
+	</span>
+}
+
+templ eventRoomDialog(dialogID string, assignment eventRoom) {
+	<dialog
+		id={ dialogID }
+		class="event-room-dialog"
+		aria-labelledby={ dialogID + "-title" }
+		data-preserve-attr="open"
+		data-effect={ fmt.Sprintf("if ($_eventRoomMapDialog === %q) { if (!el.open) el.showModal(); } else if (el.open) { el.close(); }", dialogID) }
+		data-on:close={ fmt.Sprintf("if ($_eventRoomMapDialog === %q) $_eventRoomMapDialog = '';", dialogID) }
+		data-on:click="if (evt.target === el) $_eventRoomMapDialog = ''"
+	>
+		<div class="event-room-dialog-content">
+			<header class="event-room-dialog-header">
+				<span>Finn rommet</span>
+				<button type="button" class="btn btn--ghost btn-icon-only" aria-label="Lukk kart" autofocus data-on:click="$_eventRoomMapDialog = ''">
+					@icons.Icon(icons.Close, icons.Size24)
+				</button>
+			</header>
+			<p class="event-room-floor">{ fmt.Sprintf("%d. etasje", assignment.Room.Floor) }</p>
+			<h2 id={ dialogID + "-title" }>{ assignment.Room.Name }</h2>
+			<p class="event-room-pulje">{ assignment.PuljeName }</p>
+			<img
+				src={ assignment.MapPath }
+				alt={ fmt.Sprintf("Kart med vei fra trappegangen til %s, rom %s i %d. etasje", assignment.Room.Name, assignment.Room.RoomNumber, assignment.Room.Floor) }
+			/>
+		</div>
+	</dialog>
+}
+
+templ eventRoomStyles() {
+	<style>
+		.event-room-list {
+			display: grid;
+			gap: var(--spacing-3x);
+			margin-bottom: var(--spacing-3x);
+		}
+		.event-room-button, .event-room-unmapped {
+			padding: var(--spacing-3x);
+			border-radius: var(--border-radius-2x);
+			color: var(--color-text-strong);
+		}
+		.event-room-button {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--spacing-3x);
+			inline-size: 100%;
+			font: inherit;
+			text-align: start;
+			border: 2px solid var(--color-primary);
+			background: color-mix(in srgb, var(--color-primary) 18%, var(--bg-surface));
+			cursor: pointer;
+		}
+		.event-room-button:hover {
+			background: color-mix(in srgb, var(--color-primary) 28%, var(--bg-surface));
+		}
+		.event-room-button:focus-visible {
+			outline: 2px solid var(--color-text-strong);
+			outline-offset: 3px;
+		}
+		.event-room-label {
+			display: grid;
+			gap: var(--spacing-1x);
+			overflow-wrap: anywhere;
+		}
+		.event-room-caption {
+			font-size: 12px;
+		}
+		.event-room-action {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-2x);
+			flex-shrink: 0;
+		}
+		.event-room-unmapped {
+			background: var(--bg-surface);
+		}
+		.event-room-dialog {
+			box-sizing: border-box;
+			inline-size: min(50rem, calc(100% - 2rem));
+			max-inline-size: none;
+			max-block-size: calc(100dvh - 2rem);
+			padding: 0;
+			border: none;
+			border-radius: var(--border-radius-2x);
+			background: var(--bg-surface);
+			color: var(--color-text-soft);
+			box-shadow: var(--shadow-dialog);
+			overflow: auto;
+		}
+		.event-room-dialog::backdrop {
+			background: rgb(0 0 0 / 65%);
+		}
+		.event-room-dialog-content {
+			padding: var(--responsive-pane-padding);
+		}
+		.event-room-dialog-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1rem;
+			margin-bottom: var(--spacing-4x);
+			font-weight: 700;
+		}
+		.event-room-dialog .event-room-floor {
+			margin: 0;
+			color: var(--color-primary);
+			font-weight: 700;
+		}
+		.event-room-dialog h2 {
+			margin: var(--spacing-2x) 0;
+			color: var(--color-text-strong);
+		}
+		.event-room-dialog .event-room-pulje {
+			margin: 0 0 var(--spacing-4x);
+		}
+		.event-room-dialog img {
+			display: block;
+			inline-size: auto;
+			block-size: auto;
+			max-inline-size: 100%;
+			max-block-size: max(15rem, calc(100dvh - 15rem));
+			margin-inline: auto;
+		}
+	</style>
+}

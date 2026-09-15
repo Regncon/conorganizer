@@ -1,0 +1,116 @@
+package event
+
+import (
+	"database/sql"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/templtest"
+)
+
+func createEventRoomTestDB(t *testing.T) *sql.DB {
+	t.Helper()
+	db := createEventVisibilityTestDB(t)
+	seedEventVisibilityEvent(t, db, "room-event", "Room event", models.EventStatusAnnounced, sql.NullInt64{})
+	seedEventVisibilityPulje(t, db, models.PuljeFredagKveld)
+	seedEventVisibilityEventPulje(t, db, "room-event", models.PuljeFredagKveld, true)
+	testutil.MustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?), (?)`, models.PuljeStatusCompleted, models.PuljeStatusLocked)
+	testutil.MustExec(t, db, `UPDATE puljer SET status = ? WHERE id = ?`, models.PuljeStatusCompleted, models.PuljeFredagKveld)
+	testutil.MustExec(t, db, `INSERT INTO rooms(id, name, room_number, floor, max_concurrent_games) VALUES (42, 'Amalie Hansen', '705', 7, 1)`)
+	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 42 WHERE event_id = 'room-event'`)
+	return db
+}
+
+func TestEventRoomVisibility(t *testing.T) {
+	tests := []struct {
+		name     string
+		update   string
+		wantRoom bool
+		wantMap  bool
+	}{
+		{name: "published allocation", wantRoom: true, wantMap: true},
+		{name: "unpublished program", update: `UPDATE program_publishing_state SET is_published = 0`},
+		{name: "open allocation", update: `UPDATE puljer SET status = 'Open'`},
+		{name: "locked allocation", update: `UPDATE puljer SET status = 'Locked'`},
+		{name: "unpublished occurrence", update: `UPDATE relation_event_puljer SET is_published = 0`},
+		{name: "removed occurrence", update: `UPDATE relation_event_puljer SET is_in_pulje = 0`},
+		{name: "unassigned room", update: `UPDATE relation_event_puljer SET room_id = NULL`},
+		{name: "deleted room", update: `DELETE FROM rooms WHERE id = 42`},
+		{name: "unknown map", update: `UPDATE rooms SET room_number = '999'`, wantRoom: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			db := createEventRoomTestDB(t)
+			if test.update != "" {
+				testutil.MustExec(t, db, test.update)
+			}
+			request := httptest.NewRequest("GET", "/event/room-event", nil)
+			doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+			if got := doc.Find(".event-room-label").Length() > 0; got != test.wantRoom {
+				t.Fatalf("room visible = %v, want %v", got, test.wantRoom)
+			}
+			if got := doc.Find(".event-room-button").Length() > 0; got != test.wantMap {
+				t.Fatalf("map button visible = %v, want %v", got, test.wantMap)
+			}
+			if got := doc.Find(".event-room-dialog img").Length() > 0; got != test.wantMap {
+				t.Fatalf("map rendered = %v, want %v", got, test.wantMap)
+			}
+			if !test.wantRoom && strings.Contains(doc.Find("#event-room-locations").Text(), "Amalie Hansen") {
+				t.Fatal("hidden room name leaked into markup")
+			}
+		})
+	}
+}
+
+func TestEventRoomsUseEachPuljeAssignment(t *testing.T) {
+	db := createEventRoomTestDB(t)
+	seedEventVisibilityPulje(t, db, models.PuljeLordagKveld)
+	seedEventVisibilityEventPulje(t, db, "room-event", models.PuljeLordagKveld, true)
+	testutil.MustExec(t, db, `UPDATE puljer SET name = 'Lørdag kveld', status = ?, start_at = '2026-10-10T18:30:00+02:00' WHERE id = ?`, models.PuljeStatusCompleted, models.PuljeLordagKveld)
+	testutil.MustExec(t, db, `INSERT INTO rooms(id, name, room_number, floor, max_concurrent_games) VALUES (43, 'Lørdagsrommet', '710', 7, 1)`)
+	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 43 WHERE pulje_id = ?`, models.PuljeLordagKveld)
+	seedEventVisibilityEvent(t, db, "other-event", "Other event", models.EventStatusAnnounced, sql.NullInt64{})
+	seedEventVisibilityEventPulje(t, db, "other-event", models.PuljeFredagKveld, true)
+	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 43 WHERE event_id = 'other-event'`)
+
+	assignments, err := getEventRooms(db, "room-event", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(assignments) != 2 {
+		t.Fatalf("got %d assignments, want 2", len(assignments))
+	}
+	for i, want := range []struct {
+		pulje  models.Pulje
+		roomID int
+		number string
+	}{
+		{models.PuljeFredagKveld, 42, "705"},
+		{models.PuljeLordagKveld, 43, "710"},
+	} {
+		got := assignments[i]
+		if got.PuljeID != want.pulje || got.Room.ID != want.roomID || !strings.HasSuffix(got.MapPath, "-"+want.number+".svg") {
+			t.Fatalf("assignment %d: %+v", i, got)
+		}
+	}
+	request := httptest.NewRequest("GET", "/event/room-event?pulje=LordagKveld", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+	for _, assignment := range assignments {
+		id := eventRoomDialogID("room-event", assignment.PuljeID)
+		if got := doc.Find("#"+id+" img").AttrOr("src", ""); got != assignment.MapPath {
+			t.Fatalf("map = %q, want %q", got, assignment.MapPath)
+		}
+		if !strings.Contains(doc.Find("#"+id+"-button").Text(), assignment.PuljeName) {
+			t.Fatal("button is missing its pulje name")
+		}
+	}
+	// A reassignment updates the map without changing the dialog's identity.
+	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 43 WHERE event_id = 'room-event' AND pulje_id = ?`, models.PuljeFredagKveld)
+	doc = templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+	if got := doc.Find("#"+eventRoomDialogID("room-event", models.PuljeFredagKveld)+" img").AttrOr("src", ""); got != assignments[1].MapPath {
+		t.Fatalf("reassigned map = %q", got)
+	}
+}
