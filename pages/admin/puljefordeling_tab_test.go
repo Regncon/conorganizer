@@ -82,6 +82,17 @@ func TestPuljefordelingTabContent_RendersPuljeEventsAndStatusToggles(t *testing.
 	}
 }
 
+func TestPuljefordelingIndex_RendersHumanReadablePuljeLabels(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_index_pulje_labels")
+
+	doc := templtest.Render(t, puljefordelingIndex(db, logger, models.PuljeLordagMorgen, nil))
+	tab := doc.Find(`a[href="/admin/puljefordeling/LordagMorgen"]`)
+
+	if tab.Length() != 1 || tab.Text() != "Lørdag morgen" {
+		t.Fatalf("expected human-readable puljefordeling tab label, got %q", tab.Text())
+	}
+}
+
 func TestPuljefordelingTabContent_ShowsRunningUnsatisfiedCount(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en deltaker hvis eneste førstevalg ligger i en senere pulje.",

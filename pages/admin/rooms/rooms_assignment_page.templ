@@ -442,7 +442,7 @@ templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.P
 				}
 			</div>
 		}
-		<h2>Romfordelig for { pulje }</h2>
+		<h2>Romfordelig for { pulje.Label() }</h2>
 		{{ floors := getRoomsPuljeByFloor(db, logger, pulje) }}
 		for _, floorGroup := range floors {
 			if mapPath, hasMap := roomService.MapPathForFloor(floorGroup.Floor); hasMap {
