@@ -15,7 +15,11 @@ type billettholderInterestEventRow struct {
 	IsPublished   bool
 	InterestLevel models.InterestLevel
 	AssignedRole  models.EventPlayerRole
+	IsPlayer      bool
+	IsGM          bool
 }
+
+const billettholderInterestEventRolePlayerAndGM models.EventPlayerRole = "PlayerAndGM"
 
 type billettholderInterestPuljeSection struct {
 	PuljeID  models.Pulje
@@ -72,7 +76,8 @@ func getBillettholderInterestSectionsByBillettholderID(
 				e.status AS event_status,
 				COALESCE(ep.is_published, 0) AS is_published,
 				COALESCE(i.interest_level, '') AS interest_level,
-				rep.role AS assigned_role,
+				MAX(rep.role = ?) AS is_player,
+				MAX(rep.role = ?) AS is_gm,
 				1 AS is_assigned
 			FROM relation_events_players AS rep
 			INNER JOIN requested_billettholdere AS rb
@@ -88,6 +93,16 @@ func getBillettholderInterestSectionsByBillettholderID(
 				ON i.billettholder_id = rep.billettholder_id
 				AND i.event_id = rep.event_id
 				AND i.pulje_id = rep.pulje_id
+			GROUP BY
+				rep.billettholder_id,
+				p.id,
+				p.name,
+				p.start_at,
+				e.id,
+				e.title,
+				e.status,
+				ep.is_published,
+				i.interest_level
 
 			UNION ALL
 
@@ -101,7 +116,8 @@ func getBillettholderInterestSectionsByBillettholderID(
 				e.status AS event_status,
 				COALESCE(ep.is_published, 0) AS is_published,
 				i.interest_level AS interest_level,
-				'' AS assigned_role,
+				0 AS is_player,
+				0 AS is_gm,
 				0 AS is_assigned
 			FROM interests AS i
 			INNER JOIN requested_billettholdere AS rb
@@ -128,7 +144,8 @@ func getBillettholderInterestSectionsByBillettholderID(
 			event_status,
 			is_published,
 			interest_level,
-			assigned_role,
+			is_player,
+			is_gm,
 			is_assigned
 		FROM billettholder_interest_rows
 		ORDER BY
@@ -147,7 +164,14 @@ func getBillettholderInterestSectionsByBillettholderID(
 			event_id
 	`, valuesPlaceholders(len(ids)))
 
-	args = append(args, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
+	args = append(
+		args,
+		models.EventPlayerRolePlayer,
+		models.EventPlayerRoleGM,
+		models.InterestLevelHigh,
+		models.InterestLevelMedium,
+		models.InterestLevelLow,
+	)
 
 	rows, err := db.Query(query, args...)
 	if err != nil {
@@ -166,7 +190,8 @@ func getBillettholderInterestSectionsByBillettholderID(
 			eventStatus     string
 			isPublished     int
 			interestLevel   string
-			assignedRole    string
+			isPlayer        int
+			isGM            int
 			isAssigned      int
 		)
 		if err := rows.Scan(
@@ -178,7 +203,8 @@ func getBillettholderInterestSectionsByBillettholderID(
 			&eventStatus,
 			&isPublished,
 			&interestLevel,
-			&assignedRole,
+			&isPlayer,
+			&isGM,
 			&isAssigned,
 		); err != nil {
 			return nil, fmt.Errorf("scan billettholder interest row: %w", err)
@@ -204,8 +230,10 @@ func getBillettholderInterestSectionsByBillettholderID(
 			EventStatus:   models.EventStatus(eventStatus),
 			IsPublished:   isPublished == 1,
 			InterestLevel: models.InterestLevel(interestLevel),
-			AssignedRole:  models.EventPlayerRole(assignedRole),
+			IsPlayer:      isPlayer == 1,
+			IsGM:          isGM == 1,
 		}
+		row.AssignedRole = billettholderInterestAssignedRole(row)
 		appendBillettholderInterestRow(result[billettholderID], sectionIndexForKey, row, isAssigned == 1)
 	}
 	if err := rows.Err(); err != nil {
@@ -213,6 +241,19 @@ func getBillettholderInterestSectionsByBillettholderID(
 	}
 
 	return result, nil
+}
+
+func billettholderInterestAssignedRole(row billettholderInterestEventRow) models.EventPlayerRole {
+	if row.IsPlayer && row.IsGM {
+		return billettholderInterestEventRolePlayerAndGM
+	}
+	if row.IsGM {
+		return models.EventPlayerRoleGM
+	}
+	if row.IsPlayer {
+		return models.EventPlayerRolePlayer
+	}
+	return ""
 }
 
 func uniquePositiveBillettholderIDs(ids []int) []int {
