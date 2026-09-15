@@ -269,8 +269,8 @@ templ ProgramEventCard(event UserEvent) {
 					for _, member := range event.GroupMembers {
 						<li>
 							{ member.FirstName }
-							if member.Role == models.EventPlayerRoleGM {
-								<span class="program-group-role"> (GM)</span>
+							if member.RoleLabel() != "" {
+								<span class="program-group-role"> ({ member.RoleLabel() })</span>
 							}
 						</li>
 					}

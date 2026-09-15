@@ -27,6 +27,8 @@ type UserEvent struct {
 type ProgramGroupMember struct {
 	FirstName string
 	Role      models.EventPlayerRole
+	IsPlayer  bool
+	IsGM      bool
 }
 
 type UserProgramPulje struct {
@@ -57,6 +59,16 @@ func (event UserEvent) RoomLabel() string {
 
 func (event UserEvent) GMLabel() string {
 	return strings.Join(event.GMNames, ", ")
+}
+
+func (member ProgramGroupMember) RoleLabel() string {
+	if member.IsPlayer && member.IsGM {
+		return "Spiller og GM"
+	}
+	if member.IsGM || member.Role == models.EventPlayerRoleGM {
+		return "GM"
+	}
+	return ""
 }
 
 func enrichUserProgramEvents(db *sql.DB, events []UserEvent) error {
@@ -114,17 +126,28 @@ func loadUserProgramEventDetails(db *sql.DB, event *UserEvent) error {
 	}
 
 	const groupQuery = `
-		SELECT b.first_name, player.role
+		SELECT
+			b.first_name,
+			MAX(player.role = ?) AS is_player,
+			MAX(player.role = ?) AS is_gm
 		FROM relation_events_players player
 		JOIN billettholdere b ON b.id = player.billettholder_id
 		WHERE player.event_id = ? AND player.pulje_id = ?
+		GROUP BY b.id, b.first_name, b.last_name
 		ORDER BY
-			CASE player.role WHEN ? THEN 0 ELSE 1 END,
+			MAX(player.role = ?) DESC,
 			b.first_name,
 			b.last_name,
 			b.id
 	`
-	groupRows, err := db.Query(groupQuery, event.EventID, event.PuljeID, models.EventPlayerRoleGM)
+	groupRows, err := db.Query(
+		groupQuery,
+		models.EventPlayerRolePlayer,
+		models.EventPlayerRoleGM,
+		event.EventID,
+		event.PuljeID,
+		models.EventPlayerRoleGM,
+	)
 	if err != nil {
 		return fmt.Errorf("query group for event %s in pulje %s: %w", event.EventID, event.PuljeID, err)
 	}
@@ -132,8 +155,13 @@ func loadUserProgramEventDetails(db *sql.DB, event *UserEvent) error {
 
 	for groupRows.Next() {
 		var member ProgramGroupMember
-		if err := groupRows.Scan(&member.FirstName, &member.Role); err != nil {
+		if err := groupRows.Scan(&member.FirstName, &member.IsPlayer, &member.IsGM); err != nil {
 			return fmt.Errorf("scan group member for event %s in pulje %s: %w", event.EventID, event.PuljeID, err)
+		}
+		if member.IsGM {
+			member.Role = models.EventPlayerRoleGM
+		} else if member.IsPlayer {
+			member.Role = models.EventPlayerRolePlayer
 		}
 		event.GroupMembers = append(event.GroupMembers, member)
 	}

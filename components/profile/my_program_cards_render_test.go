@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
@@ -68,6 +69,41 @@ func TestMyProgram_WhenPlayerHasCompletedAssignment_RendersPersonalGroupCard(t *
 		if !strings.Contains(actualText, expectedText) {
 			t.Errorf("expected rendered profile program to contain %q\nactual text: %s", expectedText, actualText)
 		}
+	}
+}
+
+func TestMyProgram_WhenGroupMemberIsPlayerAndGMOnSameEvent_RendersOneMemberWithBothRoles(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given one expected group member assigned as both Player and GM on the same completed arrangement.",
+		When:  "When the personal festival program is rendered.",
+		Then:  "Then that billettholder appears once with both roles shown.",
+	})
+
+	// Given
+	expectedMemberName := "Dual"
+	expectedRoleLabel := "Spiller og GM"
+
+	db, logger := createProfileProgramTestDB(t)
+	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgram(t, db, true)
+	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
+	insertProfileProgramPublishedEvent(t, db, "dual-role-group-event", "Dual Role Group Event")
+	insertProfileProgramPlayer(t, db, "dual-role-group-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramNamedPlayer(t, db, "dual-role-group-event", models.PuljeFredagKveld, 1002, "Dual", "Role", models.EventPlayerRolePlayer)
+	insertProfileProgramPlayer(t, db, "dual-role-group-event", models.PuljeFredagKveld, 1002, models.EventPlayerRoleGM)
+
+	// When
+	doc := templtest.Render(t, MyProgram(userInfo, billettholderID, db, logger, nil))
+	memberRows := doc.Find("[data-program-group] li").FilterFunction(func(_ int, selection *goquery.Selection) bool {
+		return strings.Contains(strings.Join(strings.Fields(selection.Text()), " "), expectedMemberName)
+	})
+
+	// Then
+	if memberRows.Length() != 1 {
+		t.Fatalf("expected one group row for %q, got %d", expectedMemberName, memberRows.Length())
+	}
+	if actualText := strings.Join(strings.Fields(memberRows.Text()), " "); !strings.Contains(actualText, expectedRoleLabel) {
+		t.Fatalf("expected dual-role group row to contain %q, got %q", expectedRoleLabel, actualText)
 	}
 }
 
