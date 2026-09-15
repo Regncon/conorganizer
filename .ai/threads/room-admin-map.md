@@ -466,3 +466,221 @@ mapped = mapped && room.Floor == 7 }}
 Time: 2026-09-14 16:58:04
 --- Next Prompt ---
 
+We got some feedback. First, the bug with the page becoming unresponsive after selecting an event from the "+" button still persists. 
+Diagnose the issue and leg's discuss how to fix it before changing the code.
+
+Time: 2026-09-15 20:26:29
+--- Codex Run ---
+
+Codex output:
+I’ll trace the `+` button flow end-to-end without modifying anything: opening the dialog, selecting an event, the assignment request, the server response, and Datastar’s signal/DOM replacement behavior. I’ll also inspect the live page if the local session is available, then report the most likely root cause and a small fix strategy for discussion.
+The server-side path is succeeding in tests, but those tests only verify the database mutation and that the response contains `room-saved`; they do not exercise the browser race. The code shows two concurrent Datastar flows updating the same subtree, so I’m narrowing down whether the stuck state is the shared loading signal or the dialog/listener being morphed while the POST response is still in flight.
+I found a likely root cause. The backend assignment itself succeeds; the problem is the interaction between two concurrent Datastar requests:
+
+1. The event button starts a short-lived `@post` request and sets `$_roomSaving`.
+2. The same `#room-assignment` subtree owns a long-lived live-update `@get`.
+3. The POST handler broadcasts the update before sending the modal-close script.
+
+That broadcast can morph the open dialog and the button that owns the loading indicator while the POST is still running. The later `room-saved` event and Datastar cleanup then race with that DOM replacement. If the dialog remains open, the browser makes the rest of the page inert, which looks like an unresponsive page. If the indicator state remains true, all `+` buttons appear disabled.
+
+The current tests don’t catch this: they verify the database update and that the response contains `room-saved`, but they don’t run an active live stream or inspect browser state.
+
+My preferred fix is to move the assignment dialog outside the live-patched `#room-assignment` subtree. The room board can continue updating live, while the dialog and its request state remain stable. Successful assignments can then close the stable dialog reliably; failed assignments can leave it open and show the existing error feedback.
+
+A smaller but less robust alternative is to close the dialog synchronously before starting `@post`, and reorder the broadcast after the success response. Separate HTTP streams still make that susceptible to ordering races, so I prefer the stable-dialog approach.
+
+No code has been changed in this turn. The local site was not available for browser reproduction: there was no active browser session and localhost returned `401`.
+
+Time: 2026-09-15 20:26:29
+--- Next Prompt ---
+
+We are waiting for confirmation of the bug from the admin team. In the meantime, one request is to be able to see the notes for each event, for example via an accordion on the mini even cards. Let's discuss how we can implement this feature.
+
+Time: 2026-09-15 20:35:13
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the event model/query and the existing mini-card and accordion patterns so we can add notes without duplicating data access or making the cards too dense. I’ll keep this discussion-only and won’t change the code yet.
+The notes are already stored on `events.notes`, so this does not require a schema change. The missing piece is carrying them through the lightweight room-event summary used by the assignment page.
+
+I recommend:
+
+- Add `Notes` to the existing room-event summary models.
+- Include `e.notes` in the existing queries—avoiding extra queries per card.
+- Extend the shared `roomEventCard`, so notes automatically work for:
+  - unassigned events;
+  - events assigned to mapped rooms;
+  - events assigned to rooms outside the map.
+- Render notes with native `<details>/<summary>`:
+  - collapsed by default;
+  - hidden entirely when an event has no notes;
+  - keyboard accessible;
+  - preserve line breaks;
+  - limit the expanded area with scrolling for unusually long notes.
+- Add `data-preserve-attr="open"` so live Datastar updates do not unexpectedly collapse an accordion an admin is reading.
+
+I would leave the event-selection modal unchanged initially. It is a separate control, and adding notes there would duplicate information without being necessary for the requested mini-card workflow.
+
+One consideration is map layout: expanding notes inside a mapped room may make that room overlay taller. A constrained, scrollable notes area should prevent it from obscuring too much of the map.
+
+This keeps the implementation small: one data-field extension, one shared card change, and focused tests for notes-present, notes-empty, and live-update behavior.
+
+Time: 2026-09-15 20:35:13
+--- Next Prompt ---
+
+Ok, let's implement the notes feature and see what it looks like.
+
+Time: 2026-09-15 20:45:38
+--- Codex Run ---
+
+Codex output:
+I’ll implement this through the existing lightweight room-event .ummaries and shared mini-card, so all three card locations get the same behavior. I’ll keep the picker unchanged, use native `<details>` for the accordion, preserve its open state across live updates, and add focused tests before checking the full suite.
+The data path is as expected: notes exist on the event model, but the room-assignment summaries omit them. I’m going to extend those summaries and the two existing queries, then render the notes in the shared card. This avoids a per-card database lookup and means the same implementation covers mapped, unmapped, and unassigned cards.
+The first pass is in place, including null-safe note loading and a compact, scrollable expanded area so long notes do not distort the map. I’m adding a regression test that verifies notes arrive through both data paths: assigned cards come from the room-status query, while unassigned cards come from the approved-event query.
+The focused tests pass, including the new accordion coverage for assigned and unassigned cards. I’m reviewing the generated output and running the full Go suite now; after that I’ll check whether the local site is reachable for a quick visual sanity check.
+The full test suite passes. The local server is reachable, but the assignment route returns `401`, and no browser session is connected, so I couldn’t inspect the authenticated page visually here. The rendered/tested layout is a compact card with a collapsed “Notater” disclosure beneath the title row; I’m doing the final diff check now.
+Implemented the event notes feature.
+
+- Added notes to the room-event summary data.
+- Loaded notes through the existing queries.
+- Added a native `<details>` accordion labelled “Notater” to the shared mini event cards.
+- Notes appear for assigned, unassigned, mapped, and unmapped events.
+- Empty notes do not show an accordion.
+- Preserves expanded state during live Datastar updates.
+- Long notes retain line breaks and scroll within a constrained area.
+
+Updated:
+
+- [models/rooms.go](/home/cinmay/Documents/conorganizer/models/rooms.go:30)
+- [rooms.go](/home/cinmay/Documents/conorganizer/service/rooms/rooms.go:305)
+- [rooms_assignment_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_assignment_page.templ:175)
+- [rooms_page_test.go](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_page_test.go:249)
+
+`go test ./...` passes. The local route was reachable but required authentication (`401`), so visual browser verification remains unavailable in this session.
+
+text
+2026-09-15T18:42:24.887575Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid patch: multiple operations target /home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_assignment_page.templ
+2026-09-15T18:45:16.470095Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/models/rooms.go:
+                width: fit-content;
+
+Time: 2026-09-15 20:45:38
+--- Next Prompt ---
+
+After looking at it we have decided to add the notes to the event selection modal as well.
+
+Time: 2026-09-15 21:01:17
+--- Codex Run ---
+
+Codex output:
+I’ll extend the same notes disclosure into the selection modal. Because the modal’s event rows are buttons, I’ll place each accordion beside—not inside—the button, avoiding invalid nested interactive elements while keeping event selection itself unchanged. I’ll reuse the notes markup and add a focused picker test.
+The modal now uses the same notes accordion, with the selection button and disclosure as siblings so both remain valid, independently clickable controls. The focused room-page tests pass; I’m running the full suite and checking the final diff for accidental layout or data changes.
+During the final review I noticed the shared accordion styles were scoped under `.room-event`, so the new modal accordions would have received only their padding and not the intended typography/scroll behavior. I’m moving the common styles to the shared `.event-notes` selector and keeping only card-specific layout rules under `.room-event`.
+Added notes to the event-selection modal.
+
+- Each event now has a selectable button plus a separate “Notater” accordion.
+- Notes use the same reusable accordion as the mini event cards.
+- Empty notes remain hidden.
+- Long notes are constrained and scrollable.
+- Selection and note expansion remain independent interactions.
+
+Updated [rooms_assignment_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_assignment_page.templ:132) and picker tests in [rooms_page_test.go](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_page_test.go:303).
+
+`go test ./...` passes.
+
+Time: 2026-09-15 21:01:17
+--- Next Prompt ---
+What if the cards inside the modal had a small button to add the event to the room? That way the note accordion could be inside the card?  
+
+Time: 2026-09-15 21:05:29
+--- Codex Run ---
+
+Codex output:
+Yes, I think that would be a better interaction.
+
+The modal card could become:
+
+- event image, title, status, and player count;
+- a small `+`/“Legg til” button on the right;
+- the notes accordion inside the same card below;
+- no longer make the entire card clickable.
+
+That solves the invalid nested-interactive-element problem cleanly: the card is a normal container, while the add action and notes accordion are separate controls.
+
+I’d keep the button clearly labelled for accessibility, for example `Legg til «Eventnavn» i rommet`, while displaying only `+`. The card should remain disabled only when the event is already assigned to the selected room. Events assigned elsewhere can still show “flyttes ved valg”.
+
+Implementation-wise, this is a small modal-only layout change. We can reuse the existing notes accordion and leave the room cards untouched. I recommend this approach.
+
+Time: 2026-09-15 21:05:29
+--- Next Prompt ---
+
+Okay, let's implement that change.
+
+Time: 2026-09-15 21:17:08
+--- Codex Run ---
+
+Codex output:
+I agree with that interaction, and I’ll implement it now: modal rows will become non-interactive cards, with a dedicated accessible add button and the notes accordion inside the card. I’ll preserve the existing assignment endpoint and disabled-state behavior, then update the picker tests and run the full suite.
+The modal card conversion is working in the focused tests. The event information is now passive content, the notes accordion sits inside the card, and only the small `+` button triggers assignment. I’m running the full suite and doing the final diff check.
+Implemented.
+
+- Modal event rows are now cards instead of full-row buttons.
+- Each card has a dedicated `+` button with an accessible label.
+- The notes accordion is now inside the card.
+- Assignment behavior and disabled-state logic remain unchanged.
+- Added test coverage for the add button and notes placement.
+
+Updated [rooms_assignment_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_assignment_page.templ:135) and [rooms_page_test.go](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_page_test.go:323).
+
+`go test ./...` passes.
+
+Time: 2026-09-15 21:17:08
+--- Next Prompt ---
+
+I got confirmation on the bug, the page becomes unresponsive when the modal appears to be closed, but it was not closed by the user.
+For example, if the modal is open and the user switches to another tab, and then comes back, the modal appears closed, but the page is unresponsive.
+Another example is if the modal is open and the page is refreshed from a nats event the modal appears to close but the page becomes unresponsive.
+
+Time: 2026-09-15 21:24:57
+--- Codex Run ---
+
+Codex output:
+That confirmation points to a stale native `<dialog>` state rather than the assignment request itself. I’ll trace the modal lifecycle—open, close, tab visibility changes, and Datastar morph refreshes—plus any global inert/backdrop behavior. I’ll keep this diagnostic-only for now and report the likely root cause and smallest fix before changing code.
+Implemented the modal card change.
+
+- Event rows are now non-interactive cards.
+- Added a dedicated `+` button with an accessible label.
+- Notes accordion sits inside each card.
+- Existing assignment and disabled-state behavior is unchanged.
+- Tests updated for the new structure.
+
+`go test ./...` passes.
+
+Time: 2026-09-15 21:24:57
+--- Next Prompt ---
+Ok, if you have a fix in mind, then go ahead and implement it.
+
+Time: 2026-09-15 21:30:01
+--- Codex Run ---
+
+Codex output:
+I do. The likely cause is the native modal being inside the Datastar-managed `#room-assignment` subtree. When a live refresh morphs that subtree—or the browser suspends/resumes the page—the dialog element can be replaced while its native modal state/backdrop remains associated with the old element, leaving the document inert even though no modal is visibly open.
+
+I’ll verify that lifecycle against the current route and existing dialog patterns, then implement the smallest fix: keep the dialog outside the live-patched subtree and preserve its room-selection state through signals.
+The existing codebase already contains the same architectural pattern for the puljefordeling dialogs: dialogs are rendered in a stable outer wrapper, while only the live content is refreshed. I’m applying that pattern to room assignment and adding a regression test that explicitly verifies the assignment dialog is outside `#room-assignment`.
+The regression test initially caught one test still rendering the live-only fragment while expecting the modal; I corrected it to render the full page where appropriate. The placement test now passes: the full page has one dialog outside `#room-assignment`, and the live fragment contains no dialog at all. I’m running the complete suite and reviewing the diff.
+Implemented the modal lifecycle fix.
+
+Root cause: the native `#assignment-dialog` was inside the Datastar-managed `#room-assignment` live region. NATS refreshes could replace the dialog while its native backdrop/inert state remained active, making the page appear unresponsive.
+
+Changes:
+
+- Moved the dialog outside the live-updated region.
+- Added a stable `#room-assignment-page` wrapper for shared signals and event handlers.
+- Live updates now refresh only `#room-assignment`; the dialog remains intact.
+- Added regression tests verifying the dialog placement and live fragment contents.
+
+`go test ./...` passes.
+
+Time: 2026-09-15 21:30:01
+--- Next Prompt ---
+

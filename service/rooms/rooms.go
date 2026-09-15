@@ -314,6 +314,7 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 
             e.id,
             e.title,
+            e.notes,
             e.max_players
         FROM puljer p
         CROSS JOIN rooms r
@@ -351,6 +352,7 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 
 			&row.EventID,
 			&row.EventTitle,
+			&row.EventNotes,
 			&row.EventMaxPlayers,
 		)
 		if err != nil {
@@ -387,6 +389,7 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 					),
 					EventID:    row.EventID.String,
 					Title:      row.EventTitle.String,
+					Notes:      row.EventNotes.String,
 					MaxPlayers: int(row.EventMaxPlayers.Int32),
 					RoomID:     row.RoomID,
 				},
