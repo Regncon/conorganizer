@@ -131,6 +131,24 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 	}
 }
 
+func TestRoomsAssignmentPage_DialogRendersOutsideLiveRegion(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "rooms_assignment_dialog_placement")
+
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
+
+	if got := doc.Find("#assignment-dialog").Length(); got != 1 {
+		t.Fatalf("expected exactly one assignment dialog, got %d", got)
+	}
+	if got := doc.Find("#room-assignment #assignment-dialog").Length(); got != 0 {
+		t.Fatalf("assignment dialog must not be inside the live #room-assignment region, got %d", got)
+	}
+
+	liveDoc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	if got := liveDoc.Find("#assignment-dialog").Length(); got != 0 {
+		t.Fatalf("live room assignment updates must not include the assignment dialog, got %d", got)
+	}
+}
+
 func TestCalculatePopulation_CountsPlayersAndGMs(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt arrangementer med maks antall spillere.",
@@ -215,7 +233,7 @@ func TestRoomsAssignmentMap_UsesDatabaseIDsAndCurrentPuljeAssignments(t *testing
 	insertRoomsPageEventPulje(t, db, "saturday-event", models.PuljeLordagKveld, room.ID)
 
 	// When
-	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
 	var mappedRooms []models.RoomByPulje
 	err := json.Unmarshal([]byte(doc.Find("room-map").AttrOr("rooms", "")), &mappedRooms)
 
@@ -300,7 +318,7 @@ func TestRoomAssignmentPicker_ExistsWhenPuljeHasNoEvents(t *testing.T) {
 	createRoomsPageRoom(t, db, "Amalie", "705", 7)
 
 	// When
-	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
 
 	// Then
 	if doc.Find("#assignment-dialog").Length() != 1 || !strings.Contains(doc.Find("#assignment-dialog").Text(), "Ingen godkjente arrangementer.") {
@@ -319,7 +337,7 @@ func TestRoomAssignmentPicker_IncludesApprovedEventsOutsidePulje(t *testing.T) {
 	testutil.MustExec(t, db, `UPDATE events SET notes=? WHERE id=?`, "Velg riktig bord først", "approved-outside")
 	insertRoomsPageEventPulje(t, db, "approved-outside", models.PuljeLordagKveld, room.ID)
 
-	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
 	pickerEvent := doc.Find(`#assignment-dialog .room-event-option[data-event-id="approved-outside"]`)
 	if pickerEvent.Length() != 1 || !strings.Contains(pickerEvent.Text(), "Ikke i denne puljen") {
 		t.Fatal("approved events from other puljer should be available in the picker")

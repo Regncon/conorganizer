@@ -480,23 +480,33 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             padding-inline: 8px;
         }
 	</style>
-	@RoomsAssignmentPageContent(db, logger, pulje, eventImageDir)
-}
-
-templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
-	<section
-		id="room-assignment"
-		class="rooms-section"
-		data-init={ live.DatastarInit(fmt.Sprintf("/admin/rooms/api/assignment/%s", pulje)) }
+	{{ allEvents := getApprovedEventsForPulje(db, logger, pulje) }}
+	<div
+		id="room-assignment-page"
 		data-signals:dragged-event-id="''"
 		data-signals:drag-over-room="0"
 		data-signals__ifmissing="{room: 0, _roomNumber: '', _roomSaving: false, _roomAssignmentStatus: ''}"
 		data-on:room-saved__window="$draggedEventId = ''; $_roomSaving = false; $_roomAssignmentStatus = 'Romtildelingen er lagret.'"
 	>
+		@roomsAssignmentLiveContent(db, logger, pulje, eventImageDir, allEvents)
+		@assignEventModal(allEvents, pulje, eventImageDir)
+	</div>
+}
+
+templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
+	{{ allEvents := getApprovedEventsForPulje(db, logger, pulje) }}
+	@roomsAssignmentLiveContent(db, logger, pulje, eventImageDir, allEvents)
+}
+
+templ roomsAssignmentLiveContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string, allEvents []models.RoomEventPuljeSummaryJson) {
+	<section
+		id="room-assignment"
+		class="rooms-section"
+		data-init={ live.DatastarInit(fmt.Sprintf("/admin/rooms/api/assignment/%s", pulje)) }
+	>
 		@errorfeedback.RenderMessage("room-assignment")
 		<p role="status" data-text="$_roomAssignmentStatus"></p>
 		{{
-			allEvents := getApprovedEventsForPulje(db, logger, pulje)
 			var events []models.RoomEventPuljeSummaryJson
 			for _, event := range allEvents {
 				if event.EventPuljeID == string(pulje) && !event.RoomID.Valid {
@@ -504,7 +514,6 @@ templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.P
 				}
 			}
 		}}
-		@assignEventModal(allEvents, pulje, eventImageDir)
 		if len(events) > 0 {
 			<h2>{ len(events) } Eventer i pulje uten tildelt rom</h2>
 			<div class="event-list">

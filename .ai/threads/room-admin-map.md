@@ -636,3 +636,51 @@ Updated [rooms_assignment_page.templ](/home/cinmay/Documents/conorganizer/pages/
 Time: 2026-09-15 21:17:08
 --- Next Prompt ---
 
+I got confirmation on the bug, the page becomes unresponsive when the modal appears to be closed, but it was not closed by the user.
+For example, if the modal is open and the user switches to another tab, and then comes back, the modal appears closed, but the page is unresponsive.
+Another example is if the modal is open and the page is refreshed from a nats event the modal appears to close but the page becomes unresponsive.
+
+Time: 2026-09-15 21:24:57
+--- Codex Run ---
+
+Codex output:
+That confirmation points to a stale native `<dialog>` state rather than the assignment request itself. I’ll trace the modal lifecycle—open, close, tab visibility changes, and Datastar morph refreshes—plus any global inert/backdrop behavior. I’ll keep this diagnostic-only for now and report the likely root cause and smallest fix before changing code.
+Implemented the modal card change.
+
+- Event rows are now non-interactive cards.
+- Added a dedicated `+` button with an accessible label.
+- Notes accordion sits inside each card.
+- Existing assignment and disabled-state behavior is unchanged.
+- Tests updated for the new structure.
+
+`go test ./...` passes.
+
+Time: 2026-09-15 21:24:57
+--- Next Prompt ---
+Ok, if you have a fix in mind, then go ahead and implement it.
+
+Time: 2026-09-15 21:30:01
+--- Codex Run ---
+
+Codex output:
+I do. The likely cause is the native modal being inside the Datastar-managed `#room-assignment` subtree. When a live refresh morphs that subtree—or the browser suspends/resumes the page—the dialog element can be replaced while its native modal state/backdrop remains associated with the old element, leaving the document inert even though no modal is visibly open.
+
+I’ll verify that lifecycle against the current route and existing dialog patterns, then implement the smallest fix: keep the dialog outside the live-patched subtree and preserve its room-selection state through signals.
+The existing codebase already contains the same architectural pattern for the puljefordeling dialogs: dialogs are rendered in a stable outer wrapper, while only the live content is refreshed. I’m applying that pattern to room assignment and adding a regression test that explicitly verifies the assignment dialog is outside `#room-assignment`.
+The regression test initially caught one test still rendering the live-only fragment while expecting the modal; I corrected it to render the full page where appropriate. The placement test now passes: the full page has one dialog outside `#room-assignment`, and the live fragment contains no dialog at all. I’m running the complete suite and reviewing the diff.
+Implemented the modal lifecycle fix.
+
+Root cause: the native `#assignment-dialog` was inside the Datastar-managed `#room-assignment` live region. NATS refreshes could replace the dialog while its native backdrop/inert state remained active, making the page appear unresponsive.
+
+Changes:
+
+- Moved the dialog outside the live-updated region.
+- Added a stable `#room-assignment-page` wrapper for shared signals and event handlers.
+- Live updates now refresh only `#room-assignment`; the dialog remains intact.
+- Added regression tests verifying the dialog placement and live fragment contents.
+
+`go test ./...` passes.
+
+Time: 2026-09-15 21:30:01
+--- Next Prompt ---
+
