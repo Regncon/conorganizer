@@ -1,7 +1,6 @@
 package event
 
 import (
-	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/components/icons"
@@ -376,14 +375,7 @@ templ Event_mobile(
 							</div>
 							<p title={ event.System }>{ event.System } </p>
 						</div>
-						<div class="event-detail-group">
-							<span class="label-small color-strong">Pulje(r)</span>
-							for _, pulje := range puljerForEvent {
-								<p>
-									{ fmt.Sprintf("%s (%s)", pulje.Name, pulje.TimeRange()) }
-								</p>
-							}
-						</div>
+
 					</div>
 					<hr class="event-details-divider"/>
 					<div class="event-details-section event-details-bottom">

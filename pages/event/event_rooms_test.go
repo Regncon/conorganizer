@@ -48,7 +48,7 @@ func TestEventRoomVisibility(t *testing.T) {
 			}
 			request := httptest.NewRequest("GET", "/event/room-event", nil)
 			doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
-			if got := doc.Find(".event-room-label").Length() > 0; got != test.wantRoom {
+			if got := doc.Find(".event-room-list .event-room-name").Length() > 0; got != test.wantRoom {
 				t.Fatalf("room visible = %v, want %v", got, test.wantRoom)
 			}
 			if got := doc.Find(".event-room-button").Length() > 0; got != test.wantMap {
@@ -91,18 +91,18 @@ func TestEventRoomsUseEachPuljeAssignment(t *testing.T) {
 		{models.PuljeLordagKveld, 43, "710"},
 	} {
 		got := assignments[i]
-		if got.PuljeID != want.pulje || got.Room.ID != want.roomID || !strings.HasSuffix(got.MapPath, "-"+want.number+".svg") {
+		if got.Pulje.ID != want.pulje || got.Room.ID != want.roomID || !strings.HasSuffix(got.MapPath, "-"+want.number+".svg") {
 			t.Fatalf("assignment %d: %+v", i, got)
 		}
 	}
 	request := httptest.NewRequest("GET", "/event/room-event?pulje=LordagKveld", nil)
 	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
 	for _, assignment := range assignments {
-		id := eventRoomDialogID("room-event", assignment.PuljeID)
+		id := eventRoomDialogID("room-event", assignment.Pulje.ID)
 		if got := doc.Find("#"+id+" img").AttrOr("src", ""); got != assignment.MapPath {
 			t.Fatalf("map = %q, want %q", got, assignment.MapPath)
 		}
-		if !strings.Contains(doc.Find("#"+id+"-button").Text(), assignment.PuljeName) {
+		if !strings.Contains(doc.Find("#"+id+"-button").Text(), assignment.Pulje.Name) {
 			t.Fatal("button is missing its pulje name")
 		}
 	}
@@ -111,5 +111,91 @@ func TestEventRoomsUseEachPuljeAssignment(t *testing.T) {
 	doc = templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
 	if got := doc.Find("#"+eventRoomDialogID("room-event", models.PuljeFredagKveld)+" img").AttrOr("src", ""); got != assignments[1].MapPath {
 		t.Fatalf("reassigned map = %q", got)
+	}
+}
+
+func TestEventRoomButtonsGroupSchedulesByRoom(t *testing.T) {
+	tests := []struct {
+		name           string
+		secondRoomID   any
+		roomNumber     string
+		roomName       string
+		wantButtons    int
+		wantUnassigned int
+	}{
+		{name: "same room", secondRoomID: 42, wantButtons: 1},
+		{name: "different rooms", secondRoomID: 43, roomNumber: "710", roomName: "Lucie Wolf", wantButtons: 2},
+		{name: "same name but different rooms", secondRoomID: 43, roomNumber: "710", roomName: "Amalie Hansen", wantButtons: 2},
+		{name: "unassigned occurrence", secondRoomID: nil, wantButtons: 1, wantUnassigned: 1},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			db := createEventRoomTestDB(t)
+			seedEventVisibilityPulje(t, db, models.PuljeLordagMorgen)
+			seedEventVisibilityEventPulje(t, db, "room-event", models.PuljeLordagMorgen, true)
+			testutil.MustExec(t, db, `UPDATE puljer SET name = 'Lørdag morgen', start_at = '2026-10-10T10:00:00+02:00', end_at = '2026-10-10T15:00:00+02:00' WHERE id = ?`, models.PuljeLordagMorgen)
+			if test.roomNumber != "" {
+				testutil.MustExec(t, db, `INSERT INTO rooms(id, name, room_number, floor, max_concurrent_games) VALUES (43, ?, ?, 7, 1)`, test.roomName, test.roomNumber)
+			}
+			testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = ? WHERE pulje_id = ?`, test.secondRoomID, models.PuljeLordagMorgen)
+			request := httptest.NewRequest("GET", "/event/room-event", nil)
+			doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+			if got := doc.Find(".event-room-button").Length(); got != test.wantButtons {
+				t.Fatalf("got %d buttons, want %d", got, test.wantButtons)
+			}
+			if got := doc.Find(".event-schedule-unassigned").Length(); got != test.wantUnassigned {
+				t.Fatalf("got %d unassigned schedule rows, want %d", got, test.wantUnassigned)
+			}
+			list := doc.Find(".event-room-list")
+			for _, schedule := range []string{"Fredag kveld · 18:30 - 23:00", "Lørdag morgen · 10:00 - 15:00"} {
+				if strings.Count(list.Text(), schedule) != 1 {
+					t.Fatalf("schedule should appear exactly once in the list: %s", schedule)
+				}
+			}
+			if strings.Contains(doc.Text(), "Pulje(r)") {
+				t.Fatal("redundant pulje section is still rendered")
+			}
+			if test.name == "same room" {
+				button := doc.Find(".event-room-button")
+				if button.Find(".event-room-schedule > span").Length() != 2 {
+					t.Fatal("shared room button must include both times")
+				}
+				if strings.Index(button.Text(), "Fredag kveld") > strings.Index(button.Text(), "Lørdag morgen") {
+					t.Fatal("puljer are not chronological")
+				}
+				id := button.AttrOr("aria-controls", "")
+				if doc.Find("#"+id+" .event-room-schedule > span").Length() != 2 {
+					t.Fatal("shared room modal must include both times")
+				}
+			}
+		})
+	}
+}
+
+func TestEventScheduleIsHiddenBeforeProgramPublication(t *testing.T) {
+	db := createEventRoomTestDB(t)
+	setEventVisibilityProgramPublishing(t, db, false)
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+	for _, text := range []string{"Pulje(r)", "Fredag kveld", "18:30", "Amalie Hansen"} {
+		if strings.Contains(doc.Text(), text) {
+			t.Fatalf("unpublished schedule leaked into page: %s", text)
+		}
+	}
+	if doc.Find(".event-room-schedule, .event-room-button, .event-room-dialog").Length() != 0 {
+		t.Fatal("unpublished schedule or map is rendered")
+	}
+}
+
+func TestUnassignedEventKeepsItsPublishedSchedule(t *testing.T) {
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = NULL`)
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+	if got := doc.Find(".event-schedule-unassigned").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
+		t.Fatalf("missing unassigned event schedule: %q", got)
+	}
+	if doc.Find(".event-room-button").Length() != 0 {
+		t.Fatal("unassigned event has a map button")
 	}
 }

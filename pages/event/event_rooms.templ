@@ -3,15 +3,17 @@ package event
 import (
 	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
 )
 
-templ eventRoomLocations(eventID string, assignments []eventRoom, showPuljeName bool) {
+templ eventRoomLocations(eventID string, assignments []eventRoom) {
 	{{
+		groups := groupEventRooms(assignments)
 		// Clear a withdrawn map selection so publishing it again does not reopen it.
 		availableDialogIDs := []string{}
 		for _, assignment := range assignments {
 			if assignment.MapPath != "" {
-				availableDialogIDs = append(availableDialogIDs, eventRoomDialogID(eventID, assignment.PuljeID))
+				availableDialogIDs = append(availableDialogIDs, eventRoomDialogID(eventID, assignment.Pulje.ID))
 			}
 		}
 		availableDialogIDsJSON, err := templ.JSONString(availableDialogIDs)
@@ -24,12 +26,12 @@ templ eventRoomLocations(eventID string, assignments []eventRoom, showPuljeName 
 		data-signals__ifmissing="{_eventRoomMapDialog: ''}"
 		data-effect={ fmt.Sprintf("if (!%s.includes($_eventRoomMapDialog)) { $_eventRoomMapDialog = ''; }", availableDialogIDsJSON) }
 	>
-		if len(assignments) > 0 {
+		if len(groups) > 0 {
 			@eventRoomStyles()
 			<div class="event-room-list">
-				for _, assignment := range assignments {
-					{{ dialogID := eventRoomDialogID(eventID, assignment.PuljeID) }}
-					if assignment.MapPath != "" {
+				for _, group := range groups {
+					{{ dialogID := eventRoomDialogID(eventID, group.Puljer[0].ID) }}
+					if group.MapPath != "" {
 						<button
 							type="button"
 							id={ dialogID + "-button" }
@@ -38,7 +40,8 @@ templ eventRoomLocations(eventID string, assignments []eventRoom, showPuljeName 
 							aria-controls={ dialogID }
 							data-on:click={ fmt.Sprintf("$_eventRoomMapDialog = %q", dialogID) }
 						>
-							@eventRoomLabel(assignment, showPuljeName)
+							@eventRoomTimes(group.Puljer)
+							<span class="event-room-name">{ group.Room.Name }</span>
 							<span class="event-room-action">
 								Se rommet
 								<span aria-hidden="true">
@@ -46,29 +49,41 @@ templ eventRoomLocations(eventID string, assignments []eventRoom, showPuljeName 
 								</span>
 							</span>
 						</button>
-						@eventRoomDialog(dialogID, assignment)
-					} else {
+					} else if group.Room.ID != 0 {
 						<div class="event-room-unmapped">
-							@eventRoomLabel(assignment, showPuljeName)
+							@eventRoomTimes(group.Puljer)
+							<span class="event-room-name">{ group.Room.Name }</span>
+						</div>
+					} else {
+						<div class="event-schedule-unassigned">
+							@eventRoomTimes(group.Puljer)
 						</div>
 					}
 				}
 			</div>
+			// Dialogs remain keyed by pulje so an open map follows a room reassignment.
+			for _, assignment := range assignments {
+				if assignment.MapPath != "" {
+					for _, group := range groups {
+						if group.Room.ID == assignment.Room.ID {
+							@eventRoomDialog(eventRoomDialogID(eventID, assignment.Pulje.ID), group)
+						}
+					}
+				}
+			}
 		}
 	</div>
 }
 
-templ eventRoomLabel(assignment eventRoom, showPuljeName bool) {
-	<span class="event-room-label">
-		<span class="event-room-caption">Tildelt rom</span>
-		if showPuljeName {
-			<span class="event-room-caption">{ assignment.PuljeName }</span>
+templ eventRoomTimes(puljer []models.PuljeRow) {
+	<span class="event-room-schedule">
+		for _, pulje := range puljer {
+			<span>{ fmt.Sprintf("%s · %s", pulje.Name, pulje.TimeRange()) }</span>
 		}
-		<span>{ assignment.Room.Name }</span>
 	</span>
 }
 
-templ eventRoomDialog(dialogID string, assignment eventRoom) {
+templ eventRoomDialog(dialogID string, group eventRoomGroup) {
 	<dialog
 		id={ dialogID }
 		class="event-room-dialog"
@@ -85,12 +100,12 @@ templ eventRoomDialog(dialogID string, assignment eventRoom) {
 					@icons.Icon(icons.Close, icons.Size24)
 				</button>
 			</header>
-			<p class="event-room-floor">{ fmt.Sprintf("%d. etasje", assignment.Room.Floor) }</p>
-			<h2 id={ dialogID + "-title" }>{ assignment.Room.Name }</h2>
-			<p class="event-room-pulje">{ assignment.PuljeName }</p>
+			<p class="event-room-floor">{ fmt.Sprintf("%d. etasje", group.Room.Floor) }</p>
+			<h2 id={ dialogID + "-title" }>{ group.Room.Name }</h2>
+			@eventRoomTimes(group.Puljer)
 			<img
-				src={ assignment.MapPath }
-				alt={ fmt.Sprintf("Kart med vei fra trappegangen til %s, rom %s i %d. etasje", assignment.Room.Name, assignment.Room.RoomNumber, assignment.Room.Floor) }
+				src={ group.MapPath }
+				alt={ fmt.Sprintf("Kart med vei fra trappegangen til %s, rom %s i %d. etasje", group.Room.Name, group.Room.RoomNumber, group.Room.Floor) }
 			/>
 		</div>
 	</dialog>
@@ -103,15 +118,15 @@ templ eventRoomStyles() {
 			gap: var(--spacing-3x);
 			margin-bottom: var(--spacing-3x);
 		}
-		.event-room-button, .event-room-unmapped {
+		.event-room-button, .event-room-unmapped, .event-schedule-unassigned {
 			padding: var(--spacing-3x);
 			border-radius: var(--border-radius-2x);
 			color: var(--color-text-strong);
 		}
 		.event-room-button {
-			display: flex;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
 			align-items: center;
-			justify-content: space-between;
 			gap: var(--spacing-3x);
 			inline-size: 100%;
 			font: inherit;
@@ -127,13 +142,18 @@ templ eventRoomStyles() {
 			outline: 2px solid var(--color-text-strong);
 			outline-offset: 3px;
 		}
-		.event-room-label {
+		.event-room-schedule {
+			grid-column: 1 / -1;
+			font-size: 1.125rem;
+			font-weight: 600;
+			line-height: 1.5;
 			display: grid;
 			gap: var(--spacing-1x);
 			overflow-wrap: anywhere;
 		}
-		.event-room-caption {
-			font-size: 12px;
+		.event-room-name {
+			overflow-wrap: anywhere;
+			font-size: 1rem;
 		}
 		.event-room-action {
 			display: flex;
@@ -141,7 +161,9 @@ templ eventRoomStyles() {
 			gap: var(--spacing-2x);
 			flex-shrink: 0;
 		}
-		.event-room-unmapped {
+		.event-room-unmapped, .event-schedule-unassigned {
+			display: grid;
+			gap: var(--spacing-3x);
 			background: var(--bg-surface);
 		}
 		.event-room-dialog {
@@ -180,7 +202,7 @@ templ eventRoomStyles() {
 			margin: var(--spacing-2x) 0;
 			color: var(--color-text-strong);
 		}
-		.event-room-dialog .event-room-pulje {
+		.event-room-dialog .event-room-schedule {
 			margin: 0 0 var(--spacing-4x);
 		}
 		.event-room-dialog img {
