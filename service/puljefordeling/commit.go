@@ -2,10 +2,13 @@ package puljefordeling
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/Regncon/conorganizer/models"
 )
+
+var ErrPuljeCompleted = errors.New("pulje is published; changes are not allowed")
 
 // CommitDistribution persists the current emulated distribution for a pulje to
 // relation_events_players so it becomes the actual seating shown in other views
@@ -39,6 +42,14 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 		return fmt.Errorf("begin commit tx: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
+
+	var status models.PuljeStatus
+	if err := tx.QueryRow(`SELECT status FROM puljer WHERE id = ?`, pulje).Scan(&status); err != nil {
+		return fmt.Errorf("read pulje status before commit: %w", err)
+	}
+	if status == models.PuljeStatusCompleted {
+		return ErrPuljeCompleted
+	}
 
 	// Clear the previous solver-committed seats; manual pins and GM rows stay.
 	if _, err := tx.Exec(
