@@ -42,10 +42,11 @@ func TestTildeling_AddMenuListsAllAssignmentsBeforePinning(t *testing.T) {
 	confirmationFromResponse(t, rec)
 }
 
-func TestTildeling_ConfirmedMoveRetainsEveryGM(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{Given: "Kari is GM for X, Y and Z and pinned as player on Y.", When: "An admin confirms moving the player seat to Z.", Then: "All three GM assignments remain and the single player seat is on Z."})
+func TestTildeling_ConfirmedAddRetainsEveryGMAndPlayerPin(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "Kari is GM for X, Y and Z and pinned as player on Y.", When: "An admin confirms adding her as player on Z.", Then: "All three GM assignments and both player pins remain."})
 	// Given
 	const expectedGMs = 3
+	const expectedPlayers = 2
 	db, router := tildelingsFixture(t)
 	for _, eventID := range []string{"evA", "evB", "evC"} {
 		testutil.MustExec(t, db, `INSERT INTO relation_events_players(event_id,pulje_id,billettholder_id,role) VALUES (?, 'FredagKveld', 1, 'GM')`, eventID)
@@ -56,16 +57,19 @@ func TestTildeling_ConfirmedMoveRetainsEveryGM(t *testing.T) {
 	rec := postTildeling(t, router, "evC", "Player", true, confirmationFromResponse(t, warning))
 	// Then
 	if rec.Code != http.StatusNoContent {
-		t.Fatalf("expected confirmed move, got %d: %s", rec.Code, rec.Body.String())
+		t.Fatalf("expected confirmed add, got %d: %s", rec.Code, rec.Body.String())
 	}
 	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_events_players WHERE role='GM'`); got != expectedGMs {
 		t.Fatalf("want %d GM assignments, got %d", expectedGMs, got)
 	}
-	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_events_players WHERE role='Player'`); got != 1 {
-		t.Fatalf("want one player seat, got %d", got)
+	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_events_players WHERE role='Player'`); got != expectedPlayers {
+		t.Fatalf("want %d player pins, got %d", expectedPlayers, got)
 	}
 	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_events_players WHERE event_id='evC' AND role='Player' AND source='manual'`); got != 1 {
-		t.Fatal("player pin was not moved to Z")
+		t.Fatal("player pin was not added to Z")
+	}
+	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_events_players WHERE event_id='evB' AND role='Player' AND source='manual'`); got != 1 {
+		t.Fatal("adding a player pin removed the existing pin on Y")
 	}
 }
 

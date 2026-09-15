@@ -89,7 +89,7 @@ templ TildelingsDialog() {
 				margin-block-start: 1.5rem;
 			}
 
-			.tildeling-age-warning {
+			.tildeling-age-warning, .tildeling-capacity-warning {
 				padding: 0.75rem;
 				border-inline-start: 0.25rem solid var(--color-warning, #b76b00);
 				background: color-mix(in srgb, var(--color-warning, #b76b00) 12%, transparent);
@@ -125,8 +125,11 @@ templ TildelingsDialogInnhold(varsel puljefordelingservice.Tildelingsvarsel, val
 		</ul>
 		<p>{ varsel.Handling }</p>
 		if varsel.KanBekrefte {
-			if valg.Role == models.EventPlayerRoleGM {
+			if valg.Role == models.EventPlayerRoleGM || valg.FraLeggTil {
 				<p>Eksisterende tildelinger beholdes.</p>
+				if valg.FraLeggTil {
+					<p>Lagrede automatiske spillerplasser blir manuelle, slik at de beholdes ved ny fordeling.</p>
+				}
 			} else {
 				<p>Spillederoppdragene beholdes.</p>
 			}
@@ -135,6 +138,9 @@ templ TildelingsDialogInnhold(varsel puljefordelingservice.Tildelingsvarsel, val
 		}
 		if varsel.Aldersvarsel != "" {
 			<p class="tildeling-age-warning">{ varsel.Aldersvarsel }</p>
+		}
+		if varsel.Kapasitetsvarsel != "" {
+			<p class="tildeling-capacity-warning">{ varsel.Kapasitetsvarsel }</p>
 		}
 		<div class="tildeling-actions">
 			<button type="button" class="btn btn--outline" data-on:click="document.getElementById('tildeling-dialog').close()">Avbryt</button>

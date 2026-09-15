@@ -52,15 +52,15 @@ func TestTildelBillettholder_PlacesPlayerWithoutConflict(t *testing.T) {
 	}
 }
 
-func TestTildelBillettholder_AddPlayerConfirmsAllAssignmentsThenMovesOnlyPlayer(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{Given: "a billettholder has one GM assignment and one Player assignment in the pulje", When: "an admin confirms adding a Player to another event", Then: "the warning lists both assignments and the confirmed move preserves the GM"})
+func TestTildelBillettholder_AddPlayerConfirmsAndPreservesAllAssignments(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "a billettholder has one GM assignment and one Player assignment in the pulje", When: "an admin confirms adding a Player to another event", Then: "the warning lists both assignments and confirmation preserves the existing Player and GM"})
 
 	// Given
-	expectedHandling := "Flytt spillerplassen fra «Charlie» til «Alpha»"
+	expectedHandling := "Legg til som spelar på «Alpha»"
 	expectedWarningEvents := []string{"evB", "evC"}
 	expectedGMEvents := []string{"evB"}
-	expectedPlayerEvents := []string{"evA"}
-	db, _ := testutil.CreateTestDBAndLogger(t, "tildeling_confirm_player_move")
+	expectedPlayerEvents := []string{"evA", "evC"}
+	db, _ := testutil.CreateTestDBAndLogger(t, "tildeling_confirm_player_add")
 	seedTildelingFixture(t, db, models.AgeGroupDefault, true)
 	seedEvent(t, db, "evB", "Bravo", 4, models.PuljeFredagKveld)
 	seedEvent(t, db, "evC", "Charlie", 4, models.PuljeFredagKveld)
@@ -110,16 +110,16 @@ func TestTildelBillettholder_AddPlayerConfirmsAllAssignmentsThenMovesOnlyPlayer(
 	valg.Bekreftelse = varsel.Bekreftelse
 	varsel, err = TildelBillettholder(db, valg)
 	if err != nil {
-		t.Fatalf("confirm Player move: %v", err)
+		t.Fatalf("confirm Player addition: %v", err)
 	}
 	if varsel != nil {
-		t.Fatalf("confirmed move returned another warning: %+v", varsel)
+		t.Fatalf("confirmed addition returned another warning: %+v", varsel)
 	}
 	if got := assignmentEvents(t, db, valg.PuljeID, valg.BillettholderID, models.EventPlayerRoleGM); !slices.Equal(got, expectedGMEvents) {
-		t.Fatalf("GM assignments after Player move: got %v, want %v", got, expectedGMEvents)
+		t.Fatalf("GM assignments after Player addition: got %v, want %v", got, expectedGMEvents)
 	}
 	if got := assignmentEvents(t, db, valg.PuljeID, valg.BillettholderID, models.EventPlayerRolePlayer); !slices.Equal(got, expectedPlayerEvents) {
-		t.Fatalf("Player assignments after move: got %v, want %v", got, expectedPlayerEvents)
+		t.Fatalf("Player assignments after addition: got %v, want %v", got, expectedPlayerEvents)
 	}
 }
 
@@ -433,13 +433,13 @@ func TestFjernTildeling_RemovesOnlySelectedRole(t *testing.T) {
 	}
 }
 
-func TestTildelBillettholder_MovingPlayerAcrossGMEventsPreservesEveryGM(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{Given: "a billettholder is GM on three events and manually Player on one of them", When: "an admin confirms moving the Player role to another GM event", Then: "all three GM rows remain and exactly one Player row points at the destination"})
+func TestTildelBillettholder_AddingPlayerAcrossGMEventsPreservesEveryAssignment(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "a billettholder is GM on three events and manually Player on one of them", When: "an admin confirms adding the Player role to another GM event", Then: "all three GM rows remain with Player pins at both events"})
 
 	// Given
 	expectedGMEvents := []string{"evX", "evY", "evZ"}
-	expectedPlayerEvents := []string{"evZ"}
-	db, _ := testutil.CreateTestDBAndLogger(t, "tildeling_move_across_gm_events")
+	expectedPlayerEvents := []string{"evY", "evZ"}
+	db, _ := testutil.CreateTestDBAndLogger(t, "tildeling_add_across_gm_events")
 	seedPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", "2026-09-04T18:00:00Z")
 	for _, event := range []struct{ id, title string }{{"evX", "X"}, {"evY", "Y"}, {"evZ", "Z"}} {
 		seedEvent(t, db, event.id, event.title, 4, models.PuljeFredagKveld)
@@ -452,7 +452,7 @@ func TestTildelBillettholder_MovingPlayerAcrossGMEventsPreservesEveryGM(t *testi
 	valg := Tildelingsvalg{PuljeID: models.PuljeFredagKveld, EventID: "evZ", BillettholderID: 1, Role: models.EventPlayerRolePlayer, FraLeggTil: true}
 	varsel, err := TildelBillettholder(db, valg)
 	if err != nil || varsel == nil {
-		t.Fatalf("request move confirmation: warning=%+v err=%v", varsel, err)
+		t.Fatalf("request addition confirmation: warning=%+v err=%v", varsel, err)
 	}
 	valg.Bekreftelse = varsel.Bekreftelse
 
@@ -461,7 +461,7 @@ func TestTildelBillettholder_MovingPlayerAcrossGMEventsPreservesEveryGM(t *testi
 
 	// Then
 	if err != nil || varsel != nil {
-		t.Fatalf("confirm Player move: warning=%+v err=%v", varsel, err)
+		t.Fatalf("confirm Player addition: warning=%+v err=%v", varsel, err)
 	}
 	if got := assignmentEvents(t, db, valg.PuljeID, valg.BillettholderID, models.EventPlayerRoleGM); !slices.Equal(got, expectedGMEvents) {
 		t.Fatalf("GM assignments: got %v, want %v", got, expectedGMEvents)

@@ -104,7 +104,7 @@ func tildelingsfeil(w http.ResponseWriter, logger *slog.Logger, err error) {
 
 func sendTildelingsvarsel(w http.ResponseWriter, r *http.Request, logger *slog.Logger, varsel puljefordeling.Tildelingsvarsel, valg puljefordeling.Tildelingsvalg, retryURL string) {
 	sse := datastar.NewSSE(w, r)
-	if len(varsel.Tildelinger) == 0 && varsel.Aldersvarsel != "" {
+	if len(varsel.Tildelinger) == 0 && varsel.Aldersvarsel != "" && varsel.Kapasitetsvarsel == "" {
 		if err := sse.MarshalAndPatchSignals(map[string]any{
 			"ageWarningText": varsel.Aldersvarsel, "ageWarningBillettholderId": valg.BillettholderID,
 			"ageWarningEventId": valg.EventID, "ageWarningPuljeId": string(valg.PuljeID),
