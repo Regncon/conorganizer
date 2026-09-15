@@ -44,6 +44,21 @@ func ValidPuljeValues() []string {
 	return values
 }
 
+func (pulje Pulje) Label() string {
+	switch pulje {
+	case PuljeFredagKveld:
+		return "Fredag kveld"
+	case PuljeLordagMorgen:
+		return "Lørdag morgen"
+	case PuljeLordagKveld:
+		return "Lørdag kveld"
+	case PuljeSondagMorgen:
+		return "Søndag morgen"
+	default:
+		return string(pulje)
+	}
+}
+
 type PuljeStatus string
 
 const (

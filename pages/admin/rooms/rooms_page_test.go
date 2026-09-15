@@ -67,6 +67,17 @@ func TestRoomsPageContent_RendersRoomDetailsAndCreateAction(t *testing.T) {
 	}
 }
 
+func TestRoomsIndex_RendersHumanReadablePuljeLabels(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "rooms_index_pulje_labels")
+
+	doc := templtest.Render(t, roomsIndex(RoomsPageContent(db, logger), models.PuljeLordagMorgen))
+	tab := doc.Find(`a[href="/admin/rooms/assignment/LordagMorgen"]`)
+
+	if tab.Length() != 1 || tab.Text() != "Lørdag morgen" {
+		t.Fatalf("expected human-readable room tab label, got %q", tab.Text())
+	}
+}
+
 func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en pulje med ett arrangement uten rom og ett arrangement med rom.",
@@ -78,7 +89,7 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 	expectedTextParts := []string{
 		"1 Eventer i pulje uten tildelt rom",
 		"Missing Room Event",
-		"Romfordelig for FredagKveld",
+		"Romfordelig for Fredag kveld",
 		"Assigned Room Event",
 		"201",
 	}

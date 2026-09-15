@@ -330,7 +330,7 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 					role="button"
 					href={ "/admin/puljefordeling/" + pulje }
 					class={ templ.KV("active", current == pulje) }
-				>{ pulje }</a>
+				>{ pulje.Label() }</a>
 			}
 		</div>
 		@PuljefordelingTabContent(db, logger, current, eventImageDir)
