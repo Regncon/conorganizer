@@ -27,11 +27,9 @@ func getEventRooms(db *sql.DB, eventID string, programPublished bool) ([]eventRo
 		JOIN rooms r ON r.id = ep.room_id
 		WHERE ep.event_id = ?
 			AND ep.is_in_pulje = 1
-			AND ep.is_published = 1
-			AND p.status = ?
 		ORDER BY p.start_at, p.id
 	`
-	rows, err := db.Query(query, eventID, models.PuljeStatusCompleted)
+	rows, err := db.Query(query, eventID)
 	if err != nil {
 		return nil, fmt.Errorf("query rooms for event %s: %w", eventID, err)
 	}

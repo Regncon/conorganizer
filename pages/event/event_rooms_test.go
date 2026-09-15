@@ -18,7 +18,6 @@ func createEventRoomTestDB(t *testing.T) *sql.DB {
 	seedEventVisibilityPulje(t, db, models.PuljeFredagKveld)
 	seedEventVisibilityEventPulje(t, db, "room-event", models.PuljeFredagKveld, true)
 	testutil.MustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?), (?)`, models.PuljeStatusCompleted, models.PuljeStatusLocked)
-	testutil.MustExec(t, db, `UPDATE puljer SET status = ? WHERE id = ?`, models.PuljeStatusCompleted, models.PuljeFredagKveld)
 	testutil.MustExec(t, db, `INSERT INTO rooms(id, name, room_number, floor, max_concurrent_games) VALUES (42, 'Amalie Hansen', '705', 7, 1)`)
 	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 42 WHERE event_id = 'room-event'`)
 	return db
@@ -31,11 +30,11 @@ func TestEventRoomVisibility(t *testing.T) {
 		wantRoom bool
 		wantMap  bool
 	}{
-		{name: "published allocation", wantRoom: true, wantMap: true},
+		{name: "open allocation", wantRoom: true, wantMap: true},
 		{name: "unpublished program", update: `UPDATE program_publishing_state SET is_published = 0`},
-		{name: "open allocation", update: `UPDATE puljer SET status = 'Open'`},
-		{name: "locked allocation", update: `UPDATE puljer SET status = 'Locked'`},
-		{name: "unpublished occurrence", update: `UPDATE relation_event_puljer SET is_published = 0`},
+		{name: "completed allocation", update: `UPDATE puljer SET status = 'Completed'`, wantRoom: true, wantMap: true},
+		{name: "locked allocation", update: `UPDATE puljer SET status = 'Locked'`, wantRoom: true, wantMap: true},
+		{name: "unpublished occurrence", update: `UPDATE relation_event_puljer SET is_published = 0`, wantRoom: true, wantMap: true},
 		{name: "removed occurrence", update: `UPDATE relation_event_puljer SET is_in_pulje = 0`},
 		{name: "unassigned room", update: `UPDATE relation_event_puljer SET room_id = NULL`},
 		{name: "deleted room", update: `DELETE FROM rooms WHERE id = 42`},
@@ -68,7 +67,7 @@ func TestEventRoomVisibility(t *testing.T) {
 func TestEventRoomsUseEachPuljeAssignment(t *testing.T) {
 	db := createEventRoomTestDB(t)
 	seedEventVisibilityPulje(t, db, models.PuljeLordagKveld)
-	seedEventVisibilityEventPulje(t, db, "room-event", models.PuljeLordagKveld, true)
+	seedEventVisibilityEventPulje(t, db, "room-event", models.PuljeLordagKveld, false)
 	testutil.MustExec(t, db, `UPDATE puljer SET name = 'Lørdag kveld', status = ?, start_at = '2026-10-10T18:30:00+02:00' WHERE id = ?`, models.PuljeStatusCompleted, models.PuljeLordagKveld)
 	testutil.MustExec(t, db, `INSERT INTO rooms(id, name, room_number, floor, max_concurrent_games) VALUES (43, 'Lørdagsrommet', '710', 7, 1)`)
 	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 43 WHERE pulje_id = ?`, models.PuljeLordagKveld)

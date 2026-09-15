@@ -116,7 +116,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		{{ logger.Error(roomsErr.Error(), "event_id", eventId) }}
 	}
 	@Event_mobile(event, previousNextData, puljerForEvent, puljeId, programPublished, hasTickets, showInterestControls, eventImageDir) {
-		@eventRoomLocations(eventId, roomAssignments, len(puljerForEvent) > 1)
+		@eventRoomLocations(eventId, roomAssignments, len(puljerForEvent) > 1 || len(roomAssignments) > 1)
 	}
 	if showInterestControls {
 		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, db, r, logger)

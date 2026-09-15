@@ -47,11 +47,11 @@ Denne sjekklisten dekker `/event/{id}`, altså den publiserte detaljvisningen fo
 
 - [ ] **Romkart vises først etter publisering**<br>
   **Gitt** at arrangementet har et tildelt rom.<br>
-  **Når** både programmet og puljefordelingen er publisert, og arrangementet er aktivt og publisert i puljen.<br>
+  **Når** programmet er publisert og arrangementet har en aktiv romtildeling i puljen, uavhengig av puljens status og publiseringsflagg.<br>
   **Så** vises romnavn og «Se rommet» for rom med kjent kart. Før publisering skal verken romnavn eller kart rendres.
 
 - [ ] **Hver pulje viser sitt eget rom**<br>
-  **Gitt** at arrangementet har ulike rom i to publiserte puljer.<br>
+  **Gitt** at arrangementet har ulike rom i to puljer og programmet er publisert.<br>
   **Når** brukeren åpner hvert romkart.<br>
   **Så** vises riktig pulje, romnavn, etasje og SVG-kart, også uten innlogging.
 
@@ -62,7 +62,7 @@ Denne sjekklisten dekker `/event/{id}`, altså den publiserte detaljvisningen fo
 
 - [ ] **Tilbaketrukket romkart lukkes**<br>
   **Gitt** at kartmodalen er åpen.<br>
-  **Når** romtildelingen fjernes eller programmet/puljefordelingen avpubliseres.<br>
+  **Når** romtildelingen fjernes eller programmet avpubliseres.<br>
   **Så** forsvinner kartet. Ny publisering skal ikke åpne modalen automatisk. Rom uten kjent SVG viser rominformasjon uten kartknapp.
 
 - [ ] **Kartmodalen fungerer med tastatur og på mobil**<br>
