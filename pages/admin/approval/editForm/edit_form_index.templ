@@ -66,4 +66,5 @@ templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, eventImageD
 	// Outside #edit-form-container on purpose: the live stream morphs that
 	// subtree, and a morph would strip the dialog's `open` state mid-warning.
 	@formsubmission.ApprovalAgeWarningDialog()
+	@formsubmission.TildelingsDialog()
 }

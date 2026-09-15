@@ -65,9 +65,10 @@ CREATE TABLE relation_events_players (
 	    pulje_id TEXT NOT NULL,
 	    billettholder_id INTEGER NOT NULL,
 	    role TEXT NOT NULL DEFAULT 'Player' CHECK (role IN ('Player', 'GM')),
+	    source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'solver')),
 	    -- inserted_at uses the DBDateTimeNowSQL default expression.
 	    inserted_at TEXT,
-	    PRIMARY KEY (billettholder_id, event_id, pulje_id),
+	    PRIMARY KEY (billettholder_id, event_id, pulje_id, role),
 	    FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
 	    FOREIGN KEY (event_id) REFERENCES events (id),
 	    FOREIGN KEY (pulje_id) REFERENCES puljer (id)
