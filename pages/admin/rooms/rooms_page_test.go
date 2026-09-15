@@ -280,7 +280,7 @@ func TestRoomEventCard_IsSharedAcrossAssignedAndUnassignedLocations(t *testing.T
 			t.Fatalf("removal must target the current pulje and room, got %q", got)
 		}
 
-		notes := card.Find(".room-event-notes")
+		notes := card.Find(".event-notes")
 		if roomID == 0 || roomID == mapped.ID {
 			if notes.Length() != 1 || !strings.Contains(notes.Text(), "Notat for det") {
 				t.Fatalf("event in room %d should render its notes in an accordion", roomID)
@@ -316,12 +316,16 @@ func TestRoomAssignmentPicker_IncludesApprovedEventsOutsidePulje(t *testing.T) {
 	insertRoomsPagePulje(t, db, models.PuljeLordagKveld)
 	insertRoomsPageEvent(t, db, "approved-outside", "Approved Outside", 4)
 	testutil.MustExec(t, db, `UPDATE events SET status=? WHERE id=?`, models.EventStatusApproved, "approved-outside")
+	testutil.MustExec(t, db, `UPDATE events SET notes=? WHERE id=?`, "Velg riktig bord først", "approved-outside")
 	insertRoomsPageEventPulje(t, db, "approved-outside", models.PuljeLordagKveld, room.ID)
 
 	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
 	pickerEvent := doc.Find(`#assignment-dialog button[data-event-id="approved-outside"]`)
 	if pickerEvent.Length() != 1 || !strings.Contains(pickerEvent.Text(), "Ikke i denne puljen") {
 		t.Fatal("approved events from other puljer should be available in the picker")
+	}
+	if pickerEvent.Parent().Find("details.event-notes").Length() != 1 || !strings.Contains(pickerEvent.Parent().Find("details.event-notes").Text(), "Velg riktig bord først") {
+		t.Fatal("event picker should show event notes in an accordion")
 	}
 }
 

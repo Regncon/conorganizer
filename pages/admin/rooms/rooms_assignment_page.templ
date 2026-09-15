@@ -132,44 +132,56 @@ templ assignEventModal(events []models.RoomEventPuljeSummaryJson, pulje models.P
 			}
 			for _, event := range events {
 				{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
-				<button
-					type="button"
-					class="room-event-option"
-					data-event-id={ event.EventID }
-					data-indicator="_roomSaving"
-					data-attr:disabled={ fmt.Sprintf("$_roomSaving || $room === %d", event.RoomID.Int64) }
-					{ errorfeedback.Attrs("room-picker", "Klarte ikke å tildele rommet. Prøv igjen.")... }
-					data-on:click={ fmt.Sprintf(
-                            "@post('/admin/rooms/api/assignment/%s/%s/' + $room)",
-                            string(pulje),
-                            event.EventID,
-                        ) }
-				>
-					<img
-						src={ imageBannerUrl }
-						alt=""
-						loading="lazy"
-					/>
-					<span>
-						<strong>{ event.Title }</strong>
-						<small>
-							if event.EventPuljeID != string(pulje) {
-								Ikke i denne puljen
-							} else if !event.RoomID.Valid {
-								Mangler rom
-							} else {
-								Har rom – flyttes ved valg
-							}
-							· { event.MaxPlayers } spillere
-						</small>
-					</span>
-				</button>
+				<div class="room-event-option-group">
+					<button
+						type="button"
+						class="room-event-option"
+						data-event-id={ event.EventID }
+						data-indicator="_roomSaving"
+						data-attr:disabled={ fmt.Sprintf("$_roomSaving || $room === %d", event.RoomID.Int64) }
+						{ errorfeedback.Attrs("room-picker", "Klarte ikke å tildele rommet. Prøv igjen.")... }
+						data-on:click={ fmt.Sprintf(
+                                "@post('/admin/rooms/api/assignment/%s/%s/' + $room)",
+                                string(pulje),
+                                event.EventID,
+                            ) }
+					>
+						<img
+							src={ imageBannerUrl }
+							alt=""
+							loading="lazy"
+						/>
+						<span>
+							<strong>{ event.Title }</strong>
+							<small>
+								if event.EventPuljeID != string(pulje) {
+									Ikke i denne puljen
+								} else if !event.RoomID.Valid {
+									Mangler rom
+								} else {
+									Har rom – flyttes ved valg
+								}
+								· { event.MaxPlayers } spillere
+							</small>
+						</span>
+					</button>
+					@eventNotesAccordion(event.Notes)
+				</div>
 			}
 		</div>
 		<button type="button" aria-label="Lukk" class="modal-close-button icon-size-24" data-on:click="document.getElementById('assignment-dialog').close()">
 			@icons.Icon(icons.Close, icons.Size24)
 		</button>
 	</dialog>
+}
+
+templ eventNotesAccordion(notes string) {
+	if strings.TrimSpace(notes) != "" {
+		<details class="event-notes" data-preserve-attr="open" draggable="false">
+			<summary>Notater</summary>
+			<p>{ notes }</p>
+		</details>
+	}
 }
 
 templ roomEventCard(event models.RoomEventPuljeSummary, pulje models.Pulje, eventImageDir *string) {
@@ -198,12 +210,7 @@ templ roomEventCard(event models.RoomEventPuljeSummary, pulje models.Pulje, even
 				{ errorfeedback.Attrs("room-assignment", "Klarte ikke å fjerne romtildelingen. Prøv igjen.")... }
 			>×</button>
 		}
-		if strings.TrimSpace(event.Notes) != "" {
-			<details class="room-event-notes" data-preserve-attr="open" draggable="false">
-				<summary>Notater</summary>
-				<p>{ event.Notes }</p>
-			</details>
-		}
+		@eventNotesAccordion(event.Notes)
 	</div>
 }
 
@@ -339,6 +346,11 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             margin: 0;
             padding: 0;
         }
+        .room-event-option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
         .room-empty { font-size: 12px; opacity: 0.7; }
         .room--map {
             position: relative;
@@ -390,28 +402,30 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
                 overflow-wrap: anywhere;
             }
             img { inline-size: 36px; block-size: 36px; object-fit: cover; border-radius: 3px; flex: 0 0 auto; }
-            .room-event-notes {
-                flex: 0 0 100%;
-                min-inline-size: 0;
-                border-block-start: 1px solid var(--bg-item-border);
-                padding-block-start: 4px;
-                font-size: 11px;
-                line-height: 1.35;
-            }
-            .room-event-notes summary {
+            &:hover { border-color: var(--color-primary); }
+            &.is-dragging { opacity: 0.5; }
+        }
+        .event-notes {
+            min-inline-size: 0;
+            font-size: 11px;
+            line-height: 1.35;
+            summary {
                 inline-size: fit-content;
                 color: var(--color-primary-text);
                 cursor: pointer;
             }
-            .room-event-notes p {
+            p {
                 max-block-size: 8rem;
                 margin: 4px 0 0;
                 overflow-y: auto;
                 white-space: pre-wrap;
                 overflow-wrap: anywhere;
             }
-            &:hover { border-color: var(--color-primary); }
-            &.is-dragging { opacity: 0.5; }
+        }
+        .room-event .event-notes {
+            flex: 0 0 100%;
+            border-block-start: 1px solid var(--bg-item-border);
+            padding-block-start: 4px;
         }
         #assignment-dialog {
             inline-size: min(560px, calc(100% - 32px));
@@ -437,6 +451,9 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             small { opacity: 0.7; }
             &:hover { border-color: var(--color-primary); }
             &:disabled { opacity: 0.5; cursor: default; }
+        }
+        .room-event-option-group .event-notes {
+            padding-inline: 8px;
         }
 	</style>
 	@RoomsAssignmentPageContent(db, logger, pulje, eventImageDir)

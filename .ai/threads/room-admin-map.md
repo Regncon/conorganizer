@@ -566,3 +566,27 @@ text
 Time: 2026-09-15 20:45:38
 --- Next Prompt ---
 
+After looking at it we have decided to add the notes to the event selection modal as well.
+
+Time: 2026-09-15 21:01:17
+--- Codex Run ---
+
+Codex output:
+I’ll extend the same notes disclosure into the selection modal. Because the modal’s event rows are buttons, I’ll place each accordion beside—not inside—the button, avoiding invalid nested interactive elements while keeping event selection itself unchanged. I’ll reuse the notes markup and add a focused picker test.
+The modal now uses the same notes accordion, with the selection button and disclosure as siblings so both remain valid, independently clickable controls. The focused room-page tests pass; I’m running the full suite and checking the final diff for accidental layout or data changes.
+During the final review I noticed the shared accordion styles were scoped under `.room-event`, so the new modal accordions would have received only their padding and not the intended typography/scroll behavior. I’m moving the common styles to the shared `.event-notes` selector and keeping only card-specific layout rules under `.room-event`.
+Added notes to the event-selection modal.
+
+- Each event now has a selectable button plus a separate “Notater” accordion.
+- Notes use the same reusable accordion as the mini event cards.
+- Empty notes remain hidden.
+- Long notes are constrained and scrollable.
+- Selection and note expansion remain independent interactions.
+
+Updated [rooms_assignment_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_assignment_page.templ:132) and picker tests in [rooms_page_test.go](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_page_test.go:303).
+
+`go test ./...` passes.
+
+Time: 2026-09-15 21:01:17
+--- Next Prompt ---
+
