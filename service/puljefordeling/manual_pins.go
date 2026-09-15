@@ -2,13 +2,10 @@ package puljefordeling
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/Regncon/conorganizer/models"
 )
-
-var ErrGMInPulje = errors.New("billettholder is already GM in this pulje")
 
 // AddManualSeat force-pins a participant into an event for the given pulje by
 // writing a player seat tagged source='manual'. It deliberately does NOT touch
@@ -23,31 +20,12 @@ func AddManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholder
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	var isGM bool
-	if err := tx.QueryRow(
-		`SELECT EXISTS(SELECT 1 FROM relation_events_players WHERE billettholder_id = ? AND pulje_id = ? AND role = ?)`,
-		billettholderID, string(pulje), models.EventPlayerRoleGM,
-	).Scan(&isGM); err != nil {
-		return fmt.Errorf("check GM assignment (pulje=%s bh=%d): %w", pulje, billettholderID, err)
-	}
-	if isGM {
-		return ErrGMInPulje
-	}
-
-	// Clear any prior player seat in this pulje first, so a move leaves a single
-	// pin — and once that pin is removed the player reverts to wherever the solver
-	// wants them.
-	if _, err := tx.Exec(
-		`DELETE FROM relation_events_players WHERE billettholder_id = ? AND pulje_id = ? AND role = ?`,
-		billettholderID, string(pulje), models.EventPlayerRolePlayer,
-	); err != nil {
-		return fmt.Errorf("clear prior seat (pulje=%s bh=%d): %w", pulje, billettholderID, err)
-	}
-	if _, err := tx.Exec(
-		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
-		 VALUES (?, ?, ?, ?, ?)`,
-		eventID, string(pulje), billettholderID, models.EventPlayerRolePlayer, SourceManual,
-	); err != nil {
+	if err := lagreTildeling(tx, Tildelingsvalg{
+		PuljeID:         pulje,
+		EventID:         eventID,
+		BillettholderID: billettholderID,
+		Role:            models.EventPlayerRolePlayer,
+	}); err != nil {
 		return fmt.Errorf("add manual seat (pulje=%s event=%s bh=%d): %w", pulje, eventID, billettholderID, err)
 	}
 	return tx.Commit()

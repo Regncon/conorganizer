@@ -62,7 +62,7 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 	const upsert = `
 		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
 		VALUES (?, ?, ?, ?, ?)
-		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
+		ON CONFLICT(billettholder_id, event_id, pulje_id, role) DO UPDATE SET
 			role = EXCLUDED.role,
 			source = EXCLUDED.source
 	`
