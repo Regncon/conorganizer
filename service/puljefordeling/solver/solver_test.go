@@ -529,7 +529,7 @@ func TestSolveSlotFixed_PinnedSeatHonoredWithoutPreference(t *testing.T) {
 		// "kid" intentionally absent from players: a manual placement with no interest.
 	}
 
-	result := NewState(2026, weekendOf(sl)).SolveSlotFixed(sl, players, map[string]string{"kid": "A"})
+	result := NewState(2026, weekendOf(sl)).SolveSlotFixed(sl, players, map[string][]string{"kid": {"A"}})
 
 	if !slices.Contains(assigned(result, "A"), "kid") {
 		t.Errorf("pinned kid must be seated in A, got %v", assigned(result, "A"))
@@ -552,7 +552,7 @@ func TestSolveSlotFixed_PinnedSeatCountsAsSeated(t *testing.T) {
 	}
 
 	st := NewState(2026, weekendOf(sl))
-	result := st.SolveSlotFixed(sl, players, map[string]string{"top": "A", "nopref": "A"})
+	result := st.SolveSlotFixed(sl, players, map[string][]string{"top": {"A"}, "nopref": {"A"}})
 
 	if !st.IsSatisfied("top") {
 		t.Error("pinned player whose pinned event is their top choice should be satisfied")
@@ -562,6 +562,60 @@ func TestSolveSlotFixed_PinnedSeatCountsAsSeated(t *testing.T) {
 	}
 	if !slices.Contains(result.NewlySatisfied, "top") {
 		t.Errorf("top should be newly satisfied, got %v", result.NewlySatisfied)
+	}
+}
+
+func TestSolveSlotFixed_LegacyMultiplePinsReserveEverySeatWithoutAutomaticDuplicate(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "a billettholder has two legacy manual pins in one pulje", When: "the pulje is solved", Then: "both pins consume capacity and the billettholder receives no additional automatic seat"})
+
+	// Given
+	expectedPinnedEvents := []string{"A", "B"}
+	sl := slot("s1", event("A", 1), event("B", 1), event("C", 1))
+	players := []model.Player{
+		player("legacy", prefs("s1", map[string]model.Score{"C": 5})),
+		player("regular", prefs("s1", map[string]model.Score{"C": 3})),
+	}
+	pins := map[string][]string{"legacy": expectedPinnedEvents}
+
+	// When
+	result := NewState(2026, weekendOf(sl)).SolveSlotFixed(sl, players, pins)
+
+	// Then
+	for _, eventID := range expectedPinnedEvents {
+		if !slices.Contains(assigned(result, eventID), "legacy") {
+			t.Errorf("legacy pin in %s was lost: %v", eventID, result.Assignments)
+		}
+	}
+	if slices.Contains(assigned(result, "C"), "legacy") {
+		t.Fatalf("manually pinned billettholder received an extra automatic seat: %v", result.Assignments)
+	}
+	if !slices.Contains(assigned(result, "C"), "regular") {
+		t.Fatalf("the free seat should remain available to an ordinary player: %v", result.Assignments)
+	}
+}
+
+func TestSolveSlotFixed_RegisteredGMPinIsRetainedAndConsumesCapacity(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "a legacy GM is unavailable in the pulje but also has an explicit Player pin", When: "the pulje is solved", Then: "the pin is retained, consumes capacity and the GM receives no automatic seat"})
+
+	// Given
+	expectedAssignments := []string{"gm"}
+	sl := slot("s1", event("A", 1))
+	players := []model.Player{
+		player("gm", prefs("s1", map[string]model.Score{"A": 5})),
+		player("regular", prefs("s1", map[string]model.Score{"A": 5})),
+	}
+	state := NewState(2026, weekendOf(sl))
+	state.RegisterGMs("s1", []string{"gm"})
+
+	// When
+	result := state.SolveSlotFixed(sl, players, map[string][]string{"gm": {"A"}})
+
+	// Then
+	if got := assigned(result, "A"); !slices.Equal(got, expectedAssignments) {
+		t.Fatalf("assignments: got %v, want %v", got, expectedAssignments)
+	}
+	if slices.Contains(result.Unassigned, "gm") {
+		t.Fatalf("explicitly pinned GM must not be reported unassigned: %v", result.Unassigned)
 	}
 }
 
@@ -684,7 +738,7 @@ func TestSolveSlotFixed_PinnedMinorInAdultsOnlyEventIsHonored(t *testing.T) {
 		player("kid", prefs("s1", map[string]model.Score{"A": 5})),
 	}
 
-	result := NewState(2026, weekendOf(sl)).SolveSlotFixed(sl, players, map[string]string{"kid": "A"})
+	result := NewState(2026, weekendOf(sl)).SolveSlotFixed(sl, players, map[string][]string{"kid": {"A"}})
 
 	if !slices.Contains(assigned(result, "A"), "kid") {
 		t.Errorf("pinned minor must stay seated in the AdultsOnly event, got %v", assigned(result, "A"))

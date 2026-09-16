@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
@@ -105,7 +104,7 @@ func TestPuljefordelingIndex_DialogRendersOutsideLiveRegion(t *testing.T) {
 }
 
 func TestAddFirstChoiceThenEmulate_PinsAddedPlayer(t *testing.T) {
-	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_add_then_pin")
+	db, _ := testutil.CreateTestDBAndLogger(t, "puljefordeling_add_then_pin")
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
@@ -116,8 +115,9 @@ func TestAddFirstChoiceThenEmulate_PinsAddedPlayer(t *testing.T) {
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
 
 	// Add Kari through the real picker add path (the + button's endpoint).
-	if err := formsubmission.AddPlayersFirstChoice(1, "evA", string(fredag), db, logger); err != nil {
-		t.Fatalf("AddPlayersFirstChoice: %v", err)
+	rec := postApprovalSignals(t, approvalRouterFor(t, db), http.MethodPost, approvalFirstChoicePath, 1, "evA", string(fredag), "")
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("add first choice: %d %s", rec.Code, rec.Body.String())
 	}
 
 	// A subsequent emulation must pin her into evA, marked as a manual placement.
