@@ -79,7 +79,7 @@ func TestPuljefordelingTabContent_RendersAddPickerAndManualRemove(t *testing.T) 
 
 	// The + button opens the dialog scoped to this event (attribute decoded).
 	addClick := doc.Find(".pulje-add").AttrOr("data-on:click", "")
-	if !strings.Contains(addClick, "$assignmentEventId = 'evA'") {
+	if !strings.Contains(addClick, `$assignmentEventId = "evA"`) {
 		t.Errorf("+ button should set assignmentEventId to the event; got %q", addClick)
 	}
 }

@@ -583,6 +583,10 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 				<button
 					type="button"
 					class="btn btn--secondary"
+					if eventId == "" {
+						data-class:btn--primary="$assignmentPickerGmOnly"
+						data-class:btn--secondary="!$assignmentPickerGmOnly"
+					}
 					data-on:click={ tildelingsvelgerAction(puljeId, models.EventPlayerRoleGM, gmAddURL) }
 				>
 					Legg til som spilleder
@@ -591,6 +595,9 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 			<button
 				type="button"
 				class="btn btn--secondary"
+				if eventId == "" {
+					data-show="!$assignmentPickerGmOnly"
+				}
 				data-on:click={ tildelingsvelgerAction(puljeId, models.EventPlayerRolePlayer, playerAddURL) }
 			>
 				{ playerLabel }
