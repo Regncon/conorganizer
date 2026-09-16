@@ -199,6 +199,8 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		data-signals:assignment-billettholder-id="0"
 		data-signals:clear-input="0"
 		data-signals:dragged-billettholder-id="0"
+		data-signals:dragged-event-id="''"
+		data-signals:dragged-manual-seat="false"
 		data-signals:drag-over-event="''"
 		data-signals:assignment-age-confirmed="false"
 		data-signals:age-warning-text="''"
@@ -207,6 +209,8 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		data-signals:age-warning-pulje-id="''"
 		data-signals:age-warning-role="'Player'"
 		data-signals:age-warning-from-add-menu="false"
+		data-signals:age-warning-from-event-id="''"
+		data-signals:age-warning-from-manual-seat="false"
 	>
 		<style>
             .tabs {
@@ -628,6 +632,8 @@ func puljeAgeConfirmAction() string {
 		"$assignmentPuljeId = $ageWarningPuljeId; " +
 		"$assignmentRole = $ageWarningRole; " +
 		"$assignmentFromAddMenu = $ageWarningFromAddMenu; " +
+		"$assignmentFromEventId = $ageWarningFromEventId; " +
+		"$assignmentFromManualSeat = $ageWarningFromManualSeat; " +
 		"$assignmentConfirmation = ''; " +
 		"$assignmentAgeConfirmed = true; " +
 		"@post('/admin/api/puljefordeling/assign'); " +
@@ -707,7 +713,7 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 		dropAttrs := templ.Attributes{}
 		if !published {
 			dropAttrs["data-on:dragover__prevent"] = fmt.Sprintf("$dragOverEvent = '%s'", ev.EventID)
-			dropAttrs["data-on:drop__prevent"] = fmt.Sprintf("$dragOverEvent = ''; $draggedBillettholderId && (($assignmentBillettholderId = $draggedBillettholderId), ($assignmentEventId = '%s'), ($assignmentPuljeId = '%s'), ($assignmentRole = 'Player'), ($assignmentFromAddMenu = false), ($assignmentConfirmation = ''), ($assignmentAgeConfirmed = false), @post('/admin/api/puljefordeling/assign'))", ev.EventID, string(pulje))
+			dropAttrs["data-on:drop__prevent"] = fmt.Sprintf("$dragOverEvent = ''; $draggedBillettholderId && (($assignmentBillettholderId = $draggedBillettholderId), ($assignmentEventId = %q), ($assignmentPuljeId = %q), ($assignmentFromEventId = $draggedEventId), ($assignmentFromManualSeat = $draggedManualSeat), ($assignmentRole = 'Player'), ($assignmentFromAddMenu = false), ($assignmentConfirmation = ''), ($assignmentAgeConfirmed = false), @post('/admin/api/puljefordeling/assign'))", ev.EventID, string(pulje))
 			dropAttrs["data-class:is-drag-over"] = fmt.Sprintf("$dragOverEvent === '%s'", ev.EventID)
 		}
 		imageBannerUrl := eventimage.GetEventImageUrl(ev.EventID, "banner", eventImageDir)
@@ -739,9 +745,9 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 						tileAttrs := templ.Attributes{}
 						if !published {
 							tileAttrs["draggable"] = "true"
-							tileAttrs["data-on:dragstart"] = fmt.Sprintf("$draggedBillettholderId = %d", pl.BillettholderID)
-							tileAttrs["data-on:dragend"] = "$draggedBillettholderId = 0; $dragOverEvent = ''"
-							tileAttrs["data-class:is-dragging"] = fmt.Sprintf("$draggedBillettholderId === %d", pl.BillettholderID)
+							tileAttrs["data-on:dragstart"] = fmt.Sprintf("$draggedBillettholderId = %d; $draggedEventId = %q; $draggedManualSeat = %t", pl.BillettholderID, ev.EventID, pl.Manual)
+							tileAttrs["data-on:dragend"] = "$draggedBillettholderId = 0; $draggedEventId = ''; $draggedManualSeat = false; $dragOverEvent = ''"
+							tileAttrs["data-class:is-dragging"] = fmt.Sprintf("$draggedBillettholderId === %d && $draggedEventId === %q", pl.BillettholderID, ev.EventID)
 						}
 						// A manual pin without any real interest shows a pin rather than a
 						// fabricated interest level; a genuine interest keeps its emoji.

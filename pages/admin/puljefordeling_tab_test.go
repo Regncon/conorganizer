@@ -180,15 +180,19 @@ func TestPuljefordelingTabContent_PlayerTilesDragToEventBoxes(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en pulje med et seatet arrangement.",
 		When:  "Når fanen rendres.",
-		Then:  "Så skal spillerflisene kunne dras og arrangementsboksene være slippmål.",
+		Then:  "Så skal dra-og-slipp sende både billettholder og kildearrangement til tildelingsruten.",
 	})
 
+	// Given
+	const expectedSource = `$draggedEventId = "evA"`
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_dragdrop")
 	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
 	seedTabEventWithInterest(t, db, "evA", "Alpha", models.PuljeFredagKveld)
 
+	// When
 	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
 
+	// Then
 	tile := doc.Find(".pulje-players li[draggable='true']")
 	if tile.Length() == 0 {
 		t.Fatal("expected a draggable player tile")
@@ -196,8 +200,14 @@ func TestPuljefordelingTabContent_PlayerTilesDragToEventBoxes(t *testing.T) {
 	if got := tile.AttrOr("data-on:dragstart", ""); !strings.Contains(got, "$draggedBillettholderId = 1") {
 		t.Errorf("tile dragstart should set the dragged billettholder id; got %q", got)
 	}
+	if got := tile.AttrOr("data-on:dragstart", ""); !strings.Contains(got, expectedSource) {
+		t.Errorf("tile dragstart should identify the source event; got %q", got)
+	}
 
 	drop := doc.Find(".pulje-event").AttrOr("data-on:drop__prevent", "")
+	if !strings.Contains(drop, "$assignmentFromEventId = $draggedEventId") {
+		t.Errorf("drop should preserve the dragged source for the request and confirmation; got %q", drop)
+	}
 	if !strings.Contains(drop, "/admin/api/puljefordeling/assign") {
 		t.Errorf("event box should be a drop target posting to the assign endpoint; got %q", drop)
 	}

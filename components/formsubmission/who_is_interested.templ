@@ -658,6 +658,8 @@ func approvalAgeConfirmAction() string {
 		"$assignmentIsGm = $ageWarningIsGm; " +
 		"$assignmentRole = $ageWarningRole; " +
 		"$assignmentFromAddMenu = $ageWarningFromAddMenu; " +
+		"$assignmentFromEventId = $ageWarningFromEventId; " +
+		"$assignmentFromManualSeat = $ageWarningFromManualSeat; " +
 		"$assignmentConfirmation = ''; " +
 		"$assignmentRemove = false; " +
 		"$assignmentAgeConfirmed = true; " +
@@ -696,6 +698,8 @@ templ ApprovalAgeWarningDialog() {
 			"ageWarningIsGm":            false,
 			"ageWarningRole":            "Player",
 			"ageWarningFromAddMenu":     false,
+			"ageWarningFromEventId":     "",
+			"ageWarningFromManualSeat":  false,
 			"ageWarningMethod":          "",
 			"ageWarningUrl":             "",
 		}) }
