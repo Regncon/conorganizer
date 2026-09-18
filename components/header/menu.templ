@@ -178,42 +178,28 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 templ mainMenuButtonsStyles() {
 	<style>
-		#main-menu-nav-buttons {
-			display: contents;
 
-			.main-menu-buttons {
-				display: contents;
+        #main-menu-nav-buttons {
+                display: contents;
 
-                .main-menu-button {
-                    &.selected {
-                        color: var(--color-primary);
-
-                        nav[data-menu-open]:not([data-menu-open="false"]) #main-menu-nav-buttons .main-menu-button.selected {
-                            color: var(--color-secondary) !important;
-                        }
-                    }
+                .main-menu-buttons {
+                    display: contents;
                 }
-			}
-		}
-
-        #main-menu-user-menu {
-            #main-menu-billettholder-live {
-                .main-menu-button {
-                    .menu-button-text {
-                        &.selected {
-                            color: var(--color-primary);
-                        }
-                    }
+        }
+        nav:not([data-menu-open="true"]):not([data-menu-open=""]) {
+            .main-menu-button {
+                &.selected {
+                    color: var(--color-primary);
                 }
             }
         }
 
-        nav[data-menu-open]:not([data-menu-open="false"]) #main-menu-nav-buttons .main-menu-button.selected {
-            #main-menu-nav-buttons {
-                .main-menu-buttons {
-                    .main-menu-button.selected {
-                        color: var(--color-secondary) !important;
-                    }
+        #main-menu-user-menu {
+            #main-menu-billettholder-live {
+                .main-menu-button {
+                        .selected {
+                            color: var(--color-primary);
+                        }
                 }
             }
         }
