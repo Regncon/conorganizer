@@ -12,6 +12,7 @@ import (
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/go-chi/chi/v5"
+	"strings"
 )
 
 templ menuStyles() {
@@ -147,7 +148,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 		data-signals="{_phoneMenuOpen: false, _billettholderSwitcherOpen: false}"
 		data-on:billettholder-selection-change__window="$_menuBillettholder = evt.detail; $billettHolderId = evt.detail?.Id ?? ''; $_menuBillettholderReady = true"
 	>
-		<nav class="main-menu page-content-container wide-content">
+		<nav class="main-menu page-content-container wide-content" data-attr:data-menu-open="$_phoneMenuOpen">
 			<section id="main-menu-logo">
 				<a href="/" class="logo-link">
 					<img src="/static/RegnconLogo.svg" alt="Regncon framside"/>
@@ -175,13 +176,31 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 templ mainMenuButtonsStyles() {
 	<style>
-		#main-menu-nav-buttons {
-			display: contents;
 
-			.main-menu-buttons {
-				display: contents;
-			}
-		}
+        #main-menu-nav-buttons {
+                display: contents;
+
+                .main-menu-buttons {
+                    display: contents;
+                }
+        }
+        nav:not([data-menu-open="true"]):not([data-menu-open=""]) {
+            .main-menu-button {
+                &.selected {
+                    color: var(--color-primary);
+                }
+            }
+        }
+
+        #main-menu-user-menu {
+            #main-menu-billettholder-live {
+                .main-menu-button {
+                        .selected {
+                            color: var(--color-primary);
+                        }
+                }
+            }
+        }
 
 		@container main (width > 600px) {
 			#main-menu-nav-buttons {
@@ -213,15 +232,21 @@ templ mainMenuButtonsStyles() {
 }
 
 templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
+
+    {{
+        r := chi.RouteContext(ctx)
+        path := r.RoutePattern()
+    }}
+
 	<section class="main-menu-buttons">
-		<a href="/" class="main-menu-button btn btn--ghost btn-with-icon">
+		<a href="/" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", path == "/") }>
 			@icons.Icon(icons.Home, icons.Size20)
 			<span class="menu-button-text">
 				Hjem
 			</span>
 		</a>
 		if userInfo.IsLoggedIn {
-			<a href="/profile" class="main-menu-button btn btn--ghost btn-with-icon">
+			<a href="/profile" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", strings.Contains(path, "/profile")) }>
 				@icons.Icon(icons.User, icons.Size20)
 				<span class="menu-button-text">
 					Min Side
@@ -229,7 +254,7 @@ templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
 			</a>
 		}
 		if userInfo.IsLoggedIn && userInfo.IsAdmin {
-			<a href="/admin" class="main-menu-button btn btn--ghost btn-with-icon">
+			<a href="/admin" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", strings.Contains(path, "/admin")) }>
 				@icons.Icon(icons.Shield, icons.Size20)
 				<span class="menu-button-text">
 					Admin
@@ -755,9 +780,11 @@ templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions) {
 				@billettholderMenuAvatar(billettholderOptions.Default)
 			</div>
 		} else {
-			@icons.Icon(icons.Menu, icons.Size20)
+			<div data-class:selected="$_phoneMenuOpen">
+                @icons.Icon(icons.Menu, icons.Size20)
+            </div>
 		}
-		<span class="menu-button-text">
+		<span class="menu-button-text" data-class:selected="$_phoneMenuOpen">
 			Meny
 		</span>
 	</button>
