@@ -150,7 +150,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 		data-signals="{_phoneMenuOpen: false, _billettholderSwitcherOpen: false}"
 		data-on:billettholder-selection-change__window="$_menuBillettholder = evt.detail; $billettHolderId = evt.detail?.Id ?? ''; $_menuBillettholderReady = true"
 	>
-		<nav class="main-menu page-content-container wide-content">
+		<nav class="main-menu page-content-container wide-content" data-attr:data-menu-open="$_phoneMenuOpen">
 			<section id="main-menu-logo">
 				<a href="/" class="logo-link">
 					<img src="/static/RegnconLogo.svg" alt="Regncon framside"/>
@@ -187,10 +187,36 @@ templ mainMenuButtonsStyles() {
                 .main-menu-button {
                     &.selected {
                         color: var(--color-primary);
+
+                        nav[data-menu-open]:not([data-menu-open="false"]) #main-menu-nav-buttons .main-menu-button.selected {
+                            color: var(--color-secondary) !important;
+                        }
                     }
                 }
 			}
 		}
+
+        #main-menu-user-menu {
+            #main-menu-billettholder-live {
+                .main-menu-button {
+                    .menu-button-text {
+                        &.selected {
+                            color: var(--color-primary);
+                        }
+                    }
+                }
+            }
+        }
+
+        nav[data-menu-open]:not([data-menu-open="false"]) #main-menu-nav-buttons .main-menu-button.selected {
+            #main-menu-nav-buttons {
+                .main-menu-buttons {
+                    .main-menu-button.selected {
+                        color: var(--color-secondary) !important;
+                    }
+                }
+            }
+        }
 
 		@container main (width > 600px) {
 			#main-menu-nav-buttons {
@@ -770,9 +796,11 @@ templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions) {
 				@billettholderMenuAvatar(billettholderOptions.Default)
 			</div>
 		} else {
-			@icons.Icon(icons.Menu, icons.Size20)
+			<div data-class:selected="$_phoneMenuOpen">
+                @icons.Icon(icons.Menu, icons.Size20)
+            </div>
 		}
-		<span class="menu-button-text">
+		<span class="menu-button-text" data-class:selected="$_phoneMenuOpen">
 			Meny
 		</span>
 	</button>
