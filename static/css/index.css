@@ -82,6 +82,7 @@
     /* border */
     --border-radius-1x: 4px;
     --border-radius-2x: 8px;
+    --border-radius-3x: 12px;
 
     /* shadow */
     --shadow-dialog: 0 19px 38px hsl(0deg 0% 0% / 30%), 0 15px 12px hsl(0deg 0% 0% / 22%);
@@ -578,10 +579,13 @@ input {
 /* Event status card */
 .event-status {
     display: flex;
-    gap: var(--spacing-2x);
-    padding: var(--border-radius-2x);
-    border: 2px solid;
-    border-radius: 1rem;
+    gap: var(--spacing-1x);
+    padding-top: var(--spacing-1x);
+    padding-bottom: var(--spacing-1x);
+    padding-left: var(--spacing-2x);
+    padding-right: var(--spacing-2x);
+    border: 1px solid;
+    border-radius: var(--border-radius-3x);
 }
 
 .kladd {
