@@ -238,24 +238,14 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_IgnoresLegacyPul
 }
 
 func TestGetPreviousNextForRootEventList_WhenProgramAndRaffleEventsShareADay_UsesRenderedOrder(t *testing.T) {
-	db := createPreviousNextRootListTestDB(t)
-	seedPreviousNextRootListLookups(t, db)
-	seedPreviousNextRootListPulje(t, db, models.PuljeLordagMorgen, "Lordag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
-	seedPreviousNextRootListPulje(t, db, models.PuljeLordagKveld, "Lordag kveld", "2026-10-10T18:00:00Z", "2026-10-10T23:00:00Z")
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en dag har programarrangementer og rafflearrangementer i flere puljer.",
+		When:  "Når forrige og neste arrangement hentes for hvert arrangement.",
+		Then:  "Så skal navigasjonen følge den rendrerte rekkefølgen uten å gå rundt til starten.",
+	})
 
-	seedPreviousNextRootListEvent(t, db, "program-alpha", "Alpha Program", models.EventStatusAnnounced)
-	seedPreviousNextRootListEventPulje(t, db, "program-alpha", models.PuljeLordagMorgen, true, true)
-	seedPreviousNextRootListEventPulje(t, db, "program-alpha", models.PuljeLordagKveld, true, true)
-	setPreviousNextRootListEventInPuljefordeling(t, db, "program-alpha", false)
-	seedPreviousNextRootListEvent(t, db, "program-beta", "Beta Program", models.EventStatusAnnounced)
-	seedPreviousNextRootListEventPulje(t, db, "program-beta", models.PuljeLordagMorgen, true, true)
-	setPreviousNextRootListEventInPuljefordeling(t, db, "program-beta", false)
-	seedPreviousNextRootListEvent(t, db, "morning-raffle", "Morning Raffle", models.EventStatusAnnounced)
-	seedPreviousNextRootListEventPulje(t, db, "morning-raffle", models.PuljeLordagMorgen, true, true)
-	seedPreviousNextRootListEvent(t, db, "evening-raffle", "Evening Raffle", models.EventStatusAnnounced)
-	seedPreviousNextRootListEventPulje(t, db, "evening-raffle", models.PuljeLordagKveld, true, true)
-
-	cases := []struct {
+	// Given
+	expectedCases := []struct {
 		id    string
 		pulje models.Pulje
 		want  expectedPreviousNext
@@ -284,10 +274,31 @@ func TestGetPreviousNextForRootEventList_WhenProgramAndRaffleEventsShareADay_Use
 		},
 	}
 
-	for _, tc := range cases {
+	db := createPreviousNextRootListTestDB(t)
+	seedPreviousNextRootListLookups(t, db)
+	seedPreviousNextRootListPulje(t, db, models.PuljeLordagMorgen, "Lordag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
+	seedPreviousNextRootListPulje(t, db, models.PuljeLordagKveld, "Lordag kveld", "2026-10-10T18:00:00Z", "2026-10-10T23:00:00Z")
+
+	seedPreviousNextRootListEvent(t, db, "program-alpha", "Alpha Program", models.EventStatusAnnounced)
+	seedPreviousNextRootListEventPulje(t, db, "program-alpha", models.PuljeLordagMorgen, true, true)
+	seedPreviousNextRootListEventPulje(t, db, "program-alpha", models.PuljeLordagKveld, true, true)
+	setPreviousNextRootListEventInPuljefordeling(t, db, "program-alpha", false)
+	seedPreviousNextRootListEvent(t, db, "program-beta", "Beta Program", models.EventStatusAnnounced)
+	seedPreviousNextRootListEventPulje(t, db, "program-beta", models.PuljeLordagMorgen, true, true)
+	setPreviousNextRootListEventInPuljefordeling(t, db, "program-beta", false)
+	seedPreviousNextRootListEvent(t, db, "morning-raffle", "Morning Raffle", models.EventStatusAnnounced)
+	seedPreviousNextRootListEventPulje(t, db, "morning-raffle", models.PuljeLordagMorgen, true, true)
+	seedPreviousNextRootListEvent(t, db, "evening-raffle", "Evening Raffle", models.EventStatusAnnounced)
+	seedPreviousNextRootListEventPulje(t, db, "evening-raffle", models.PuljeLordagKveld, true, true)
+
+	// When
+	for _, tc := range expectedCases {
 		t.Run(tc.id, func(t *testing.T) {
+			// When
 			request := httptest.NewRequest("GET", "/event/"+tc.id+"?date=2026-10-10&pulje="+string(tc.pulje), nil)
 			actual, err := GetPreviousNextForRootEventList(context.Background(), db, tc.id, true, request, nil)
+
+			// Then
 			if err != nil {
 				t.Fatalf("get previous/next: %v", err)
 			}

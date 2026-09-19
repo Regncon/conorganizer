@@ -471,6 +471,16 @@ func TestEventPageContent_WhenProgramAndPuljeArePublished_RendersInterestDialog(
 }
 
 func TestEventPageContent_WhenEventIsNotInPuljefordeling_RendersProgramInfoPanel(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at et annonsert arrangement ikke er med i puljefordelingen, men er lagt i en pulje.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal informasjonspanelet vises uten interessevalg-dialogen.",
+	})
+
+	// Given
+	expectedPanelVisible := true
+	expectedDialogVisible := false
+	expectedMessagePart := "åpent for alle"
 	db := createEventVisibilityTestDB(t)
 	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
 	seedEventVisibilityEvent(t, db, "program-only-event", "Program Only Event", models.EventStatusAnnounced, sql.NullInt64{})
@@ -479,14 +489,20 @@ func TestEventPageContent_WhenEventIsNotInPuljefordeling_RendersProgramInfoPanel
 	mustExecEventVisibilityTest(t, db, `UPDATE events SET is_in_puljefordeling = 0 WHERE id = 'program-only-event'`)
 	request := httptest.NewRequest("GET", "/event/program-only-event?pulje=FredagKveld", nil)
 
+	// When
 	doc := templtest.Render(t, event_page_content("program-only-event", false, logger, db, nil, request))
-	if !templtest.HasSelector(doc, ".event-interest-picker-container") {
-		t.Fatal("program-only event must render the program information panel")
+	actualPanelVisible := templtest.HasSelector(doc, ".event-interest-picker-container")
+	actualDialogVisible := templtest.HasSelector(doc, ".interest-dialog")
+	message := strings.Join(strings.Fields(doc.Find(".event-interest-program-message").Text()), " ")
+
+	// Then
+	if actualPanelVisible != expectedPanelVisible {
+		t.Fatalf("program information panel visibility mismatch\nexpected: %v\nactual:   %v", expectedPanelVisible, actualPanelVisible)
 	}
-	if templtest.HasSelector(doc, ".interest-dialog") {
-		t.Fatal("program-only event must not render the interest dialog")
+	if actualDialogVisible != expectedDialogVisible {
+		t.Fatalf("interest dialog visibility mismatch\nexpected: %v\nactual:   %v", expectedDialogVisible, actualDialogVisible)
 	}
-	if message := strings.Join(strings.Fields(doc.Find(".event-interest-program-message").Text()), " "); !strings.Contains(message, "åpent for alle") {
-		t.Fatalf("program information message = %q", message)
+	if !strings.Contains(message, expectedMessagePart) {
+		t.Fatalf("program information message = %q, want it to contain %q", message, expectedMessagePart)
 	}
 }

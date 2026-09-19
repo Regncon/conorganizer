@@ -208,6 +208,21 @@ func TestRootPageContent_WhenProgramPublishingIsOn_SortsEventsAlphabeticallyWith
 }
 
 func TestRootPageContent_WhenProgramAndRaffleEventsAreMixed_DeduplicatesProgramAndRendersSections(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at program- og rafflearrangementer er blandet i lørdagens puljer.",
+		When:  "Når forsiden vises for lørdag.",
+		Then:  "Så skal programmet dedupliseres og vises før rafflearrangementene i egne seksjoner.",
+	})
+
+	// Given
+	expectedProgramTitles := []string{"Alpha Program", "Beta Program", "Gamma Program"}
+	expectedProgramCardCount := 3
+	expectedRaffleCardCount := 2
+	expectedProgramRowCount := 2
+	expectedReversedProgramRowCount := 1
+	expectedAlphaHref := "/event/program-alpha?date=2026-10-10&pulje=LordagMorgen"
+	expectedHeadings := []string{"Programoversikt", "Lørdag morgen (10:00 - 15:00)", "Lørdag kveld (18:00 - 23:00)"}
+
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)
 	setProgramPublishing(t, db, true)
@@ -238,38 +253,49 @@ func TestRootPageContent_WhenProgramAndRaffleEventsAreMixed_DeduplicatesProgramA
 	insertRootPageEvent(t, db, "raffle-evening", "Evening Raffle", models.EventStatusAnnounced)
 	insertRootPageEventPulje(t, db, "raffle-evening", models.PuljeLordagKveld, true)
 
+	// When
 	doc := templtest.Render(t, rootPageContentForDate(db, false, nil, "2026-10-10"))
 	programTitles := templtest.CollectTexts(doc, ".program-event-card .event-card-title")
-	if !slices.Equal(programTitles, []string{"Alpha Program", "Beta Program", "Gamma Program"}) {
-		t.Fatalf("program event titles mismatch: %v", programTitles)
-	}
-	if got := doc.Find(".program-event-card").Length(); got != 3 {
-		t.Fatalf("program event card count = %d, want 3", got)
-	}
-	if got := doc.Find(".program-event-card .event-card-subtitle, .program-event-card .event-card-footer-gamemaster").Length(); got != 0 {
-		t.Fatalf("program cards rendered %d system/GM elements", got)
-	}
-	if got := doc.Find(".program-event-card .event-card-main-body .event-card-description").Length(); got != 0 {
-		t.Fatalf("program cards rendered %d descriptions in the body", got)
-	}
-	if got := doc.Find(".program-event-card .event-card-footer-description").Length(); got != 3 {
-		t.Fatalf("program cards rendered %d descriptions in the footer, want 3", got)
-	}
-	if got := doc.Find(".raffle-eventcard-grid .raffle-event-card").Length(); got != 2 {
-		t.Fatalf("raffle event card count = %d, want 2", got)
-	}
-	if got := doc.Find(".program-event-row").Length(); got != 2 {
-		t.Fatalf("program row count = %d, want 2", got)
-	}
-	if got := doc.Find(".program-event-row.reversed").Length(); got != 1 {
-		t.Fatalf("reversed program row count = %d, want 1", got)
-	}
+	programCardCount := doc.Find(".program-event-card").Length()
+	programHiddenMetadataCount := doc.Find(".program-event-card .event-card-subtitle, .program-event-card .event-card-footer-gamemaster").Length()
+	programBodyDescriptionCount := doc.Find(".program-event-card .event-card-main-body .event-card-description").Length()
+	programFooterDescriptionCount := doc.Find(".program-event-card .event-card-footer-description").Length()
+	raffleCardCount := doc.Find(".raffle-eventcard-grid .raffle-event-card").Length()
+	programRowCount := doc.Find(".program-event-row").Length()
+	reversedProgramRowCount := doc.Find(".program-event-row.reversed").Length()
 
 	alphaHref := doc.Find(`.program-event-card`).First().AttrOr("href", "")
-	if alphaHref != "/event/program-alpha?date=2026-10-10&pulje=LordagMorgen" {
+	headings := templtest.CollectTexts(doc, ".pulje-heading")
+
+	// Then
+	if !slices.Equal(programTitles, expectedProgramTitles) {
+		t.Fatalf("program event titles mismatch: %v", programTitles)
+	}
+	if programCardCount != expectedProgramCardCount {
+		t.Fatalf("program event card count = %d, want %d", programCardCount, expectedProgramCardCount)
+	}
+	if programHiddenMetadataCount != 0 {
+		t.Fatalf("program cards rendered %d system/GM elements", programHiddenMetadataCount)
+	}
+	if programBodyDescriptionCount != 0 {
+		t.Fatalf("program cards rendered %d descriptions in the body", programBodyDescriptionCount)
+	}
+	if programFooterDescriptionCount != expectedProgramCardCount {
+		t.Fatalf("program cards rendered %d descriptions in the footer, want %d", programFooterDescriptionCount, expectedProgramCardCount)
+	}
+	if raffleCardCount != expectedRaffleCardCount {
+		t.Fatalf("raffle event card count = %d, want %d", raffleCardCount, expectedRaffleCardCount)
+	}
+	if programRowCount != expectedProgramRowCount {
+		t.Fatalf("program row count = %d, want %d", programRowCount, expectedProgramRowCount)
+	}
+	if reversedProgramRowCount != expectedReversedProgramRowCount {
+		t.Fatalf("reversed program row count = %d, want %d", reversedProgramRowCount, expectedReversedProgramRowCount)
+	}
+	if alphaHref != expectedAlphaHref {
 		t.Fatalf("program event href = %q", alphaHref)
 	}
-	if headings := templtest.CollectTexts(doc, ".pulje-heading"); !slices.Equal(headings, []string{"Programoversikt", "Lørdag morgen (10:00 - 15:00)", "Lørdag kveld (18:00 - 23:00)"}) {
+	if !slices.Equal(headings, expectedHeadings) {
 		t.Fatalf("section headings mismatch: %v", headings)
 	}
 }
