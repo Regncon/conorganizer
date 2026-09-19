@@ -50,7 +50,7 @@ templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 			@components.ProgramScrollnav(db)
 		}
 		@components.CallToAction()
-        @components.TimeSchedule()
+        @components.TimeScheduleFriday()
 		@eventList(db, isAdmin, eventImageDir, programPublished)
 	}
 }
