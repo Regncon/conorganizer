@@ -9,11 +9,11 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav(t *testing.T) {
+func TestRootPageContent_WhenProgramPublishingIsOff_HidesProgramDaySelector(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at publisering av program er skrudd av.",
 		When:  "Når forsiden vises.",
-		Then:  "Så skal puljefilteret skjules.",
+		Then:  "Så skal dagvelgeren skjules.",
 	})
 
 	// Given
@@ -26,11 +26,11 @@ func TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav(t *testing.T)
 
 	// When
 	doc := templtest.Render(t, rootPageContent(db, false, nil))
-	actualScrollnavVisible := templtest.HasSelector(doc, ".program-scrollnav-container")
+	actualDaySelectorVisible := templtest.HasSelector(doc, ".program-day-selector-container")
 
 	// Then
-	if actualScrollnavVisible != expectedScrollnavVisible {
-		t.Fatalf("scrollnav visibility mismatch\nexpected: %v\nactual:   %v", expectedScrollnavVisible, actualScrollnavVisible)
+	if actualDaySelectorVisible != expectedScrollnavVisible {
+		t.Fatalf("day selector visibility mismatch\nexpected: %v\nactual:   %v", expectedScrollnavVisible, actualDaySelectorVisible)
 	}
 }
 
