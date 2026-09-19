@@ -40,8 +40,8 @@ func seedEventVisibilityEvent(t *testing.T, db *sql.DB, eventID string, title st
 			id, title, intro, description, system, event_type,
 			age_group, event_runtime, host_name, user_id, email, phone_number,
 			max_players, beginner_friendly, can_be_run_in_english,
-			status
-		) VALUES (?, ?, 'intro', 'description', '', ?, ?, ?, 'Host', ?, 'host@example.com', '11111111', 4, 1, 1, ?)
+			is_in_puljefordeling, status
+		) VALUES (?, ?, 'intro', 'description', '', ?, ?, ?, 'Host', ?, 'host@example.com', '11111111', 4, 1, 1, 1, ?)
 	`, eventID, title, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, userID, status)
 }
 

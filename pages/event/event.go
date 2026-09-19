@@ -254,6 +254,7 @@ func updateInterest(
 		WHERE ep.event_id = $1
 			AND ep.pulje_id = $2
 			AND ep.is_in_pulje = 1
+			AND e.is_in_puljefordeling = 1
 			AND e.status = $3
 	`
 	var puljeStatus models.PuljeStatus

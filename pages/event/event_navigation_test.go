@@ -131,16 +131,16 @@ func TestEventPageContent_WhenProgramPublishingIsOn_RendersPuljeSpecificPrevious
 			name: "fredag occurrence",
 			path: "/event/shared-event?pulje=FredagKveld",
 			expectedHrefs: []string{
-				"/event/alpha-fredag?pulje=FredagKveld",
-				"/event/zeta-fredag?pulje=FredagKveld",
+				"/event/alpha-fredag?date=2026-10-09&pulje=FredagKveld",
+				"/event/zeta-fredag?date=2026-10-09&pulje=FredagKveld",
 			},
 		},
 		{
 			name: "lordag occurrence",
 			path: "/event/shared-event?pulje=LordagMorgen",
 			expectedHrefs: []string{
-				"/event/lima-lordag?pulje=LordagMorgen",
-				"/event/zulu-lordag?pulje=LordagMorgen",
+				"/event/lima-lordag?date=2026-10-10&pulje=LordagMorgen",
+				"/event/zulu-lordag?date=2026-10-10&pulje=LordagMorgen",
 			},
 		},
 	}

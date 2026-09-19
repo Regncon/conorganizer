@@ -27,8 +27,19 @@ var norwegianWeekdays = [...]string{
 }
 
 type ProgramDay struct {
-	Date   time.Time
-	Blocks []PuljeBlock
+	Date          time.Time
+	ProgramEvents []ProgramEvent
+	Blocks        []PuljeBlock
+}
+
+type ProgramEvent struct {
+	Event   models.EventCardModel
+	PuljeID models.Pulje
+}
+
+type ProgramEventRow struct {
+	Events   []ProgramEvent
+	Reversed bool
 }
 
 func (day ProgramDay) QueryValue() string {
@@ -78,11 +89,45 @@ func buildProgramDays(puljer []models.PuljeRow, blocks []PuljeBlock, location *t
 		}
 
 		if block, ok := blocksByPulje[pulje.ID]; ok {
-			days[dayIndex].Blocks = append(days[dayIndex].Blocks, block)
+			day := &days[dayIndex]
+			day.Blocks = append(day.Blocks, block)
+
+			seenProgramEvents := make(map[string]struct{}, len(day.ProgramEvents))
+			for _, programEvent := range day.ProgramEvents {
+				seenProgramEvents[programEvent.Event.Id] = struct{}{}
+			}
+			for _, event := range block.Events {
+				if event.IsInPuljefordeling {
+					continue
+				}
+				if _, seen := seenProgramEvents[event.Id]; seen {
+					continue
+				}
+				day.ProgramEvents = append(day.ProgramEvents, ProgramEvent{
+					Event:   event,
+					PuljeID: pulje.ID,
+				})
+				seenProgramEvents[event.Id] = struct{}{}
+			}
 		}
 	}
 
 	return days
+}
+
+func ProgramEventRows(events []ProgramEvent) []ProgramEventRow {
+	rows := make([]ProgramEventRow, 0, (len(events)+1)/2)
+	for index := 0; index < len(events); index += 2 {
+		end := index + 2
+		if end > len(events) {
+			end = len(events)
+		}
+		rows = append(rows, ProgramEventRow{
+			Events:   events[index:end],
+			Reversed: len(rows)%2 == 1,
+		})
+	}
+	return rows
 }
 
 func SelectProgramDayIndex(days []ProgramDay, requestedDate string, now time.Time) int {

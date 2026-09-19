@@ -104,6 +104,16 @@ func insertRootPageEventPulje(t *testing.T, db *sql.DB, eventID string, puljeID 
 		INSERT INTO relation_event_puljer(event_id, pulje_id, is_in_pulje, is_published)
 		VALUES(?, ?, 1, ?)
 	`, eventID, puljeID, published)
+	mustExec(t, db, `UPDATE events SET is_in_puljefordeling = 1 WHERE id = ?`, eventID)
+}
+
+func setRootPageEventInPuljefordeling(t *testing.T, db *sql.DB, eventID string, isInPuljefordeling bool) {
+	t.Helper()
+	value := 0
+	if isInPuljefordeling {
+		value = 1
+	}
+	mustExec(t, db, `UPDATE events SET is_in_puljefordeling = ? WHERE id = ?`, value, eventID)
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {

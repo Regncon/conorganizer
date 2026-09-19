@@ -67,3 +67,51 @@
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+.program-event-grid,
+.raffle-eventcard-grid {
+    display: grid;
+    gap: var(--spacing-8x);
+}
+
+.program-event-grid {
+    gap: var(--spacing-4x);
+}
+
+.program-event-row {
+    display: grid;
+    grid-template-columns: 1.618fr 1fr;
+    gap: var(--spacing-4x);
+}
+
+.program-event-row.reversed {
+    grid-template-columns: 1fr 1.618fr;
+}
+
+.program-event-row > .event-card-container {
+    min-width: 0;
+}
+
+.raffle-eventcard-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4x);
+}
+
+@container main (width <= 720px) {
+    .program-event-row,
+    .program-event-row.reversed {
+        grid-template-columns: 1fr;
+    }
+}
+
+@container main (width > 720px) {
+    .raffle-eventcard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container main (width > 1200px) {
+    .raffle-eventcard-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}

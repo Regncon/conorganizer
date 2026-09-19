@@ -26,6 +26,10 @@ func getProgramPublished(db *sql.DB) (bool, error) {
 	return isPublished == 1, nil
 }
 
-func canShowInterestControls(programPublished bool, puljerForEvent []models.PuljeRow) bool {
-	return programPublished && len(puljerForEvent) > 0
+func canShowInterestControls(programPublished bool, isInPuljefordeling bool, puljerForEvent []models.PuljeRow) bool {
+	return programPublished && isInPuljefordeling && len(puljerForEvent) > 0
+}
+
+func canShowInterestPanel(isInPuljefordeling bool, puljerForEvent []models.PuljeRow) bool {
+	return isInPuljefordeling && len(puljerForEvent) > 0
 }

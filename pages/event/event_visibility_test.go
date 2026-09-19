@@ -468,3 +468,18 @@ func TestEventPageContent_WhenProgramAndPuljeArePublished_RendersInterestDialog(
 		t.Fatalf("interest dialog visibility mismatch\nexpected: %v\nactual:   %v", expectedDialogVisible, actualDialogVisible)
 	}
 }
+
+func TestEventPageContent_WhenEventIsNotInPuljefordeling_HidesInterestPanel(t *testing.T) {
+	db := createEventVisibilityTestDB(t)
+	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
+	seedEventVisibilityEvent(t, db, "program-only-event", "Program Only Event", models.EventStatusAnnounced, sql.NullInt64{})
+	seedEventVisibilityPulje(t, db, models.PuljeFredagKveld)
+	seedEventVisibilityEventPulje(t, db, "program-only-event", models.PuljeFredagKveld, true)
+	mustExecEventVisibilityTest(t, db, `UPDATE events SET is_in_puljefordeling = 0 WHERE id = 'program-only-event'`)
+	request := httptest.NewRequest("GET", "/event/program-only-event?pulje=FredagKveld", nil)
+
+	doc := templtest.Render(t, event_page_content("program-only-event", false, logger, db, nil, request))
+	if templtest.HasSelector(doc, ".event-interest-picker-container") {
+		t.Fatal("program-only event must not render an interest panel")
+	}
+}

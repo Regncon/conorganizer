@@ -144,9 +144,9 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_IgnoresLegacyPul
 			currentID: "shared-event",
 			path:      "/event/shared-event?pulje=FredagKveld",
 			expected: expectedPreviousNext{
-				previousURL:   "/event/unpublished-pulje?pulje=FredagKveld",
+				previousURL:   "/event/unpublished-pulje?date=2026-10-09&pulje=FredagKveld",
 				previousTitle: "Beta Unpublished",
-				nextURL:       "/event/zeta-fredag?pulje=FredagKveld",
+				nextURL:       "/event/zeta-fredag?date=2026-10-09&pulje=FredagKveld",
 				nextTitle:     "Zeta Fredag",
 			},
 		},
@@ -155,9 +155,9 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_IgnoresLegacyPul
 			currentID: "shared-event",
 			path:      "/event/shared-event?pulje=LordagMorgen",
 			expected: expectedPreviousNext{
-				previousURL:   "/event/lima-lordag?pulje=LordagMorgen",
+				previousURL:   "/event/lima-lordag?date=2026-10-10&pulje=LordagMorgen",
 				previousTitle: "Lima Lordag",
-				nextURL:       "/event/zulu-lordag?pulje=LordagMorgen",
+				nextURL:       "/event/zulu-lordag?date=2026-10-10&pulje=LordagMorgen",
 				nextTitle:     "Zulu Lordag",
 			},
 		},
@@ -172,9 +172,9 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_IgnoresLegacyPul
 			currentID: "unpublished-pulje",
 			path:      "/event/unpublished-pulje?pulje=FredagKveld",
 			expected: expectedPreviousNext{
-				previousURL:   "/event/alpha-fredag?pulje=FredagKveld",
+				previousURL:   "/event/alpha-fredag?date=2026-10-09&pulje=FredagKveld",
 				previousTitle: "Alpha Fredag",
-				nextURL:       "/event/shared-event?pulje=FredagKveld",
+				nextURL:       "/event/shared-event?date=2026-10-09&pulje=FredagKveld",
 				nextTitle:     "Shared Event",
 			},
 		},
@@ -207,7 +207,7 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_IgnoresLegacyPul
 			currentID: "alpha-fredag",
 			path:      "/event/alpha-fredag?pulje=FredagKveld",
 			expected: expectedPreviousNext{
-				nextURL:   "/event/unpublished-pulje?pulje=FredagKveld",
+				nextURL:   "/event/unpublished-pulje?date=2026-10-09&pulje=FredagKveld",
 				nextTitle: "Beta Unpublished",
 			},
 		},
@@ -216,7 +216,7 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_IgnoresLegacyPul
 			currentID: "zulu-lordag",
 			path:      "/event/zulu-lordag?pulje=LordagMorgen",
 			expected: expectedPreviousNext{
-				previousURL:   "/event/shared-event?pulje=LordagMorgen",
+				previousURL:   "/event/shared-event?date=2026-10-10&pulje=LordagMorgen",
 				previousTitle: "Shared Event",
 			},
 		},
@@ -233,6 +233,65 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_IgnoresLegacyPul
 				t.Fatalf("expected previous/next query to succeed: %v", err)
 			}
 			assertPreviousNextMatches(t, tc.expected, actual)
+		})
+	}
+}
+
+func TestGetPreviousNextForRootEventList_WhenProgramAndRaffleEventsShareADay_UsesRenderedOrder(t *testing.T) {
+	db := createPreviousNextRootListTestDB(t)
+	seedPreviousNextRootListLookups(t, db)
+	seedPreviousNextRootListPulje(t, db, models.PuljeLordagMorgen, "Lordag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
+	seedPreviousNextRootListPulje(t, db, models.PuljeLordagKveld, "Lordag kveld", "2026-10-10T18:00:00Z", "2026-10-10T23:00:00Z")
+
+	seedPreviousNextRootListEvent(t, db, "program-alpha", "Alpha Program", models.EventStatusAnnounced)
+	seedPreviousNextRootListEventPulje(t, db, "program-alpha", models.PuljeLordagMorgen, true, true)
+	seedPreviousNextRootListEventPulje(t, db, "program-alpha", models.PuljeLordagKveld, true, true)
+	setPreviousNextRootListEventInPuljefordeling(t, db, "program-alpha", false)
+	seedPreviousNextRootListEvent(t, db, "program-beta", "Beta Program", models.EventStatusAnnounced)
+	seedPreviousNextRootListEventPulje(t, db, "program-beta", models.PuljeLordagMorgen, true, true)
+	setPreviousNextRootListEventInPuljefordeling(t, db, "program-beta", false)
+	seedPreviousNextRootListEvent(t, db, "morning-raffle", "Morning Raffle", models.EventStatusAnnounced)
+	seedPreviousNextRootListEventPulje(t, db, "morning-raffle", models.PuljeLordagMorgen, true, true)
+	seedPreviousNextRootListEvent(t, db, "evening-raffle", "Evening Raffle", models.EventStatusAnnounced)
+	seedPreviousNextRootListEventPulje(t, db, "evening-raffle", models.PuljeLordagKveld, true, true)
+
+	cases := []struct {
+		id    string
+		pulje models.Pulje
+		want  expectedPreviousNext
+	}{
+		{
+			id: "program-alpha", pulje: models.PuljeLordagMorgen,
+			want: expectedPreviousNext{nextURL: "/event/program-beta?date=2026-10-10&pulje=LordagMorgen", nextTitle: "Beta Program"},
+		},
+		{
+			id: "program-beta", pulje: models.PuljeLordagMorgen,
+			want: expectedPreviousNext{
+				previousURL: "/event/program-alpha?date=2026-10-10&pulje=LordagMorgen", previousTitle: "Alpha Program",
+				nextURL: "/event/morning-raffle?date=2026-10-10&pulje=LordagMorgen", nextTitle: "Morning Raffle",
+			},
+		},
+		{
+			id: "morning-raffle", pulje: models.PuljeLordagMorgen,
+			want: expectedPreviousNext{
+				previousURL: "/event/program-beta?date=2026-10-10&pulje=LordagMorgen", previousTitle: "Beta Program",
+				nextURL: "/event/evening-raffle?date=2026-10-10&pulje=LordagKveld", nextTitle: "Evening Raffle",
+			},
+		},
+		{
+			id: "evening-raffle", pulje: models.PuljeLordagKveld,
+			want: expectedPreviousNext{previousURL: "/event/morning-raffle?date=2026-10-10&pulje=LordagMorgen", previousTitle: "Morning Raffle"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.id, func(t *testing.T) {
+			request := httptest.NewRequest("GET", "/event/"+tc.id+"?date=2026-10-10&pulje="+string(tc.pulje), nil)
+			actual, err := GetPreviousNextForRootEventList(context.Background(), db, tc.id, true, request, nil)
+			if err != nil {
+				t.Fatalf("get previous/next: %v", err)
+			}
+			assertPreviousNextMatches(t, tc.want, actual)
 		})
 	}
 }

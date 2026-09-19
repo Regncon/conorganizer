@@ -73,7 +73,8 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		<p>Error fetching program publishing state: { programPublishedErr.Error() }</p>
 		{{ return nil }}
 	}
-	{{ showInterestControls := canShowInterestControls(programPublished, puljerForEvent) }}
+	{{ showInterestControls := canShowInterestControls(programPublished, event.IsInPuljefordeling, puljerForEvent) }}
+	{{ showInterestPanel := canShowInterestPanel(event.IsInPuljefordeling, puljerForEvent) }}
 	{{ associatedTicketHolders, ticketHoldersErr := ticketholder.GetTicketHolders(userInfo, db) }}
 	if ticketHoldersErr != nil {
 		{{ logger.Error(ticketHoldersErr.Error(), "event_id", eventId, "user_id", userInfo.Id) }}
@@ -115,7 +116,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 	if roomsErr != nil {
 		{{ logger.Error(roomsErr.Error(), "event_id", eventId) }}
 	}
-	@Event_mobile(event, previousNextData, puljerForEvent, puljeId, programPublished, hasTickets, showInterestControls, eventImageDir) {
+	@Event_mobile(event, previousNextData, puljerForEvent, puljeId, programPublished, hasTickets, showInterestPanel, showInterestControls, eventImageDir) {
 		@eventRoomLocations(eventId, roomAssignments)
 	}
 	if showInterestControls {

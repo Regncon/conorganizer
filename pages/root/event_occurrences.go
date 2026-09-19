@@ -58,3 +58,13 @@ func GetPublishedEventOccurrences(db *sql.DB) ([]RootEventOccurrence, error) {
 
 	return occurrences, nil
 }
+
+func RaffleEvents(block PuljeBlock) []models.EventCardModel {
+	events := make([]models.EventCardModel, 0, len(block.Events))
+	for _, event := range block.Events {
+		if event.IsInPuljefordeling {
+			events = append(events, event)
+		}
+	}
+	return events
+}

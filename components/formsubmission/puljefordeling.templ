@@ -17,6 +17,39 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
+func UpdateIsInPuljefordeling(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+			return
+		}
+
+		var store struct {
+			IsInPuljefordeling bool `json:"isInPuljefordeling"`
+		}
+		if err := datastar.ReadSignals(r, &store); err != nil {
+			logger.Error(fmt.Errorf("failed to read puljefordeling signal: %w", err).Error())
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
+			return
+		}
+
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "is_in_puljefordeling = ?", store.IsInPuljefordeling); err != nil {
+			logger.Error(fmt.Errorf("failed to update puljefordeling flag for event %s: %w", eventID, err).Error())
+			http.Error(w, "Klarte ikkje å oppdatere puljefordeling", http.StatusInternalServerError)
+			return
+		}
+
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast puljefordeling update for event %s: %w", eventID, err).Error())
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	})
+}
+
 func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
 		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
@@ -272,9 +305,21 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 	</div>
 }
 
-templ puljefordeling(eventId string, db *sql.DB) {
+templ puljefordeling(eventId string, isInPuljefordeling bool, db *sql.DB) {
 	<article class="form-card">
 		<h4 class="form-card-title">Puljefordeling</h4>
+		<label class="checkbox-background form-group-checkbox">
+			<span>Med i puljefordeling</span>
+			<input
+				if isInPuljefordeling {
+					checked
+				}
+				data-bind="isInPuljefordeling"
+				data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/is-in-puljefordeling')", eventId) }
+				type="checkbox"
+				class="checkbox input"
+			/>
+		</label>
 		<section class="puljefordeling-section">
 			{{ puljer, err := puljerService.GetAllPuljer(db) }}
 			if err != nil {

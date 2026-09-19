@@ -122,7 +122,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersEventLinksWithPulje(t 
 	})
 
 	// Given
-	expectedHrefs := []string{"/event/alpha-event?pulje=FredagKveld"}
+	expectedHrefs := []string{"/event/alpha-event?date=2026-10-09&pulje=FredagKveld"}
 
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)
@@ -204,5 +204,66 @@ func TestRootPageContent_WhenProgramPublishingIsOn_SortsEventsAlphabeticallyWith
 	// Then
 	if !slices.Equal(expectedTitles, actualTitles) {
 		t.Fatalf("event titles mismatch\nexpected: %v\nactual:   %v", expectedTitles, actualTitles)
+	}
+}
+
+func TestRootPageContent_WhenProgramAndRaffleEventsAreMixed_DeduplicatesProgramAndRendersSections(t *testing.T) {
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, true)
+	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
+	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagKveld, "Lørdag kveld", "2026-10-10T18:00:00Z", "2026-10-10T23:00:00Z")
+
+	for _, event := range []struct {
+		id    string
+		title string
+	}{
+		{id: "program-alpha", title: "Alpha Program"},
+		{id: "program-beta", title: "Beta Program"},
+		{id: "program-gamma", title: "Gamma Program"},
+	} {
+		insertRootPageEvent(t, db, event.id, event.title, models.EventStatusAnnounced)
+		mustExec(t, db, `UPDATE events SET system = 'Hidden System', host_name = 'Hidden Host' WHERE id = ?`, event.id)
+	}
+	insertRootPageEventPulje(t, db, "program-alpha", models.PuljeLordagMorgen, true)
+	insertRootPageEventPulje(t, db, "program-alpha", models.PuljeLordagKveld, true)
+	insertRootPageEventPulje(t, db, "program-beta", models.PuljeLordagMorgen, true)
+	insertRootPageEventPulje(t, db, "program-gamma", models.PuljeLordagKveld, true)
+	for _, eventID := range []string{"program-alpha", "program-beta", "program-gamma"} {
+		setRootPageEventInPuljefordeling(t, db, eventID, false)
+	}
+
+	insertRootPageEvent(t, db, "raffle-morning", "Morning Raffle", models.EventStatusAnnounced)
+	insertRootPageEventPulje(t, db, "raffle-morning", models.PuljeLordagMorgen, true)
+	insertRootPageEvent(t, db, "raffle-evening", "Evening Raffle", models.EventStatusAnnounced)
+	insertRootPageEventPulje(t, db, "raffle-evening", models.PuljeLordagKveld, true)
+
+	doc := templtest.Render(t, rootPageContentForDate(db, false, nil, "2026-10-10"))
+	programTitles := templtest.CollectTexts(doc, ".program-event-card .event-card-title")
+	if !slices.Equal(programTitles, []string{"Alpha Program", "Beta Program", "Gamma Program"}) {
+		t.Fatalf("program event titles mismatch: %v", programTitles)
+	}
+	if got := doc.Find(".program-event-card").Length(); got != 3 {
+		t.Fatalf("program event card count = %d, want 3", got)
+	}
+	if got := doc.Find(".program-event-card .event-card-subtitle, .program-event-card .event-card-footer-gamemaster").Length(); got != 0 {
+		t.Fatalf("program cards rendered %d system/GM elements", got)
+	}
+	if got := doc.Find(".raffle-eventcard-grid .raffle-event-card").Length(); got != 2 {
+		t.Fatalf("raffle event card count = %d, want 2", got)
+	}
+	if got := doc.Find(".program-event-row").Length(); got != 2 {
+		t.Fatalf("program row count = %d, want 2", got)
+	}
+	if got := doc.Find(".program-event-row.reversed").Length(); got != 1 {
+		t.Fatalf("reversed program row count = %d, want 1", got)
+	}
+
+	alphaHref := doc.Find(`.program-event-card`).First().AttrOr("href", "")
+	if alphaHref != "/event/program-alpha?date=2026-10-10&pulje=LordagMorgen" {
+		t.Fatalf("program event href = %q", alphaHref)
+	}
+	if headings := templtest.CollectTexts(doc, ".pulje-heading"); !slices.Equal(headings, []string{"Programoversikt", "Lørdag morgen (10:00 - 15:00)", "Lørdag kveld (18:00 - 23:00)"}) {
+		t.Fatalf("section headings mismatch: %v", headings)
 	}
 }

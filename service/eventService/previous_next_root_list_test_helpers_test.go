@@ -115,6 +115,18 @@ func seedPreviousNextRootListEventPulje(t *testing.T, db *sql.DB, eventID string
 		INSERT INTO relation_event_puljer(event_id, pulje_id, is_in_pulje, is_published)
 		VALUES(?, ?, ?, ?)
 	`, eventID, puljeID, inPulje, published)
+	if isInPulje {
+		mustExecPreviousNextRootList(t, db, `UPDATE events SET is_in_puljefordeling = 1 WHERE id = ?`, eventID)
+	}
+}
+
+func setPreviousNextRootListEventInPuljefordeling(t *testing.T, db *sql.DB, eventID string, isInPuljefordeling bool) {
+	t.Helper()
+	value := 0
+	if isInPuljefordeling {
+		value = 1
+	}
+	mustExecPreviousNextRootList(t, db, `UPDATE events SET is_in_puljefordeling = ? WHERE id = ?`, value, eventID)
 }
 
 func mustExecPreviousNextRootList(t *testing.T, db *sql.DB, query string, args ...any) {

@@ -63,7 +63,7 @@ templ rootPageContentForDate(db *sql.DB, isAdmin bool, eventImageDir *string, re
 				@programDaySelector(programDays, selectedDayIndex)
 				@components.CallToAction()
 				{{ selectedDay := programDays[selectedDayIndex] }}
-				@eventList(db, isAdmin, eventImageDir, true, selectedDay.Blocks)
+				@eventList(db, isAdmin, eventImageDir, true, &selectedDay)
 			} else {
 				@components.CallToAction()
 				@eventList(db, isAdmin, eventImageDir, true, nil)

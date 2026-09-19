@@ -25,8 +25,8 @@ func TestPuljefordelingRemoveManualSeatRoute_DeletesPin(t *testing.T) {
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA','Alpha','','','','','',4,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
@@ -57,8 +57,8 @@ func TestPuljefordelingTabContent_RendersAddPickerAndManualRemove(t *testing.T) 
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA','Alpha','','','','','',4,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
@@ -108,8 +108,8 @@ func TestAddFirstChoiceThenEmulate_PinsAddedPlayer(t *testing.T) {
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA','Alpha','','','','','',4,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
@@ -166,8 +166,8 @@ func TestPuljefordelingCommitRoute_PersistsSolverPicks(t *testing.T) {
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA','Alpha','','','','','',4,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
@@ -200,8 +200,8 @@ func TestPuljefordelingAssignRoute_PinsWithoutCreatingInterest(t *testing.T) {
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA','Alpha','','','','','',4,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
@@ -233,8 +233,8 @@ func TestPuljefordelingAssignRoute_RejectsWhenPublished(t *testing.T) {
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA','Alpha','','','','','',4,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
@@ -259,8 +259,8 @@ func TestPuljefordelingRemoveManualSeatRoute_RejectsWhenPublished(t *testing.T) 
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA','Alpha','','','','','',4,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
@@ -319,8 +319,8 @@ func postAssignSignalsConfirmed(t *testing.T, router http.Handler, bhID int, eve
 func seedAssignFixture(t *testing.T, db *sql.DB, pulje models.Pulje, ageGroup models.AgeGroup, over18 bool) {
 	t.Helper()
 	seedTabPulje(t, db, pulje, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group)
-		VALUES ('evA','Voksenspel','','','','','',4,?)`, string(ageGroup))
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group, is_in_puljefordeling)
+		VALUES ('evA','Voksenspel','','','','','',4,?,1)`, string(ageGroup))
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(pulje))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id, is_over_18)
 		VALUES (1,'Kari','Nordmann',0,'',0,1,?)`, boolToInt(over18))
