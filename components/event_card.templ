@@ -30,14 +30,14 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
 	if pulje != "" {
 		{{ cardClass = "raffle-event-card" }}
 	}
-	@renderEventCard(eventCard, eventImageDir, showStatus, pulje, date, true, true, cardClass)
+	@renderEventCard(eventCard, eventImageDir, showStatus, pulje, date, true, true, false, cardClass)
 }
 
 templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, pulje string, date string) {
-	@renderEventCard(eventCard, eventImageDir, false, pulje, date, false, false, "program-event-card")
+	@renderEventCard(eventCard, eventImageDir, false, pulje, date, false, false, true, "program-event-card")
 }
 
-templ renderEventCard(eventCard models.EventCardModel, eventImageDir *string, showStatus bool, pulje string, date string, showSystem bool, showHost bool, cardClass string) {
+templ renderEventCard(eventCard models.EventCardModel, eventImageDir *string, showStatus bool, pulje string, date string, showSystem bool, showHost bool, descriptionInFooter bool, cardClass string) {
 	{{ imageUrl := eventimage.GetEventImageUrl(eventCard.Id, "card", eventImageDir) }}
 	<a
 		if eventCard.Status == models.EventStatusDraft || eventCard.Status == models.EventStatusSubmitted || eventCard.Status == models.EventStatusArchived {
@@ -71,15 +71,14 @@ templ renderEventCard(eventCard models.EventCardModel, eventImageDir *string, sh
 					</h3>
 					}
 			</div>
-			<p class="event-card-description">
-				if eventCard.Intro != "" {
-					{ eventCard.Intro }
-				} else {
-					Legg til en kort beskrivelse
-				}
-			</p>
+			if !descriptionInFooter {
+				@eventCardDescription(eventCard, "")
+			}
 		</div>
 		<div class="event-card-footer">
+			if descriptionInFooter {
+				@eventCardDescription(eventCard, "event-card-footer-description")
+			}
 			if showHost {
 				<div class="event-card-footer-gamemaster">
 					@icons.Icon(icons.Gamemaster, icons.Size24)
@@ -141,4 +140,14 @@ templ renderEventCard(eventCard models.EventCardModel, eventImageDir *string, sh
 			</div>
 		</div>
 	</a>
+}
+
+templ eventCardDescription(eventCard models.EventCardModel, className string) {
+	<p class={ "event-card-description", className }>
+		if eventCard.Intro != "" {
+			{ eventCard.Intro }
+		} else {
+			Legg til en kort beskrivelse
+		}
+	</p>
 }

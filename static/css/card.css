@@ -95,7 +95,7 @@
 }
 
 .program-event-card {
-	grid-template-rows: 220px minmax(130px, 1fr) min-content;
+	grid-template-rows: 220px min-content min-content;
 
 	.event-card-subtitle,
 	.event-card-footer-gamemaster {
@@ -103,7 +103,8 @@
 	}
 
 	.event-card-footer {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr) auto;
+		border-top: 0;
 	}
 }
 

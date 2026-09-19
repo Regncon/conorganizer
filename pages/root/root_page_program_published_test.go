@@ -249,6 +249,12 @@ func TestRootPageContent_WhenProgramAndRaffleEventsAreMixed_DeduplicatesProgramA
 	if got := doc.Find(".program-event-card .event-card-subtitle, .program-event-card .event-card-footer-gamemaster").Length(); got != 0 {
 		t.Fatalf("program cards rendered %d system/GM elements", got)
 	}
+	if got := doc.Find(".program-event-card .event-card-main-body .event-card-description").Length(); got != 0 {
+		t.Fatalf("program cards rendered %d descriptions in the body", got)
+	}
+	if got := doc.Find(".program-event-card .event-card-footer-description").Length(); got != 3 {
+		t.Fatalf("program cards rendered %d descriptions in the footer, want 3", got)
+	}
 	if got := doc.Find(".raffle-eventcard-grid .raffle-event-card").Length(); got != 2 {
 		t.Fatalf("raffle event card count = %d, want 2", got)
 	}
