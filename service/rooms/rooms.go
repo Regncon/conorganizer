@@ -416,7 +416,6 @@ func AssignRoomToRelationEventPuljer(db *sql.DB, roomID int64, relationEventPulj
 			event_id,
 			pulje_id,
 			is_in_pulje,
-			is_published,
 			room_id
 	`
 
@@ -425,7 +424,6 @@ func AssignRoomToRelationEventPuljer(db *sql.DB, roomID int64, relationEventPulj
 		&result.EventID,
 		&result.PuljeID,
 		&result.IsInPulje,
-		&result.IsPublished,
 		&result.RoomID,
 	)
 

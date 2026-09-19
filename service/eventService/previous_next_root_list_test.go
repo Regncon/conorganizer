@@ -98,11 +98,11 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsNotPublished_UsesAnnounced
 	assertPreviousNextMatches(t, expectedPreviousNext{}, archived)
 }
 
-func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_UsesPublishedRootPuljeOccurrences(t *testing.T) {
+func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_IgnoresLegacyPuljePublishedFlag(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt publiserte, upubliserte og interne puljerader.",
 		When:  "Når forrige/neste hentes etter at programmet er publisert.",
-		Then:  "Så brukes bare publiserte annonserte forsiderader og pulje er del av forekomsten.",
+		Then:  "Så brukes annonserte rader som er med i puljen, uavhengig av det gamle publiseringsflagget.",
 	})
 
 	// Given
@@ -144,8 +144,8 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_UsesPublishedRoo
 			currentID: "shared-event",
 			path:      "/event/shared-event?pulje=FredagKveld",
 			expected: expectedPreviousNext{
-				previousURL:   "/event/alpha-fredag?pulje=FredagKveld",
-				previousTitle: "Alpha Fredag",
+				previousURL:   "/event/unpublished-pulje?pulje=FredagKveld",
+				previousTitle: "Beta Unpublished",
 				nextURL:       "/event/zeta-fredag?pulje=FredagKveld",
 				nextTitle:     "Zeta Fredag",
 			},
@@ -168,10 +168,15 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_UsesPublishedRoo
 			expected:  expectedPreviousNext{},
 		},
 		{
-			name:      "unpublished pulje row is excluded",
+			name:      "legacy unpublished pulje row remains included",
 			currentID: "unpublished-pulje",
 			path:      "/event/unpublished-pulje?pulje=FredagKveld",
-			expected:  expectedPreviousNext{},
+			expected: expectedPreviousNext{
+				previousURL:   "/event/alpha-fredag?pulje=FredagKveld",
+				previousTitle: "Alpha Fredag",
+				nextURL:       "/event/shared-event?pulje=FredagKveld",
+				nextTitle:     "Shared Event",
+			},
 		},
 		{
 			name:      "non announced event row is excluded",
@@ -202,8 +207,8 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_UsesPublishedRoo
 			currentID: "alpha-fredag",
 			path:      "/event/alpha-fredag?pulje=FredagKveld",
 			expected: expectedPreviousNext{
-				nextURL:   "/event/shared-event?pulje=FredagKveld",
-				nextTitle: "Shared Event",
+				nextURL:   "/event/unpublished-pulje?pulje=FredagKveld",
+				nextTitle: "Beta Unpublished",
 			},
 		},
 		{

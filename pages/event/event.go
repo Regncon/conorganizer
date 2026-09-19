@@ -40,7 +40,7 @@ func interestErrorMessageFromError(err error) string {
 	if strings.Contains(err.Error(), "does not have access") {
 		return "Du har ikkje tilgang til å endre interessa til denne billettheldaren. Kontakt styret."
 	}
-	if strings.Contains(err.Error(), "is not active and published for event") {
+	if strings.Contains(err.Error(), "is not active for event") {
 		return "Denne pulja er ikkje tilgjengeleg for dette arrangementet."
 	}
 	if strings.Contains(err.Error(), "is locked for event") {
@@ -254,14 +254,13 @@ func updateInterest(
 		WHERE ep.event_id = $1
 			AND ep.pulje_id = $2
 			AND ep.is_in_pulje = 1
-			AND ep.is_published = 1
 			AND e.status = $3
 	`
 	var puljeStatus models.PuljeStatus
 	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId, models.EventStatusAnnounced).Scan(&puljeStatus)
 	if puljerErr != nil {
 		if puljerErr == sql.ErrNoRows {
-			return fmt.Errorf("pulje %s is not active and published for event %s", puljeId, eventID)
+			return fmt.Errorf("pulje %s is not active for event %s", puljeId, eventID)
 		}
 		return fmt.Errorf("failed to check if pulje %s exists for event %s: %w", puljeId, eventID, puljerErr)
 	}

@@ -613,7 +613,7 @@ templ puljeSection(eventId string, pulje models.PuljeRow, interests []InterestWi
 	}}
 	<article
 		class="form-card"
-		data-style:display={ fmt.Sprintf("(!$isInPulje%s || !$isPublished%s) && 'none' || ''", puljeId, puljeId) }
+		data-style:display={ fmt.Sprintf("!$isInPulje%s && 'none' || ''", puljeId) }
 	>
 		<style>
 			.missing-dm-badge {

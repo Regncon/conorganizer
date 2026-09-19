@@ -76,15 +76,15 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsProgramDaysWithActiveDay
 	}
 }
 
-func TestRootPageContent_WhenProgramPublishingIsOn_OnlyShowsAnnouncedPublishedPuljeEvents(t *testing.T) {
+func TestRootPageContent_WhenProgramPublishingIsOn_ShowsAnnouncedActivePuljeEventsRegardlessOfLegacyPublishedFlag(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at publisering av program er skrudd på.",
 		When:  "Når forsiden vises.",
-		Then:  "Så skal puljevisningen bare vise annonserte arrangementer som er publisert i en pulje.",
+		Then:  "Så skal puljevisningen vise alle annonserte arrangementer som er med i en pulje.",
 	})
 
 	// Given
-	expectedTitles := []string{"Published Announced"}
+	expectedTitles := []string{"Published Announced", "Unpublished Announced"}
 
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)

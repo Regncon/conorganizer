@@ -127,9 +127,6 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 					newApiIdRouter.Route("/event-in-pulje", func(putEventInPuljeRouter chi.Router) {
 						formsubmission.UpdateEventInPulje(putEventInPuljeRouter, db, liveManager, logger)
 					})
-					newApiIdRouter.Route("/is-published", func(putIsPublishedRouter chi.Router) {
-						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, liveManager, logger)
-					})
 					newApiIdRouter.Route("/assign-room", func(putAssignedRoomRouter chi.Router) {
 						formsubmission.UpdateRoomInPulje(putAssignedRoomRouter, db, liveManager, logger)
 					})

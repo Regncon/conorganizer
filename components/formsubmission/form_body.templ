@@ -54,34 +54,10 @@ func submitEventWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, 
 	return updateEventStatusWithAudit(ctx, db, logger, eventID, models.EventStatusSubmitted)
 }
 
-func updateEventPuljePublishedWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, isPublished bool) error {
-	updatedByID, err := currentUserDBID(ctx, db, logger)
-	if err != nil {
-		return err
-	}
-
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("start publish update transaction for event %q and pulje %q: %w", eventID, puljeID, err)
-	}
-	defer tx.Rollback()
-
-	query := `UPDATE relation_event_puljer SET is_published = ? WHERE event_id = ? AND pulje_id = ?;`
-	if _, err := tx.ExecContext(ctx, query, isPublished, eventID, puljeID); err != nil {
-		return fmt.Errorf("update publish status for event %q and pulje %q: %w", eventID, puljeID, err)
-	}
-	if err := touchEventUpdatedAtWithUserID(ctx, tx, eventID, updatedByID); err != nil {
-		return fmt.Errorf("touch event after publish update for event %q and pulje %q: %w", eventID, puljeID, err)
-	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit publish update for event %q and pulje %q: %w", eventID, puljeID, err)
-	}
-	return nil
-}
-
-// SetEventInPulje upserts whether an event belongs to a pulje (is_in_pulje),
-// resets is_published, and stamps updated_by_id. Shared by the per-event form
-// and the puljeoppsett board. Idempotent.
+// SetEventInPulje upserts whether an event belongs to a pulje (is_in_pulje) and
+// stamps updated_by_id. Shared by the per-event form and the puljeoppsett
+// board. Idempotent. The legacy is_published column is deliberately left
+// untouched.
 func SetEventInPulje(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, isInPulje bool) error {
 	updatedByID, err := currentUserDBID(ctx, db, logger)
 	if err != nil {
@@ -95,14 +71,10 @@ func SetEventInPulje(ctx context.Context, db *sql.DB, logger *slog.Logger, event
 	defer tx.Rollback()
 
 	const upsert = `
-	INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published)
-	VALUES (?, ?, ?, 0)
+	INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje)
+	VALUES (?, ?, ?)
 	ON CONFLICT(event_id, pulje_id) DO UPDATE SET
-		is_in_pulje = excluded.is_in_pulje,
-		is_published = CASE
-			WHEN is_in_pulje = excluded.is_in_pulje THEN is_published
-			ELSE 0
-		END;
+		is_in_pulje = excluded.is_in_pulje;
 	`
 	if _, err := tx.ExecContext(ctx, upsert, eventID, puljeID, isInPulje); err != nil {
 		return fmt.Errorf("upsert relation_event_puljer for event %q and pulje %q: %w", eventID, puljeID, err)

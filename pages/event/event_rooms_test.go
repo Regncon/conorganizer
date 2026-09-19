@@ -34,7 +34,7 @@ func TestEventRoomVisibility(t *testing.T) {
 		{name: "unpublished program", update: `UPDATE program_publishing_state SET is_published = 0`},
 		{name: "completed allocation", update: `UPDATE puljer SET status = 'Completed'`, wantRoom: true, wantMap: true},
 		{name: "locked allocation", update: `UPDATE puljer SET status = 'Locked'`, wantRoom: true, wantMap: true},
-		{name: "unpublished occurrence", update: `UPDATE relation_event_puljer SET is_published = 0`, wantRoom: true, wantMap: true},
+		{name: "legacy unpublished occurrence flag is ignored", update: `UPDATE relation_event_puljer SET is_published = 0`, wantRoom: true, wantMap: true},
 		{name: "removed occurrence", update: `UPDATE relation_event_puljer SET is_in_pulje = 0`},
 		{name: "unassigned room", update: `UPDATE relation_event_puljer SET room_id = NULL`},
 		{name: "deleted room", update: `DELETE FROM rooms WHERE id = 42`},

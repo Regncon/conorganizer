@@ -61,7 +61,7 @@ func TestInterestErrorMessageFromError_ReturnsFriendlyMessages(t *testing.T) {
 		"Interessevalget er ikke åpnet ennå.",
 	}
 	errors := []error{
-		errForInterestMessage("pulje fredag is not active and published for event abc"),
+		errForInterestMessage("pulje fredag is not active for event abc"),
 		errForInterestMessage("pulje fredag is locked for event abc"),
 		errForInterestMessage("pulje fredag is completed for event abc"),
 		errForInterestMessage("program is not published"),

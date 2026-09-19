@@ -20,7 +20,6 @@ func GetAnnouncedEventsAlphabetically(db *sql.DB) ([]models.EventCardModel, erro
 	const q = `
 		SELECT
 			e.id,
-			0 AS is_published,
 			e.title,
 			e.intro,
 			e.status,
@@ -47,7 +46,6 @@ func GetAnnouncedEventsAlphabetically(db *sql.DB) ([]models.EventCardModel, erro
 		var event models.EventCardModel
 		if err := rows.Scan(
 			&event.Id,
-			&event.IsPublished,
 			&event.Title,
 			&event.Intro,
 			&event.Status,
@@ -75,7 +73,6 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 	const q = `
 		SELECT
 			e.id,
-			e.is_published,
 			e.title,
 			e.intro,
 			e.status,
@@ -93,7 +90,6 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 			e.pulje_start_at,
 			e.pulje_end_at
 		FROM v_events_by_pulje_active e
-		WHERE e.is_published = 1
 		ORDER BY e.pulje_start_at ASC, e.title COLLATE NOCASE ASC, e.id ASC
 	`
 
@@ -114,7 +110,6 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 
 		if err := rows.Scan(
 			&ev.Id,
-			&ev.IsPublished,
 			&ev.Title,
 			&ev.Intro,
 			&ev.Status,
