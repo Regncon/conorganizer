@@ -74,12 +74,22 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		{{ return nil }}
 	}
 	{{ showInterestControls := canShowInterestControls(programPublished, event.IsInPuljefordeling, puljerForEvent) }}
-	{{ showInterestPanel := canShowInterestPanel(event.IsInPuljefordeling, puljerForEvent) }}
+	{{ showInterestPanel := canShowInterestPanel(puljerForEvent) }}
 	{{ associatedTicketHolders, ticketHoldersErr := ticketholder.GetTicketHolders(userInfo, db) }}
 	if ticketHoldersErr != nil {
 		{{ logger.Error(ticketHoldersErr.Error(), "event_id", eventId, "user_id", userInfo.Id) }}
 	}
 	{{ hasTickets := len(associatedTicketHolders) > 0 }}
+	{{
+		programInterestNotice := ProgramInterestNotice{}
+		if !event.IsInPuljefordeling && hasTickets {
+			var programInterestNoticeErr error
+			programInterestNotice, programInterestNoticeErr = getProgramInterestNotice(db, associatedTicketHolders, selectedPuljeId)
+			if programInterestNoticeErr != nil {
+				logger.Error(programInterestNoticeErr.Error(), "event_id", eventId, "pulje_id", selectedPuljeId, "user_id", userInfo.Id)
+			}
+		}
+	}}
 	{{ previousNextData, previousNextErr := eventservice.GetPreviousNextForRootEventList(ctx, db, eventId, programPublished, r, eventImageDir) }}
 	if previousNextErr != nil {
 		{{ logger.Error(previousNextErr.Error(), "event_id", eventId) }}
@@ -116,7 +126,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 	if roomsErr != nil {
 		{{ logger.Error(roomsErr.Error(), "event_id", eventId) }}
 	}
-	@Event_mobile(event, previousNextData, puljerForEvent, puljeId, programPublished, hasTickets, showInterestPanel, showInterestControls, eventImageDir) {
+	@Event_mobile(event, previousNextData, puljerForEvent, puljeId, programPublished, hasTickets, event.IsInPuljefordeling, programInterestNotice, showInterestPanel, showInterestControls, eventImageDir) {
 		@eventRoomLocations(eventId, roomAssignments)
 	}
 	if showInterestControls {

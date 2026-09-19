@@ -160,3 +160,62 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, sele
 		</div>
 	</div>
 }
+
+templ ProgramEventInterestPanel(notice ProgramInterestNotice) {
+	<style>
+		.event-interest-program-message {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+			width: 100%;
+		}
+
+		.event-interest-program-message p {
+			margin: 0;
+		}
+
+		.event-interest-program-warning {
+			display: flex;
+			align-items: flex-start;
+			gap: var(--spacing-2x);
+			width: 100%;
+			color: var(--color-warning, var(--color-error));
+		}
+
+		.event-interest-program-warning .inline-icon {
+			flex: 0 0 auto;
+		}
+
+		.event-interest-program-warning a {
+			display: inline-flex;
+			margin-top: var(--spacing-2x);
+			color: inherit;
+		}
+	</style>
+	<div class="event-interest-picker-container">
+		<div class="card event-interest-picker">
+			<div class="event-interest-program-message">
+				<p class="color-strong">
+					Dette er et programarrangement som er åpent for alle. Du trenger ikke melde interesse eller reservere plass.
+				</p>
+				if notice.HasInterest() {
+					<div class="event-interest-program-warning">
+						@icons.Icon(icons.Warning, icons.Size16)
+						<div>
+							if len(notice.EventTitles) == 1 {
+								<p>
+									Du har meldt interesse for «{ notice.EventTitles[0] }» i puljen «{ notice.PuljeName }». Ved puljefordelingen kan du bli valgt ut som spiller på dette arrangementet.
+								</p>
+							} else {
+								<p>
+									Du har meldt interesse for { len(notice.EventTitles) } arrangementer i puljen «{ notice.PuljeName }». Ved puljefordelingen kan du bli valgt ut som spiller på ett av disse arrangementene.
+								</p>
+							}
+							<a href="/profile">Se og endre interessene dine</a>
+						</div>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
@@ -469,7 +470,7 @@ func TestEventPageContent_WhenProgramAndPuljeArePublished_RendersInterestDialog(
 	}
 }
 
-func TestEventPageContent_WhenEventIsNotInPuljefordeling_HidesInterestPanel(t *testing.T) {
+func TestEventPageContent_WhenEventIsNotInPuljefordeling_RendersProgramInfoPanel(t *testing.T) {
 	db := createEventVisibilityTestDB(t)
 	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
 	seedEventVisibilityEvent(t, db, "program-only-event", "Program Only Event", models.EventStatusAnnounced, sql.NullInt64{})
@@ -479,7 +480,13 @@ func TestEventPageContent_WhenEventIsNotInPuljefordeling_HidesInterestPanel(t *t
 	request := httptest.NewRequest("GET", "/event/program-only-event?pulje=FredagKveld", nil)
 
 	doc := templtest.Render(t, event_page_content("program-only-event", false, logger, db, nil, request))
-	if templtest.HasSelector(doc, ".event-interest-picker-container") {
-		t.Fatal("program-only event must not render an interest panel")
+	if !templtest.HasSelector(doc, ".event-interest-picker-container") {
+		t.Fatal("program-only event must render the program information panel")
+	}
+	if templtest.HasSelector(doc, ".interest-dialog") {
+		t.Fatal("program-only event must not render the interest dialog")
+	}
+	if message := strings.Join(strings.Fields(doc.Find(".event-interest-program-message").Text()), " "); !strings.Contains(message, "åpent for alle") {
+		t.Fatalf("program information message = %q", message)
 	}
 }
