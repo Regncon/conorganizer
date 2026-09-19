@@ -5,14 +5,134 @@ templ TimeSchedule() {
     <style>
         @container main (width > 1200px) {
             .time-schedule-container {
+                display: grid;
                 width: 1280px;
-                border-radius: var(--border-radius-2x);
-                padding: var(--spacing-5x);
-                gap: var(--spacing-4x);
+                gap: 40px;
+                margin-inline: auto;
+
+                .time-schedule-content {
+                    display: grid;
+                    border-radius: var(--border-radius-2x);
+                    padding: var(--spacing-5x);
+                    gap: var(--spacing-4x);
+                    background-color: var(--bg-item);
+
+                    h3 {
+                        font-size: var(--text-body);
+                        font-weight: bold;
+                    }
+
+                    .time-schedule-mainbox {
+                        display: grid;
+                        width: 1240px;
+                        gap: var(--spacing-8x);
+                        grid-template-columns: 1fr 1px 1fr;
+                        .time-schedule-box {
+                            display: grid;
+                            width: 588px;
+                            gap: var(--spacing-5x);
+                            grid-template-rows: 1fr;
+                        }
+
+                        .time-schedule-subbox {
+                            display: flex;
+                            gap: var(--spacing-4x);
+                            h4 {
+                                font-weight: bold;
+                                color: var(--color-primary);
+                                font-family: var(--font-sans-serif);
+                                font-size: var(--text-heading-2);
+                            }
+                            .time-schedule-subbox-content {
+                                .time-schedule-subbox-title {
+                                    font-weight: bold;
+                                    font-size: var(--text-body);
+                                }
+                                .time-schedule-subbox-description {
+                                    font-size: 12px;
+                                }
+                                p + p {
+                                    margin: 0;
+                                }
+
+                                .time-schedule-subbox-sublist {
+                                    position: relative;
+                                    top: 4px;
+                                    font-size: 12px;
+                                    padding: 0;
+                                    margin: 0;
+                                    list-style-position: inside;
+                                    li::marker {
+                                        color: var(--color-primary);
+                                    }
+
+                                    time {
+                                        color: var(--color-primary);
+                                        font-weight: bold;
+                                    }
+                                }
+                            }
+                        }
+                        .time-schedule-divider {
+                            background: var(--bg-item-hover);
+                        }
+                    }
+                }
             }
         }
     </style>
 
-    <h1> why does this not work </h1>
-    test
+    <div class="time-schedule-container">
+        <h1>Fredag (17:00 - 22:00)</h1>
+
+        <div class="time-schedule-content">
+            <h3>Tidspunkter for dagen</h3>
+            <div class="time-schedule-mainbox">
+                <div class="time-schedule-box">
+                    <div class="time-schedule-subbox">
+                        <h4>09:00</h4>
+                        <div class="time-schedule-subbox-content">
+                            <p class="time-schedule-subbox-title">
+                                Dørene åpner for innsjekk til festivalen
+                            </p>
+                            <p class="time-schedule-subbox-description">
+                                Ekstra text under her etter behov
+                            </p>
+                        </div>
+                    </div>
+                    <div class="time-schedule-subbox">
+                        <h4>10:00</h4>
+                        <div class="time-schedule-subbox-content">
+                            <p class="time-schedule-subbox-title">
+                                Første pulje i programmet starter
+                            </p>
+                            <p class="time-schedule-subbox-description">
+                                noe her om puljene og alt sammen
+                            </p>
+                            <ul class="time-schedule-subbox-sublist">
+                                <li><time>00:00</time> - Puljefordeling lukkes</li>
+                                <li><time>00:00</time> - Arrangementer i puljen annonseres</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-schedule-divider" aria-hidden="true"></div>
+                <div class="time-schedule-box">
+                    <div class="time-schedule-subbox">
+                        <h4>09:00</h4>
+                        <div class="time-schedule-subbox-content">
+                            <p class="time-schedule-subbox-title">
+                                Dørene åpner for innsjekk til festivalen
+                            </p>
+                            <p class="time-schedule-subbox-description">
+                                Ekstra text under her etter behov
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 }
