@@ -9,15 +9,15 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestRootPageContent_WhenProgramPublishingIsOn_ShowsScrollnav(t *testing.T) {
+func TestRootPageContent_WhenProgramPublishingIsOn_ShowsProgramDaySelector(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at publisering av program er skrudd på.",
 		When:  "Når forsiden vises.",
-		Then:  "Så skal puljefilteret vises.",
+		Then:  "Så skal dagvelgeren vises.",
 	})
 
 	// Given
-	expectedScrollnavVisible := true
+	expectedDaySelectorVisible := true
 
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)
@@ -26,11 +26,53 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsScrollnav(t *testing.T) 
 
 	// When
 	doc := templtest.Render(t, rootPageContent(db, false, nil))
-	actualScrollnavVisible := templtest.HasSelector(doc, ".program-scrollnav-container")
+	actualDaySelectorVisible := templtest.HasSelector(doc, ".program-day-selector-container")
 
 	// Then
-	if actualScrollnavVisible != expectedScrollnavVisible {
-		t.Fatalf("scrollnav visibility mismatch\nexpected: %v\nactual:   %v", expectedScrollnavVisible, actualScrollnavVisible)
+	if actualDaySelectorVisible != expectedDaySelectorVisible {
+		t.Fatalf("day selector visibility mismatch\nexpected: %v\nactual:   %v", expectedDaySelectorVisible, actualDaySelectorVisible)
+	}
+}
+
+func TestRootPageContent_WhenProgramPublishingIsOn_ShowsProgramDaysWithActiveDay(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at programmet er publisert og puljene dekker fredag, lørdag og søndag.",
+		When:  "Når forsiden vises med lørdag valgt.",
+		Then:  "Så skal dagene vises med riktig aktiv dag.",
+	})
+
+	// Given
+	expectedLabels := []string{"Fredag 2.10", "Lørdag 3.10", "Søndag 4.10"}
+	expectedActiveDay := "Lørdag 3.10"
+	expectedEventTitles := []string{"Saturday Event"}
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, true)
+	insertRootPagePuljeWithDetails(t, db, models.PuljeFredagKveld, "Fredag kveld", "2026-10-02T18:00:00Z", "2026-10-02T23:00:00Z")
+	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-03T10:00:00Z", "2026-10-03T15:00:00Z")
+	insertRootPagePuljeWithDetails(t, db, models.PuljeSondagMorgen, "Søndag morgen", "2026-10-04T10:00:00Z", "2026-10-04T15:00:00Z")
+	insertRootPageEvent(t, db, "friday-event", "Friday Event", models.EventStatusAnnounced)
+	insertRootPageEventPulje(t, db, "friday-event", models.PuljeFredagKveld, true)
+	insertRootPageEvent(t, db, "saturday-event", "Saturday Event", models.EventStatusAnnounced)
+	insertRootPageEventPulje(t, db, "saturday-event", models.PuljeLordagMorgen, true)
+	insertRootPageEvent(t, db, "sunday-event", "Sunday Event", models.EventStatusAnnounced)
+	insertRootPageEventPulje(t, db, "sunday-event", models.PuljeSondagMorgen, true)
+
+	// When
+	doc := templtest.Render(t, rootPageContentForDate(db, false, nil, "2026-10-03"))
+	actualLabels := templtest.CollectTexts(doc, ".program-day-selector .btn")
+	actualActiveDay := doc.Find(".program-day-selector .is-active").Text()
+	actualEventTitles := templtest.CollectTexts(doc, ".event-card-title")
+
+	// Then
+	if !slices.Equal(expectedLabels, actualLabels) {
+		t.Fatalf("program day labels mismatch\nexpected: %v\nactual:   %v", expectedLabels, actualLabels)
+	}
+	if actualActiveDay != expectedActiveDay {
+		t.Fatalf("active program day mismatch\nexpected: %q\nactual:   %q", expectedActiveDay, actualActiveDay)
+	}
+	if !slices.Equal(expectedEventTitles, actualEventTitles) {
+		t.Fatalf("selected day event titles mismatch\nexpected: %v\nactual:   %v", expectedEventTitles, actualEventTitles)
 	}
 }
 
@@ -99,24 +141,24 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersEventLinksWithPulje(t 
 	}
 }
 
-func TestRootPageContent_WhenProgramPublishingIsOn_RendersPuljeSectionsInTimeOrder(t *testing.T) {
+func TestRootPageContent_WhenProgramPublishingIsOn_RendersSelectedDatePuljeSectionsInTimeOrder(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at publisering av program er skrudd på.",
 		When:  "Når forsiden vises.",
-		Then:  "Så skal arrangementene grupperes i puljer sortert etter starttidspunkt.",
+		Then:  "Så skal den valgte dagen vise puljene sortert etter starttidspunkt.",
 	})
 
 	// Given
 	expectedPuljeHeadings := []string{
 		"Fredag kveld (18:00 - 23:00)",
-		"Lordag morgen (10:00 - 14:00)",
+		"Lordag morgen (20:00 - 22:00)",
 	}
 
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)
 	setProgramPublishing(t, db, true)
 	insertRootPagePuljeWithDetails(t, db, models.PuljeFredagKveld, "Fredag kveld", "2026-10-09T18:00:00Z", "2026-10-09T23:00:00Z")
-	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lordag morgen", "2026-10-10T10:00:00Z", "2026-10-10T14:00:00Z")
+	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lordag morgen", "2026-10-09T20:00:00Z", "2026-10-09T22:00:00Z")
 
 	insertRootPageEvent(t, db, "lordag-event", "Lordag Event", models.EventStatusAnnounced)
 	insertRootPageEventPulje(t, db, "lordag-event", models.PuljeLordagMorgen, true)
@@ -125,7 +167,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersPuljeSectionsInTimeOrd
 	insertRootPageEventPulje(t, db, "fredag-event", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContentForDate(db, false, nil, "2026-10-09"))
 	actualPuljeHeadings := templtest.CollectTexts(doc, ".pulje-heading")
 
 	// Then

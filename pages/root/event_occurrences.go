@@ -14,14 +14,18 @@ type RootEventOccurrence struct {
 }
 
 func GetPublishedEventPuljeBlocks(db *sql.DB) ([]PuljeBlock, error) {
-	eventsByPulje, err := GetEventsByPulje(db)
-	if err != nil {
-		return nil, err
-	}
-
 	puljer, err := puljerService.GetAllPuljer(db)
 	if err != nil {
 		return nil, fmt.Errorf("query puljer for published root events: %w", err)
+	}
+
+	return getPublishedEventPuljeBlocks(db, puljer)
+}
+
+func getPublishedEventPuljeBlocks(db *sql.DB, puljer []models.PuljeRow) ([]PuljeBlock, error) {
+	eventsByPulje, err := GetEventsByPulje(db)
+	if err != nil {
+		return nil, err
 	}
 
 	blocks := make([]PuljeBlock, 0, len(puljer))

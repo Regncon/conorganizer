@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/requestctx"
@@ -28,13 +29,17 @@ func getProgramPublished(db *sql.DB) (bool, error) {
 	return isPublished == 1, nil
 }
 
-templ rootPage(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin bool, eventImageDir *string, logger *slog.Logger) {
+templ rootPage(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin bool, eventImageDir *string, logger *slog.Logger, requestedDate string) {
 	<div id="root-page-wrapper">
-		@rootPageContent(db, isAdmin, eventImageDir)
+		@rootPageContentForDate(db, isAdmin, eventImageDir, requestedDate)
 	</div>
 }
 
 templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
+	@rootPageContentForDate(db, isAdmin, eventImageDir, "")
+}
+
+templ rootPageContentForDate(db *sql.DB, isAdmin bool, eventImageDir *string, requestedDate string) {
 	{{
 		programPublished, err := getProgramPublished(db)
 	}}
@@ -47,9 +52,25 @@ templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 		</div>
 	} else {
 		if programPublished {
-			@components.ProgramScrollnav(db)
+			{{ programDays, programDaysErr := GetPublishedProgramDays(db) }}
+			if programDaysErr != nil {
+				@components.CallToAction()
+				<div class="page-content-container">
+					<p class="root-page-error">{ rootEventsLoadErrorMessage }</p>
+				</div>
+			} else if len(programDays) > 0 {
+				{{ selectedDayIndex := SelectProgramDayIndex(programDays, requestedDate, time.Now()) }}
+				@programDaySelector(programDays, selectedDayIndex)
+				@components.CallToAction()
+				{{ selectedDay := programDays[selectedDayIndex] }}
+				@eventList(db, isAdmin, eventImageDir, true, selectedDay.Blocks)
+			} else {
+				@components.CallToAction()
+				@eventList(db, isAdmin, eventImageDir, true, nil)
+			}
+		} else {
+			@components.CallToAction()
+			@eventList(db, isAdmin, eventImageDir, false, nil)
 		}
-		@components.CallToAction()
-		@eventList(db, isAdmin, eventImageDir, programPublished)
 	}
 }

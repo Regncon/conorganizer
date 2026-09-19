@@ -107,7 +107,6 @@
 
     /* responsively size some gap variables so this doesn't have to be redefined */
     --responsive-top-of-page-spacing: var(--spacing-4x);
-    --responsive-scroll-margin-top-event: calc(var(--nav-event-height) + var(--nav-breadcrumb-height));
     --responsive-pane-column-spacing: var(--spacing-4x);
     --responsive-page-section-spacing: var(--spacing-8x);
     --responsive-pane-padding: var(--spacing-4x);
@@ -121,7 +120,6 @@
         --responsive-page-section-spacing: var(--spacing-8x);
         --responsive-pane-padding: var(--spacing-5x);
         --responsive-h2-margin: var(--spacing-5x);
-        --responsive-scroll-margin-top-event: calc(var(--nav-height) + var(--nav-event-height));
     }
 }
 @media screen and (width > 1200px) {
