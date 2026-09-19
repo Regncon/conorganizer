@@ -19,6 +19,8 @@ type tildelingssignaler struct {
 	PuljeID         string                 `json:"assignmentPuljeId"`
 	Role            models.EventPlayerRole `json:"assignmentRole"`
 	FraLeggTil      bool                   `json:"assignmentFromAddMenu"`
+	FraEventID      string                 `json:"assignmentFromEventId"`
+	FraManuellPlass bool                   `json:"assignmentFromManualSeat"`
 	Bekreftelse     string                 `json:"assignmentConfirmation"`
 	AlderBekreftet  bool                   `json:"assignmentAgeConfirmed"`
 	Fjern           bool                   `json:"assignmentRemove"`
@@ -69,7 +71,7 @@ func tildelingsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Logge
 				PuljeID: pulje, EventID: signaler.EventID, BillettholderID: signaler.BillettholderID,
 				Role: role, FraLeggTil: rute.FraLeggTil || signaler.FraLeggTil,
 				Bekreftelse: signaler.Bekreftelse, AlderBekreftet: signaler.AlderBekreftet,
-				Forstevalg: rute.Forstevalg,
+				Forstevalg: rute.Forstevalg, FraEventID: signaler.FraEventID, FraManuellPlass: signaler.FraManuellPlass,
 			}
 			varsel, err := puljefordeling.TildelBillettholder(db, valg)
 			if err != nil {
@@ -104,12 +106,13 @@ func tildelingsfeil(w http.ResponseWriter, logger *slog.Logger, err error) {
 
 func sendTildelingsvarsel(w http.ResponseWriter, r *http.Request, logger *slog.Logger, varsel puljefordeling.Tildelingsvarsel, valg puljefordeling.Tildelingsvalg, retryURL string) {
 	sse := datastar.NewSSE(w, r)
-	if len(varsel.Tildelinger) == 0 && varsel.Aldersvarsel != "" {
+	if len(varsel.Tildelinger) == 0 && varsel.Aldersvarsel != "" && varsel.Kapasitetsvarsel == "" {
 		if err := sse.MarshalAndPatchSignals(map[string]any{
 			"ageWarningText": varsel.Aldersvarsel, "ageWarningBillettholderId": valg.BillettholderID,
 			"ageWarningEventId": valg.EventID, "ageWarningPuljeId": string(valg.PuljeID),
 			"ageWarningIsPlayer": valg.Role == models.EventPlayerRolePlayer, "ageWarningIsGm": valg.Role == models.EventPlayerRoleGM,
 			"ageWarningRole": string(valg.Role), "ageWarningFromAddMenu": valg.FraLeggTil,
+			"ageWarningFromEventId": valg.FraEventID, "ageWarningFromManualSeat": valg.FraManuellPlass,
 			"ageWarningMethod": r.Method, "ageWarningUrl": retryURL,
 		}); err != nil {
 			logger.Error(err.Error())

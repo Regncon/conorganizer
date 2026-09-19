@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"sort"
 	"strings"
 
 	"github.com/Regncon/conorganizer/models"
@@ -28,6 +29,8 @@ type Tildelingsvalg struct {
 	BillettholderID int
 	Role            models.EventPlayerRole
 	FraLeggTil      bool
+	FraEventID      string
+	FraManuellPlass bool
 	Bekreftelse     string
 	AlderBekreftet  bool
 	Forstevalg      bool
@@ -43,6 +46,7 @@ type Tildelingsvarsel struct {
 	Role              models.EventPlayerRole
 	Tildelinger       []Tildeling
 	Aldersvarsel      string
+	Kapasitetsvarsel  string
 	Bekreftelse       string
 	Handling          string
 	KanBekrefte       bool
@@ -63,6 +67,18 @@ func TildelBillettholder(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, er
 	if err != nil {
 		return nil, err
 	}
+	if !valg.FraLeggTil {
+		fraEventID, err := finnFlyttetSpillerplass(valg.FraEventID, valg.FraManuellPlass, grunnlag.tildelinger)
+		if err != nil {
+			return nil, err
+		}
+		valg.FraEventID = fraEventID
+		for _, tildeling := range grunnlag.tildelinger {
+			if tildeling.Role == models.EventPlayerRolePlayer && tildeling.Source == SourceManual && tildeling.EventID == valg.EventID {
+				return nil, nil
+			}
+		}
+	}
 	if varsel := lagTildelingsvarsel(valg, grunnlag); varsel != nil {
 		if !varsel.KanBekrefte {
 			return varsel, nil
@@ -71,7 +87,7 @@ func TildelBillettholder(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, er
 			if valg.Bekreftelse != varsel.Bekreftelse {
 				return varsel, nil
 			}
-		} else if tildelingerKreverBekreftelse(valg, grunnlag.tildelinger) || (varsel.Aldersvarsel != "" && !valg.AlderBekreftet) {
+		} else if tildelingerKreverBekreftelse(valg, grunnlag.tildelinger) || varsel.Kapasitetsvarsel != "" || (varsel.Aldersvarsel != "" && !valg.AlderBekreftet) {
 			return varsel, nil
 		}
 	}
@@ -82,6 +98,29 @@ func TildelBillettholder(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, er
 		return nil, fmt.Errorf("fullfør tildeling: %w", err)
 	}
 	return nil, nil
+}
+
+func finnFlyttetSpillerplass(fraEventID string, fraManuellPlass bool, tildelinger []Tildeling) (string, error) {
+	var manuellePlasser []string
+	for _, tildeling := range tildelinger {
+		if tildeling.Role == models.EventPlayerRolePlayer && tildeling.Source == SourceManual {
+			manuellePlasser = append(manuellePlasser, tildeling.EventID)
+		}
+	}
+	// En automatisk forhåndsvisning trenger ikke å ha en lagret spillerplass.
+	if len(manuellePlasser) == 0 && !fraManuellPlass {
+		return fraEventID, nil
+	}
+	// Eldre klienter sendte ikke kilden. Én manuell plass er entydig.
+	if fraEventID == "" && len(manuellePlasser) == 1 {
+		return manuellePlasser[0], nil
+	}
+	for _, eventID := range manuellePlasser {
+		if eventID == fraEventID {
+			return fraEventID, nil
+		}
+	}
+	return "", fmt.Errorf("%w: velg spillerplassen som skal flyttes", ErrUgyldigTildeling)
 }
 
 func GetTildelinger(db *sql.DB, pulje models.Pulje, billettholderID int) ([]Tildeling, error) {
@@ -179,6 +218,15 @@ type tildelingsgrunnlag struct {
 	billettholderNavn string
 	isOver18          bool
 	tildelinger       []Tildeling
+	kapasiteter       []tildelingskapasitet
+}
+
+type tildelingskapasitet struct {
+	ageGroup               models.AgeGroup
+	eventID                string
+	eventTitle             string
+	maksSpillere           int
+	manuelleSpillerplasser int
 }
 
 func hentTildelingsgrunnlag(tx *sql.Tx, valg Tildelingsvalg) (tildelingsgrunnlag, error) {
@@ -218,7 +266,42 @@ func hentTildelingsgrunnlag(tx *sql.Tx, valg Tildelingsvalg) (tildelingsgrunnlag
 		return grunnlag, err
 	}
 	grunnlag.tildelinger = tildelinger
-	return grunnlag, nil
+	grunnlag.kapasiteter, err = hentTildelingskapasiteter(tx, valg, tildelinger)
+	return grunnlag, err
+}
+
+func hentTildelingskapasiteter(tx *sql.Tx, valg Tildelingsvalg, tildelinger []Tildeling) ([]tildelingskapasitet, error) {
+	var eventIDs []string
+	if valg.Role == models.EventPlayerRolePlayer {
+		eventIDs = append(eventIDs, valg.EventID)
+	}
+	if valg.FraLeggTil {
+		for _, tildeling := range tildelinger {
+			if tildeling.Role != models.EventPlayerRolePlayer || tildeling.Source != SourceSolver {
+				continue
+			}
+			if valg.Role == models.EventPlayerRolePlayer && tildeling.EventID == valg.EventID {
+				continue
+			}
+			eventIDs = append(eventIDs, tildeling.EventID)
+		}
+	}
+	sort.Strings(eventIDs)
+	var kapasiteter []tildelingskapasitet
+	for _, eventID := range eventIDs {
+		kapasitet := tildelingskapasitet{eventID: eventID}
+		if err := tx.QueryRow(
+			`SELECT e.title, e.age_group, e.max_players,
+			 (SELECT COUNT(*) + 1 FROM relation_events_players
+			  WHERE event_id = e.id AND pulje_id = ? AND role = ? AND source = ? AND billettholder_id != ?)
+			 FROM events e WHERE e.id = ?`,
+			valg.PuljeID, models.EventPlayerRolePlayer, SourceManual, valg.BillettholderID, eventID,
+		).Scan(&kapasitet.eventTitle, &kapasitet.ageGroup, &kapasitet.maksSpillere, &kapasitet.manuelleSpillerplasser); err != nil {
+			return nil, fmt.Errorf("hent kapasitet på %s i %s: %w", eventID, valg.PuljeID, err)
+		}
+		kapasiteter = append(kapasiteter, kapasitet)
+	}
+	return kapasiteter, nil
 }
 
 func validerTildelingsvalg(valg Tildelingsvalg) error {
@@ -245,12 +328,23 @@ func lagTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tild
 			harGM = true
 		}
 	}
-	aldersvarsel := ""
+	var aldersvarsler []string
 	if !grunnlag.isOver18 && grunnlag.ageGroup == models.AgeGroupAdultsOnly {
-		aldersvarsel = fmt.Sprintf("%s er under 18 år, og «%s» er 18+.", grunnlag.billettholderNavn, grunnlag.eventTitle)
+		aldersvarsler = append(aldersvarsler, fmt.Sprintf("%s er under 18 år, og «%s» er 18+.", grunnlag.billettholderNavn, grunnlag.eventTitle))
 	}
+	var kapasitetsvarsler []string
+	for _, kapasitet := range grunnlag.kapasiteter {
+		if !grunnlag.isOver18 && kapasitet.eventID != valg.EventID && kapasitet.ageGroup == models.AgeGroupAdultsOnly {
+			aldersvarsler = append(aldersvarsler, fmt.Sprintf("%s er under 18 år, og «%s» er 18+.", grunnlag.billettholderNavn, kapasitet.eventTitle))
+		}
+		if kapasitet.manuelleSpillerplasser > kapasitet.maksSpillere {
+			kapasitetsvarsler = append(kapasitetsvarsler, fmt.Sprintf("«%s» får %d manuelt festede spillerplasser, men har kapasitet til %d.", kapasitet.eventTitle, kapasitet.manuelleSpillerplasser, kapasitet.maksSpillere))
+		}
+	}
+	aldersvarsel := strings.Join(aldersvarsler, " ")
+	kapasitetsvarsel := strings.Join(kapasitetsvarsler, " ")
 	bekreftelseKreves := tildelingerKreverBekreftelse(valg, grunnlag.tildelinger)
-	if !bekreftelseKreves && aldersvarsel == "" && (valg.Bekreftelse == "" || valg.Bekreftelse == bekreftelse) {
+	if !bekreftelseKreves && aldersvarsel == "" && kapasitetsvarsel == "" && (valg.Bekreftelse == "" || valg.Bekreftelse == bekreftelse) {
 		return nil
 	}
 
@@ -264,6 +358,7 @@ func lagTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tild
 		Role:              valg.Role,
 		Tildelinger:       grunnlag.tildelinger,
 		Aldersvarsel:      aldersvarsel,
+		Kapasitetsvarsel:  kapasitetsvarsel,
 		Handling:          tildelingshandling(valg, grunnlag),
 		KanBekrefte:       true,
 	}
@@ -297,28 +392,27 @@ func tildelingshandling(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) string
 	if valg.Role == models.EventPlayerRoleGM {
 		return fmt.Sprintf("Legg til som GM på «%s»", grunnlag.eventTitle)
 	}
-	var fraArrangementer []string
+	if valg.FraLeggTil {
+		return fmt.Sprintf("Legg til som spelar på «%s»", grunnlag.eventTitle)
+	}
 	for _, tildeling := range grunnlag.tildelinger {
-		if tildeling.Role == models.EventPlayerRolePlayer && tildeling.EventID != valg.EventID {
-			fraArrangementer = append(fraArrangementer, "«"+tildeling.EventTitle+"»")
+		if tildeling.Role == models.EventPlayerRolePlayer && tildeling.EventID == valg.FraEventID && tildeling.EventID != valg.EventID {
+			return fmt.Sprintf("Flytt spillerplassen fra «%s» til «%s»", tildeling.EventTitle, grunnlag.eventTitle)
 		}
-	}
-	if len(fraArrangementer) == 1 {
-		return fmt.Sprintf("Flytt spillerplassen fra %s til «%s»", fraArrangementer[0], grunnlag.eventTitle)
-	}
-	if len(fraArrangementer) > 1 {
-		return fmt.Sprintf("Flytt spillerplassene fra %s til «%s»", strings.Join(fraArrangementer, ", "), grunnlag.eventTitle)
 	}
 	return fmt.Sprintf("Legg til som spelar på «%s»", grunnlag.eventTitle)
 }
 
 func tildelingsbekreftelse(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) string {
 	h := sha256.New()
-	skrivHashfelt(h, "tildeling-v1")
+	skrivHashfelt(h, "tildeling-v3")
 	skrivHashfelt(h, string(valg.PuljeID), valg.EventID, fmt.Sprint(valg.BillettholderID), string(valg.Role))
-	skrivHashfelt(h, fmt.Sprint(valg.FraLeggTil), fmt.Sprint(valg.Forstevalg))
+	skrivHashfelt(h, fmt.Sprint(valg.FraLeggTil), valg.FraEventID, fmt.Sprint(valg.FraManuellPlass), fmt.Sprint(valg.Forstevalg))
 	skrivHashfelt(h, grunnlag.puljeNavn, string(grunnlag.puljeStatus), grunnlag.eventTitle, string(grunnlag.ageGroup))
 	skrivHashfelt(h, grunnlag.billettholderNavn, fmt.Sprint(grunnlag.isOver18))
+	for _, kapasitet := range grunnlag.kapasiteter {
+		skrivHashfelt(h, kapasitet.eventID, kapasitet.eventTitle, string(kapasitet.ageGroup), fmt.Sprint(kapasitet.maksSpillere), fmt.Sprint(kapasitet.manuelleSpillerplasser))
+	}
 	for _, tildeling := range grunnlag.tildelinger {
 		skrivHashfelt(h, tildeling.EventID, tildeling.EventTitle, string(tildeling.Role), tildeling.Source, tildeling.InsertedAt)
 	}
@@ -332,10 +426,20 @@ func skrivHashfelt(h hash.Hash, felter ...string) {
 }
 
 func lagreTildeling(tx *sql.Tx, valg Tildelingsvalg) error {
-	if valg.Role == models.EventPlayerRolePlayer {
+	if valg.FraLeggTil {
 		if _, err := tx.Exec(
-			`DELETE FROM relation_events_players WHERE pulje_id = ? AND billettholder_id = ? AND role = ?`,
-			valg.PuljeID, valg.BillettholderID, models.EventPlayerRolePlayer,
+			`UPDATE relation_events_players SET source = ?
+			 WHERE pulje_id = ? AND billettholder_id = ? AND role = ? AND source = ?`,
+			SourceManual, valg.PuljeID, valg.BillettholderID, models.EventPlayerRolePlayer, SourceSolver,
+		); err != nil {
+			return fmt.Errorf("fest eksisterende spillerplasser i %s: %w", valg.PuljeID, err)
+		}
+	}
+	if valg.Role == models.EventPlayerRolePlayer && !valg.FraLeggTil {
+		if _, err := tx.Exec(
+			`DELETE FROM relation_events_players WHERE pulje_id = ? AND billettholder_id = ? AND role = ?
+			 AND (event_id = ? OR source = ? OR ? = '')`,
+			valg.PuljeID, valg.BillettholderID, models.EventPlayerRolePlayer, valg.FraEventID, SourceSolver, valg.FraEventID,
 		); err != nil {
 			return fmt.Errorf("fjern tidligere Player-tildeling i %s: %w", valg.PuljeID, err)
 		}
