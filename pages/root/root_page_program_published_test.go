@@ -41,6 +41,10 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsProgramDaysWithActiveDay
 		Then:  "Så skal dagene vises med riktig aktiv dag.",
 	})
 
+	// Given
+	expectedLabels := []string{"Fredag 2.10", "Lørdag 3.10", "Søndag 4.10"}
+	expectedActiveDay := "Lørdag 3.10"
+	expectedEventTitles := []string{"Saturday Event"}
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)
 	setProgramPublishing(t, db, true)
@@ -54,20 +58,21 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsProgramDaysWithActiveDay
 	insertRootPageEvent(t, db, "sunday-event", "Sunday Event", models.EventStatusAnnounced)
 	insertRootPageEventPulje(t, db, "sunday-event", models.PuljeSondagMorgen, true)
 
+	// When
 	doc := templtest.Render(t, rootPageContentForDate(db, false, nil, "2026-10-03"))
+	actualLabels := templtest.CollectTexts(doc, ".program-day-selector .btn")
+	actualActiveDay := doc.Find(".program-day-selector .is-active").Text()
+	actualEventTitles := templtest.CollectTexts(doc, ".event-card-title")
 
-	if actual := templtest.CollectTexts(doc, ".program-day-selector .btn"); !slices.Equal(
-		[]string{"Fredag 2.10", "Lørdag 3.10", "Søndag 4.10"}, actual,
-	) {
-		t.Fatalf("program day labels mismatch\nexpected: %v\nactual:   %v", []string{"Fredag 2.10", "Lørdag 3.10", "Søndag 4.10"}, actual)
+	// Then
+	if !slices.Equal(expectedLabels, actualLabels) {
+		t.Fatalf("program day labels mismatch\nexpected: %v\nactual:   %v", expectedLabels, actualLabels)
 	}
-
-	if actual := doc.Find(".program-day-selector .is-active").Text(); actual != "Lørdag 3.10" {
-		t.Fatalf("active program day mismatch\nexpected: %q\nactual:   %q", "Lørdag 3.10", actual)
+	if actualActiveDay != expectedActiveDay {
+		t.Fatalf("active program day mismatch\nexpected: %q\nactual:   %q", expectedActiveDay, actualActiveDay)
 	}
-
-	if actual := templtest.CollectTexts(doc, ".event-card-title"); !slices.Equal([]string{"Saturday Event"}, actual) {
-		t.Fatalf("selected day event titles mismatch\nexpected: %v\nactual:   %v", []string{"Saturday Event"}, actual)
+	if !slices.Equal(expectedEventTitles, actualEventTitles) {
+		t.Fatalf("selected day event titles mismatch\nexpected: %v\nactual:   %v", expectedEventTitles, actualEventTitles)
 	}
 }
 
