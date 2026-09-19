@@ -197,6 +197,8 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		data-signals:assignment-event-id="''"
 		data-signals:assignment-pulje-id="''"
 		data-signals:assignment-billettholder-id="0"
+		data-signals:assignment-picker-gm-only="false"
+		data-signals:assignment-picker-title="'Legg til deltaker'"
 		data-signals:clear-input="0"
 		data-signals:dragged-billettholder-id="0"
 		data-signals:dragged-event-id="''"
@@ -284,9 +286,13 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		result, hasResult := findEmulatedPulje(em, pulje)
 		unsatisfied, hasUnsatisfied := unsatisfiedAfter(em, pulje)
 		var fordelingsvarsler []puljefordeling.Fordelingsvarsel
+		var kapasitetsvarsler []puljefordeling.Kapasitetsvarsel
 		var varslerErr error
 		if emErr == nil && hasResult {
 			fordelingsvarsler, varslerErr = puljefordeling.FinnFordelingsvarsler(db, result)
+			if varslerErr == nil {
+				kapasitetsvarsler, varslerErr = puljefordeling.FinnKapasitetsvarsler(db, result)
+			}
 			if varslerErr != nil {
 				logger.Error(varslerErr.Error(), "component", "puljefordeling", "pulje_id", pulje)
 			}
@@ -445,6 +451,17 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-event.missing-dm {
             border-color: var(--color-text-error, #e05050);
         }
+        .pulje-missing-gm {
+            place-self: start;
+            block-size: auto;
+            min-block-size: var(--btn-height);
+            max-inline-size: 100%;
+            padding-block: var(--spacing-1x);
+            white-space: normal;
+            text-align: start;
+            color: var(--color-text-error, #e05050);
+            border-color: currentColor;
+        }
         .pulje-badge {
             align-self: flex-start;
             padding: 0 var(--spacing-2x);
@@ -585,9 +602,9 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			<p class="pulje-empty">Ingen fordeling å vise for denne puljen ennå.</p>
 		} else {
 			if varslerErr != nil {
-				<p class="pulje-error">Kunne ikke kontrollere overlappende tildelinger.</p>
+				<p class="pulje-error">Kunne ikke kontrollere tildelinger og kapasitet.</p>
 			} else {
-				@puljeFordelingsvarsler(pulje, fordelingsvarsler)
+				@puljeFordelingsvarsler(pulje, fordelingsvarsler, kapasitetsvarsler)
 			}
 			<div class="pulje-event-grid">
 				for _, ev := range result.Events {
@@ -604,12 +621,11 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 	</section>
 }
 
-// puljeAssignDialog is the single shared picker dialog for the page. The + button
-// on each event box sets $assignmentEventId before opening it, so the picker adds
-// the chosen billettholder to that event (reusing the approval add endpoints).
+// puljeAssignDialog is the shared picker for adding players or a missing GM.
+// Each opening action supplies the event, pulje and role context.
 templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
-	<dialog id="puljefordeling-assign-dialog" closedBy="any">
-		<h3>Legg til deltaker</h3>
+	<dialog id="puljefordeling-assign-dialog" closedBy="any" aria-labelledby="puljefordeling-assign-title">
+		<h3 id="puljefordeling-assign-title" data-text="$assignmentPickerTitle">Legg til deltaker</h3>
 		@formsubmission.PuljeAssignmentSearch(db, logger, pulje)
 		<button
 			class="btn btn--outline"
@@ -617,6 +633,17 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
 			data-on:click="document.getElementById('puljefordeling-assign-dialog').close()"
 		>Lukk</button>
 	</dialog>
+}
+
+func puljeAssignDialogAction(pulje models.Pulje, event puljefordeling.EmulatedEvent, gmOnly bool) string {
+	title := "Legg til deltaker på " + event.Title
+	role := models.EventPlayerRolePlayer
+	if gmOnly {
+		title = "Legg til spilleder på " + event.Title
+		role = models.EventPlayerRoleGM
+	}
+	return fmt.Sprintf("$assignmentEventId = %q; $assignmentPuljeId = %q; $assignmentRole = %q; $assignmentPickerGmOnly = %t; $assignmentPickerTitle = %q; $assignmentBillettholderId = 0; const dialog = document.getElementById('puljefordeling-assign-dialog'); const search = dialog.querySelector('admin-billettholder-search'); search?.clearSearch(); dialog.showModal(); search?.shadowRoot?.querySelector('input')?.focus()",
+		event.EventID, string(pulje), string(role), gmOnly, title)
 }
 
 // puljeAgeConfirmAction re-posts the pending placement with the age confirmation
@@ -732,8 +759,16 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 					<span class="pulje-badge pulje-badge--error">Under 18</span>
 				}
 			</p>
-		} else {
+		} else if published {
 			<span class="pulje-badge pulje-badge--error">Mangler spilleder</span>
+		} else {
+			<button
+				type="button"
+				class="btn btn--outline pulje-missing-gm"
+				aria-haspopup="dialog"
+				aria-controls="puljefordeling-assign-dialog"
+				data-on:click={ puljeAssignDialogAction(pulje, ev, true) }
+			>Mangler spilleder · Legg til spilleder</button>
 		}
 		if ev.Undersubscribed {
 			<span class="pulje-badge">Få deltakere</span>
@@ -780,7 +815,9 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 			<button
 				type="button"
 				class="pulje-add"
-				data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; document.getElementById('puljefordeling-assign-dialog').showModal()", ev.EventID, string(pulje)) }
+				aria-haspopup="dialog"
+				aria-controls="puljefordeling-assign-dialog"
+				data-on:click={ puljeAssignDialogAction(pulje, ev, false) }
 			>+ Legg til deltaker</button>
 		}
 	</div>
