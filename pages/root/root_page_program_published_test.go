@@ -4,6 +4,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
@@ -297,5 +298,50 @@ func TestRootPageContent_WhenProgramAndRaffleEventsAreMixed_DeduplicatesProgramA
 	}
 	if !slices.Equal(headings, expectedHeadings) {
 		t.Fatalf("section headings mismatch: %v", headings)
+	}
+}
+
+func TestRootPageContent_WhenProgramPublishingIsOn_RendersSelectedDayScheduleBeforeProgramOverview(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at lørdagens program er publisert.",
+		When:  "Når forsiden vises med lørdag valgt.",
+		Then:  "Så skal dagens tittel og tidsskjema vises før programoversikten.",
+	})
+
+	// Given
+	expectedOrder := []string{"day heading", "schedule", "program overview"}
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, true)
+	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
+	insertRootPageEvent(t, db, "saturday-program", "Saturday Program", models.EventStatusAnnounced)
+	insertRootPageEventPulje(t, db, "saturday-program", models.PuljeLordagMorgen, true)
+	setRootPageEventInPuljefordeling(t, db, "saturday-program", false)
+
+	// When
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-10"))
+	actualDayHeading := doc.Find(".program-day-heading").Text()
+	actualScheduleHeadings := doc.Find(".time-schedule-container h1").Length()
+	actualOrder := make([]string, 0, 3)
+	doc.Find(".event-pulje-overview").Children().Each(func(_ int, child *goquery.Selection) {
+		switch {
+		case child.Is(".program-day-heading"):
+			actualOrder = append(actualOrder, "day heading")
+		case child.Is(".time-schedule-container"):
+			actualOrder = append(actualOrder, "schedule")
+		case child.Is(".program-section"):
+			actualOrder = append(actualOrder, "program overview")
+		}
+	})
+
+	// Then
+	if actualDayHeading != "Lørdag (09:00 - 22:00)" {
+		t.Fatalf("day heading = %q", actualDayHeading)
+	}
+	if actualScheduleHeadings != 0 {
+		t.Fatalf("schedule rendered %d duplicate day headings", actualScheduleHeadings)
+	}
+	if !slices.Equal(actualOrder, expectedOrder) {
+		t.Fatalf("published day content order mismatch\nexpected: %v\nactual:   %v", expectedOrder, actualOrder)
 	}
 }

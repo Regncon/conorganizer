@@ -3,6 +3,7 @@ package root
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
@@ -178,6 +179,20 @@ templ eventPuljeBlock(block PuljeBlock, eventImageDir *string, date string) {
 	}
 }
 
+templ programDaySchedule(day ProgramDay) {
+	switch day.Date.Weekday() {
+		case time.Friday:
+			<h1 class="program-day-heading">Fredag (17:00 - 22:00)</h1>
+			@components.TimeScheduleFriday()
+		case time.Saturday:
+			<h1 class="program-day-heading">Lørdag (09:00 - 22:00)</h1>
+			@components.TimeScheduleLoordag()
+		case time.Sunday:
+			<h1 class="program-day-heading">Søndag (09:00 - xx:xx)</h1>
+			@components.TimeScheduleSoondag()
+	}
+}
+
 templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publishedDay *ProgramDay) {
 	<style>
 		.event-pulje-overview {
@@ -193,7 +208,7 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 		}
 
 		.pulje-heading {
-			color: var(--color-primary);
+			color: var(--color-text-strong);
 			margin: 0 0 var(--spacing-3x);
 			text-transform: capitalize;
 		}
@@ -201,7 +216,7 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 			font-family: var(--font-sans-serif);
 			font-size: var(--text-body);
 			font-weight: normal;
-			color: var(--color-text-soft);
+			color: var(--color-primary);
 		}
 
 		@container main (width > 600px) {
@@ -213,6 +228,7 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 	<div class="page-content-container event-pulje-overview">
 		if programPublished {
 			if publishedDay != nil {
+				@programDaySchedule(*publishedDay)
 				if len(publishedDay.ProgramEvents) > 0 {
 					<section class="container-inner-padding program-section">
 						<h2 class="pulje-heading">Programoversikt</h2>
