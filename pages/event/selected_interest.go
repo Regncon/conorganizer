@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components/event_components"
-	"github.com/Regncon/conorganizer/models"
 	eventservice "github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
@@ -67,7 +66,7 @@ func selectedInterestHandler(db *sql.DB, logger *slog.Logger, eventImageDir *str
 			return
 		}
 
-		notices, err := event_components.LoadInterestNoticeSignals(signals.BillettHolderId, signals.PuljeId, event.AgeGroup, eventImageDir, db)
+		notices, err := event_components.LoadInterestNoticeState(signals.BillettHolderId, signals.PuljeId, event.AgeGroup, eventImageDir, db)
 		if err != nil {
 			logger.Error(err.Error())
 			http.Error(w, "Kunne ikke hente interessevarsler.", http.StatusInternalServerError)
@@ -79,14 +78,12 @@ func selectedInterestHandler(db *sql.DB, logger *slog.Logger, eventImageDir *str
 			http.Error(w, "Kunne ikke hente valgt interesse.", http.StatusInternalServerError)
 			return
 		}
-		response := struct {
-			event_components.InterestNoticeSignals
-			SelectedInterestLevel      models.InterestLevel `json:"selectedInterestLevel"`
-			CurrentInterestLevelChoice string               `json:"currentInterestLevelChoice"`
-		}{notices, interest, "Pending choice"}
 		sse := datastar.NewSSE(w, r)
-		if err := sse.MarshalAndPatchSignals(response); err != nil {
-			logger.Error(fmt.Errorf("failed to patch selected interest signals: %w", err).Error())
+		if err := sse.PatchElementTempl(
+			event_components.InterestContent(eventID, event.Title, notices, interest, db, r, logger),
+			datastar.WithModeReplace(),
+		); err != nil {
+			logger.Error(fmt.Errorf("failed to patch selected interest content: %w", err).Error())
 		}
 	}
 }

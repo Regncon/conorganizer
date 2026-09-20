@@ -10,37 +10,37 @@ import (
 )
 
 type AssignedEvent struct {
-	Title    string `json:"title"`
-	System   string `json:"system"`
-	Role     string `json:"role"`
-	Source   string `json:"source"`
-	EventID  string `json:"eventId"`
-	ImageURL string `json:"imageUrl"`
+	Title    string
+	System   string
+	Role     string
+	Source   string
+	EventID  string
+	ImageURL string
 }
 
-type InterestNoticeSignals struct {
-	ShowAssignedEvent bool          `json:"showAssignedEvent"`
-	ShowUnder18       bool          `json:"showUnder18"`
-	CanChooseInterest bool          `json:"canChooseInterest"`
-	AssignedEvent     AssignedEvent `json:"assignedEvent"`
+type InterestNoticeState struct {
+	ShowAssignedEvent bool
+	ShowUnder18       bool
+	CanChooseInterest bool
+	AssignedEvent     AssignedEvent
 }
 
-func LoadInterestNoticeSignals(billettholderID int, puljeID string, ageGroup models.AgeGroup, eventImageDir *string, db *sql.DB) (InterestNoticeSignals, error) {
+func LoadInterestNoticeState(billettholderID int, puljeID string, ageGroup models.AgeGroup, eventImageDir *string, db *sql.DB) (InterestNoticeState, error) {
 	if billettholderID <= 0 {
-		return InterestNoticeSignals{}, nil
+		return InterestNoticeState{}, nil
 	}
 	var isOver18 bool
 	if err := db.QueryRow("SELECT is_over_18 FROM billettholdere WHERE id = ?1", billettholderID).Scan(&isOver18); err != nil {
-		return InterestNoticeSignals{}, fmt.Errorf("failed to fetch billettholder age: %w", err)
+		return InterestNoticeState{}, fmt.Errorf("failed to fetch billettholder age: %w", err)
 	}
 	assignedEvent, err := getAssignedEventForBillettholder(billettholderID, puljeID, db)
 	if err != nil {
-		return InterestNoticeSignals{}, err
+		return InterestNoticeState{}, err
 	}
 	if assignedEvent.EventID != "" {
 		assignedEvent.ImageURL = eventimage.GetEventImageUrl(assignedEvent.EventID, "banner", eventImageDir)
 	}
-	return InterestNoticeSignals{
+	return InterestNoticeState{
 		ShowAssignedEvent: assignedEvent.EventID != "",
 		ShowUnder18:       !isOver18 && ageGroup == models.AgeGroupAdultsOnly,
 		CanChooseInterest: isOver18 && assignedEvent.EventID == "",
@@ -69,13 +69,6 @@ func getAssignedEventForBillettholder(billettholderID int, puljeID string, db *s
 		return AssignedEvent{}, fmt.Errorf("failed to fetch assigned event for billettholder: %w", err)
 	}
 	return assignedEvent, nil
-}
-
-func noticeDisplayStyle(visible bool) string {
-	if visible {
-		return ""
-	}
-	return "display: none;"
 }
 
 func assignedEventHeading(role string) string {

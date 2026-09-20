@@ -1,0 +1,33 @@
+package event_components
+
+import (
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"net/http"
+
+	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/models"
+)
+
+// Page morphs preserve this selection-dependent content. The selected-interest
+// endpoint replaces the wrapper explicitly after validating the current selection.
+templ InterestContent(eventID string, title string, state InterestNoticeState, interest models.InterestLevel, db *sql.DB, r *http.Request, logger *slog.Logger) {
+	<div
+		id="interest-content"
+		data-ignore-morph
+		data-signals:selected-interest-level={ fmt.Sprintf("%q", interest) }
+		data-signals:current-interest-level-choice="'Pending choice'"
+	>
+		<p class="label">Velg interesse</p>
+		if state.ShowAssignedEvent {
+			@InterestAlreadyAssigned(title, state.AssignedEvent)
+		}
+		if state.ShowUnder18 {
+			@interestUnder18(title)
+		}
+		if state.CanChooseInterest {
+			@ticketholder.TicketHolderInterestPicker(eventID, db, r, logger)
+		}
+	</div>
+}

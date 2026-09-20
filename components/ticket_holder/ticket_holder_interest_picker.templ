@@ -80,8 +80,6 @@ templ TicketHolderInterestPicker(
 	<div
 		class="interest-buttons"
 		data-class:is-disabled="!$puljeCanEdit"
-		data-signals:current-interest-level-choice={ fmt.Sprintf("'%s'", pendingChoice) }
-		data-signals:selected-interest-level={ fmt.Sprintf("'%s'", models.InterestLevelNone) }
 	>
 		<strong
 			class="ticket-holder-error"

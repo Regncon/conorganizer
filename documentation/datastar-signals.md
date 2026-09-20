@@ -113,6 +113,10 @@ A long-lived SSE request keeps the selection and cookies it received when it
 opened. When results depend on a selection the user can change, send that
 current selection in a fresh request. Validate it on the server.
 
-Use normal morphing for server-rendered components. Reserve `data-ignore-morph`
-for DOM that another widget owns: it also prevents ordinary text and markup
-inside that element from receiving server updates.
+Use normal morphing for server-rendered components. Use `data-ignore-morph`
+only when a widget or a separate endpoint owns that region: it also prevents
+ordinary text and markup inside it from receiving parent updates. An endpoint
+that owns such a region can explicitly replace its wrapper with a
+`datastar-patch-elements` event using `mode replace`. Keep selection controls and
+the request listener outside the replaced region, and include any required initial
+values in the replacement HTML.

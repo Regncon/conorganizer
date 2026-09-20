@@ -23,16 +23,16 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	r *http.Request,
 	logger *slog.Logger) {
 	{{
-		puljer, puljerErr := ticketholder.GetPuljerFromEventId(eventId, db)
-		if puljerErr != nil {
-			logger.Error(puljerErr.Error(), "event_id", eventId)
-		}
-		selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
-		billettholderID := requestctx.SelectedBillettholderID(r.Context())
-		noticeSignals, noticeErr := LoadInterestNoticeSignals(billettholderID, puljeId, ageGroup, eventImageDir, db)
-		if noticeErr != nil {
-			logger.Error(noticeErr.Error(), "event_id", eventId, "pulje_id", puljeId, "billettholder_id", billettholderID)
-		}
+	puljer, puljerErr := ticketholder.GetPuljerFromEventId(eventId, db)
+	if puljerErr != nil {
+		logger.Error(puljerErr.Error(), "event_id", eventId)
+	}
+	selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
+	billettholderID := requestctx.SelectedBillettholderID(r.Context())
+	noticeState, noticeErr := LoadInterestNoticeState(billettholderID, puljeId, ageGroup, eventImageDir, db)
+	if noticeErr != nil {
+		logger.Error(noticeErr.Error(), "event_id", eventId, "pulje_id", puljeId, "billettholder_id", billettholderID)
+	}
 	}}
 	<style>
 		.dialog-container {
@@ -133,7 +133,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	<dialog
 		class="interest-dialog"
 		data-attr:open="$_interestIsOpen ? true : false"
-		data-signals__ifmissing={ templ.JSONString(noticeSignals) }
 		data-signals:pulje-id={ fmt.Sprintf("'%s'", puljeId) }
 		data-signals:pulje-availability={ fmt.Sprintf("'%s'", selectedPuljeState.Availability) }
 		data-signals:pulje-can-edit={ fmt.Sprintf("%t", selectedPuljeState.CanEdit) }
@@ -154,16 +153,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			>
 				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
-				<div>
-					<p class="label">Velg interesse</p>
-					@InterestAlreadyAssigned(title, noticeSignals.AssignedEvent)
-					<div data-show="$showUnder18" style={ noticeDisplayStyle(noticeSignals.ShowUnder18) }>
-						@interestUnder18(title)
-					</div>
-					<div data-show="$canChooseInterest" style={ noticeDisplayStyle(noticeSignals.CanChooseInterest) }>
-						@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
-					</div>
-				</div>
+				@InterestContent(eventId, title, noticeState, models.InterestLevelNone, db, r, logger)
 			</div>
 			<div class="dialog-footer">
 				<p class="auto-save-message">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
@@ -229,17 +219,18 @@ templ InterestAlreadyAssigned(title string, assignedEvent AssignedEvent) {
         }
 
     </style>
-	<section class="interest-already-assigned" data-show="$showAssignedEvent" style={ noticeDisplayStyle(assignedEvent.EventID != "") }>
-		<h3 data-text="$assignedEvent.role === 'GM' ? 'Du er arrangør for et arrangement i denne puljen.' : 'Du har allerede blitt tildelt denne puljen.'">
+	<section class="interest-already-assigned">
+		<h3>
 			{ assignedEventHeading(assignedEvent.Role) }
 		</h3>
-		<p data-show="$assignedEvent.role === 'GM'" style={ noticeDisplayStyle(assignedEvent.Role == "GM") }>
-			<i data-text="$assignedEvent.title">{ assignedEvent.Title }</i> er satt opp med deg som arrangør.
-		</p>
-		<p data-show="$assignedEvent.role !== 'GM'" style={ noticeDisplayStyle(assignedEvent.Role != "GM") }>
-			Du har allerede plass på et annet arrangement i denne puljen.
-			Du kan melde deg av det arrangementet om du heller ønsker å være med på <i>{ title }</i>.
-		</p>
+		if assignedEvent.Role == "GM" {
+			<p><i>{ assignedEvent.Title }</i> er satt opp med deg som arrangør.</p>
+		} else {
+			<p>
+				Du har allerede plass på et annet arrangement i denne puljen.
+				Du kan melde deg av det arrangementet om du heller ønsker å være med på <i>{ title }</i>.
+			</p>
+		}
 		@ClickableEventCard(assignedEvent)
 	</section>
 }
@@ -266,7 +257,7 @@ templ interestUnder18(title string) {
 
 templ ClickableEventCard(assignedEvent AssignedEvent) {
 	<section class="prev-next-button-container no-print clickable-event-card">
-		<a class="previous-next-buttons" href={ templ.URL("/event/" + assignedEvent.EventID) } data-attr:href="'/event/' + encodeURIComponent($assignedEvent.eventId)">
+		<a class="previous-next-buttons" href={ templ.URL("/event/" + assignedEvent.EventID) }>
 			<div style="display: grid; grid-template-rows: 1fr; height: 100%;">
 				<div class="text-container" style="display: flex; align-items: center; grid-row: 1 / 2; grid-column: 1 / 2;">
 					<div
@@ -278,25 +269,20 @@ templ ClickableEventCard(assignedEvent AssignedEvent) {
                             "
 					>
 						<strong
-							data-text="$assignedEvent.title"
 							style="
                                 height: 1lh;
                                 word-break: break-all;
                             "
 						>{ assignedEvent.Title }</strong>
-						<p data-text="$assignedEvent.system">{ assignedEvent.System }</p>
+						<p>{ assignedEvent.System }</p>
 					</div>
 				</div>
-				<img
-					if assignedEvent.ImageURL != "" {
+				if assignedEvent.ImageURL != "" {
+					<img
 						src={ assignedEvent.ImageURL }
-					}
-					title={ assignedEvent.Title }
-					data-show="$assignedEvent.imageUrl !== ''"
-					data-attr:src="$assignedEvent.imageUrl || null"
-					data-attr:title="$assignedEvent.title"
-					height="75px"
-					style={ noticeDisplayStyle(assignedEvent.ImageURL != "") + `
+						title={ assignedEvent.Title }
+						height="75px"
+						style="
                                 grid-row: 1 / 2;
                                 grid-column: 1 / 2;
                                 mask-image: var(--linear-gradient-mask);
@@ -304,8 +290,9 @@ templ ClickableEventCard(assignedEvent AssignedEvent) {
                                 filter:opacity(0.5);
                                 place-self: end;
                                 border-radius: var(--border-radius-2x);
-                            ` }
-				/>
+                            "
+					/>
+				}
 			</div>
 		</a>
 	</section>
