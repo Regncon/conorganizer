@@ -175,7 +175,7 @@ func TestBuildPuljeInterestState_WhenOpenPuljeHasActiveWarning_ReturnsWarning(t 
 
 	// Given
 	expectedAvailability := PuljeInterestWarning
-	expectedMessage := "Puljefordelingen stenger snart. Gjør endringer nå hvis du vil endre interessen din."
+	expectedMessage := "Viktig: Puljefordelingen stenger snart. Gjør endringer nå hvis du vil endre interessene dine."
 
 	pulje := buildPuljeInterestStateTestPulje(
 		t,

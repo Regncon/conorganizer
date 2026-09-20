@@ -139,7 +139,7 @@ func BuildPuljeInterestState(pulje models.PuljeRow, now time.Time) PuljeInterest
 
 	if pulje.ClosingWarningActive {
 		state.Availability = PuljeInterestWarning
-		state.Message = "Puljefordelingen stenger snart. Gjør endringer nå hvis du vil endre interessen din."
+		state.Message = "Viktig: Puljefordelingen stenger snart. Gjør endringer nå hvis du vil endre interessene dine."
 		state.Priority = 2
 		return state
 	}
