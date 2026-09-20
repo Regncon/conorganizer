@@ -89,33 +89,7 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 
 			eventIdRouter.Route("/interest", func(eventInterest chi.Router) {
 
-				eventInterest.Put("/selected-interest", func(w http.ResponseWriter, r *http.Request) {
-					eventId := chi.URLParam(r, "idx")
-					type Signals struct {
-						BillettHolderId int    `json:"billettHolderId"`
-						PuljeId         string `json:"puljeId"`
-					}
-					signals := &Signals{}
-					if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
-						logger.Error(fmt.Errorf("failed to read event interest signals: %w", readSignalErr).Error())
-						http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
-						return
-					}
-
-					interest, err := getSelectedInterest(eventId, signals.BillettHolderId, signals.PuljeId, db)
-					if err != nil {
-						logger.Error(fmt.Errorf("failed to get selected interest: %w", err).Error())
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-
-					sse := datastar.NewSSE(w, r)
-					signalJSON := fmt.Appendf(nil, `{"selectedInterestLevel": %q, "currentInterestLevelChoice": "Pending choice"}`, interest)
-					if err := sse.PatchSignals(signalJSON); err != nil {
-						logger.Error(fmt.Errorf("failed to patch selected interest signal: %w", err).Error(), "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "selectedInterestLevel", interest)
-					}
-
-				})
+				eventInterest.Put("/selected-interest", selectedInterestHandler(db, logger, eventImageDir))
 
 				eventInterest.Route("/update", func(updateInterestRouter chi.Router) {
 

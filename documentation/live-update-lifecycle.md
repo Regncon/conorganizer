@@ -4,6 +4,9 @@
 
 Conorganizer uses Datastar Server-Sent Events and embedded NATS KeyValue buckets to refresh open pages when server-side content changes.
 
+For browser state, signal responses, and signals carried by live HTML, see
+[Datastar signals and examples](datastar-signals.md).
+
 Every live page must render full content during the normal HTTP request. After the page loads, a Datastar `data-init` request opens a live SSE endpoint. The endpoint ensures the browser has a Gorilla session cookie named `connections`, ensures the connection id from that session exists as a key in the relevant NATS KeyValue bucket, sends one full Datastar patch immediately, and then waits for bucket updates.
 
 When a mutation changes content, the server broadcasts to the affected bucket by looping through all keys in that bucket and writing a new timestamp/nonce value to each key. Each open SSE watcher sees its key change and re-renders the full page fragment from the database.

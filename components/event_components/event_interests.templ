@@ -10,7 +10,6 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
@@ -30,11 +29,10 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		}
 		selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
 		billettholderID := requestctx.SelectedBillettholderID(r.Context())
-		assignedEvent, _ := getAssignedEventForBillettholder(billettholderID, db, logger)
-		isOver18, _ := getBillettholderIsOver18(billettholderID, db, logger)
-		showUnder18 := isOver18 == 0 && ageGroup == models.AgeGroupAdultsOnly
-		showAssignedEvent := assignedEvent.EventID != "" || assignedEvent.Role == "GM"
-		imgURL := eventimage.GetEventImageUrl(assignedEvent.EventID, "banner", eventImageDir)
+		noticeSignals, noticeErr := LoadInterestNoticeSignals(billettholderID, puljeId, ageGroup, eventImageDir, db)
+		if noticeErr != nil {
+			logger.Error(noticeErr.Error(), "event_id", eventId, "pulje_id", puljeId, "billettholder_id", billettholderID)
+		}
 	}}
 	<style>
 		.dialog-container {
@@ -130,19 +128,25 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			}
 		}
 	</style>
+	// Refresh the current browser selection when the page's live stream delivers HTML.
+	// The stream's original request may contain an earlier billettholder selection.
 	<dialog
 		class="interest-dialog"
 		data-attr:open="$_interestIsOpen ? true : false"
+		data-signals__ifmissing={ templ.JSONString(noticeSignals) }
 		data-signals:pulje-id={ fmt.Sprintf("'%s'", puljeId) }
 		data-signals:pulje-availability={ fmt.Sprintf("'%s'", selectedPuljeState.Availability) }
 		data-signals:pulje-can-edit={ fmt.Sprintf("%t", selectedPuljeState.CanEdit) }
 		data-signals:pulje-status-message={ fmt.Sprintf("%q", selectedPuljeState.Message) }
 		data-signals:pulje-show-profile-link={ fmt.Sprintf("%t", selectedPuljeState.ShowProfileLink) }
+		data-effect={ fmt.Sprintf("if ($billettHolderId && $puljeId) { @put('/event/api/%s/interest/selected-interest') }", eventId) }
+		data-on:datastar-fetch__document={ fmt.Sprintf("if (el.isConnected && evt.detail.type === 'datastar-patch-elements' && evt.detail.el?.id === 'event-container' && $billettHolderId && $puljeId) { @put('/event/api/%s/interest/selected-interest') }", eventId) }
 	>
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
 			</header>
+			<pre data-json-signals></pre>
 			<div
 				class="dialog-content"
 				tabindex="-1"
@@ -152,15 +156,13 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
 					<p class="label">Velg interesse</p>
-					if showAssignedEvent {
-						@InterestAlreadyAssigned(assignedEvent.Title, assignedEvent.System, assignedEvent.Role, imgURL, assignedEvent.EventID)
-					}
-					if showUnder18 {
+					@InterestAlreadyAssigned(title, noticeSignals.AssignedEvent)
+					<div data-show="$showUnder18" style={ noticeDisplayStyle(noticeSignals.ShowUnder18) }>
 						@interestUnder18(title)
-					}
-					if isOver18 == 1 && !showAssignedEvent {
+					</div>
+					<div data-show="$canChooseInterest" style={ noticeDisplayStyle(noticeSignals.CanChooseInterest) }>
 						@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
-					}
+					</div>
 				</div>
 			</div>
 			<div class="dialog-footer">
@@ -187,7 +189,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	</script>
 }
 
-templ InterestAlreadyAssigned(title string, system string, role string, imgURL string, eventId string) {
+templ InterestAlreadyAssigned(title string, assignedEvent AssignedEvent) {
 	<style>
         .interest-already-assigned {
             padding: var(--spacing-5x);
@@ -195,7 +197,7 @@ templ InterestAlreadyAssigned(title string, system string, role string, imgURL s
             border-radius: var(--border-radius-1x);
             color: var(--color-text-soft);
 
-            & > p {
+            > p {
                 margin-block: var(--spacing-5x);
             }
 
@@ -227,30 +229,18 @@ templ InterestAlreadyAssigned(title string, system string, role string, imgURL s
         }
 
     </style>
-	<section class="interest-already-assigned">
-		<h3>
-			Du
-			if role == "GM" {
-				er arrangør i på et annet arrangement i denne puljen.
-			} else {
-				har allerede blitt tildelt denne puljen.
-			}
+	<section class="interest-already-assigned" data-show="$showAssignedEvent" style={ noticeDisplayStyle(assignedEvent.EventID != "") }>
+		<h3 data-text="$assignedEvent.role === 'GM' ? 'Du er arrangør for et arrangement i denne puljen.' : 'Du har allerede blitt tildelt denne puljen.'">
+			{ assignedEventHeading(assignedEvent.Role) }
 		</h3>
-		<p>
-			if role == "GM" {
-				<i>{ title }</i> er satt opp med deg som arrangør.
-			} else {
-				Du har allerede plass på et annet arrangement i denne puljen.
-				Du kan melde deg av det arrangementet om du heller ønsker å være med på <i>{ title }</i>.
-			}
+		<p data-show="$assignedEvent.role === 'GM'" style={ noticeDisplayStyle(assignedEvent.Role == "GM") }>
+			<i data-text="$assignedEvent.title">{ assignedEvent.Title }</i> er satt opp med deg som arrangør.
 		</p>
-		<!-- use correct data (current assigned event) not current event data -->
-		@ClickableEventCard(
-			title,
-			system,
-			imgURL,
-			eventId,
-		)
+		<p data-show="$assignedEvent.role !== 'GM'" style={ noticeDisplayStyle(assignedEvent.Role != "GM") }>
+			Du har allerede plass på et annet arrangement i denne puljen.
+			Du kan melde deg av det arrangementet om du heller ønsker å være med på <i>{ title }</i>.
+		</p>
+		@ClickableEventCard(assignedEvent)
 	</section>
 }
 
@@ -274,9 +264,9 @@ templ interestUnder18(title string) {
 	</section>
 }
 
-templ ClickableEventCard(title string, system string, imgURL string, eventId string) {
+templ ClickableEventCard(assignedEvent AssignedEvent) {
 	<section class="prev-next-button-container no-print clickable-event-card">
-		<a class="previous-next-buttons" href={ fmt.Sprintf("%s", templ.URL("/event/"+eventId)) }>
+		<a class="previous-next-buttons" href={ templ.URL("/event/" + assignedEvent.EventID) } data-attr:href="'/event/' + encodeURIComponent($assignedEvent.eventId)">
 			<div style="display: grid; grid-template-rows: 1fr; height: 100%;">
 				<div class="text-container" style="display: flex; align-items: center; grid-row: 1 / 2; grid-column: 1 / 2;">
 					<div
@@ -288,20 +278,25 @@ templ ClickableEventCard(title string, system string, imgURL string, eventId str
                             "
 					>
 						<strong
+							data-text="$assignedEvent.title"
 							style="
                                 height: 1lh;
                                 word-break: break-all;
                             "
-						>{ title }</strong>
-						<p>{ system }</p>
+						>{ assignedEvent.Title }</strong>
+						<p data-text="$assignedEvent.system">{ assignedEvent.System }</p>
 					</div>
 				</div>
-				if imgURL != "" {
-					<img
-						src={ imgURL }
-						title={ title }
-						height="75px"
-						style="
+				<img
+					if assignedEvent.ImageURL != "" {
+						src={ assignedEvent.ImageURL }
+					}
+					title={ assignedEvent.Title }
+					data-show="$assignedEvent.imageUrl !== ''"
+					data-attr:src="$assignedEvent.imageUrl || null"
+					data-attr:title="$assignedEvent.title"
+					height="75px"
+					style={ noticeDisplayStyle(assignedEvent.ImageURL != "") + `
                                 grid-row: 1 / 2;
                                 grid-column: 1 / 2;
                                 mask-image: var(--linear-gradient-mask);
@@ -309,60 +304,9 @@ templ ClickableEventCard(title string, system string, imgURL string, eventId str
                                 filter:opacity(0.5);
                                 place-self: end;
                                 border-radius: var(--border-radius-2x);
-                            "
-					/>
-				}
+                            ` }
+				/>
 			</div>
 		</a>
 	</section>
-}
-
-func getBillettholderIsOver18(billettholderId int, db *sql.DB, log *slog.Logger) (int, error) {
-	query := "SELECT is_over_18 FROM billettholdere WHERE id = ?"
-	var isOver18 int
-
-	err := db.QueryRow(query, billettholderId).Scan(&isOver18)
-	if err != nil {
-		log.Error(fmt.Errorf("Error occurred while fetching billettholder age: %w", err).Error())
-		return 0, err
-	}
-
-	return isOver18, nil
-}
-
-type AssignedEvent struct {
-	Title   string
-	System  string
-	Role    string
-	Source  string
-	EventID string
-}
-
-func getAssignedEventForBillettholder(billettholderId int, db *sql.DB, log *slog.Logger) (AssignedEvent, error) {
-	query := `
-        SELECT e.title, e.system, bp.role, bp.source, e.id as event_id
-        FROM billettholdere b
-        JOIN relation_events_players bp ON b.id = bp.billettholder_id
-        JOIN events e ON bp.event_id = e.id
-        WHERE (b.id = ?1 AND bp.source = 'manual') or (b.id = ?1 AND bp.role = 'GM')
-    `
-	var assignedEventTitle string
-	var assignedEventSystem string
-	var assignedEventRole string
-	var assignedEventSource string
-	var assignedEventId string
-
-	err := db.QueryRow(query, billettholderId).Scan(&assignedEventTitle, &assignedEventSystem, &assignedEventRole, &assignedEventSource, &assignedEventId)
-	if err != nil {
-		log.Error(fmt.Errorf("Error occurred while fetching assigned event for billettholder: %w", err).Error())
-		return AssignedEvent{}, err
-	}
-
-	return AssignedEvent{
-		Title:   assignedEventTitle,
-		System:  assignedEventSystem,
-		Role:    assignedEventRole,
-		Source:  assignedEventSource,
-		EventID: assignedEventId,
-	}, nil
 }

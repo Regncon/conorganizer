@@ -43,7 +43,6 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		class="ticket-holder-container"
 		data-signals__ifmissing:billett-holder-id=""
 		data-on:billettholder-selected="$billettHolderId = evt.detail"
-		data-effect={ fmt.Sprintf("if ($billettHolderId) { @put('/event/api/%s/interest/selected-interest') }", eventId) }
 		data-init={ fmt.Sprintf("const init = window.conorganizer.billettholderSelection.initialize(%s, %s); $billettHolderId = init?.Id ?? '';", associatedTicketHoldersJSON, defaultBillettholderJSON) }
 	>
 		if err != nil {
