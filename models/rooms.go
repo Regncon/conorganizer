@@ -26,11 +26,13 @@ RoomEventPuljeSummary is the summary of an event in `relation_event_puljer` and 
   - `EventPuljeID` is the ID of the unique event in a pulje
   - `EventID`      is the ID of the pulje the unique event is in
   - `Title`        is the title of the event
+  - `Notes`        is the event's administrative notes
 */
 type RoomEventPuljeSummary struct {
 	EventPuljeID string
 	EventID      string
 	Title        string
+	Notes        string
 	MaxPlayers   int
 	RoomID       int64
 }
@@ -38,6 +40,7 @@ type RoomEventPuljeSummaryJson struct {
 	EventPuljeID string        `json:"pulje_id"`
 	EventID      string        `json:"event_id"`
 	Title        string        `json:"title"`
+	Notes        string        `json:"notes"`
 	MaxPlayers   int           `json:"max_players"`
 	RoomID       sql.NullInt64 `json:"room_id"`
 }
@@ -66,6 +69,7 @@ type RoomStatusRow struct {
 
 	EventID         sql.NullString
 	EventTitle      sql.NullString
+	EventNotes      sql.NullString
 	EventMaxPlayers sql.NullInt32
 }
 

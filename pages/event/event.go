@@ -79,7 +79,7 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 			eventIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				eventID := chi.URLParam(r, "idx")
 				liveManager.Stream(w, r, live.Page{
-					Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests},
+					Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests, live.BucketRooms},
 					Render: func(ctx context.Context, r *http.Request) templ.Component {
 						isAdmin := authctx.GetAdminFromUserToken(ctx)
 						return event_page(eventID, isAdmin, logger, db, eventImageDir, r)

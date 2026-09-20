@@ -21,6 +21,7 @@ type InterestWithHolder struct {
 	FirstChoice          bool
 	HasOtherEventInPulje bool
 	HasBeenGamemaster    bool
+	IsPlayer             bool
 	IsGamemaster         bool
 
 	FirstName  string
@@ -117,7 +118,8 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 ` + queryFirstChoice + `,
                 ` + queryHasOtherAssignedEventInPulje(interestRowAlias) + `,
                 ` + queryHasBeenGamemaster(interestRowAlias) + `,
-                COALESCE(ep.role = '` + string(models.EventPlayerRoleGM) + `', 0) AS is_gamemaster,
+				0 AS is_player,
+				0 AS is_gamemaster,
                 b.first_name,
                 b.last_name,
                 b.ticket_type,
@@ -181,6 +183,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&interest.FirstChoice,
 			&interest.HasOtherEventInPulje,
 			&interest.HasBeenGamemaster,
+			&interest.IsPlayer,
 			&interest.IsGamemaster,
 			&interest.FirstName,
 			&interest.LastName,
@@ -209,7 +212,8 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 ` + queryFirstChoice + `,
                 ` + queryHasOtherAssignedEventInPulje(assignmentRowAlias) + `,
                 ` + queryHasBeenGamemaster(assignmentRowAlias) + `,
-                COALESCE(ep.role = '` + string(models.EventPlayerRoleGM) + `', 0) AS is_gamemaster,
+				MAX(ep.role = '` + string(models.EventPlayerRolePlayer) + `') AS is_player,
+				MAX(ep.role = '` + string(models.EventPlayerRoleGM) + `') AS is_gamemaster,
                 b.first_name,
                 b.last_name,
                 b.ticket_type,
@@ -222,9 +226,18 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                     AND i.pulje_id = ep.pulje_id
             WHERE
                 ep.event_id = ?
+			GROUP BY
+				ep.billettholder_id,
+				ep.event_id,
+				ep.pulje_id,
+				i.interest_level,
+				b.first_name,
+				b.last_name,
+				b.ticket_type,
+				b.is_over_18
             ORDER BY
-                (ep.role = '` + string(models.EventPlayerRoleGM) + `') DESC,
-                ep.inserted_at ASC
+				MAX(ep.role = '` + string(models.EventPlayerRoleGM) + `') DESC,
+				MIN(ep.inserted_at) ASC
 		`
 	rows, queryErr := db.Query(query, eventId)
 	if queryErr != nil {
@@ -243,6 +256,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&assignment.FirstChoice,
 			&assignment.HasOtherEventInPulje,
 			&assignment.HasBeenGamemaster,
+			&assignment.IsPlayer,
 			&assignment.IsGamemaster,
 			&assignment.FirstName,
 			&assignment.LastName,
@@ -278,24 +292,18 @@ func actionButtonClass(label string) string {
 	return "btn btn--outline button-size"
 }
 
-func playerButtonAction(isAssigned bool, isGamemaster bool, assignAction string, removeAction string) ButtonInfo {
-	if !isAssigned {
+func playerButtonAction(isPlayer bool, assignAction string, removeAction string) ButtonInfo {
+	if !isPlayer {
 		return ButtonInfo{Label: "Tildel som " + models.EventPlayerRolePlayer.Label(), Action: assignAction}
-	}
-	if isGamemaster {
-		return ButtonInfo{Label: "Bytt til " + models.EventPlayerRolePlayer.Label(), Action: assignAction}
 	}
 	return ButtonInfo{Label: "Fjern som " + models.EventPlayerRolePlayer.Label(), Action: removeAction}
 }
 
-func gmButtonAction(isAssigned bool, isGamemaster bool, assignAction string, removeAction string) ButtonInfo {
-	if !isAssigned {
-		return ButtonInfo{Label: "Tildel som " + models.EventPlayerRoleGM.Label(), Action: assignAction}
-	}
+func gmButtonAction(isGamemaster bool, assignAction string, removeAction string) ButtonInfo {
 	if isGamemaster {
 		return ButtonInfo{Label: "Fjern som " + models.EventPlayerRoleGM.Label(), Action: removeAction}
 	}
-	return ButtonInfo{Label: "Bytt til " + models.EventPlayerRoleGM.Label(), Action: assignAction}
+	return ButtonInfo{Label: "Tildel som " + models.EventPlayerRoleGM.Label(), Action: assignAction}
 }
 
 func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error) {
@@ -325,98 +333,6 @@ func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error)
 		return nil, fmt.Errorf("iterate billettholder rows: %w", rowErr)
 	}
 	return billettholdere, nil
-}
-
-func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *slog.Logger) error {
-	tx, txErr := db.Begin()
-	if txErr != nil {
-		logger.Error(fmt.Errorf("failed to begin transaction for first choice: %w", txErr).Error())
-		return fmt.Errorf("begin first choice transaction: %w", txErr)
-	}
-	defer tx.Rollback()
-
-	upsertInterestQuery := `
-		INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level)
-		VALUES (?, ?, ?, '` + string(models.InterestLevelHigh) + `')
-		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
-			interest_level = EXCLUDED.interest_level,
-			updated_at = ` + models.DBDateTimeNowSQL + `
-	`
-	if _, execErr := tx.Exec(upsertInterestQuery, bid, eId, Pid); execErr != nil {
-		logger.Error(fmt.Errorf("failed to upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
-		return fmt.Errorf("upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr)
-	}
-
-	upsertPlayerQuery := `
-		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role)
-		VALUES (?, ?, ?, '` + string(models.EventPlayerRolePlayer) + `')
-		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
-			role = EXCLUDED.role,
-			inserted_at = ` + models.DBDateTimeNowSQL + `
-	`
-	if _, execErr := tx.Exec(upsertPlayerQuery, eId, Pid, bid); execErr != nil {
-		logger.Error(fmt.Errorf("failed to upsert player status for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
-		return fmt.Errorf("upsert player status for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr)
-	}
-
-	if commitErr := tx.Commit(); commitErr != nil {
-		logger.Error(fmt.Errorf("failed to commit first choice transaction: %w", commitErr).Error())
-		return fmt.Errorf("commit first choice transaction: %w", commitErr)
-	}
-	return nil
-}
-
-func UpdatePlayerStatus(eventId string,
-	puljeId string,
-	billettholderId int,
-	isPlayer bool,
-	isGM bool,
-	db *sql.DB,
-	logger *slog.Logger,
-) error {
-	if isPlayer && isGM {
-		return fmt.Errorf("player assignment cannot be both %s and %s", models.EventPlayerRolePlayer, models.EventPlayerRoleGM)
-	}
-
-	if !isPlayer && !isGM {
-		query := `
-			DELETE FROM relation_events_players
-			WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ?
-		`
-		_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId)
-		if updatePlayerStatusErr != nil {
-			logger.Error(fmt.Errorf("failed to remove player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, updatePlayerStatusErr).Error())
-			return fmt.Errorf("remove player status (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, updatePlayerStatusErr)
-		}
-		return nil
-	}
-
-	role := models.EventPlayerRolePlayer
-	if isGM {
-		role = models.EventPlayerRoleGM
-	}
-
-	query := `
-		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role)
-		VALUES (?, ?, ?, '` + string(role) + `')
-		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
-			role = EXCLUDED.role,
-			inserted_at = ` + models.DBDateTimeNowSQL + `
-	`
-	_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId)
-	if updatePlayerStatusErr != nil {
-		logger.Error(fmt.Errorf("failed to update player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d, isPlayer=%t, isGM=%t): %w", eventId, puljeId, billettholderId, isPlayer, isGM, updatePlayerStatusErr).Error())
-		return fmt.Errorf(
-			"update player status (event_id=%s, pulje_id=%s, billettholder_id=%d, isPlayer=%t, isGM=%t): %w",
-			eventId,
-			puljeId,
-			billettholderId,
-			isPlayer,
-			isGM,
-			updatePlayerStatusErr,
-		)
-	}
-	return nil
 }
 
 templ interestInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder, isAssigned bool) {
@@ -523,12 +439,12 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
 			{{
-				assignPlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = true; $assignmentIsGm = false; @put('" + UpdatePlayerStatusURL + "')", eventId, puljeId, interest.BillettholderId)
-				removePlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('" + UpdatePlayerStatusURL + "')", eventId, puljeId, interest.BillettholderId)
-				assignGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = true; @put('" + UpdatePlayerStatusURL + "')", eventId, puljeId, interest.BillettholderId)
-				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('" + UpdatePlayerStatusURL + "')", eventId, puljeId, interest.BillettholderId)
-				playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerAction, removePlayerAction)
-				gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmAction, removeGmAction)
+				assignPlayerAction := tildelingsrolleAction(eventId, puljeId, interest.BillettholderId, models.EventPlayerRolePlayer, false)
+				removePlayerAction := tildelingsrolleAction(eventId, puljeId, interest.BillettholderId, models.EventPlayerRolePlayer, true)
+				assignGmAction := tildelingsrolleAction(eventId, puljeId, interest.BillettholderId, models.EventPlayerRoleGM, false)
+				removeGmAction := tildelingsrolleAction(eventId, puljeId, interest.BillettholderId, models.EventPlayerRoleGM, true)
+				playerAction := playerButtonAction(interest.IsPlayer, assignPlayerAction, removePlayerAction)
+				gmAction := gmButtonAction(interest.IsGamemaster, assignGmAction, removeGmAction)
 				buttonsInfo := []ButtonInfo{playerAction, gmAction}
 			}}
 			<section
@@ -559,6 +475,9 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 							</span>
 							Speleleiar
 						</p>
+					}
+					if interest.IsPlayer {
+						<p>Spiller</p>
 					}
 					if interest.HasBeenGamemaster && !interest.IsGamemaster {
 						<p class="has-been-gamemaster">
@@ -608,12 +527,20 @@ templ PuljeAssignmentSearch(db *sql.DB, logger *slog.Logger, pulje models.Pulje)
 	if err != nil {
 		<p style="color: var(--color-error);">Kunne ikke hente billettholdere</p>
 	} else {
-		@billettholderAssignmentActions("", pulje, billettholdere, false, "/admin/api/puljefordeling/assign")
+		@billettholderAssignmentActions("", pulje, billettholdere, true, "/admin/api/puljefordeling/assign")
 	}
 }
 
 templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder, showGM bool, playerAddURL string) {
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
+	{{
+		gmAddURL := AddGMURL
+		playerLabel := "Legg til som førsteval"
+		if eventId == "" {
+			gmAddURL = playerAddURL
+			playerLabel = "Legg til som spiller"
+		}
+	}}
 	<style>
 		.billettholder-search {
 			margin-block-end: 2rem;
@@ -654,17 +581,19 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 		<div class="billettholder-search-buttons">
 			if showGM {
 				<button
+					type="button"
 					class="btn btn--secondary"
-					data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('" + AddGMURL + "'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+					data-on:click={ tildelingsvelgerAction(puljeId, models.EventPlayerRoleGM, gmAddURL) }
 				>
-					Legg til som { models.EventPlayerRoleGM.Label() }
+					Legg til som spilleder
 				</button>
 			}
 			<button
+				type="button"
 				class="btn btn--secondary"
-				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('%s'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId, playerAddURL) }
+				data-on:click={ tildelingsvelgerAction(puljeId, models.EventPlayerRolePlayer, playerAddURL) }
 			>
-				Legg til som førsteval
+				{ playerLabel }
 			</button>
 		</div>
 		<script src="/static/web_components/admin_billettholder_search.js"></script>
@@ -727,9 +656,16 @@ func approvalAgeConfirmAction() string {
 		"$assignmentPuljeId = $ageWarningPuljeId; " +
 		"$assignmentIsPlayer = $ageWarningIsPlayer; " +
 		"$assignmentIsGm = $ageWarningIsGm; " +
+		"$assignmentRole = $ageWarningRole; " +
+		"$assignmentFromAddMenu = $ageWarningFromAddMenu; " +
+		"$assignmentFromEventId = $ageWarningFromEventId; " +
+		"$assignmentFromManualSeat = $ageWarningFromManualSeat; " +
+		"$assignmentConfirmation = ''; " +
+		"$assignmentRemove = false; " +
 		"$assignmentAgeConfirmed = true; " +
 		"($ageWarningMethod === 'PUT' ? @put($ageWarningUrl) : @post($ageWarningUrl)); " +
 		"$assignmentAgeConfirmed = false; " +
+		"$assignmentFromAddMenu = false; " +
 		"$assignmentBillettholderId = 0; " +
 		"$ageWarningText = ''; " +
 		"document.getElementById('approval-age-dialog').close()"
@@ -760,6 +696,10 @@ templ ApprovalAgeWarningDialog() {
 			"ageWarningPuljeId":         "",
 			"ageWarningIsPlayer":        false,
 			"ageWarningIsGm":            false,
+			"ageWarningRole":            "Player",
+			"ageWarningFromAddMenu":     false,
+			"ageWarningFromEventId":     "",
+			"ageWarningFromManualSeat":  false,
 			"ageWarningMethod":          "",
 			"ageWarningUrl":             "",
 		}) }
@@ -821,7 +761,7 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 			<h2>Spelarar</h2>
 		</article>
 		for _, pulje := range puljer {
-			@puljeSection(eventId, pulje, interests, assignees, pulje.ID == models.PuljeFredagKveld, billettholdere)
+			@puljeSection(eventId, pulje, interests, assignees, true, billettholdere)
 		}
 	</div>
 }

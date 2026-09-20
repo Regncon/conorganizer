@@ -111,7 +111,13 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 			style="margin:1rem;"
 		>Administrator - rediger arrangementer</a>
 	}
-	@Event_mobile(event, previousNextData, puljerForEvent, puljeId, programPublished, hasTickets, showInterestControls, eventImageDir)
+	{{ roomAssignments, roomsErr := getEventRooms(db, eventId, programPublished) }}
+	if roomsErr != nil {
+		{{ logger.Error(roomsErr.Error(), "event_id", eventId) }}
+	}
+	@Event_mobile(event, previousNextData, puljerForEvent, puljeId, programPublished, hasTickets, showInterestControls, eventImageDir) {
+		@eventRoomLocations(eventId, roomAssignments)
+	}
 	if showInterestControls {
 		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, event.Title, event.AgeGroup, eventImageDir, db, r, logger)
 	}

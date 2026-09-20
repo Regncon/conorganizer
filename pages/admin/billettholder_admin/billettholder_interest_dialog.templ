@@ -30,7 +30,7 @@ func billettholderSectionInterestLevelTotal(section billettholderInterestPuljeSe
 
 func billettholderSectionHasGMOrDM(section billettholderInterestPuljeSection) bool {
 	for _, row := range section.Assigned {
-		if row.IsPublished && row.AssignedRole == models.EventPlayerRoleGM {
+		if row.IsPublished && row.IsGM {
 			return true
 		}
 	}
@@ -49,7 +49,7 @@ func billettholderHasGMOrDM(sections []billettholderInterestPuljeSection) bool {
 func billettholderHasFirstChoice(sections []billettholderInterestPuljeSection) bool {
 	for _, section := range sections {
 		for _, row := range section.Assigned {
-			if row.IsPublished && row.AssignedRole == models.EventPlayerRolePlayer && row.InterestLevel == models.InterestLevelHigh {
+			if row.IsPublished && row.IsPlayer && row.InterestLevel == models.InterestLevelHigh {
 				return true
 			}
 		}
@@ -79,6 +79,8 @@ func billettholderInterestLevelIcon(level models.InterestLevel) string {
 
 func billettholderInterestRoleLabel(role models.EventPlayerRole) string {
 	switch role {
+	case billettholderInterestEventRolePlayerAndGM:
+		return "Spiller og Spilleder (GM/DM)"
 	case models.EventPlayerRoleGM:
 		return "Spilleder (GM/DM)"
 	case models.EventPlayerRolePlayer:

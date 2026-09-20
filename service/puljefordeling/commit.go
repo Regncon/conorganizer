@@ -2,10 +2,13 @@ package puljefordeling
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/Regncon/conorganizer/models"
 )
+
+var ErrPuljeCompleted = errors.New("pulje is published; changes are not allowed")
 
 // CommitDistribution persists the current emulated distribution for a pulje to
 // relation_events_players so it becomes the actual seating shown in other views
@@ -16,7 +19,13 @@ import (
 // solver-committed seats for the pulje are cleared first, so re-committing always
 // reflects the latest distribution. GM rows are not touched.
 func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
-	em, err := EmulateSeatings(db)
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin commit tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	em, err := emulateSeatings(tx)
 	if err != nil {
 		return fmt.Errorf("emulate before commit: %w", err)
 	}
@@ -34,11 +43,13 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 		return nil
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		return fmt.Errorf("begin commit tx: %w", err)
+	var status models.PuljeStatus
+	if err := tx.QueryRow(`SELECT status FROM puljer WHERE id = ?`, pulje).Scan(&status); err != nil {
+		return fmt.Errorf("read pulje status before commit: %w", err)
 	}
-	defer func() { _ = tx.Rollback() }()
+	if status == models.PuljeStatusCompleted {
+		return ErrPuljeCompleted
+	}
 
 	// Clear the previous solver-committed seats; manual pins and GM rows stay.
 	if _, err := tx.Exec(
@@ -51,7 +62,7 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 	const upsert = `
 		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
 		VALUES (?, ?, ?, ?, ?)
-		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
+		ON CONFLICT(billettholder_id, event_id, pulje_id, role) DO UPDATE SET
 			role = EXCLUDED.role,
 			source = EXCLUDED.source
 	`

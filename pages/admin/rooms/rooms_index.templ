@@ -183,7 +183,7 @@ templ roomsIndex(children templ.Component, puljeQuery models.Pulje) {
 					role="button"
 					href={ "/admin/rooms/assignment/" + pulje }
 					class={ templ.KV("active", puljeQuery == pulje) }
-				>{ pulje }</a>
+				>{ pulje.Label() }</a>
 			}
 		</div>
 		@children

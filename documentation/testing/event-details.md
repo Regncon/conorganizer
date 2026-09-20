@@ -43,6 +43,38 @@ Denne sjekklisten dekker `/event/{id}`, altså den publiserte detaljvisningen fo
   **Når** siden vises.<br>
   **Så** skal brukeren møte en forståelig feiltilstand og ikke en halvferdig arrangementsvisning.
 
+### Romkart
+
+- [ ] **Romkart vises først etter publisering**<br>
+  **Gitt** at arrangementet har et tildelt rom.<br>
+  **Når** programmet er publisert og arrangementet har en aktiv romtildeling i puljen, uavhengig av puljens status og publiseringsflagg.<br>
+  **Så** vises romnavn og «Se rommet» for rom med kjent kart. Før publisering skal verken puljer, klokkeslett, romnavn eller kart rendres.
+
+- [ ] **Hver pulje viser sitt eget rom**<br>
+  **Gitt** at arrangementet har ulike rom i to puljer og programmet er publisert.<br>
+  **Når** brukeren åpner hvert romkart.<br>
+  **Så** vises riktig pulje, romnavn, etasje og SVG-kart, også uten innlogging.
+
+- [ ] **Samme rom gir én knapp med alle tidspunktene**<br>
+  **Gitt** at arrangementet har samme rom i flere puljer og programmet er publisert.<br>
+  **Når** detaljsiden vises.<br>
+  **Så** vises én kartknapp per rom med puljenavn og klokkeslett i kronologisk rekkefølge og større tekst. Den separate «Pulje(r)»-listen er fjernet. Puljer uten rom vises som vanlige tidsrader uten kartknapp.
+
+- [ ] **Kartet forblir åpent ved liveoppdateringer**<br>
+  **Gitt** at kartmodalen er åpen.<br>
+  **Når** en endring i interesse, arrangement eller rom utløser en NATS/Datastar-oppdatering.<br>
+  **Så** forblir samme modal åpen. Endring av romnavn eller romtildeling oppdaterer innholdet uten å lukke modalen, også når romknapper slås sammen eller deles opp.
+
+- [ ] **Tilbaketrukket romkart lukkes**<br>
+  **Gitt** at kartmodalen er åpen.<br>
+  **Når** romtildelingen fjernes eller programmet avpubliseres.<br>
+  **Så** forsvinner kartet. Ny publisering skal ikke åpne modalen automatisk. Rom uten kjent SVG viser rominformasjon uten kartknapp.
+
+- [ ] **Kartmodalen fungerer med tastatur og på mobil**<br>
+  **Gitt** at brukeren åpner «Se rommet» med tastatur eller på en smal skjerm.<br>
+  **Når** modalen vises og lukkes med Escape, lukkeknappen eller bakgrunnen.<br>
+  **Så** holdes tastaturfokus i modalen mens den er åpen og returnerer til knappen ved lukking. Hele kartet beholder proporsjonene, og innholdet kan rulles ved liten skjermhøyde.
+
 ### Interesseflyt
 
 - [ ] **Interessepanelet forklarer handlingen**<br>

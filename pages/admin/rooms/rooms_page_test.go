@@ -67,6 +67,17 @@ func TestRoomsPageContent_RendersRoomDetailsAndCreateAction(t *testing.T) {
 	}
 }
 
+func TestRoomsIndex_RendersHumanReadablePuljeLabels(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "rooms_index_pulje_labels")
+
+	doc := templtest.Render(t, roomsIndex(RoomsPageContent(db, logger), models.PuljeLordagMorgen))
+	tab := doc.Find(`a[href="/admin/rooms/assignment/LordagMorgen"]`)
+
+	if tab.Length() != 1 || tab.Text() != "Lørdag morgen" {
+		t.Fatalf("expected human-readable room tab label, got %q", tab.Text())
+	}
+}
+
 func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en pulje med ett arrangement uten rom og ett arrangement med rom.",
@@ -78,7 +89,7 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 	expectedTextParts := []string{
 		"1 Eventer i pulje uten tildelt rom",
 		"Missing Room Event",
-		"Romfordelig for FredagKveld",
+		"Romfordelig for Fredag kveld",
 		"Assigned Room Event",
 		"201",
 	}
@@ -117,6 +128,24 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 	}
 	if got := doc.Find(`.event-list .room-event[draggable="true"]`).AttrOr("data-on:dragstart", ""); got != "$draggedEventId = 'missing-room-event'" {
 		t.Fatalf("missing-room event link should set the dragged signal on dragstart\nactual: %s", got)
+	}
+}
+
+func TestRoomsAssignmentPage_DialogRendersOutsideLiveRegion(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "rooms_assignment_dialog_placement")
+
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
+
+	if got := doc.Find("#assignment-dialog").Length(); got != 1 {
+		t.Fatalf("expected exactly one assignment dialog, got %d", got)
+	}
+	if got := doc.Find("#room-assignment #assignment-dialog").Length(); got != 0 {
+		t.Fatalf("assignment dialog must not be inside the live #room-assignment region, got %d", got)
+	}
+
+	liveDoc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	if got := liveDoc.Find("#assignment-dialog").Length(); got != 0 {
+		t.Fatalf("live room assignment updates must not include the assignment dialog, got %d", got)
 	}
 }
 
@@ -204,7 +233,7 @@ func TestRoomsAssignmentMap_UsesDatabaseIDsAndCurrentPuljeAssignments(t *testing
 	insertRoomsPageEventPulje(t, db, "saturday-event", models.PuljeLordagKveld, room.ID)
 
 	// When
-	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
 	var mappedRooms []models.RoomByPulje
 	err := json.Unmarshal([]byte(doc.Find("room-map").AttrOr("rooms", "")), &mappedRooms)
 
@@ -218,7 +247,7 @@ func TestRoomsAssignmentMap_UsesDatabaseIDsAndCurrentPuljeAssignments(t *testing
 	if len(mappedRooms[0].AssignedEventsID) != 1 || mappedRooms[0].AssignedEventsID[0].EventID != "friday-event" {
 		t.Fatalf("expected only Friday assignments, got %+v", mappedRooms[0].AssignedEventsID)
 	}
-	if doc.Find(`#assignment-dialog button[data-event-id="friday-event"]`).Length() != 1 || doc.Find(`#assignment-dialog button[data-event-id="saturday-event"]`).Length() != 1 {
+	if doc.Find(`#assignment-dialog .room-event-option[data-event-id="friday-event"]`).Length() != 1 || doc.Find(`#assignment-dialog .room-event-option[data-event-id="saturday-event"]`).Length() != 1 {
 		t.Fatal("map event picker must contain approved events from other puljer")
 	}
 	if doc.Find(".rooms-container .room").Length() != 1 || doc.Find("room-map .room").Length() != 1 {
@@ -248,6 +277,8 @@ func TestRoomEventCard_IsSharedAcrossAssignedAndUnassignedLocations(t *testing.T
 		insertRoomsPageEvent(t, db, id, "Et arrangement", 4)
 		insertRoomsPageEventPulje(t, db, id, models.PuljeFredagKveld, roomID)
 	}
+	testutil.MustExec(t, db, `UPDATE events SET notes=? WHERE id=?`, "Notat for det ledige arrangementet", fmt.Sprintf("event-%d", 0))
+	testutil.MustExec(t, db, `UPDATE events SET notes=? WHERE id=?`, "Notat for det tildelte arrangementet", fmt.Sprintf("event-%d", mapped.ID))
 
 	// When
 	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
@@ -266,6 +297,18 @@ func TestRoomEventCard_IsSharedAcrossAssignedAndUnassignedLocations(t *testing.T
 		} else if got := remove.AttrOr("data-on:click", ""); got != fmt.Sprintf("@delete('/admin/rooms/api/assignment/FredagKveld/event-%d/%d')", roomID, roomID) {
 			t.Fatalf("removal must target the current pulje and room, got %q", got)
 		}
+
+		notes := card.Find(".event-notes")
+		if roomID == 0 || roomID == mapped.ID {
+			if notes.Length() != 1 || !strings.Contains(notes.Text(), "Notat for det") {
+				t.Fatalf("event in room %d should render its notes in an accordion", roomID)
+			}
+			if got := notes.Find("summary").Text(); got != "Notater" {
+				t.Fatalf("notes accordion should have a clear label, got %q", got)
+			}
+		} else if notes.Length() != 0 {
+			t.Fatalf("event in room %d without notes should not render an empty accordion", roomID)
+		}
 	}
 }
 
@@ -275,7 +318,7 @@ func TestRoomAssignmentPicker_ExistsWhenPuljeHasNoEvents(t *testing.T) {
 	createRoomsPageRoom(t, db, "Amalie", "705", 7)
 
 	// When
-	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
 
 	// Then
 	if doc.Find("#assignment-dialog").Length() != 1 || !strings.Contains(doc.Find("#assignment-dialog").Text(), "Ingen godkjente arrangementer.") {
@@ -291,12 +334,20 @@ func TestRoomAssignmentPicker_IncludesApprovedEventsOutsidePulje(t *testing.T) {
 	insertRoomsPagePulje(t, db, models.PuljeLordagKveld)
 	insertRoomsPageEvent(t, db, "approved-outside", "Approved Outside", 4)
 	testutil.MustExec(t, db, `UPDATE events SET status=? WHERE id=?`, models.EventStatusApproved, "approved-outside")
+	testutil.MustExec(t, db, `UPDATE events SET notes=? WHERE id=?`, "Velg riktig bord først", "approved-outside")
 	insertRoomsPageEventPulje(t, db, "approved-outside", models.PuljeLordagKveld, room.ID)
 
-	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
-	pickerEvent := doc.Find(`#assignment-dialog button[data-event-id="approved-outside"]`)
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
+	pickerEvent := doc.Find(`#assignment-dialog .room-event-option[data-event-id="approved-outside"]`)
 	if pickerEvent.Length() != 1 || !strings.Contains(pickerEvent.Text(), "Ikke i denne puljen") {
 		t.Fatal("approved events from other puljer should be available in the picker")
+	}
+	if pickerEvent.Find("details.event-notes").Length() != 1 || !strings.Contains(pickerEvent.Find("details.event-notes").Text(), "Velg riktig bord først") {
+		t.Fatal("event picker should show event notes in an accordion")
+	}
+	addButton := pickerEvent.Find("button.room-event-option-add")
+	if addButton.Length() != 1 || !strings.Contains(addButton.AttrOr("data-on:click", ""), "@post('/admin/rooms/api/assignment/FredagKveld/approved-outside/' + $room)") {
+		t.Fatal("event picker should provide a dedicated add button")
 	}
 }
 

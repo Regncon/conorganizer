@@ -189,3 +189,31 @@ func TestGetAllEventsForUser_WhenGMEventIsInCompletedPulje_ReturnsGMEvent(t *tes
 	assertProfileProgramEventTitles(t, expectedEventTitles, events)
 	assertProfileProgramEventsAreGM(t, events)
 }
+
+func TestGetAllEventsForUser_WhenAssignedAsPlayerAndGMOnSameEvent_ReturnsOneGMEvent(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given one expected profile event where the billettholder is assigned as both Player and GM.",
+		When:  "When the profile program data is loaded.",
+		Then:  "Then one event card is returned and it is marked as GM.",
+	})
+
+	// Given
+	expectedEventTitles := []string{"Dual Role Event"}
+
+	db, logger := createProfileProgramTestDB(t)
+	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
+	insertProfileProgramPublishedEvent(t, db, "dual-role-event", "Dual Role Event")
+	insertProfileProgramPlayer(t, db, "dual-role-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramPlayer(t, db, "dual-role-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM)
+
+	// When
+	events, err := GetAllEventsForUser(userInfo, billettholderID, db, logger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected event query to succeed: %v", err)
+	}
+	assertProfileProgramEventTitles(t, expectedEventTitles, events)
+	assertProfileProgramEventsAreGM(t, events)
+}

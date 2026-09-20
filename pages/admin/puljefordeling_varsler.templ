@@ -1,0 +1,91 @@
+package admin
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
+)
+
+func fordelingsvarselOppsummering(varsel puljefordeling.Fordelingsvarsel) string {
+	plasser := "spillerplasser"
+	if varsel.AntallSpillerplasser == 1 {
+		plasser = "spillerplass"
+	}
+	return fmt.Sprintf("%d spillederoppdrag · %d %s", varsel.AntallGMOppdrag, varsel.AntallSpillerplasser, plasser)
+}
+
+templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordelingsvarsel) {
+	if len(varsler) > 0 {
+		<section class="fordelingsvarsler" aria-labelledby={ "fordelingsvarsler-" + string(pulje) }>
+			<h3 id={ "fordelingsvarsler-" + string(pulje) }><span aria-hidden="true">⚠</span> Overlappende tildelinger</h3>
+			<p>Disse billettholderne har flere tildelinger i samme pulje. Åpne navnet for å se alle arrangementer og roller.</p>
+			for _, varsel := range varsler {
+				<details
+					id={ fmt.Sprintf("fordelingsvarsel-%s-%d", pulje, varsel.BillettholderID) }
+					data-fordelingsvarsel={ strconv.Itoa(varsel.BillettholderID) }
+					data-preserve-attr="open"
+				>
+					<summary><strong>{ varsel.BillettholderNavn }</strong><span>{ fordelingsvarselOppsummering(varsel) }</span></summary>
+					<ul>
+						for _, tildeling := range varsel.Tildelinger {
+							<li>
+								if tildeling.Role == models.EventPlayerRoleGM {
+									<strong>Spilleder:</strong>
+								} else {
+									<strong>Spiller:</strong>
+								}
+								{ " " + tildeling.EventTitle }
+							</li>
+						}
+					</ul>
+				</details>
+			}
+		</section>
+		<style>
+			.fordelingsvarsler {
+				--varsel-farge: var(--color-text-warning, #e0a030);
+				container: fordelingsvarsler / inline-size;
+				padding: clamp(0.75rem, 2cqi, 1.5rem);
+				border-inline-start: 0.25rem solid var(--varsel-farge);
+				border-radius: var(--border-radius-1x);
+				background: color-mix(in srgb, var(--varsel-farge) 10%, var(--bg-item));
+
+				h3 {
+					margin-block-start: 0;
+					color: var(--varsel-farge);
+				}
+
+				details {
+					border-block-start: 1px solid color-mix(in srgb, var(--varsel-farge) 35%, transparent);
+					padding-block: 0.75rem;
+				}
+
+				summary {
+					cursor: pointer;
+
+					span {
+						display: block;
+						margin-block-start: 0.25rem;
+						color: var(--color-text-soft);
+					}
+				}
+
+				ul {
+					display: grid;
+					gap: 0.5rem;
+					padding-inline-start: 1.5rem;
+					margin-block-end: 0;
+				}
+			}
+
+			@container fordelingsvarsler (width > 36rem) {
+				.fordelingsvarsler summary span {
+					display: inline;
+					margin-inline-start: 1rem;
+				}
+			}
+		</style>
+	}
+}

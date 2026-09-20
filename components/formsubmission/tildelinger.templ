@@ -1,0 +1,156 @@
+package formsubmission
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/models"
+	puljefordelingservice "github.com/Regncon/conorganizer/service/puljefordeling"
+)
+
+func tildelingsrolle(role models.EventPlayerRole) string {
+	if role == models.EventPlayerRoleGM {
+		return "Spilleder"
+	}
+	return "Spiller"
+}
+
+func tildelingsvelgerAction(pulje models.Pulje, role models.EventPlayerRole, url string) string {
+	return fmt.Sprintf("$assignmentPuljeId = %q; $assignmentRole = %q; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentRemove = false; @post(%q); $assignmentFromAddMenu = false; evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", string(pulje), string(role), url)
+}
+
+func tildelingsrolleAction(eventID string, pulje models.Pulje, billettholderID int, role models.EventPlayerRole, fjern bool) string {
+	return fmt.Sprintf("$assignmentEventId = %q; $assignmentPuljeId = %q; $assignmentBillettholderId = %d; $assignmentRole = %q; $assignmentRemove = %t; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; @put(%q); $assignmentRemove = false; $assignmentFromAddMenu = false", eventID, string(pulje), billettholderID, string(role), fjern, UpdatePlayerStatusURL)
+}
+
+func tildelingsoppsummering(tildelinger []puljefordelingservice.Tildeling) string {
+	var gms, spillere int
+	for _, tildeling := range tildelinger {
+		if tildeling.Role == models.EventPlayerRoleGM {
+			gms++
+		} else {
+			spillere++
+		}
+	}
+	spillerplasser := "spillerplasser"
+	if spillere == 1 {
+		spillerplasser = "spillerplass"
+	}
+	return fmt.Sprintf("%d spillederoppdrag · %d %s", gms, spillere, spillerplasser)
+}
+
+func tildelingsbekreftelse(varsel puljefordelingservice.Tildelingsvarsel, valg puljefordelingservice.Tildelingsvalg, method, retryURL string) string {
+	action := "@post"
+	if method == http.MethodPut {
+		action = "@put"
+	}
+	return fmt.Sprintf("$assignmentBillettholderId = %d; $assignmentEventId = %q; $assignmentPuljeId = %q; $assignmentRole = %q; $assignmentFromAddMenu = %t; $assignmentFromEventId = %q; $assignmentFromManualSeat = %t; $assignmentConfirmation = %q; $assignmentAgeConfirmed = true; $assignmentRemove = false; $tildelingOpen = false; document.getElementById('tildeling-dialog').close(); %s(%q); $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentFromAddMenu = false; $assignmentBillettholderId = 0",
+		valg.BillettholderID, valg.EventID, string(valg.PuljeID), string(valg.Role), valg.FraLeggTil, valg.FraEventID, valg.FraManuellPlass, varsel.Bekreftelse, action, retryURL)
+}
+
+templ TildelingsDialog() {
+	<dialog
+		id="tildeling-dialog"
+		class="tildeling-dialog"
+		closedBy="any"
+		aria-labelledby="tildeling-dialog-title"
+		data-signals:tildeling-open="false"
+		data-signals:assignment-confirmation="''"
+		data-signals:assignment-from-add-menu="false"
+		data-signals:assignment-from-event-id="''"
+		data-signals:assignment-from-manual-seat="false"
+		data-signals:assignment-role="'Player'"
+		data-signals:assignment-remove="false"
+		data-effect="$tildelingOpen && !document.getElementById('tildeling-dialog').open && document.getElementById('tildeling-dialog').showModal()"
+		data-on:close="$tildelingOpen = false; $assignmentConfirmation = ''"
+	>
+		<div id="tildeling-dialog-innhold"></div>
+	</dialog>
+	<style>
+		.tildeling-dialog {
+			inline-size: min(36rem, 90%);
+			max-block-size: 85dvb;
+			overflow: auto;
+			container: tildeling / inline-size;
+			padding: var(--responsive-pane-padding, 1.5rem);
+
+			.tildeling-list {
+				display: grid;
+				gap: 0.75rem;
+				padding-inline-start: 1.25rem;
+
+				span {
+					display: block;
+					font-size: 0.875rem;
+				}
+			}
+
+			.tildeling-actions {
+				display: grid;
+				gap: 0.75rem;
+				margin-block-start: 1.5rem;
+			}
+
+			.tildeling-age-warning, .tildeling-capacity-warning {
+				padding: 0.75rem;
+				border-inline-start: 0.25rem solid var(--color-warning, #b76b00);
+				background: color-mix(in srgb, var(--color-warning, #b76b00) 12%, transparent);
+			}
+		}
+
+		@container tildeling (width > 420px) {
+			.tildeling-actions {
+				grid-template-columns: auto 1fr;
+				place-items: stretch;
+			}
+		}
+	</style>
+}
+
+templ TildelingsDialogInnhold(varsel puljefordelingservice.Tildelingsvarsel, valg puljefordelingservice.Tildelingsvalg, method, retryURL string) {
+	<div id="tildeling-dialog-innhold">
+		<h2 id="tildeling-dialog-title">Tildelinger for { varsel.BillettholderNavn }</h2>
+		<p><strong>{ varsel.PuljeNavn }</strong> · { tildelingsoppsummering(varsel.Tildelinger) }</p>
+		<ul class="tildeling-list">
+			for _, tildeling := range varsel.Tildelinger {
+				<li data-role={ string(tildeling.Role) } data-event-id={ tildeling.EventID }>
+					<strong>{ tildelingsrolle(tildeling.Role) }:</strong> { tildeling.EventTitle }
+					if tildeling.Role == models.EventPlayerRolePlayer {
+						if tildeling.Source == puljefordelingservice.SourceManual {
+							<span>Manuelt festet spillerplass</span>
+						} else {
+							<span>Automatisk fordelt spillerplass</span>
+						}
+					}
+				</li>
+			}
+		</ul>
+		<p>{ varsel.Handling }</p>
+		if varsel.KanBekrefte {
+			if valg.Role == models.EventPlayerRoleGM || valg.FraLeggTil {
+				<p>Eksisterende tildelinger beholdes.</p>
+				if valg.FraLeggTil {
+					<p>Lagrede automatiske spillerplasser blir manuelle, slik at de beholdes ved ny fordeling.</p>
+				}
+			} else {
+				<p>Andre tildelinger beholdes.</p>
+			}
+		} else {
+			<p>Bruk «Legg til» for å bekrefte denne tildelingen.</p>
+		}
+		if varsel.Aldersvarsel != "" {
+			<p class="tildeling-age-warning">{ varsel.Aldersvarsel }</p>
+		}
+		if varsel.Kapasitetsvarsel != "" {
+			<p class="tildeling-capacity-warning">{ varsel.Kapasitetsvarsel }</p>
+		}
+		<div class="tildeling-actions">
+			<button type="button" class="btn btn--outline" data-on:click="document.getElementById('tildeling-dialog').close()">Avbryt</button>
+			if varsel.KanBekrefte {
+				<button type="button" class="btn" data-confirmation={ varsel.Bekreftelse } data-on:click={ tildelingsbekreftelse(varsel, valg, method, retryURL) }>
+					{ varsel.Handling }
+				</button>
+			}
+		</div>
+	</div>
+}

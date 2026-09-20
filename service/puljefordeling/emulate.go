@@ -6,8 +6,10 @@ package puljefordeling
 import (
 	"database/sql"
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/puljefordeling/solver"
@@ -41,8 +43,8 @@ type EmulatedEvent struct {
 	EventID           string
 	Title             string
 	Capacity          int
-	GMName            string           // empty if the event has no GM assigned
-	GMIsOver18        bool             // the GM's age flag, so an under-18 GM of an 18+ game can be marked
+	GMName            string           // sorted GM names, empty if the event has no GM assigned
+	GMIsOver18        bool             // true when all GMs are adults; any minor keeps the 18+ warning visible
 	AssignedPlayers   []AssignedPlayer // sorted by name
 	Undersubscribed   bool             // fewer than the solver's viable-player threshold
 	EventType         models.EventType
@@ -80,10 +82,18 @@ type eligibleEvent struct {
 	canBeRunInEnglish bool
 }
 
+type emulationQuerier interface {
+	Query(query string, args ...any) (*sql.Rows, error)
+}
+
 // EmulateSeatings builds the solver model from the database, runs the
 // distribution for every pulje in chronological order, and returns the
 // proposed seating. It performs only reads.
 func EmulateSeatings(db *sql.DB) (Emulation, error) {
+	return emulateSeatings(db)
+}
+
+func emulateSeatings(db emulationQuerier) (Emulation, error) {
 	puljer, err := loadPuljer(db)
 	if err != nil {
 		return Emulation{}, err
@@ -96,7 +106,7 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	if err != nil {
 		return Emulation{}, err
 	}
-	gms, err := loadGMs(db) // [eventPuljeKey] -> billettholderID
+	gms, gmsByPulje, err := loadGMs(db) // event/pulje and pulje -> billettholder IDs
 	if err != nil {
 		return Emulation{}, err
 	}
@@ -108,7 +118,11 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	if err != nil {
 		return Emulation{}, err
 	}
-	pins, err := loadManualPins(db) // pulje -> playerID -> eventID (admin manual seats)
+	pins, err := loadManualPins(db) // pulje -> playerID -> eventIDs (admin manual seats)
+	if err != nil {
+		return Emulation{}, err
+	}
+	actual, err := loadCompletedAssignments(db)
 	if err != nil {
 		return Emulation{}, err
 	}
@@ -127,8 +141,8 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 				// admin pin can put one there.
 				AdultsOnly: e.ageGroup == models.AgeGroupAdultsOnly,
 			}
-			if gmID, ok := gms[eventPuljeKey(eid, p.ID)]; ok {
-				ev.DMID = strconv.Itoa(gmID)
+			for _, gmID := range gms[eventPuljeKey(eid, p.ID)] {
+				ev.DMIDs = append(ev.DMIDs, strconv.Itoa(gmID))
 			}
 			slot.Events = append(slot.Events, ev)
 		}
@@ -148,17 +162,31 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 
 	// Players who run any game in the weekend carry the DM bump.
 	dmSet := make(map[int]bool, len(gms))
-	for _, bhID := range gms {
-		dmSet[bhID] = true
+	for _, gmIDs := range gms {
+		for _, bhID := range gmIDs {
+			dmSet[bhID] = true
+		}
 	}
 
 	year := puljer[0].StartAt.TimeOrZero().Year()
 	state := solver.NewState(year, weekend)
+	for pulje, gmIDs := range gmsByPulje {
+		ids := make([]string, 0, len(gmIDs))
+		for _, gmID := range gmIDs {
+			ids = append(ids, strconv.Itoa(gmID))
+		}
+		state.RegisterGMs(string(pulje), ids)
+	}
 
 	emulation := Emulation{Year: year, PlayerCount: len(players)}
 	for i, slot := range weekend.Slots {
 		pulje := puljer[i]
-		res := state.SolveSlotFixed(slot, players, pins[pulje.ID])
+		var res smodel.SlotResult
+		if pulje.Status == models.PuljeStatusCompleted {
+			res = state.ApplyActual(slot, players, actual[pulje.ID])
+		} else {
+			res = state.SolveSlotFixed(slot, players, pins[pulje.ID])
+		}
 		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, over18, prefs, dmSet, pins[pulje.ID], events[pulje.ID]))
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
@@ -171,12 +199,12 @@ func shapePulje(
 	pulje models.PuljeRow,
 	slot smodel.Slot,
 	res smodel.SlotResult,
-	gms map[string]int,
+	gms map[string][]int,
 	names map[int]string,
 	over18 map[int]bool,
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
-	manual map[string]string,
+	manual map[string][]string,
 	meta map[string]eligibleEvent,
 ) EmulatedPulje {
 	under := make(map[string]bool, len(res.UndersubscribedEvents))
@@ -212,9 +240,15 @@ func shapePulje(
 			emEv.BeginnerFriendly = m.beginnerFriendly
 			emEv.CanBeRunInEnglish = m.canBeRunInEnglish
 		}
-		if gmID, ok := gms[eventPuljeKey(ev.ID, pulje.ID)]; ok {
-			emEv.GMName = names[gmID]
-			emEv.GMIsOver18 = over18[gmID]
+		if gmIDs := gms[eventPuljeKey(ev.ID, pulje.ID)]; len(gmIDs) > 0 {
+			gmNames := make([]string, 0, len(gmIDs))
+			emEv.GMIsOver18 = true
+			for _, gmID := range gmIDs {
+				gmNames = append(gmNames, names[gmID])
+				emEv.GMIsOver18 = emEv.GMIsOver18 && over18[gmID]
+			}
+			sort.Strings(gmNames)
+			emEv.GMName = strings.Join(gmNames, ", ")
 		}
 		out.Events = append(out.Events, emEv)
 	}
@@ -234,7 +268,7 @@ func assignedPlayers(
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
 	moved map[string]bool,
-	manual map[string]string,
+	manual map[string][]string,
 ) []AssignedPlayer {
 	if len(ids) == 0 {
 		return nil
@@ -251,7 +285,7 @@ func assignedPlayers(
 			Name:            names[bh],
 			IsDM:            dmSet[bh],
 			Moved:           moved[id],
-			Manual:          manual[id] == eventID,
+			Manual:          slices.Contains(manual[id], eventID),
 			IsOver18:        over18[bh],
 		}
 		if byPulje, ok := prefs[bh]; ok {
@@ -266,7 +300,7 @@ func assignedPlayers(
 
 // --- data loading -----------------------------------------------------------
 
-func loadPuljer(db *sql.DB) ([]models.PuljeRow, error) {
+func loadPuljer(db emulationQuerier) ([]models.PuljeRow, error) {
 	const query = `
 		SELECT id, name, status, start_at, end_at
 		FROM puljer
@@ -289,7 +323,36 @@ func loadPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 	return puljer, rows.Err()
 }
 
-func loadEligibleEvents(db *sql.DB) (map[models.Pulje]map[string]eligibleEvent, error) {
+func loadCompletedAssignments(db emulationQuerier) (map[models.Pulje]map[string][]string, error) {
+	const query = `
+		SELECT ep.pulje_id, ep.event_id, ep.billettholder_id
+		FROM relation_events_players ep
+		JOIN puljer p ON p.id = ep.pulje_id
+		WHERE ep.role = ? AND p.status = ?
+	`
+	rows, err := db.Query(query, models.EventPlayerRolePlayer, models.PuljeStatusCompleted)
+	if err != nil {
+		return nil, fmt.Errorf("query completed assignments: %w", err)
+	}
+	defer rows.Close()
+
+	out := make(map[models.Pulje]map[string][]string)
+	for rows.Next() {
+		var pulje models.Pulje
+		var eventID string
+		var bhID int
+		if err := rows.Scan(&pulje, &eventID, &bhID); err != nil {
+			return nil, fmt.Errorf("scan completed assignment: %w", err)
+		}
+		if out[pulje] == nil {
+			out[pulje] = make(map[string][]string)
+		}
+		out[pulje][eventID] = append(out[pulje][eventID], strconv.Itoa(bhID))
+	}
+	return out, rows.Err()
+}
+
+func loadEligibleEvents(db emulationQuerier) (map[models.Pulje]map[string]eligibleEvent, error) {
 	const query = `
 		SELECT ep.pulje_id, e.id, e.title, e.max_players,
 		       e.event_type, e.age_group, e.event_runtime,
@@ -328,10 +391,10 @@ func loadEligibleEvents(db *sql.DB) (map[models.Pulje]map[string]eligibleEvent, 
 }
 
 // loadManualPins returns the admin-pinned player seats keyed by pulje, then by
-// solver player ID (the billettholder ID as a string) → event ID. These are
+// solver player ID (the billettholder ID as a string) → event IDs. These are
 // fed to the solver as fixed placements so a manually-added player is reserved
 // into their event regardless of expressed interest.
-func loadManualPins(db *sql.DB) (map[models.Pulje]map[string]string, error) {
+func loadManualPins(db emulationQuerier) (map[models.Pulje]map[string][]string, error) {
 	const query = `
 		SELECT pulje_id, event_id, billettholder_id
 		FROM relation_events_players
@@ -343,7 +406,7 @@ func loadManualPins(db *sql.DB) (map[models.Pulje]map[string]string, error) {
 	}
 	defer rows.Close()
 
-	out := make(map[models.Pulje]map[string]string)
+	out := make(map[models.Pulje]map[string][]string)
 	for rows.Next() {
 		var pulje models.Pulje
 		var eventID string
@@ -352,14 +415,15 @@ func loadManualPins(db *sql.DB) (map[models.Pulje]map[string]string, error) {
 			return nil, fmt.Errorf("scan manual pin row: %w", err)
 		}
 		if out[pulje] == nil {
-			out[pulje] = make(map[string]string)
+			out[pulje] = make(map[string][]string)
 		}
-		out[pulje][strconv.Itoa(bhID)] = eventID
+		playerID := strconv.Itoa(bhID)
+		out[pulje][playerID] = append(out[pulje][playerID], eventID)
 	}
 	return out, rows.Err()
 }
 
-func loadGMs(db *sql.DB) (map[string]int, error) {
+func loadGMs(db emulationQuerier) (map[string][]int, map[models.Pulje][]int, error) {
 	const query = `
 		SELECT event_id, pulje_id, billettholder_id
 		FROM relation_events_players
@@ -367,27 +431,33 @@ func loadGMs(db *sql.DB) (map[string]int, error) {
 	`
 	rows, err := db.Query(query, models.EventPlayerRoleGM)
 	if err != nil {
-		return nil, fmt.Errorf("query GMs: %w", err)
+		return nil, nil, fmt.Errorf("query GMs: %w", err)
 	}
 	defer rows.Close()
 
-	out := make(map[string]int)
+	out := make(map[string][]int)
+	byPulje := make(map[models.Pulje][]int)
 	for rows.Next() {
 		var eventID string
 		var pulje models.Pulje
 		var bhID int
 		if err := rows.Scan(&eventID, &pulje, &bhID); err != nil {
-			return nil, fmt.Errorf("scan GM row: %w", err)
+			return nil, nil, fmt.Errorf("scan GM row: %w", err)
 		}
-		out[eventPuljeKey(eventID, pulje)] = bhID
+		key := eventPuljeKey(eventID, pulje)
+		out[key] = append(out[key], bhID)
+		byPulje[pulje] = append(byPulje[pulje], bhID)
 	}
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+	return out, byPulje, nil
 }
 
 // loadParticipants returns the display name and the over-18 flag for every
 // billettholder. The age flag gates AdultsOnly events in the solver, so it is
 // read in the same pass as the names.
-func loadParticipants(db *sql.DB) (map[int]string, map[int]bool, error) {
+func loadParticipants(db emulationQuerier) (map[int]string, map[int]bool, error) {
 	const query = `SELECT id, first_name, last_name, is_over_18 FROM billettholdere`
 	rows, err := db.Query(query)
 	if err != nil {
@@ -417,7 +487,7 @@ func loadParticipants(db *sql.DB) (map[int]string, map[int]bool, error) {
 // interests in events that are actually placed in that pulje and only positive
 // scores (an edge in the assignment graph).
 func loadPrefs(
-	db *sql.DB,
+	db emulationQuerier,
 	events map[models.Pulje]map[string]eligibleEvent,
 ) (map[int]map[string]map[string]smodel.Score, error) {
 	const query = `SELECT billettholder_id, event_id, pulje_id, interest_level FROM interests`

@@ -15,10 +15,10 @@ import (
 //
 // Declared priority, highest first (bumps break ties within a band):
 //
-//	1. unsatisfied + top choice (Veldig)   — the satisfaction goal
-//	2. satisfied   + top choice
-//	3. medium interest (Middels)           — satisfied or not, same band
-//	4. low interest    (Litt)              — satisfied or not, same band
+//  1. unsatisfied + top choice (Veldig)   — the satisfaction goal
+//  2. satisfied   + top choice
+//  3. medium interest (Middels)           — satisfied or not, same band
+//  4. low interest    (Litt)              — satisfied or not, same band
 //
 // The unsatisfied advantage exists ONLY on the top choice (the satisfaction
 // goal); Middels/Litt are valued the same whether or not the player is
@@ -97,14 +97,13 @@ func NewState(year int, weekend model.Weekend) *State {
 	isDM := make(map[string]struct{})
 	for _, sl := range weekend.Slots {
 		for _, ev := range sl.Events {
-			if ev.DMID == "" {
-				continue
+			for _, dmID := range ev.DMIDs {
+				isDM[dmID] = struct{}{}
+				if dmSlots[dmID] == nil {
+					dmSlots[dmID] = make(map[string]struct{})
+				}
+				dmSlots[dmID][sl.ID] = struct{}{}
 			}
-			isDM[ev.DMID] = struct{}{}
-			if dmSlots[ev.DMID] == nil {
-				dmSlots[ev.DMID] = make(map[string]struct{})
-			}
-			dmSlots[ev.DMID][sl.ID] = struct{}{}
 		}
 	}
 	return &State{
@@ -134,13 +133,25 @@ func (s *State) IsDM(playerID string) bool {
 	return ok
 }
 
+// RegisterGMs records GM availability from persisted assignments, including
+// legacy assignments whose event is no longer part of the solver's event list.
+func (s *State) RegisterGMs(slotID string, playerIDs []string) {
+	for _, playerID := range playerIDs {
+		s.isDM[playerID] = struct{}{}
+		if s.dmSlots[playerID] == nil {
+			s.dmSlots[playerID] = make(map[string]struct{})
+		}
+		s.dmSlots[playerID][slotID] = struct{}{}
+	}
+}
+
 // SolveSlot assigns players to events for one slot with no pinned placements.
 func (s *State) SolveSlot(slot model.Slot, players []model.Player) model.SlotResult {
 	return s.SolveSlotFixed(slot, players, nil)
 }
 
 // SolveSlotFixed assigns players to events for one slot, honoring pinned manual
-// placements (fixed maps playerID → eventID), updates the fairness state, and
+// placements (fixed maps playerID → eventIDs), updates the fairness state, and
 // returns the result.
 //
 // A pinned player is reserved into their event (consuming a seat and reducing the
@@ -148,8 +159,9 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player) model.SlotRes
 // are honored even when the player expressed no interest in that event, and also
 // when the player is not over 18 and the event is AdultsOnly — a pin is the
 // admin's deliberate override of the age rule the free pool obeys (see runMCMF).
-// Players DMing any event in this slot are excluded from the player pool.
-func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed map[string]string) model.SlotResult {
+// Players DMing any event in this slot are excluded from automatic allocation.
+// An explicit pin is still retained and reserves its destination's capacity.
+func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed map[string][]string) model.SlotResult {
 	currentIndex := s.slotIndex
 	seed := int64(s.year)*1000 + int64(currentIndex)
 	s.slotIndex++
@@ -162,9 +174,14 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 
 	// Players DMing in this slot are unavailable as players.
 	dmingHere := make(map[string]struct{})
+	for playerID, slots := range s.dmSlots {
+		if _, ok := slots[slot.ID]; ok {
+			dmingHere[playerID] = struct{}{}
+		}
+	}
 	for _, ev := range slot.Events {
-		if ev.DMID != "" {
-			dmingHere[ev.DMID] = struct{}{}
+		for _, dmID := range ev.DMIDs {
+			dmingHere[dmID] = struct{}{}
 		}
 	}
 
@@ -176,15 +193,14 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 	}
 	pinnedByEvent := make(map[string][]string)
 	pinned := make(map[string]struct{})
-	for pid, evID := range fixed {
-		if _, ok := eventInSlot[evID]; !ok {
-			continue
+	for pid, eventIDs := range fixed {
+		for _, evID := range eventIDs {
+			if _, ok := eventInSlot[evID]; !ok {
+				continue
+			}
+			pinnedByEvent[evID] = append(pinnedByEvent[evID], pid)
+			pinned[pid] = struct{}{}
 		}
-		if _, ok := dmingHere[pid]; ok {
-			continue
-		}
-		pinnedByEvent[evID] = append(pinnedByEvent[evID], pid)
-		pinned[pid] = struct{}{}
 	}
 
 	// Free pool: interested players who are neither DMing here nor pinned.
@@ -524,8 +540,8 @@ func (s *State) ApplyActual(slot model.Slot, players []model.Player, assignments
 
 	dmingHere := make(map[string]struct{})
 	for _, ev := range slot.Events {
-		if ev.DMID != "" {
-			dmingHere[ev.DMID] = struct{}{}
+		for _, dmID := range ev.DMIDs {
+			dmingHere[dmID] = struct{}{}
 		}
 	}
 
