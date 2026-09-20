@@ -40,10 +40,12 @@ func LoadInterestNoticeState(billettholderID int, puljeID string, ageGroup model
 	if assignedEvent.EventID != "" {
 		assignedEvent.ImageURL = eventimage.GetEventImageUrl(assignedEvent.EventID, "banner", eventImageDir)
 	}
+	showUnder18 := !isOver18 && ageGroup == models.AgeGroupAdultsOnly
 	return InterestNoticeState{
+		IsOver18:          isOver18,
 		ShowAssignedEvent: assignedEvent.EventID != "",
-		ShowUnder18:       !isOver18 && ageGroup == models.AgeGroupAdultsOnly,
-		CanChooseInterest: isOver18 && assignedEvent.EventID == "",
+		ShowUnder18:       showUnder18,
+		CanChooseInterest: !showUnder18 && assignedEvent.EventID == "",
 		AssignedEvent:     assignedEvent,
 	}, nil
 }
