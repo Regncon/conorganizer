@@ -222,6 +222,7 @@ CREATE TABLE "puljer"(
   id TEXT NOT NULL PRIMARY KEY,
   name TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'Open' CHECK(status IN('Open', 'Locked', 'Completed')),
+  closing_warning_active INTEGER NOT NULL DEFAULT 0 CHECK(closing_warning_active IN(0, 1)),
   start_at TEXT NOT NULL,
   end_at TEXT NOT NULL,
   FOREIGN KEY(status) REFERENCES pulje_statuses(status) ON UPDATE CASCADE

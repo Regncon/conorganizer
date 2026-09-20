@@ -29,7 +29,7 @@ func TestEventRoomBrowserFixture(t *testing.T) {
 	manager, err := live.NewManager(context.Background(),ns,sessions.NewCookieStore([]byte("room-group-fixture-only-secret")))
 	if err != nil { t.Fatal(err) }
 	router := chi.NewRouter()
-	if err := SetupEventRoute(router,ns,manager,db,testutil.NewTestLogger(),nil); err != nil { t.Fatal(err) }
+	if err := SetupEventRoute(router,manager,db,testutil.NewTestLogger(),nil); err != nil { t.Fatal(err) }
 	router.Handle("/static/*",http.StripPrefix("/static/",http.FileServer(http.Dir("../../static"))))
 	router.Post("/fixture/{action}",func(w http.ResponseWriter,r *http.Request){
 		bucket := live.BucketRooms

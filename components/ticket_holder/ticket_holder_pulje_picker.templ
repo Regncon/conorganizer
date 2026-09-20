@@ -53,11 +53,6 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
                 border-color: currentColor;
             }
 
-            .pulje-interest-state--urgent-warning {
-                color: var(--color-error);
-                border-color: currentColor;
-            }
-
             .pulje-interest-state--locked {
                 color: var(--color-accent-blue);
                 border-color: currentColor;
@@ -111,8 +106,6 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 								}
 								if puljeState.Availability == PuljeInterestWarning {
 									<span>Låses snart</span>
-								} else if puljeState.Availability == PuljeInterestUrgentWarning {
-									<span>Låses straks</span>
 								} else if puljeState.IsLocked() {
 									<span>Låst</span>
 								} else if puljeState.IsCompleted() {

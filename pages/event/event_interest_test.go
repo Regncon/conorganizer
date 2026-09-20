@@ -11,9 +11,9 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *testing.T) {
+func TestEventInterestPanel_WhenClosingWarningIsActive_RendersWarningState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at den planlagte varselmeldingen for en åpen pulje har blitt sendt.",
+		Given: "Gitt at en åpen pulje har et aktivt stengevarsel.",
 		When:  "Når interessepanelet rendres på nytt.",
 		Then:  "Så skal billettholderen se varselstatus ved knappen.",
 	})
@@ -21,7 +21,7 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
 	// Given
 	expectedHelperVisible := true
 	expectedHelperClass := "pulje-interest-state--warning"
-	expectedMessagePart := "låses snart"
+	expectedMessagePart := "stenger snart"
 	expectedExternalLinkIconVisible := true
 
 	now := time.Now()
@@ -33,6 +33,7 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
 			now.Add(2*time.Hour),
 		),
 	}
+	puljer[0].ClosingWarningActive = true
 
 	// When
 	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeFredagKveld), true, true))
@@ -57,9 +58,9 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
 	}
 }
 
-func TestEventInterestPanel_WhenCurrentTimeIsBeforeWarningThreshold_RendersNoWarningState(t *testing.T) {
+func TestEventInterestPanel_WhenClosingWarningIsInactive_RendersNoWarningState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at en åpen pulje ikke nærmer seg låsing.",
+		Given: "Gitt at en åpen pulje ikke har et aktivt stengevarsel.",
 		When:  "Når interessepanelet rendres.",
 		Then:  "Så skal ingen låseadvarsel vises ved knappen.",
 	})
@@ -87,17 +88,17 @@ func TestEventInterestPanel_WhenCurrentTimeIsBeforeWarningThreshold_RendersNoWar
 	}
 }
 
-func TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarningState(t *testing.T) {
+func TestEventInterestPanel_WhenSelectedPuljeHasActiveWarning_RendersWarningState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at den planlagte hastevarselmeldingen for en åpen pulje har blitt sendt.",
+		Given: "Gitt at den valgte åpne puljen har et aktivt stengevarsel.",
 		When:  "Når interessepanelet rendres.",
 		Then:  "Så skal statusen for den valgte puljen vises ved knappen.",
 	})
 
 	// Given
 	expectedHelperVisible := true
-	expectedHelperClass := "pulje-interest-state--urgent-warning"
-	expectedMessagePart := "låses straks"
+	expectedHelperClass := "pulje-interest-state--warning"
+	expectedMessagePart := "stenger snart"
 
 	now := time.Now()
 	puljer := []models.PuljeRow{
@@ -114,6 +115,7 @@ func TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarn
 			now.Add(45*time.Minute),
 		),
 	}
+	puljer[1].ClosingWarningActive = true
 
 	// When
 	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeLordagMorgen), true, true))

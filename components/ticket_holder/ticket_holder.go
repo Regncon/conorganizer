@@ -66,11 +66,10 @@ func (options BillettholderOptions) CanSwitchBillettholder() bool {
 type PuljeInterestAvailability string
 
 const (
-	PuljeInterestOpen          PuljeInterestAvailability = "open"
-	PuljeInterestWarning       PuljeInterestAvailability = "warning"
-	PuljeInterestUrgentWarning PuljeInterestAvailability = "urgent-warning"
-	PuljeInterestLocked        PuljeInterestAvailability = "locked"
-	PuljeInterestCompleted     PuljeInterestAvailability = "completed"
+	PuljeInterestOpen      PuljeInterestAvailability = "open"
+	PuljeInterestWarning   PuljeInterestAvailability = "warning"
+	PuljeInterestLocked    PuljeInterestAvailability = "locked"
+	PuljeInterestCompleted PuljeInterestAvailability = "completed"
 )
 
 type PuljeInterestState struct {
@@ -92,7 +91,7 @@ func (state PuljeInterestState) HasMessage() bool {
 }
 
 func (state PuljeInterestState) IsWarning() bool {
-	return state.Availability == PuljeInterestWarning || state.Availability == PuljeInterestUrgentWarning
+	return state.Availability == PuljeInterestWarning
 }
 
 func (state PuljeInterestState) IsLocked() bool {
@@ -138,36 +137,14 @@ func BuildPuljeInterestState(pulje models.PuljeRow, now time.Time) PuljeInterest
 		return state
 	}
 
-	lockAt, hasLockAt := puljeLockAt(pulje)
-	if !hasLockAt {
-		return state
-	}
-
-	urgentStartsAt := lockAt.Add(-30 * time.Minute)
-	warningStartsAt := lockAt.Add(-2 * time.Hour)
-	lockTimeLabel := lockAt.Format("15:04")
-
-	if !now.Before(urgentStartsAt) {
-		state.Availability = PuljeInterestUrgentWarning
-		state.Message = fmt.Sprintf("Puljen låses straks, kl %s. Gjør endringer nå hvis du vil endre interessen din.", lockTimeLabel)
-		state.Priority = 3
-		return state
-	}
-	if !now.Before(warningStartsAt) {
+	if pulje.ClosingWarningActive {
 		state.Availability = PuljeInterestWarning
-		state.Message = fmt.Sprintf("Puljen låses snart, kl %s.", lockTimeLabel)
+		state.Message = "Puljefordelingen stenger snart. Gjør endringer nå hvis du vil endre interessen din."
 		state.Priority = 2
 		return state
 	}
 
 	return state
-}
-
-func puljeLockAt(pulje models.PuljeRow) (time.Time, bool) {
-	if pulje.StartAt.IsZero() {
-		return time.Time{}, false
-	}
-	return pulje.StartAt.TimeOrZero().Add(-30 * time.Minute), true
 }
 
 func BuildSelectedPuljeInterestState(puljer []models.PuljeRow, puljeID string, now time.Time) PuljeInterestState {
