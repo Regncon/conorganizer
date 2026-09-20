@@ -42,7 +42,6 @@ func LoadInterestNoticeState(billettholderID int, puljeID string, ageGroup model
 	}
 	showUnder18 := !isOver18 && ageGroup == models.AgeGroupAdultsOnly
 	return InterestNoticeState{
-		IsOver18:          isOver18,
 		ShowAssignedEvent: assignedEvent.EventID != "",
 		ShowUnder18:       showUnder18,
 		CanChooseInterest: !showUnder18 && assignedEvent.EventID == "",
