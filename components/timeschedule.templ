@@ -2,84 +2,112 @@ package components
 
 templ timeScheduleStyles() {
 	<style>
-        @container main (width > 1200px) {
-            .time-schedule-container {
-                display: grid;
-                width: 1280px;
-                gap: 40px;
-                margin-inline: auto;
+		.time-schedule-container {
+			width: 100%;
+			min-width: 0;
 
-                .time-schedule-content {
-                    display: grid;
-                    border-radius: var(--border-radius-2x);
-                    padding: var(--spacing-5x);
-                    gap: var(--spacing-4x);
-                    background-color: var(--bg-item);
+			.time-schedule-content {
+				display: grid;
+				gap: var(--spacing-4x);
+				padding: var(--spacing-4x);
+				border-radius: var(--border-radius-2x);
+				background-color: var(--bg-item);
 
-                    h3 {
-                        font-size: var(--text-body);
-                        font-weight: bold;
-                    }
+				h3 {
+					font-size: var(--text-body);
+					font-weight: bold;
+				}
 
-                    .time-schedule-mainbox {
-                        display: grid;
-                        width: 1240px;
-                        gap: var(--spacing-8x);
-                        grid-template-columns: 1fr 1px 1fr;
-                        .time-schedule-box {
-                            display: grid;
-                            width: 588px;
-                            gap: var(--spacing-5x);
-                            grid-template-rows: 1fr;
-                        }
+				.time-schedule-mainbox,
+				.time-schedule-box {
+					display: grid;
+					gap: var(--spacing-5x);
+					min-width: 0;
+				}
 
-                        .time-schedule-subbox {
-                            display: flex;
-                            gap: var(--spacing-4x);
-                            h4 {
-                                font-weight: bold;
-                                color: var(--color-primary);
-                                font-family: var(--font-sans-serif);
-                                font-size: var(--text-heading-2);
-                            }
-                            .time-schedule-subbox-content {
-                                .time-schedule-subbox-title {
-                                    font-weight: bold;
-                                    font-size: var(--text-body);
-                                }
-                                .time-schedule-subbox-description {
-                                    font-size: 12px;
-                                }
-                                p + p {
-                                    margin: 0;
-                                }
+				.time-schedule-subbox {
+					display: grid;
+					grid-template-columns: 4.5rem minmax(0, 1fr);
+					gap: var(--spacing-4x);
 
-                                .time-schedule-subbox-sublist {
-                                    position: relative;
-                                    top: 4px;
-                                    font-size: 12px;
-                                    padding: 0;
-                                    margin: 0;
-                                    list-style-position: inside;
-                                    li::marker {
-                                        color: var(--color-primary);
-                                    }
+					h4 {
+						font-family: var(--font-sans-serif);
+						font-size: var(--text-heading-2-mobile);
+						font-weight: bold;
+						color: var(--color-primary);
+					}
 
-                                    time {
-                                        color: var(--color-primary);
-                                        font-weight: bold;
-                                    }
-                                }
-                            }
-                        }
-                        .time-schedule-divider {
-                            background: var(--bg-item-hover);
-                        }
-                    }
-                }
-            }
-        }
-    </style>
+					.time-schedule-subbox-content {
+						min-width: 0;
+
+						.time-schedule-subbox-title {
+							font-size: var(--text-body);
+							font-weight: bold;
+						}
+
+						.time-schedule-subbox-description,
+						.time-schedule-subbox-sublist {
+							font-size: 12px;
+						}
+
+						p + p {
+							margin: 0;
+						}
+
+						.time-schedule-subbox-sublist {
+							position: relative;
+							top: 4px;
+							margin: 0;
+							padding: 0;
+							list-style-position: inside;
+
+							li::marker {
+								color: var(--color-primary);
+							}
+
+							time {
+								font-weight: bold;
+								color: var(--color-primary);
+							}
+						}
+					}
+				}
+
+				.time-schedule-divider {
+					display: none;
+				}
+			}
+		}
+
+		@container main (width > 1200px) {
+			.time-schedule-container {
+				width: min(1280px, 100%);
+				margin-inline: auto;
+
+				.time-schedule-content {
+					padding: var(--spacing-5x);
+
+					.time-schedule-mainbox {
+						grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+						gap: var(--spacing-8x);
+					}
+
+					.time-schedule-subbox {
+						grid-template-columns: 6rem minmax(0, 1fr);
+
+						h4 {
+							font-size: var(--text-heading-2);
+						}
+					}
+
+					.time-schedule-divider {
+						display: block;
+						background: var(--bg-item-hover);
+					}
+				}
+			}
+		}
+	</style>
 }
 
 templ TimeScheduleFriday() {
