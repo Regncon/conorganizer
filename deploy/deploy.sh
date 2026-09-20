@@ -14,7 +14,7 @@ if [[ -z "$SAFE_NAME" ]]; then
 fi
 
 FIXED_ENVIRONMENT="false"
-if [[ "$SAFE_NAME" == "main" || "$SAFE_NAME" == "demo" ]]; then
+if [[ "$SAFE_NAME" == "main" || "$SAFE_NAME" == "demo" || "$SAFE_NAME" == "restored" ]]; then
   FIXED_ENVIRONMENT="true"
 fi
 
@@ -147,6 +147,12 @@ echo "[deploy] Promoting new binary to $CUR_BIN"
 mv "$NEW_BIN_SRC" "$CUR_BIN"
 chmod +x "$CUR_BIN"
 chown "$SERVICE_USER:$SERVICE_GROUP" "$CUR_BIN" || true
+
+if [[ "$SAFE_NAME" == "restored" && ! -f "$BRANCH_DB_FILE" ]]; then
+  echo "[deploy] Restored database has not been selected yet; binary deployed without starting $SERVICE_NAME."
+  echo "[deploy] Run conorganizer-sqlite-restore <backup-file> to initialize it."
+  exit 0
+fi
 
 echo "--- Restart systemd service ---"
 

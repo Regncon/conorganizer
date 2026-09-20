@@ -17,7 +17,7 @@ var errPuljeNotFound = errors.New("pulje not found")
 
 func getPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 	const query = `
-		SELECT id, name, status, start_at, end_at
+		SELECT id, name, status, closing_warning_active, start_at, end_at
 		FROM puljer
 		ORDER BY start_at ASC
 	`
@@ -35,6 +35,7 @@ func getPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 			&pulje.ID,
 			&pulje.Name,
 			&pulje.Status,
+			&pulje.ClosingWarningActive,
 			&pulje.StartAt,
 			&pulje.EndAt,
 		); err != nil {
@@ -91,9 +92,13 @@ func puljeStatusUpdateAction(
 }
 
 func updatePuljeStatus(db *sql.DB, puljeID models.Pulje, status models.PuljeStatus) error {
-	const query = `UPDATE puljer SET status = ? WHERE id = ?`
+	const query = `
+		UPDATE puljer
+		SET status = ?, closing_warning_active = CASE WHEN ? = 'Open' THEN closing_warning_active ELSE FALSE END
+		WHERE id = ?
+	`
 
-	result, err := db.Exec(query, status, puljeID)
+	result, err := db.Exec(query, status, status, puljeID)
 	if err != nil {
 		return fmt.Errorf("update pulje %s status to %s: %w", puljeID, status, err)
 	}
@@ -107,6 +112,27 @@ func updatePuljeStatus(db *sql.DB, puljeID models.Pulje, status models.PuljeStat
 		return errPuljeNotFound
 	}
 
+	return nil
+}
+
+func updatePuljeClosingWarning(db *sql.DB, puljeID models.Pulje, active bool) error {
+	result, err := db.Exec(
+		`UPDATE puljer
+		 SET closing_warning_active = CASE WHEN ? AND status = 'Open' THEN TRUE ELSE FALSE END
+		 WHERE id = ?`,
+		active,
+		puljeID,
+	)
+	if err != nil {
+		return fmt.Errorf("update pulje %s closing warning: %w", puljeID, err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("get rows affected for pulje %s closing warning update: %w", puljeID, err)
+	}
+	if rowsAffected == 0 {
+		return errPuljeNotFound
+	}
 	return nil
 }
 
@@ -150,6 +176,38 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.
 			return
 		}
 
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	router.Put("/api/puljer/{puljeId}/closing-warning", func(w http.ResponseWriter, r *http.Request) {
+		puljeID, ok := models.ParsePulje(chi.URLParam(r, "puljeId"))
+		if !ok {
+			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+			return
+		}
+
+		type Store struct {
+			ClosingWarningActive bool `json:"closingWarningActive"`
+		}
+		store := &Store{}
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := updatePuljeClosingWarning(db, puljeID, store.ClosingWarningActive); err != nil {
+			if errors.Is(err, errPuljeNotFound) {
+				http.Error(w, "Pulje not found", http.StatusNotFound)
+				return
+			}
+			logger.Error(err.Error(), "pulje_id", puljeID)
+			http.Error(w, "Failed to update pulje closing warning", http.StatusInternalServerError)
+			return
+		}
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast pulje closing warning update: %w", err).Error(), "pulje_id", puljeID)
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusNoContent)
 	})
 }

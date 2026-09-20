@@ -81,11 +81,12 @@ func (status PuljeStatus) Label() string {
 }
 
 type PuljeRow struct {
-	ID      Pulje       `json:"id"`
-	Name    string      `json:"name"`
-	Status  PuljeStatus `json:"status"`
-	StartAt DBDateTime  `json:"start_at"`
-	EndAt   DBDateTime  `json:"end_at"`
+	ID                   Pulje       `json:"id"`
+	Name                 string      `json:"name"`
+	Status               PuljeStatus `json:"status"`
+	ClosingWarningActive bool        `json:"closing_warning_active"`
+	StartAt              DBDateTime  `json:"start_at"`
+	EndAt                DBDateTime  `json:"end_at"`
 }
 
 func (pulje PuljeRow) TimeRange() string {

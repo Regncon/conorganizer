@@ -189,6 +189,7 @@ CREATE TABLE "puljer"(
   status TEXT NOT NULL DEFAULT 'Open' CHECK(status IN('Open', 'Locked', 'Completed')),
   start_at TEXT NOT NULL,
   end_at TEXT NOT NULL,
+  closing_warning_active INTEGER NOT NULL DEFAULT 0 CHECK(closing_warning_active IN(0, 1)),
   FOREIGN KEY(status) REFERENCES pulje_statuses(status) ON UPDATE CASCADE
 ) STRICT;
 CREATE TABLE "relation_events_players"(
