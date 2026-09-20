@@ -265,7 +265,7 @@ templ interestAlreadyAssignedPlayer(eventID string, title string, assignedEvent 
 
 templ interestAlreadyAssignedGM(eventID string, assignedEvent AssignedEvent) {
 	if assignedEvent.EventID == eventID {
-		<h3>Du er satt opp som arrangør  @icons.Icon(icons.Gamemaster, icons.Size20) for dette arrangementet.</h3>
+		<h3>Du er satt opp som arrangør for dette arrangementet.</h3>
 	} else {
 		<h3>Du er arrangør for et arrangement i denne puljen.</h3>
 		<p><i>{ assignedEvent.Title }</i> er satt opp med deg som arrangør.</p>
