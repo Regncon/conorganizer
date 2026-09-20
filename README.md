@@ -30,6 +30,28 @@ go tool task download:main
 go tool task download:demo
 ```
 
+## Run a Restored Database Backup
+
+`restored.lekeplassen.regncon.no` runs a selected production database backup.
+It is a public, isolated environment: restoring a backup replaces its database
+and refreshes its event images from main, without changing main or demo.
+
+On the production server, choose one of the backup files in
+`/mnt/HC_Volume_103911252/backups/sqlite` and run:
+
+```bash
+sudo conorganizer-sqlite-restore events-20260920T120007Z.db.zst
+```
+
+The command verifies the compressed SQLite backup before replacing the restored
+environment, then starts `conorganizer-restored.service`. Verify the result at
+[https://restored.lekeplassen.regncon.no/](https://restored.lekeplassen.regncon.no/).
+
+For the first rollout, add the DNS record, let the first application deployment
+install the restored binary, apply the configuration-as-code changes, then run
+the restore command. The first application deployment only installs its binary
+until a backup has been selected.
+
 ## Run Locally
 
 ```bash
