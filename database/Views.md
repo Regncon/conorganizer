@@ -40,6 +40,8 @@ rows, err := db.Query("SELECT billettholder_id FROM v_get_user_billettholder WHE
 - `events.status = 'Annonsert'`
 - `relation_event_puljer.is_in_pulje = 1`
 
+The global `program_publishing_state` controls whether the front page shows the daily program or the announced event list. When published, program events (`is_in_puljefordeling = 0`) appear once per day; raffle events appear in each active pulje.
+
 **Columns:**
 
 | Column | Type | Description |
@@ -62,7 +64,8 @@ rows, err := db.Query("SELECT billettholder_id FROM v_get_user_billettholder WHE
 | `notes` | `TEXT` | Event notes. |
 | `status` | `TEXT` | Event status. |
 | `created_at` | `TEXT` | Event creation timestamp. |
-| `is_published` | `INTEGER` | Pulje publish flag for this event, `0` or `1`. |
+| `is_in_puljefordeling` | `INTEGER` | Event participates in the raffle, `0` or `1`. Defaults to `0` (program event). |
+| `is_published` | `INTEGER` | Legacy pulje publication flag, retained for compatibility; no longer controls visibility. |
 | `pulje_id` | `TEXT` | Pulje id. |
 | `room_id` | `INTEGER` | Pulje-assigned room id, or `NULL`. |
 | `room_number` | `TEXT` | Pulje-assigned room number, or `NULL`. |
@@ -78,7 +81,7 @@ rows, err := db.Query("SELECT billettholder_id FROM v_get_user_billettholder WHE
 **Go usage example:**
 
 ```go
-rows, err := db.Query("SELECT id, title, pulje_id, pulje_start_at, room_number, room_name, room_is_disabled FROM v_events_by_pulje_active WHERE is_published = $1", 1)
+rows, err := db.Query("SELECT id, title, pulje_id, pulje_start_at, room_number, room_name, room_is_disabled FROM v_events_by_pulje_active ORDER BY pulje_start_at, title")
 ```
 
 ---
@@ -147,12 +150,11 @@ rows, err := db.Query("SELECT billettholder_id, first_name, last_name FROM v_bil
 
 # Database View: `v_event_puljer_active`
 
-**Purpose:** Active and published pulje rows for events, including optional room metadata.
+**Purpose:** Active pulje rows for events, including optional room metadata.
 
 **Filters:**
 
 - `relation_event_puljer.is_in_pulje = 1`
-- `relation_event_puljer.is_published = 1`
 
 **Columns:**
 
@@ -171,7 +173,7 @@ rows, err := db.Query("SELECT billettholder_id, first_name, last_name FROM v_bil
 | `pulje_start_at` | `TEXT` | Pulje start timestamp. |
 | `pulje_end_at` | `TEXT` | Pulje end timestamp. |
 | `is_in_pulje` | `INTEGER` | Active-in-pulje flag, always `1` in this view. |
-| `is_published` | `INTEGER` | Published-in-pulje flag, always `1` in this view. |
+| `is_published` | `INTEGER` | Legacy publication flag, `0` or `1`; no longer filters this view. |
 
 **Go usage example:**
 

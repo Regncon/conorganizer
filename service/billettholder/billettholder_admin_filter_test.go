@@ -10,15 +10,15 @@ import (
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
-func TestGetBillettholdereWithFilters_WhenFilteringWithoutFirstChoiceAndGM_ReturnsPublishedGMWithoutPublishedFirstChoice(t *testing.T) {
+func TestGetBillettholdereWithFilters_WhenFilteringWithoutFirstChoiceAndGM_ReturnsActiveGMWithoutActiveFirstChoice(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given expected billettholdere who are GM/DM in a published pulje and have not received a published first choice.",
+		Given: "Given expected billettholdere who are GM/DM in an active pulje and have not received an active first choice.",
 		When:  "When the admin billettholder query applies both filters.",
-		Then:  "Then only billettholdere matching both published-event filters are returned.",
+		Then:  "Then only billettholdere matching both active-event filters are returned.",
 	})
 
 	// Given
-	expectedBillettholderIDs := []int{3}
+	expectedBillettholderIDs := []int{3, 4}
 	filters := BillettholderFilters{
 		WithoutFirstChoice: true,
 		GMOrDM:             true,

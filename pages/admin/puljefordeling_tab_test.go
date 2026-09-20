@@ -25,8 +25,8 @@ func seedTabPulje(t *testing.T, db *sql.DB, id models.Pulje, name string, status
 func seedTabEventWithInterest(t *testing.T, db *sql.DB, eventID, title string, pulje models.Pulje) {
 	t.Helper()
 	if _, err := db.Exec(
-		`INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		 VALUES (?, ?, '', '', '', '', '', 4)`,
+		`INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		 VALUES (?, ?, '', '', '', '', '', 4, 1)`,
 		eventID, title,
 	); err != nil {
 		t.Fatalf("seed event %s: %v", eventID, err)
@@ -135,8 +135,8 @@ func TestPuljefordelingTabContent_WarnsWhenEventHasNoDm(t *testing.T) {
 	// Given: an event in the pulje with no GM assigned.
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_missing_dm")
 	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA','Alpha','','','','','',4,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
 
 	// When
@@ -158,8 +158,8 @@ func TestPuljefordelingTabContent_PublishedHidesAssignmentControls(t *testing.T)
 
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_published_readonly")
 	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA','Alpha','','','','','',4,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
@@ -234,8 +234,8 @@ func TestPuljefordelingTabContent_PinEmojiForManualWithoutInterest(t *testing.T)
 
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_pin_emoji")
 	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA','Alpha','','','','','',4,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
@@ -314,8 +314,8 @@ func TestUpdatePuljeStatus_ClosingClearsActiveWarning(t *testing.T) {
 func seedPinnedParticipant(t *testing.T, db *sql.DB, pulje models.Pulje, ageGroup models.AgeGroup, over18 bool) {
 	t.Helper()
 	seedTabPulje(t, db, pulje, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group)
-		VALUES ('evA','Voksenspel','','','','','',4,?)`, string(ageGroup))
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group, is_in_puljefordeling)
+		VALUES ('evA','Voksenspel','','','','','',4,?,1)`, string(ageGroup))
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(pulje))
 	over18Value := 0
 	if over18 {
@@ -383,8 +383,8 @@ func TestPuljefordelingTabContent_MinorGMInAdultsOnlyShowsBadge(t *testing.T) {
 
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_badge_minor_gm")
 	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group)
-		VALUES ('evA','Voksenspel','','','','','',4,?)`, string(models.AgeGroupAdultsOnly))
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group, is_in_puljefordeling)
+		VALUES ('evA','Voksenspel','','','','','',4,?,1)`, string(models.AgeGroupAdultsOnly))
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id, is_over_18)
 		VALUES (1,'Kari','Nordmann',0,'',0,1,0)`)
@@ -404,8 +404,8 @@ func TestPuljefordelingTabContent_MinorGMInAdultsOnlyShowsBadge(t *testing.T) {
 func TestPuljefordelingTabContent_AdultGMInAdultsOnlyHasNoBadge(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_badge_adult_gm")
 	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group)
-		VALUES ('evA','Voksenspel','','','','','',4,?)`, string(models.AgeGroupAdultsOnly))
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group, is_in_puljefordeling)
+		VALUES ('evA','Voksenspel','','','','','',4,?,1)`, string(models.AgeGroupAdultsOnly))
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id, is_over_18)
 		VALUES (1,'Kari','Nordmann',0,'',0,1,1)`)

@@ -19,7 +19,7 @@ type billettholderAdminOverviewCounts struct {
 func getBillettholderAdminOverviewCounts(db *sql.DB) (billettholderAdminOverviewCounts, error) {
 	var counts billettholderAdminOverviewCounts
 	err := db.QueryRow(`
-		WITH published_assignments AS (
+		WITH active_assignments AS (
 			SELECT
 				rep.billettholder_id,
 				rep.role,
@@ -28,7 +28,7 @@ func getBillettholderAdminOverviewCounts(db *sql.DB) (billettholderAdminOverview
 			INNER JOIN relation_event_puljer AS ep
 				ON ep.event_id = rep.event_id
 				AND ep.pulje_id = rep.pulje_id
-				AND ep.is_published = 1
+				AND ep.is_in_pulje = 1
 			LEFT JOIN interests AS i
 				ON i.billettholder_id = rep.billettholder_id
 				AND i.event_id = rep.event_id
@@ -36,12 +36,12 @@ func getBillettholderAdminOverviewCounts(db *sql.DB) (billettholderAdminOverview
 		),
 		first_choice_billettholdere AS (
 			SELECT DISTINCT billettholder_id
-			FROM published_assignments
+			FROM active_assignments
 			WHERE role = ? AND interest_level = ?
 		),
 		gm_billettholdere AS (
 			SELECT DISTINCT billettholder_id
-			FROM published_assignments
+			FROM active_assignments
 			WHERE role = ?
 		)
 		SELECT

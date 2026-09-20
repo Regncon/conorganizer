@@ -2,189 +2,58 @@ package root
 
 import (
 	"database/sql"
-	"fmt"
+	"time"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/puljer"
+	"github.com/Regncon/conorganizer/service/program"
 )
 
-type PuljeBlock struct {
-	Pulje  models.PuljeRow
-	Events []models.EventCardModel
-}
-
-type EventsByPulje map[models.Pulje]*PuljeBlock
-
-func GetAnnouncedEventsAlphabetically(db *sql.DB) ([]models.EventCardModel, error) {
-	const q = `
-		SELECT
-			e.id,
-			0 AS is_published,
-			e.title,
-			e.intro,
-			e.status,
-			e.system,
-			e.host_name,
-			e.event_type,
-			e.age_group,
-			e.event_runtime,
-			e.beginner_friendly,
-			e.can_be_run_in_english
-		FROM events e
-		WHERE e.status = ?
-		ORDER BY e.title COLLATE NOCASE ASC, e.id ASC
-	`
-
-	rows, err := db.Query(q, models.EventStatusAnnounced)
-	if err != nil {
-		return nil, fmt.Errorf("query announced events alphabetically: %w", err)
-	}
-	defer rows.Close()
-
-	events := make([]models.EventCardModel, 0)
-	for rows.Next() {
-		var event models.EventCardModel
-		if err := rows.Scan(
-			&event.Id,
-			&event.IsPublished,
-			&event.Title,
-			&event.Intro,
-			&event.Status,
-			&event.System,
-			&event.HostName,
-			&event.EventType,
-			&event.AgeGroup,
-			&event.Runtime,
-			&event.BeginnerFriendly,
-			&event.CanBeRunInEnglish,
-		); err != nil {
-			return nil, fmt.Errorf("scan announced event row: %w", err)
-		}
-		events = append(events, event)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate announced event rows: %w", err)
-	}
-
-	return events, nil
-}
-
-func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
-	const q = `
-		SELECT
-			e.id,
-			e.is_published,
-			e.title,
-			e.intro,
-			e.status,
-			e.system,
-			e.host_name,
-			e.event_type,
-			e.age_group,
-			e.event_runtime,
-			e.beginner_friendly,
-			e.can_be_run_in_english,
-
-			-- pulje
-			e.pulje_id,
-			e.pulje_name,
-			e.pulje_start_at,
-			e.pulje_end_at
-		FROM v_events_by_pulje_active e
-		WHERE e.is_published = 1
-		ORDER BY e.pulje_start_at ASC, e.title COLLATE NOCASE ASC, e.id ASC
-	`
-
-	rows, err := db.Query(q)
-	if err != nil {
-		return nil, fmt.Errorf("querying events by pulje: %w", err)
-	}
-	defer rows.Close()
-
-	out := make(EventsByPulje)
-
-	for rows.Next() {
-		var (
-			ev                 models.EventCardModel
-			puljeID, puljeName string
-			startAt, endAt     models.DBDateTime
-		)
-
-		if err := rows.Scan(
-			&ev.Id,
-			&ev.IsPublished,
-			&ev.Title,
-			&ev.Intro,
-			&ev.Status,
-			&ev.System,
-			&ev.HostName,
-			&ev.EventType,
-			&ev.AgeGroup,
-			&ev.Runtime,
-			&ev.BeginnerFriendly,
-			&ev.CanBeRunInEnglish,
-
-			&puljeID,
-			&puljeName,
-			&startAt,
-			&endAt,
-		); err != nil {
-			return nil, err
-		}
-
-		key := models.Pulje(puljeID)
-		block, ok := out[key]
-		if !ok {
-			pulje, err := puljerService.BuildPulje(key, puljeName, "", startAt, endAt)
-			if err != nil {
-				return nil, err
-			}
-
-			block = &PuljeBlock{
-				Pulje: pulje,
-			}
-			out[key] = block
-		}
-
-		block.Events = append(block.Events, ev)
-	}
-
-	return out, rows.Err()
-}
-
-templ flatEventList(events []models.EventCardModel, eventImageDir *string, isAdmin bool) {
+templ flatEventList(events []models.EventCardModel, eventImageDir *string) {
 	<div class="page-wide-eventcard-grid">
 		for _, event := range events {
-			@components.EventCard(event, eventImageDir, isAdmin, "")
+			@components.EventCard(event, eventImageDir, "", "")
 		}
 	</div>
 }
 
-templ eventPuljeBlock(block PuljeBlock, eventImageDir *string, isAdmin bool) {
-	<section class="container-inner-padding program-pulje-section" id={ block.Pulje.ID }>
-		<h2 class="pulje-heading">
-			{ block.Pulje.Name }
-			<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
-		</h2>
-		<div class="page-wide-eventcard-grid">
-			for _, event := range block.Events {
-				@components.EventCard(event, eventImageDir, isAdmin, string(block.Pulje.ID))
-			}
-		</div>
-	</section>
+templ eventPuljeBlock(block program.PuljeBlock, eventImageDir *string, date string) {
+	{{ events := block.RaffleEvents() }}
+	if len(events) > 0 {
+		<section class="container-inner-padding raffle-pulje-section">
+			<h2 class="pulje-heading">
+				{ block.Pulje.Name }
+				<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
+			</h2>
+			<div class="raffle-eventcard-grid">
+				for _, event := range events {
+					@components.EventCard(event, eventImageDir, string(block.Pulje.ID), date)
+				}
+			</div>
+		</section>
+	}
 }
 
-templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublished bool) {
+templ programDaySchedule(day program.Day) {
+	switch day.Date.Weekday() {
+		case time.Friday:
+			<h1 class="program-day-heading">Fredag (17:00 - 22:00)</h1>
+			@components.TimeScheduleFriday()
+		case time.Saturday:
+			<h1 class="program-day-heading">Lørdag (09:00 - 22:00)</h1>
+			@components.TimeScheduleLoordag()
+		case time.Sunday:
+			<h1 class="program-day-heading">Søndag (09:00 - 16:00)</h1>
+			@components.TimeScheduleSoondag()
+	}
+}
+
+templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publishedDay *program.Day) {
 	<style>
 		.event-pulje-overview {
 			display: flex;
 			flex-direction: column;
-			/* Using padding here so the space between counts as in the scroll context of the one above */
-			.program-pulje-section{
-				padding-top: var(--spacing-8x);
-			}
+			gap: var(--spacing-8x);
 		}
 
 		@container main (width > 1200px) {
@@ -198,14 +67,11 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublishe
 			margin: 0 0 var(--spacing-3x);
 			text-transform: capitalize;
 		}
-		.program-pulje-section {
-			scroll-margin: var(--responsive-scroll-margin-top-event);
-		}
 		.pulje-heading-time {
 			font-family: var(--font-sans-serif);
 			font-size: var(--text-body);
 			font-weight: normal;
-			color: var(--color-text-soft);
+			color: var(--color-primary);
 		}
 
 		@container main (width > 600px) {
@@ -216,20 +82,32 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublishe
 	</style>
 	<div class="page-content-container event-pulje-overview">
 		if programPublished {
-			{{ puljeBlocks, err := GetPublishedEventPuljeBlocks(db) }}
-			if err != nil {
-				<p class="root-page-error">{ rootEventsLoadErrorMessage }</p>
-			} else {
-				for _, block := range puljeBlocks {
-					@eventPuljeBlock(block, eventImageDir, isAdmin)
+			if publishedDay != nil {
+				@programDaySchedule(*publishedDay)
+				if len(publishedDay.ProgramEvents) > 0 {
+					<section class="container-inner-padding program-section">
+						<h2 class="pulje-heading">Programoversikt</h2>
+						<div class="program-event-grid">
+							for _, row := range programEventRows(publishedDay.ProgramEvents) {
+								<div class={ "program-event-row", templ.KV("reversed", row.Reversed) }>
+									for _, programEvent := range row.Events {
+										@components.ProgramEventCard(programEvent.Event, eventImageDir, string(programEvent.PuljeID), publishedDay.QueryValue())
+									}
+								</div>
+							}
+						</div>
+					</section>
+				}
+				for _, block := range publishedDay.Blocks {
+					@eventPuljeBlock(block, eventImageDir, publishedDay.QueryValue())
 				}
 			}
 		} else {
-			{{ events, err := GetAnnouncedEventsAlphabetically(db) }}
+			{{ events, err := program.GetAnnouncedEvents(db) }}
 			if err != nil {
 				<p class="root-page-error">{ rootEventsLoadErrorMessage }</p>
 			} else {
-				@flatEventList(events, eventImageDir, isAdmin)
+				@flatEventList(events, eventImageDir)
 			}
 		}
 	</div>

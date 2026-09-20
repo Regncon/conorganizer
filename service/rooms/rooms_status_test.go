@@ -67,7 +67,6 @@ func TestAssignRoomToRelationEventPuljer_AssignsRoomToEventPulje(t *testing.T) {
 		EventID:     eventID,
 		PuljeID:     puljeID,
 		IsInPulje:   true,
-		IsPublished: false,
 		RoomID:      sql.NullInt64{Int64: int64(room.ID), Valid: true},
 	}
 

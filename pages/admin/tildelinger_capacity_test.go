@@ -25,7 +25,7 @@ func TestTildeling_AdditionalPlayerPinsSurviveRepeatedDistribution(t *testing.T)
 	expectedEvents := []string{"evA", "evB", "evC"}
 	db, router := tildelingsFixture(t)
 	testutil.MustExec(t, db, `UPDATE events SET max_players=1`)
-	testutil.MustExec(t, db, `INSERT INTO events(id,title,intro,description,host_name,email,phone_number,max_players) VALUES ('evD','Arrangement W','','','','','',1)`)
+	testutil.MustExec(t, db, `INSERT INTO events(id,title,intro,description,host_name,email,phone_number,max_players,is_in_puljefordeling) VALUES ('evD','Arrangement W','','','','','',1,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer(event_id,pulje_id,is_in_pulje) VALUES ('evD','FredagKveld',1)`)
 	seedTildelingAdult(t, db, 2)
 	testutil.MustExec(t, db, `INSERT INTO relation_events_players(event_id,pulje_id,billettholder_id,role,source) VALUES ('evA','FredagKveld',1,'Player','manual')`)

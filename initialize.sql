@@ -60,6 +60,7 @@ CREATE TABLE
         max_players INTEGER NOT NULL,
         beginner_friendly INTEGER NOT NULL DEFAULT 0 CHECK (beginner_friendly IN (0, 1)),
         can_be_run_in_english INTEGER NOT NULL DEFAULT 0 CHECK (can_be_run_in_english IN (0, 1)),
+        is_in_puljefordeling INTEGER NOT NULL DEFAULT 0 CHECK (is_in_puljefordeling IN (0, 1)),
         notes TEXT DEFAULT '',
         status TEXT NOT NULL DEFAULT 'Kladd',
         created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
@@ -311,6 +312,7 @@ SELECT
     e.notes,
     e.status,
     e.created_at,
+    e.is_in_puljefordeling AS is_in_puljefordeling,
     ep.is_published AS is_published,
     ep.pulje_id,
     ep.room_id,
@@ -395,5 +397,4 @@ FROM
     JOIN puljer p ON p.id = ep.pulje_id
     LEFT JOIN rooms r ON r.id = ep.room_id
 WHERE
-    ep.is_in_pulje = 1
-    AND ep.is_published = 1;
+    ep.is_in_pulje = 1;

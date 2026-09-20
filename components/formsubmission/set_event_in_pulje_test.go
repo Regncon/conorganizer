@@ -7,6 +7,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestSetEventInPulje_AddsThenRemovesMembership(t *testing.T) {
@@ -43,11 +44,17 @@ func TestSetEventInPulje_AddsThenRemovesMembership(t *testing.T) {
 	}
 }
 
-// TestSetEventInPulje_NoOpReAddPreservesPublished verifies that re-dropping a
-// card onto the pulje it already belongs to (isInPulje unchanged: true -> true)
-// does not clear is_published. A dumb "reset is_published = 0 on every upsert"
-// would silently unpublish an already-published game on a no-op re-drop.
-func TestSetEventInPulje_NoOpReAddPreservesPublished(t *testing.T) {
+// TestSetEventInPulje_DoesNotChangeLegacyPublished verifies that membership
+// updates leave the legacy is_published column untouched.
+func TestSetEventInPulje_DoesNotChangeLegacyPublished(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en puljerad allerede er med i puljen og er markert som publisert.",
+		When:  "Når samme medlemskap lagres på nytt.",
+		Then:  "Så skal det gamle publiseringsflagget forbli uendret.",
+	})
+
+	// Given
+	expectedPublished := 1
 	db, logger := testutil.CreateTestDBAndLogger(t, "set_event_in_pulje_noop")
 	testutil.MustExec(t, db,
 		`INSERT INTO users (id, external_id, email, is_admin) VALUES (42, 'ext-42', 'admin@x.no', 1)`)
@@ -62,6 +69,8 @@ func TestSetEventInPulje_NoOpReAddPreservesPublished(t *testing.T) {
 		string(models.PuljeFredagKveld))
 
 	ctx := authctx.WithUserToken(context.Background(), "ext-42", "admin@x.no")
+
+	// When
 	if err := SetEventInPulje(ctx, db, logger, "e1", string(models.PuljeFredagKveld), true); err != nil {
 		t.Fatalf("no-op re-add: %v", err)
 	}
@@ -75,16 +84,24 @@ func TestSetEventInPulje_NoOpReAddPreservesPublished(t *testing.T) {
 	gotPublished := testutil.QueryInt(t, db,
 		`SELECT is_published FROM relation_event_puljer WHERE event_id='e1' AND pulje_id=?`,
 		string(models.PuljeFredagKveld))
-	if gotPublished != 1 {
-		t.Fatalf("after no-op re-add is_published = %d, want 1 (must survive a no-op re-drop)", gotPublished)
+
+	// Then
+	if gotPublished != expectedPublished {
+		t.Fatalf("after no-op re-add is_published = %d, want %d", gotPublished, expectedPublished)
 	}
 }
 
-// TestSetEventInPulje_RealChangeResetsPublished verifies that an actual
-// membership flip (true -> false) DOES clear is_published, and that a
-// subsequent genuine re-add (false -> true) does NOT auto-republish — the
-// preservation rule only applies when the membership value is unchanged.
-func TestSetEventInPulje_RealChangeResetsPublished(t *testing.T) {
+// TestSetEventInPulje_RealChangeLeavesLegacyPublishedUntouched verifies that
+// membership changes do not change the legacy is_published value.
+func TestSetEventInPulje_RealChangeLeavesLegacyPublishedUntouched(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en puljerad er med i puljen og er markert som publisert.",
+		When:  "Når medlemskapet fjernes og legges til igjen.",
+		Then:  "Så skal det gamle publiseringsflagget forbli uendret gjennom begge endringene.",
+	})
+
+	// Given
+	expectedPublished := 1
 	db, logger := testutil.CreateTestDBAndLogger(t, "set_event_in_pulje_realchange")
 	testutil.MustExec(t, db,
 		`INSERT INTO users (id, external_id, email, is_admin) VALUES (42, 'ext-42', 'admin@x.no', 1)`)
@@ -100,25 +117,26 @@ func TestSetEventInPulje_RealChangeResetsPublished(t *testing.T) {
 
 	ctx := authctx.WithUserToken(context.Background(), "ext-42", "admin@x.no")
 
-	// Real change: true -> false must reset is_published.
+	// When
 	if err := SetEventInPulje(ctx, db, logger, "e1", string(models.PuljeFredagKveld), false); err != nil {
 		t.Fatalf("remove: %v", err)
 	}
-	gotPublished := testutil.QueryInt(t, db,
+	gotPublishedAfterRemoval := testutil.QueryInt(t, db,
 		`SELECT is_published FROM relation_event_puljer WHERE event_id='e1' AND pulje_id=?`,
 		string(models.PuljeFredagKveld))
-	if gotPublished != 0 {
-		t.Fatalf("after real removal is_published = %d, want 0", gotPublished)
-	}
 
-	// Genuine re-add: false -> true must NOT auto-republish.
 	if err := SetEventInPulje(ctx, db, logger, "e1", string(models.PuljeFredagKveld), true); err != nil {
 		t.Fatalf("re-add: %v", err)
 	}
-	gotPublished = testutil.QueryInt(t, db,
+	gotPublishedAfterReadd := testutil.QueryInt(t, db,
 		`SELECT is_published FROM relation_event_puljer WHERE event_id='e1' AND pulje_id=?`,
 		string(models.PuljeFredagKveld))
-	if gotPublished != 0 {
-		t.Fatalf("after genuine re-add is_published = %d, want 0 (not auto-republished)", gotPublished)
+
+	// Then
+	if gotPublishedAfterRemoval != expectedPublished {
+		t.Fatalf("after real removal is_published = %d, want %d", gotPublishedAfterRemoval, expectedPublished)
+	}
+	if gotPublishedAfterReadd != expectedPublished {
+		t.Fatalf("after genuine re-add is_published = %d, want %d", gotPublishedAfterReadd, expectedPublished)
 	}
 }

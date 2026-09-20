@@ -80,7 +80,7 @@ func TestTildeling_DragRejectsAmbiguousOrStaleSourceWithoutChangingPins(t *testi
 			expectedPins := []string{"evA:manual", "evB:manual"}
 			const expectedStatus = http.StatusBadRequest
 			db, router := tildelingDragFixture(t)
-			testutil.MustExec(t, db, `INSERT INTO events(id,title,intro,description,host_name,email,phone_number,max_players) VALUES ('evD','Former source','','','','','',4)`)
+			testutil.MustExec(t, db, `INSERT INTO events(id,title,intro,description,host_name,email,phone_number,max_players,is_in_puljefordeling) VALUES ('evD','Former source','','','','','',4,1)`)
 			testutil.MustExec(t, db, `INSERT INTO relation_event_puljer(event_id,pulje_id,is_in_pulje) VALUES ('evD','FredagKveld',1)`)
 
 			// When

@@ -360,6 +360,7 @@ func loadEligibleEvents(db emulationQuerier) (map[models.Pulje]map[string]eligib
 		FROM relation_event_puljer ep
 		JOIN events e ON e.id = ep.event_id
 		WHERE ep.is_in_pulje = 1
+		  AND e.is_in_puljefordeling = 1
 	`
 	rows, err := db.Query(query)
 	if err != nil {

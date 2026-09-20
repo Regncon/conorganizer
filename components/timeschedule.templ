@@ -1,0 +1,278 @@
+package components
+
+templ timeScheduleStyles() {
+	<style>
+		.time-schedule-container {
+			width: 100%;
+			min-width: 0;
+
+			.time-schedule-content {
+				display: grid;
+				gap: var(--spacing-4x);
+				padding: var(--spacing-4x);
+				border-radius: var(--border-radius-2x);
+				background-color: var(--bg-item);
+
+				h3 {
+					font-size: var(--text-body);
+					font-weight: bold;
+				}
+
+				.time-schedule-mainbox,
+				.time-schedule-box {
+					display: grid;
+					gap: var(--spacing-5x);
+					min-width: 0;
+				}
+
+				.time-schedule-subbox {
+					display: grid;
+					grid-template-columns: 4.5rem minmax(0, 1fr);
+					gap: var(--spacing-4x);
+
+					h4 {
+						font-family: var(--font-sans-serif);
+						font-size: var(--text-heading-2-mobile);
+						font-weight: bold;
+						color: var(--color-primary);
+					}
+
+					.time-schedule-subbox-content {
+						min-width: 0;
+
+						.time-schedule-subbox-title {
+							font-size: var(--text-body);
+							font-weight: bold;
+						}
+
+						.time-schedule-subbox-description,
+						.time-schedule-subbox-sublist {
+							font-size: 12px;
+						}
+
+						p + p {
+							margin: 0;
+						}
+
+						.time-schedule-subbox-sublist {
+							position: relative;
+							top: 4px;
+							margin: 0;
+							padding: 0;
+							list-style-position: inside;
+
+							li::marker {
+								color: var(--color-primary);
+							}
+
+							time {
+								font-weight: bold;
+								color: var(--color-primary);
+							}
+						}
+					}
+				}
+
+				.time-schedule-divider {
+					display: none;
+				}
+			}
+		}
+
+		@container main (width > 1200px) {
+			.time-schedule-container {
+				width: min(1280px, 100%);
+				margin-inline: auto;
+
+				.time-schedule-content {
+					padding: var(--spacing-5x);
+
+					.time-schedule-mainbox {
+						grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+						gap: var(--spacing-8x);
+					}
+
+					.time-schedule-subbox {
+						grid-template-columns: 6rem minmax(0, 1fr);
+
+						h4 {
+							font-size: var(--text-heading-2);
+						}
+					}
+
+					.time-schedule-divider {
+						display: block;
+						background: var(--bg-item-hover);
+					}
+				}
+			}
+		}
+	</style>
+}
+
+templ TimeScheduleFriday() {
+	@timeScheduleStyles()
+	<div class="time-schedule-container">
+		<div class="time-schedule-content">
+			<h3>Tidspunkter for dagen</h3>
+			<div class="time-schedule-mainbox">
+				<div class="time-schedule-box">
+					<div class="time-schedule-subbox">
+						<h4>16:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Dørene åpner for innsjekk til festivalen
+							</p>
+						</div>
+					</div>
+					<div class="time-schedule-subbox">
+						<h4>18:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Første pulje i programmet starter
+							</p>
+							<p class="time-schedule-subbox-description">
+								noe her om puljene og alt sammen
+							</p>
+							<ul class="time-schedule-subbox-sublist">
+								<li><time>16:30</time> - Programmet er ferdigstilt, rom er fordelt</li>
+								<li><time>17:00</time> - Påmelding lukkes, arrangementer i puljen annonseres</li>
+							</ul>
+						</div>
+					</div>
+					<div class="time-schedule-subbox">
+						<h4>23:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Festivalen avsluttes for dagen
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ TimeScheduleLoordag() {
+	@timeScheduleStyles()
+	<div class="time-schedule-container">
+		<div class="time-schedule-content">
+			<h3>Tidspunkter for dagen</h3>
+			<div class="time-schedule-mainbox">
+				<div class="time-schedule-box">
+					<div class="time-schedule-subbox">
+						<h4>09:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Dørene åpner for innsjekk til festivalen
+							</p>
+						</div>
+					</div>
+					<div class="time-schedule-subbox">
+						<h4>10:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Andre pulje i programmet starter
+							</p>
+							<p class="time-schedule-subbox-description">
+								noe her om puljene og alt sammen
+							</p>
+							<ul class="time-schedule-subbox-sublist">
+								<li><time>9:00</time> - Påmelding lukkes, arrangementer i puljen annonseres</li>
+							</ul>
+						</div>
+					</div>
+					<div class="time-schedule-subbox">
+						<h4>16:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Middag
+							</p>
+							<p class="time-schedule-subbox-description">
+								For de som har kjøpt middagsbilett
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="time-schedule-divider" aria-hidden="true"></div>
+				<div class="time-schedule-box">
+					<div class="time-schedule-subbox">
+						<h4>18:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Tredje pulje starter
+							</p>
+							<p class="time-schedule-subbox-description">
+								Ekstra text under her etter behov
+							</p>
+							<ul class="time-schedule-subbox-sublist">
+								<li><time>17:00</time> - Påmelding lukkes, arrangementer i puljen annonseres</li>
+							</ul>
+						</div>
+					</div>
+					<div class="time-schedule-subbox">
+						<h4>23:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Festivalen avsluttes for dagen
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ TimeScheduleSoondag() {
+	@timeScheduleStyles()
+	<div class="time-schedule-container">
+		<div class="time-schedule-content">
+			<h3>Tidspunkter for dagen</h3>
+			<div class="time-schedule-mainbox">
+				<div class="time-schedule-box">
+					<div class="time-schedule-subbox">
+						<h4>09:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Dørene åpner for innsjekk til festivalen
+							</p>
+							<p class="time-schedule-subbox-description">
+								Ekstra text under her etter behov
+							</p>
+						</div>
+					</div>
+					<div class="time-schedule-subbox">
+						<h4>10:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Siste pulje i programmet starter
+							</p>
+							<p class="time-schedule-subbox-description">
+								noe her om puljene og alt sammen
+							</p>
+							<ul class="time-schedule-subbox-sublist">
+								<li><time>09:00</time> - Påmelding lukkes, arrangementer i puljen annonseres</li>
+							</ul>
+						</div>
+					</div>
+					<div class="time-schedule-subbox">
+						<h4>16:00</h4>
+						<div class="time-schedule-subbox-content">
+							<p class="time-schedule-subbox-title">
+								Festivalen avsluttes
+							</p>
+							<p class="time-schedule-subbox-description">
+								noe her om puljene og alt sammen
+							</p>
+							<ul class="time-schedule-subbox-sublist">
+								<li><time>15:15</time> - Premier blir delt ut</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}

@@ -1,0 +1,53 @@
+package root
+
+import "github.com/Regncon/conorganizer/service/program"
+
+templ programDaySelector(days []program.Day, selectedIndex int) {
+	<style>
+		.program-day-selector-container {
+			padding: var(--spacing-2x) 0;
+			position: sticky;
+			top: 51px;
+			background-color: var(--bg-base);
+			z-index: var(--subnav-z-index);
+		}
+
+		.program-day-selector {
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			gap: var(--spacing-2x);
+		}
+
+		.program-day-selector .btn.is-active {
+			color: var(--color-text-strong);
+			background-color: var(--btn-primary-hover-bg);
+			border-color: var(--color-primary);
+		}
+
+		@container main (width <= 600px) {
+			.program-day-selector .btn {
+				text-align: center;
+				font-size: 12px;
+			}
+		}
+
+		@container main (width > 600px) {
+			.program-day-selector-container {
+				margin-top: var(--spacing-3x);
+				top: var(--nav-height);
+			}
+		}
+	</style>
+	<nav class="program-day-selector-container" aria-label="Velg programdag">
+		<div class="page-content-container program-day-selector">
+			for index, day := range days {
+				<a
+					href={ templ.URL(programDateURL(day.QueryValue())) }
+					class={ "btn btn--outline", templ.KV("is-active", index == selectedIndex) }
+					aria-current={ templ.KV("page", index == selectedIndex) }
+				>{ day.Label() }</a>
+			}
+		</div>
+	</nav>
+}

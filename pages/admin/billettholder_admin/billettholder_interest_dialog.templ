@@ -30,7 +30,7 @@ func billettholderSectionInterestLevelTotal(section billettholderInterestPuljeSe
 
 func billettholderSectionHasGMOrDM(section billettholderInterestPuljeSection) bool {
 	for _, row := range section.Assigned {
-		if row.IsPublished && row.IsGM {
+		if row.IsGM {
 			return true
 		}
 	}
@@ -48,8 +48,8 @@ func billettholderHasGMOrDM(sections []billettholderInterestPuljeSection) bool {
 
 func billettholderHasFirstChoice(sections []billettholderInterestPuljeSection) bool {
 	for _, section := range sections {
-		for _, row := range section.Assigned {
-			if row.IsPublished && row.IsPlayer && row.InterestLevel == models.InterestLevelHigh {
+	for _, row := range section.Assigned {
+			if row.IsPlayer && row.InterestLevel == models.InterestLevelHigh {
 				return true
 			}
 		}

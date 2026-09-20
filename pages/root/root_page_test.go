@@ -26,7 +26,7 @@ func TestRootPageContent_RendersHomeBreadcrumb(t *testing.T) {
 	setProgramPublishing(t, db, false)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualBreadcrumb := templtest.CollectTexts(doc, ".breadcrumb-end")
 
 	// Then
@@ -55,7 +55,7 @@ func TestRootPageContent_RendersSubmitEventCallToAction(t *testing.T) {
 	setProgramPublishing(t, db, false)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualText := strings.Join(templtest.CollectTexts(doc, ".call-to-action"), " ")
 	actualHref, actualHrefExists := doc.Find(".call-to-action a").Attr("href")
 	actualImageSrc, actualImageSrcExists := doc.Find(".call-to-action img.call-to-action-avatar").Attr("src")
@@ -96,7 +96,7 @@ func TestRootPageContent_WhenProgramPublishingStateCannotLoad_RendersFriendlyErr
 	mustExec(t, db, `DROP TABLE program_publishing_state`)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualText := rootPageText(doc)
 
 	// Then
@@ -126,7 +126,7 @@ func TestRootPageContent_WhenEventsCannotLoad_RendersFriendlyError(t *testing.T)
 	mustExec(t, db, `DROP TABLE events`)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualText := rootPageText(doc)
 
 	// Then

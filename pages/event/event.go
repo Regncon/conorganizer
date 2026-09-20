@@ -12,6 +12,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/program"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
@@ -38,7 +39,7 @@ func interestErrorMessageFromError(err error) string {
 	if strings.Contains(err.Error(), "does not have access") {
 		return "Du har ikkje tilgang til å endre interessa til denne billettheldaren. Kontakt styret."
 	}
-	if strings.Contains(err.Error(), "is not active and published for event") {
+	if strings.Contains(err.Error(), "is not active for event") {
 		return "Denne pulja er ikkje tilgjengeleg for dette arrangementet."
 	}
 	if strings.Contains(err.Error(), "is locked for event") {
@@ -223,7 +224,7 @@ func updateInterest(
 		return fmt.Errorf("interest level is required")
 	}
 
-	programPublished, programPublishedErr := getProgramPublished(db)
+	programPublished, programPublishedErr := program.IsPublished(db)
 	if programPublishedErr != nil {
 		return fmt.Errorf("failed to check program publishing state: %w", programPublishedErr)
 	}
@@ -239,14 +240,14 @@ func updateInterest(
 		WHERE ep.event_id = $1
 			AND ep.pulje_id = $2
 			AND ep.is_in_pulje = 1
-			AND ep.is_published = 1
+			AND e.is_in_puljefordeling = 1
 			AND e.status = $3
 	`
 	var puljeStatus models.PuljeStatus
 	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId, models.EventStatusAnnounced).Scan(&puljeStatus)
 	if puljerErr != nil {
 		if puljerErr == sql.ErrNoRows {
-			return fmt.Errorf("pulje %s is not active and published for event %s", puljeId, eventID)
+			return fmt.Errorf("pulje %s is not active for event %s", puljeId, eventID)
 		}
 		return fmt.Errorf("failed to check if pulje %s exists for event %s: %w", puljeId, eventID, puljerErr)
 	}

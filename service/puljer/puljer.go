@@ -12,7 +12,7 @@ func GetActivePuljeForEvent(eventID string, db *sql.DB) ([]models.PuljeRow, erro
 		SELECT p.id, p.name, p.status, p.closing_warning_active, p.start_at, p.end_at
 		FROM puljer p
 		JOIN relation_event_puljer ep ON p.id = ep.pulje_id
-		WHERE ep.event_id = ? AND ep.is_in_pulje = TRUE AND ep.is_published = TRUE
+		WHERE ep.event_id = ? AND ep.is_in_pulje = TRUE
 		ORDER BY p.start_at ASC
 	`
 
