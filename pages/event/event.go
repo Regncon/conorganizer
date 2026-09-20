@@ -90,83 +90,9 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 			})
 
 			eventIdRouter.Route("/interest", func(eventInterest chi.Router) {
-
 				eventInterest.Put("/selected-interest", selectedInterestHandler(db, logger, eventImageDir))
-
 				eventInterest.Route("/update", func(updateInterestRouter chi.Router) {
-
-					updateInterestRouter.Put("/interest", func(w http.ResponseWriter, r *http.Request) {
-						type Put struct {
-							BillettHolderId            int                  `json:"billettHolderId"`
-							PuljeId                    string               `json:"puljeId"`
-							CurrentInterestLevelChoice models.InterestLevel `json:"currentInterestLevelChoice"`
-						}
-						signals := &Put{}
-
-						if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
-							logger.Error(fmt.Errorf("failed to read event interest signals: %w", readSignalErr).Error())
-							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
-							return
-						}
-						ctx := r.Context()
-						userInfo := userctx.GetUserRequestInfo(ctx)
-						sse := datastar.NewSSE(w, r)
-
-						eventId := chi.URLParam(r, "idx")
-						if eventId == "" {
-							logger.Error("Rejected interest update: missing event id", "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							if err := patchInterestErrorSignal(sse, "Mangler arrangement."); err != nil {
-								logger.Error(err.Error(), "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							}
-							return
-						}
-						if signals.BillettHolderId <= 0 {
-							logger.Error("Rejected interest update: missing billettholder id", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							if err := patchInterestErrorSignal(sse, "Vel billetthelder f\u00f8r du melder interesse."); err != nil {
-								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							}
-							return
-						}
-						if signals.PuljeId == "" {
-							logger.Error("Rejected interest update: missing pulje id", "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
-							if err := patchInterestErrorSignal(sse, "Vel pulje f\u00f8r du melder interesse."); err != nil {
-								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
-							}
-							return
-						}
-
-						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, signals.CurrentInterestLevelChoice, signals.PuljeId, db); err != nil {
-							logger.Error(
-								err.Error(),
-								"event_id", eventId,
-								"user_id", userInfo.Id,
-								"pulje_id", signals.PuljeId,
-								"billettholder_id", signals.BillettHolderId,
-							)
-							if patchErr := patchInterestErrorSignal(sse, interestErrorMessageFromError(err)); patchErr != nil {
-								logger.Error(patchErr.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							}
-							return
-						}
-
-						if err := patchInterestErrorSignal(sse, ""); err != nil {
-							logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-						}
-
-						logger.Debug("Interest update request handled",
-							"event_id", eventId,
-							"pulje_id", signals.PuljeId,
-							"user_id", userInfo.Id,
-							"billettholder_id", signals.BillettHolderId,
-						)
-
-						if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
-							logger.Error(fmt.Errorf("failed to broadcast interest update: %w", err).Error(), "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
-							return
-						}
-					})
-
+					updateInterestRouter.Put("/interest", interestUpdateHandler(liveManager, db, logger))
 				})
 			})
 		})
@@ -299,6 +225,80 @@ func updateInterest(
 	}
 
 	return nil
+}
+
+func interestUpdateHandler(liveManager *live.Manager, db *sql.DB, logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		type Put struct {
+			BillettHolderId            int                  `json:"billettHolderId"`
+			PuljeId                    string               `json:"puljeId"`
+			CurrentInterestLevelChoice models.InterestLevel `json:"currentInterestLevelChoice"`
+		}
+		signals := &Put{}
+
+		if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
+			logger.Error(fmt.Errorf("failed to read event interest signals: %w", readSignalErr).Error())
+			http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+			return
+		}
+		ctx := r.Context()
+		userInfo := userctx.GetUserRequestInfo(ctx)
+		sse := datastar.NewSSE(w, r)
+
+		eventId := chi.URLParam(r, "idx")
+		if eventId == "" {
+			logger.Error("Rejected interest update: missing event id", "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+			if err := patchInterestErrorSignal(sse, "Mangler arrangement."); err != nil {
+				logger.Error(err.Error(), "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+			}
+			return
+		}
+		if signals.BillettHolderId <= 0 {
+			logger.Error("Rejected interest update: missing billettholder id", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+			if err := patchInterestErrorSignal(sse, "Vel billetthelder f\u00f8r du melder interesse."); err != nil {
+				logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+			}
+			return
+		}
+		if signals.PuljeId == "" {
+			logger.Error("Rejected interest update: missing pulje id", "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
+			if err := patchInterestErrorSignal(sse, "Vel pulje f\u00f8r du melder interesse."); err != nil {
+				logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
+			}
+			return
+		}
+
+		if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, signals.CurrentInterestLevelChoice, signals.PuljeId, db); err != nil {
+			logger.Error(
+				err.Error(),
+				"event_id", eventId,
+				"user_id", userInfo.Id,
+				"pulje_id", signals.PuljeId,
+				"billettholder_id", signals.BillettHolderId,
+			)
+			if patchErr := patchInterestErrorSignal(sse, interestErrorMessageFromError(err)); patchErr != nil {
+				logger.Error(patchErr.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+			}
+			return
+		}
+
+		if err := patchInterestErrorSignal(sse, ""); err != nil {
+			logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+		}
+
+		logger.Debug("Interest update request handled",
+			"event_id", eventId,
+			"pulje_id", signals.PuljeId,
+			"user_id", userInfo.Id,
+			"billettholder_id", signals.BillettHolderId,
+		)
+
+		if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast interest update: %w", err).Error(), "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
 func selectedInterestHandler(db *sql.DB, logger *slog.Logger, eventImageDir *string) http.HandlerFunc {
