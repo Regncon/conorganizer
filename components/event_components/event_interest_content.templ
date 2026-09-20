@@ -21,7 +21,7 @@ templ InterestContent(eventID string, title string, state InterestNoticeState, i
 	>
 		<p class="label">Velg interesse</p>
 		if state.ShowAssignedEvent {
-			@InterestAlreadyAssigned(title, state.AssignedEvent)
+			@InterestAlreadyAssigned(eventID, title, state.AssignedEvent)
 		}
 		if state.ShowUnder18 {
 			@interestUnder18(title)

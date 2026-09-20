@@ -178,7 +178,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	</script>
 }
 
-templ InterestAlreadyAssigned(title string, assignedEvent AssignedEvent) {
+templ InterestAlreadyAssigned(eventID string, title string, assignedEvent AssignedEvent) {
 	<style>
         .interest-already-assigned {
             padding: var(--spacing-5x);
@@ -219,19 +219,34 @@ templ InterestAlreadyAssigned(title string, assignedEvent AssignedEvent) {
 
     </style>
 	<section class="interest-already-assigned">
-		<h3>
-			{ assignedEventHeading(assignedEvent.Role) }
-		</h3>
 		if assignedEvent.Role == "GM" {
-			<p><i>{ assignedEvent.Title }</i> er satt opp med deg som arrangør.</p>
+			@interestAlreadyAssignedGM(eventID, assignedEvent)
 		} else {
-			<p>
-				Du har allerede plass på et annet arrangement i denne puljen.
-				Du kan melde deg av det arrangementet om du heller ønsker å være med på <i>{ title }</i>.
-			</p>
+			@interestAlreadyAssignedPlayer(eventID, title, assignedEvent)
 		}
-		@ClickableEventCard(assignedEvent)
 	</section>
+}
+
+templ interestAlreadyAssignedPlayer(eventID string, title string, assignedEvent AssignedEvent) {
+	if assignedEvent.EventID == eventID {
+		<h3>Du har allerede blitt tildelt dette arrangementet.</h3>
+	} else {
+		<h3>Du har allerede blitt tildelt denne puljen.</h3>
+		<p>
+			Du har allerede plass på et annet arrangement i denne puljen. <i>{ title }</i>.
+		</p>
+		@ClickableEventCard(assignedEvent)
+	}
+}
+
+templ interestAlreadyAssignedGM(eventID string, assignedEvent AssignedEvent) {
+	if assignedEvent.EventID == eventID {
+		<h3>Du er satt opp som arrangør for dette arrangementet.</h3>
+	} else {
+		<h3>Du er arrangør for et arrangement i denne puljen.</h3>
+		<p><i>{ assignedEvent.Title }</i> er satt opp med deg som arrangør.</p>
+		@ClickableEventCard(assignedEvent)
+	}
 }
 
 templ interestUnder18(title string) {

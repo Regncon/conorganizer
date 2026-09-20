@@ -67,11 +67,19 @@ func TestSelectedInterest_PuljefordelingAssignmentAppearsForCurrentBillettholder
 	if err := puljefordeling.AddManualSeat(db, fixture.puljeID, fixture.eventID, expectedBillettholderID); err != nil {
 		t.Fatal(err)
 	}
-	actual := decodeInterestContent(t, requestInterestContent(t, db, fixture, expectedBillettholderID))
+	response := requestInterestContent(t, db, fixture, expectedBillettholderID)
+	actual := decodeInterestContent(t, response)
 
 	// Then
-	if !actual.ShowAssigned || actual.CanChoose || actual.Assigned.EventID != fixture.eventID || actual.Assigned.Role != "Player" {
+	if !actual.ShowAssigned || actual.CanChoose {
 		t.Fatalf("expected the current billettholder's manual assignment, got %+v", actual)
+	}
+	html := response.Body.String()
+	if !strings.Contains(html, "Du har allerede blitt tildelt dette arrangementet.") || !strings.Contains(html, "Du har allerede plass på dette arrangement.") {
+		t.Fatalf("expected the current event's assignment text, got %s", html)
+	}
+	if strings.Contains(html, "prev-next-button-container") {
+		t.Fatal("an assignment to the current event should not render an event card")
 	}
 }
 

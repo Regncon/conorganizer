@@ -71,10 +71,3 @@ func getAssignedEventForBillettholder(billettholderID int, puljeID string, db *s
 	}
 	return assignedEvent, nil
 }
-
-func assignedEventHeading(role string) string {
-	if role == "GM" {
-		return "Du er arrangør for et arrangement i denne puljen."
-	}
-	return "Du har allerede blitt tildelt denne puljen."
-}
