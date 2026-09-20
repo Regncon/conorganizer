@@ -2,30 +2,11 @@ package root
 
 import (
 	"database/sql"
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/program"
 )
-
-func getProgramPublished(db *sql.DB) (bool, error) {
-	const query = `
-		SELECT is_published
-		FROM program_publishing_state
-		WHERE id = 1
-	`
-
-	var isPublished int
-	if err := db.QueryRow(query).Scan(&isPublished); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
-		}
-		return false, fmt.Errorf("query program publishing state: %w", err)
-	}
-
-	return isPublished == 1, nil
-}
 
 templ rootPage(db *sql.DB, eventImageDir *string, requestedDate string) {
 	<div id="root-page-wrapper">
@@ -38,9 +19,7 @@ templ rootPageContent(db *sql.DB, eventImageDir *string) {
 }
 
 templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string) {
-	{{
-		programPublished, err := getProgramPublished(db)
-	}}
+	{{ programPublished, err := program.IsPublished(db) }}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
 	})
@@ -50,14 +29,14 @@ templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate st
 		</div>
 	} else {
 		if programPublished {
-			{{ programDays, programDaysErr := GetPublishedProgramDays(db) }}
+			{{ programDays, programDaysErr := program.GetDays(db) }}
 			if programDaysErr != nil {
 				@components.CallToAction()
 				<div class="page-content-container">
 					<p class="root-page-error">{ rootEventsLoadErrorMessage }</p>
 				</div>
 			} else if len(programDays) > 0 {
-				{{ selectedDayIndex := SelectProgramDayIndex(programDays, requestedDate, time.Now()) }}
+				{{ selectedDayIndex := program.SelectDayIndex(programDays, requestedDate, time.Now()) }}
 				@programDaySelector(programDays, selectedDayIndex)
 				@components.CallToAction()
 				{{ selectedDay := programDays[selectedDayIndex] }}

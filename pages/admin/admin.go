@@ -367,7 +367,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						}
 
 						// Assign the event to this pulje even when it has no active
-						// relation here yet. Room assignment also publishes it.
+						// relation here yet.
 						result, err := db.ExecContext(r.Context(), `
 							INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, room_id)
 							VALUES (?, ?, 1, ?)

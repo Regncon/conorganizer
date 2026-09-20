@@ -26,8 +26,8 @@ func PrintFriendlyRoute(router chi.Router, db *sql.DB, eventImageDir *string, lo
 		if err := layouts.Base(
 			"Regncon program uttriftsvennlig",
 			userInfo,
-            db,
-            logger,
+			db,
+			logger,
 			printFriendlyPage(db, eventImageDir, logger),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render print-friendly page: %w", err).Error(), "user_id", userInfo.Id)
@@ -174,7 +174,7 @@ templ eventPulje(pulje models.Pulje, byPulje EventsPrintByPulje, eventImageDir *
 					<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
 				</h2>
 				<hr style="margin-block: 1rem;"/>
-				@event.Event_mobile(&blockEvent, components.PreviousNext{}, nil, "", true, true, false, event.ProgramInterestNotice{}, false, false, eventImageDir)
+				@event.Event_mobile(&blockEvent, components.PreviousNext{}, nil, eventImageDir)
 				<div class="pagebreak"></div>
 			}
 		</div>

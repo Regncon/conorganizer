@@ -73,7 +73,7 @@ func insertRootPagePuljeWithDetails(t *testing.T, db *sql.DB, puljeID models.Pul
 	`, puljeID, name, models.PuljeStatusOpen, startAt, endAt)
 }
 
-func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus) {
+func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus, isInPuljefordeling bool) {
 	t.Helper()
 
 	mustExec(t, db, `
@@ -86,10 +86,11 @@ func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, stat
 			email,
 			phone_number,
 			max_players,
-			status
+			status,
+			is_in_puljefordeling
 		)
-		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, id, title, "Intro", "Description", "Host", "host@example.com", "12345678", 4, status)
+		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, id, title, "Intro", "Description", "Host", "host@example.com", "12345678", 4, status, isInPuljefordeling)
 }
 
 func insertRootPageEventPulje(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, isPublished bool) {
@@ -104,16 +105,6 @@ func insertRootPageEventPulje(t *testing.T, db *sql.DB, eventID string, puljeID 
 		INSERT INTO relation_event_puljer(event_id, pulje_id, is_in_pulje, is_published)
 		VALUES(?, ?, 1, ?)
 	`, eventID, puljeID, published)
-	mustExec(t, db, `UPDATE events SET is_in_puljefordeling = 1 WHERE id = ?`, eventID)
-}
-
-func setRootPageEventInPuljefordeling(t *testing.T, db *sql.DB, eventID string, isInPuljefordeling bool) {
-	t.Helper()
-	value := 0
-	if isInPuljefordeling {
-		value = 1
-	}
-	mustExec(t, db, `UPDATE events SET is_in_puljefordeling = ? WHERE id = ?`, value, eventID)
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {

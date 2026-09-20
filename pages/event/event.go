@@ -12,6 +12,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/program"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
@@ -223,7 +224,7 @@ func updateInterest(
 		return fmt.Errorf("interest level is required")
 	}
 
-	programPublished, programPublishedErr := getProgramPublished(db)
+	programPublished, programPublishedErr := program.IsPublished(db)
 	if programPublishedErr != nil {
 		return fmt.Errorf("failed to check program publishing state: %w", programPublishedErr)
 	}

@@ -75,7 +75,7 @@ func seedPreviousNextRootListPulje(t *testing.T, db *sql.DB, puljeID models.Pulj
 	`, puljeID, name, models.PuljeStatusOpen, startAt, endAt)
 }
 
-func seedPreviousNextRootListEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus) {
+func seedPreviousNextRootListEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus, isInPuljefordeling bool) {
 	t.Helper()
 
 	mustExecPreviousNextRootList(t, db, `
@@ -93,10 +93,11 @@ func seedPreviousNextRootListEvent(t *testing.T, db *sql.DB, id string, title st
 			max_players,
 			beginner_friendly,
 			can_be_run_in_english,
-			status
+			status,
+			is_in_puljefordeling
 		)
-		VALUES(?, ?, 'Intro', 'Description', ?, ?, ?, 'Host', 'host@example.com', '12345678', 4, 1, 1, ?)
-	`, id, title, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, status)
+		VALUES(?, ?, 'Intro', 'Description', ?, ?, ?, 'Host', 'host@example.com', '12345678', 4, 1, 1, ?, ?)
+	`, id, title, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, status, isInPuljefordeling)
 }
 
 func seedPreviousNextRootListEventPulje(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, isInPulje bool, isPublished bool) {
@@ -115,18 +116,6 @@ func seedPreviousNextRootListEventPulje(t *testing.T, db *sql.DB, eventID string
 		INSERT INTO relation_event_puljer(event_id, pulje_id, is_in_pulje, is_published)
 		VALUES(?, ?, ?, ?)
 	`, eventID, puljeID, inPulje, published)
-	if isInPulje {
-		mustExecPreviousNextRootList(t, db, `UPDATE events SET is_in_puljefordeling = 1 WHERE id = ?`, eventID)
-	}
-}
-
-func setPreviousNextRootListEventInPuljefordeling(t *testing.T, db *sql.DB, eventID string, isInPuljefordeling bool) {
-	t.Helper()
-	value := 0
-	if isInPuljefordeling {
-		value = 1
-	}
-	mustExecPreviousNextRootList(t, db, `UPDATE events SET is_in_puljefordeling = ? WHERE id = ?`, value, eventID)
 }
 
 func mustExecPreviousNextRootList(t *testing.T, db *sql.DB, query string, args ...any) {

@@ -1,33 +1,16 @@
 package components
 
 import (
-	"net/url"
-
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
+	"github.com/Regncon/conorganizer/service/program"
 )
-
-func eventCardHref(eventID string, pulje string, date string) string {
-	query := url.Values{}
-	if date != "" {
-		query.Set("date", date)
-	}
-	if pulje != "" {
-		query.Set("pulje", pulje)
-	}
-
-	href := "/event/" + url.PathEscape(eventID)
-	if encoded := query.Encode(); encoded != "" {
-		href += "?" + encoded
-	}
-	return href
-}
 
 templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, pulje string, date string) {
 	{{ imageUrl := eventimage.GetEventImageUrl(eventCard.Id, "card", eventImageDir) }}
 	<a
-		href={ templ.URL(eventCardHref(eventCard.Id, pulje, date)) }
+		href={ templ.URL(program.EventURL(eventCard.Id, pulje, date)) }
 		class="event-card-container program-event-card"
 	>
 		<img
@@ -62,7 +45,7 @@ templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, p
 templ EventCard(eventCard models.EventCardModel, eventImageDir *string, pulje string, date string) {
 	{{ imageUrl := eventimage.GetEventImageUrl(eventCard.Id, "card", eventImageDir) }}
 	<a
-		href={ templ.URL(eventCardHref(eventCard.Id, pulje, date)) }
+		href={ templ.URL(program.EventURL(eventCard.Id, pulje, date)) }
 		class="event-card-container"
 	>
 		<img

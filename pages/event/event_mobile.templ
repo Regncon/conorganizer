@@ -5,21 +5,14 @@ import (
 	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/eventimage"
-    "github.com/Regncon/conorganizer/service/eventService"
 )
 
 templ Event_mobile(
 	event *models.Event,
 	previousNextData components.PreviousNext,
-	puljerForEvent []models.PuljeRow,
-	selectedPuljeQuery string,
-	programPublished bool,
-	hasTickets bool,
-	isInPuljefordeling bool,
-	programInterestNotice ProgramInterestNotice,
-	showInterestPanel bool,
-	showInterestControls bool,
+	interestPanel templ.Component,
 	eventImageDir *string) {
 	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
@@ -348,13 +341,9 @@ templ Event_mobile(
 			</header>
 		</div>
 		<div class="event-information">
-		if showInterestPanel {
-			if isInPuljefordeling {
-				@EventInterestPanel(hasTickets, puljerForEvent, selectedPuljeQuery, programPublished, showInterestControls)
-			} else {
-				@ProgramEventInterestPanel(programInterestNotice)
+			if interestPanel != nil {
+				@interestPanel
 			}
-		}
 			<section class="surface-pane event-details-pane">
 				<h2 class="surface-pane-title">Detaljer om arrangementet</h2>
 				{ children... }
@@ -384,7 +373,6 @@ templ Event_mobile(
 							</div>
 							<p title={ event.System }>{ event.System } </p>
 						</div>
-
 					</div>
 					<hr class="event-details-divider"/>
 					<div class="event-details-section event-details-bottom">

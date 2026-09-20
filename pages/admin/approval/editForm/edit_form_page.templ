@@ -19,15 +19,7 @@ templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, eventIm
 }
 
 templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
-	{{
-	isAdmin := authctx.GetAdminFromUserToken(ctx)
-	puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db)
-	}}
-	if puljerErr != nil {
-		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
-		<p>Error fetching event puljer: { puljerErr.Error() }</p>
-		return
-	}
+	{{ isAdmin := authctx.GetAdminFromUserToken(ctx) }}
 	{{ eventData, eventErr := eventservice.GetEventById(eventId, db) }}
 	if eventErr != nil {
 		{{ logger.Error(eventErr.Error(), "event_id", eventId) }}
@@ -39,7 +31,6 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		<p>Event not found</p>
 		return
 	}
-
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Admin", Url: "/admin/"},
@@ -54,7 +45,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		>
 			@formsubmission.FormBody(eventData, eventImageDir, isAdmin, db)
 		</form>
-		@event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
+		@event.EventFormPreview(eventData, eventImageDir)
 	}
 	<div class="page-content-container wide-content">
 		@formsubmission.WhoIsInterested(eventId, db, logger)

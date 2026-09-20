@@ -52,11 +52,11 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsProgramDaysWithActiveDay
 	insertRootPagePuljeWithDetails(t, db, models.PuljeFredagKveld, "Fredag kveld", "2026-10-02T18:00:00Z", "2026-10-02T23:00:00Z")
 	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-03T10:00:00Z", "2026-10-03T15:00:00Z")
 	insertRootPagePuljeWithDetails(t, db, models.PuljeSondagMorgen, "Søndag morgen", "2026-10-04T10:00:00Z", "2026-10-04T15:00:00Z")
-	insertRootPageEvent(t, db, "friday-event", "Friday Event", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "friday-event", "Friday Event", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "friday-event", models.PuljeFredagKveld, true)
-	insertRootPageEvent(t, db, "saturday-event", "Saturday Event", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "saturday-event", "Saturday Event", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "saturday-event", models.PuljeLordagMorgen, true)
-	insertRootPageEvent(t, db, "sunday-event", "Sunday Event", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "sunday-event", "Sunday Event", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "sunday-event", models.PuljeSondagMorgen, true)
 
 	// When
@@ -92,17 +92,17 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsAnnouncedActivePuljeEven
 	setProgramPublishing(t, db, true)
 	insertRootPagePulje(t, db)
 
-	insertRootPageEvent(t, db, "published-announced", "Published Announced", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "published-announced", "Published Announced", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "published-announced", models.PuljeFredagKveld, true)
 
-	insertRootPageEvent(t, db, "unpublished-announced", "Unpublished Announced", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "unpublished-announced", "Unpublished Announced", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "unpublished-announced", models.PuljeFredagKveld, false)
 
-	insertRootPageEvent(t, db, "unrelated-approved", "Unrelated Approved", models.EventStatusApproved)
-	insertRootPageEvent(t, db, "published-approved", "Published Approved", models.EventStatusApproved)
+	insertRootPageEvent(t, db, "unrelated-approved", "Unrelated Approved", models.EventStatusApproved, false)
+	insertRootPageEvent(t, db, "published-approved", "Published Approved", models.EventStatusApproved, true)
 	insertRootPageEventPulje(t, db, "published-approved", models.PuljeFredagKveld, true)
 
-	insertRootPageEvent(t, db, "published-submitted", "Published Submitted", models.EventStatusSubmitted)
+	insertRootPageEvent(t, db, "published-submitted", "Published Submitted", models.EventStatusSubmitted, true)
 	insertRootPageEventPulje(t, db, "published-submitted", models.PuljeFredagKveld, true)
 
 	// When
@@ -129,7 +129,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersEventLinksWithPulje(t 
 	seedRootPageLookups(t, db)
 	setProgramPublishing(t, db, true)
 	insertRootPagePulje(t, db)
-	insertRootPageEvent(t, db, "alpha-event", "Alpha Event", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "alpha-event", "Alpha Event", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "alpha-event", models.PuljeFredagKveld, true)
 
 	// When
@@ -161,10 +161,10 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersSelectedDatePuljeSecti
 	insertRootPagePuljeWithDetails(t, db, models.PuljeFredagKveld, "Fredag kveld", "2026-10-09T18:00:00Z", "2026-10-09T23:00:00Z")
 	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lordag morgen", "2026-10-09T20:00:00Z", "2026-10-09T22:00:00Z")
 
-	insertRootPageEvent(t, db, "lordag-event", "Lordag Event", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "lordag-event", "Lordag Event", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "lordag-event", models.PuljeLordagMorgen, true)
 
-	insertRootPageEvent(t, db, "fredag-event", "Fredag Event", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "fredag-event", "Fredag Event", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "fredag-event", models.PuljeFredagKveld, true)
 
 	// When
@@ -192,10 +192,10 @@ func TestRootPageContent_WhenProgramPublishingIsOn_SortsEventsAlphabeticallyWith
 	setProgramPublishing(t, db, true)
 	insertRootPagePulje(t, db)
 
-	insertRootPageEvent(t, db, "beta-event", "Beta Event", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "beta-event", "Beta Event", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "beta-event", models.PuljeFredagKveld, true)
 
-	insertRootPageEvent(t, db, "alpha-event", "Alpha Event", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "alpha-event", "Alpha Event", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "alpha-event", models.PuljeFredagKveld, true)
 
 	// When
@@ -238,20 +238,17 @@ func TestRootPageContent_WhenProgramAndRaffleEventsAreMixed_DeduplicatesProgramA
 		{id: "program-beta", title: "Beta Program"},
 		{id: "program-gamma", title: "Gamma Program"},
 	} {
-		insertRootPageEvent(t, db, event.id, event.title, models.EventStatusAnnounced)
+		insertRootPageEvent(t, db, event.id, event.title, models.EventStatusAnnounced, false)
 		mustExec(t, db, `UPDATE events SET system = 'Hidden System', host_name = 'Hidden Host' WHERE id = ?`, event.id)
 	}
 	insertRootPageEventPulje(t, db, "program-alpha", models.PuljeLordagMorgen, true)
 	insertRootPageEventPulje(t, db, "program-alpha", models.PuljeLordagKveld, true)
 	insertRootPageEventPulje(t, db, "program-beta", models.PuljeLordagMorgen, true)
 	insertRootPageEventPulje(t, db, "program-gamma", models.PuljeLordagKveld, true)
-	for _, eventID := range []string{"program-alpha", "program-beta", "program-gamma"} {
-		setRootPageEventInPuljefordeling(t, db, eventID, false)
-	}
 
-	insertRootPageEvent(t, db, "raffle-morning", "Morning Raffle", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "raffle-morning", "Morning Raffle", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "raffle-morning", models.PuljeLordagMorgen, true)
-	insertRootPageEvent(t, db, "raffle-evening", "Evening Raffle", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "raffle-evening", "Evening Raffle", models.EventStatusAnnounced, true)
 	insertRootPageEventPulje(t, db, "raffle-evening", models.PuljeLordagKveld, true)
 
 	// When
@@ -314,9 +311,8 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersSelectedDayScheduleBef
 	seedRootPageLookups(t, db)
 	setProgramPublishing(t, db, true)
 	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
-	insertRootPageEvent(t, db, "saturday-program", "Saturday Program", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "saturday-program", "Saturday Program", models.EventStatusAnnounced, false)
 	insertRootPageEventPulje(t, db, "saturday-program", models.PuljeLordagMorgen, true)
-	setRootPageEventInPuljefordeling(t, db, "saturday-program", false)
 
 	// When
 	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-10"))

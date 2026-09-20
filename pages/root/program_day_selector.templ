@@ -1,6 +1,8 @@
 package root
 
-templ programDaySelector(days []ProgramDay, selectedIndex int) {
+import "github.com/Regncon/conorganizer/service/program"
+
+templ programDaySelector(days []program.Day, selectedIndex int) {
 	<style>
 		.program-day-selector-container {
 			padding: var(--spacing-2x) 0;

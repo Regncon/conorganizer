@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/Regncon/conorganizer/service/program"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
@@ -39,18 +39,18 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsNotPublished_UsesAnnounced
 	imgDir := ""
 	db := createPreviousNextRootListTestDB(t)
 	seedPreviousNextRootListLookups(t, db)
-	seedPreviousNextRootListEvent(t, db, "draft-event", "Draft Event", models.EventStatusDraft)
-	seedPreviousNextRootListEvent(t, db, "submitted-event", "Submitted Event", models.EventStatusSubmitted)
-	seedPreviousNextRootListEvent(t, db, "approved-event", "Approved Event", models.EventStatusApproved)
-	seedPreviousNextRootListEvent(t, db, "archived-event", "Archived Event", models.EventStatusArchived)
-	seedPreviousNextRootListEvent(t, db, "beta-announced", "Beta Announced", models.EventStatusAnnounced)
-	seedPreviousNextRootListEvent(t, db, "delta-announced", "Delta Announced", models.EventStatusAnnounced)
-	seedPreviousNextRootListEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "draft-event", "Draft Event", models.EventStatusDraft, false)
+	seedPreviousNextRootListEvent(t, db, "submitted-event", "Submitted Event", models.EventStatusSubmitted, false)
+	seedPreviousNextRootListEvent(t, db, "approved-event", "Approved Event", models.EventStatusApproved, false)
+	seedPreviousNextRootListEvent(t, db, "archived-event", "Archived Event", models.EventStatusArchived, false)
+	seedPreviousNextRootListEvent(t, db, "beta-announced", "Beta Announced", models.EventStatusAnnounced, false)
+	seedPreviousNextRootListEvent(t, db, "delta-announced", "Delta Announced", models.EventStatusAnnounced, false)
+	seedPreviousNextRootListEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced, false)
 
 	request := httptest.NewRequest("GET", "/event/beta-announced?pulje=FredagKveld", nil)
 
 	// When
-	announcedEvents, err := root.GetAnnouncedEventsAlphabetically(db)
+	announcedEvents, err := program.GetAnnouncedEvents(db)
 	if err != nil {
 		t.Fatalf("expected announced root events query to succeed: %v", err)
 	}
@@ -114,23 +114,23 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_IgnoresLegacyPul
 	seedPreviousNextRootListPulje(t, db, models.PuljeLordagMorgen, "Lordag morgen", "2026-10-10T10:00:00Z", "2026-10-10T14:00:00Z")
 	seedPreviousNextRootListPulje(t, db, models.PuljeSondagMorgen, "Sondag morgen", "2026-10-11T10:00:00Z", "2026-10-11T14:00:00Z")
 
-	seedPreviousNextRootListEvent(t, db, "alpha-fredag", "Alpha Fredag", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "alpha-fredag", "Alpha Fredag", models.EventStatusAnnounced, true)
 	seedPreviousNextRootListEventPulje(t, db, "alpha-fredag", models.PuljeFredagKveld, true, true)
-	seedPreviousNextRootListEvent(t, db, "shared-event", "Shared Event", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "shared-event", "Shared Event", models.EventStatusAnnounced, true)
 	seedPreviousNextRootListEventPulje(t, db, "shared-event", models.PuljeFredagKveld, true, true)
 	seedPreviousNextRootListEventPulje(t, db, "shared-event", models.PuljeLordagMorgen, true, true)
-	seedPreviousNextRootListEvent(t, db, "zeta-fredag", "Zeta Fredag", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "zeta-fredag", "Zeta Fredag", models.EventStatusAnnounced, true)
 	seedPreviousNextRootListEventPulje(t, db, "zeta-fredag", models.PuljeFredagKveld, true, true)
-	seedPreviousNextRootListEvent(t, db, "lima-lordag", "Lima Lordag", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "lima-lordag", "Lima Lordag", models.EventStatusAnnounced, true)
 	seedPreviousNextRootListEventPulje(t, db, "lima-lordag", models.PuljeLordagMorgen, true, true)
-	seedPreviousNextRootListEvent(t, db, "zulu-lordag", "Zulu Lordag", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "zulu-lordag", "Zulu Lordag", models.EventStatusAnnounced, true)
 	seedPreviousNextRootListEventPulje(t, db, "zulu-lordag", models.PuljeLordagMorgen, true, true)
 
-	seedPreviousNextRootListEvent(t, db, "not-in-pulje", "Beta Not In Pulje", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "not-in-pulje", "Beta Not In Pulje", models.EventStatusAnnounced, false)
 	seedPreviousNextRootListEventPulje(t, db, "not-in-pulje", models.PuljeFredagKveld, false, true)
-	seedPreviousNextRootListEvent(t, db, "unpublished-pulje", "Beta Unpublished", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "unpublished-pulje", "Beta Unpublished", models.EventStatusAnnounced, true)
 	seedPreviousNextRootListEventPulje(t, db, "unpublished-pulje", models.PuljeFredagKveld, true, false)
-	seedPreviousNextRootListEvent(t, db, "approved-pulje", "Beta Approved", models.EventStatusApproved)
+	seedPreviousNextRootListEvent(t, db, "approved-pulje", "Beta Approved", models.EventStatusApproved, true)
 	seedPreviousNextRootListEventPulje(t, db, "approved-pulje", models.PuljeFredagKveld, true, true)
 
 	cases := []struct {
@@ -279,16 +279,14 @@ func TestGetPreviousNextForRootEventList_WhenProgramAndRaffleEventsShareADay_Use
 	seedPreviousNextRootListPulje(t, db, models.PuljeLordagMorgen, "Lordag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
 	seedPreviousNextRootListPulje(t, db, models.PuljeLordagKveld, "Lordag kveld", "2026-10-10T18:00:00Z", "2026-10-10T23:00:00Z")
 
-	seedPreviousNextRootListEvent(t, db, "program-alpha", "Alpha Program", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "program-alpha", "Alpha Program", models.EventStatusAnnounced, false)
 	seedPreviousNextRootListEventPulje(t, db, "program-alpha", models.PuljeLordagMorgen, true, true)
 	seedPreviousNextRootListEventPulje(t, db, "program-alpha", models.PuljeLordagKveld, true, true)
-	setPreviousNextRootListEventInPuljefordeling(t, db, "program-alpha", false)
-	seedPreviousNextRootListEvent(t, db, "program-beta", "Beta Program", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "program-beta", "Beta Program", models.EventStatusAnnounced, false)
 	seedPreviousNextRootListEventPulje(t, db, "program-beta", models.PuljeLordagMorgen, true, true)
-	setPreviousNextRootListEventInPuljefordeling(t, db, "program-beta", false)
-	seedPreviousNextRootListEvent(t, db, "morning-raffle", "Morning Raffle", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "morning-raffle", "Morning Raffle", models.EventStatusAnnounced, true)
 	seedPreviousNextRootListEventPulje(t, db, "morning-raffle", models.PuljeLordagMorgen, true, true)
-	seedPreviousNextRootListEvent(t, db, "evening-raffle", "Evening Raffle", models.EventStatusAnnounced)
+	seedPreviousNextRootListEvent(t, db, "evening-raffle", "Evening Raffle", models.EventStatusAnnounced, true)
 	seedPreviousNextRootListEventPulje(t, db, "evening-raffle", models.PuljeLordagKveld, true, true)
 
 	// When

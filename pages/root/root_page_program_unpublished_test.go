@@ -47,11 +47,11 @@ func TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsAnnouncedEvents(t *
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)
 	setProgramPublishing(t, db, false)
-	insertRootPageEvent(t, db, "draft-event", "Draft Event", models.EventStatusDraft)
-	insertRootPageEvent(t, db, "submitted-event", "Submitted Event", models.EventStatusSubmitted)
-	insertRootPageEvent(t, db, "approved-event", "Approved Event", models.EventStatusApproved)
-	insertRootPageEvent(t, db, "beta-announced", "Beta Announced", models.EventStatusAnnounced)
-	insertRootPageEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "draft-event", "Draft Event", models.EventStatusDraft, false)
+	insertRootPageEvent(t, db, "submitted-event", "Submitted Event", models.EventStatusSubmitted, false)
+	insertRootPageEvent(t, db, "approved-event", "Approved Event", models.EventStatusApproved, false)
+	insertRootPageEvent(t, db, "beta-announced", "Beta Announced", models.EventStatusAnnounced, false)
+	insertRootPageEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced, false)
 
 	// When
 	doc := templtest.Render(t, rootPageContent(db, nil))
@@ -76,8 +76,8 @@ func TestRootPageContent_WhenProgramPublishingIsOff_RendersEventLinksWithoutPulj
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)
 	setProgramPublishing(t, db, false)
-	insertRootPageEvent(t, db, "beta-announced", "Beta Announced", models.EventStatusAnnounced)
-	insertRootPageEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "beta-announced", "Beta Announced", models.EventStatusAnnounced, false)
+	insertRootPageEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced, false)
 
 	// When
 	doc := templtest.Render(t, rootPageContent(db, nil))

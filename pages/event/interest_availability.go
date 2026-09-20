@@ -2,7 +2,6 @@ package event
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -19,30 +18,8 @@ func (notice ProgramInterestNotice) HasInterest() bool {
 	return len(notice.EventTitles) > 0
 }
 
-func getProgramPublished(db *sql.DB) (bool, error) {
-	const query = `
-		SELECT is_published
-		FROM program_publishing_state
-		WHERE id = 1
-	`
-
-	var isPublished int
-	if err := db.QueryRow(query).Scan(&isPublished); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
-		}
-		return false, fmt.Errorf("query program publishing state: %w", err)
-	}
-
-	return isPublished == 1, nil
-}
-
 func canShowInterestControls(programPublished bool, isInPuljefordeling bool, puljerForEvent []models.PuljeRow) bool {
 	return programPublished && isInPuljefordeling && len(puljerForEvent) > 0
-}
-
-func canShowInterestPanel(puljerForEvent []models.PuljeRow) bool {
-	return len(puljerForEvent) > 0
 }
 
 func getProgramInterestNotice(db *sql.DB, ticketHolders []ticketholder.BillettHolder, puljeID string) (ProgramInterestNotice, error) {
