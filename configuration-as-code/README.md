@@ -21,11 +21,20 @@ From the repository root:
 ```
 
 ## Fix permissions
+
 ```bash
 sudo find configuration-as-code/stow -type d -exec chmod 755 {} \;
 sudo find configuration-as-code/stow -type f -exec chmod 644 {} \;
+sudo find configuration-as-code/stow/scripts/usr/local/bin -type f -exec chmod 755 {} \;
 ```
 
+## Database scripts
+
+The `scripts` Stow package installs the database maintenance commands in
+`/usr/local/bin`.
+
+- `conorganizer-sqlite-backup` creates the scheduled compressed main-database backups.
+- `conorganizer-sqlite-restore events-YYYYMMDDTHHMMSSZ.db.zst` installs a selected backup into the public `restored` environment and refreshes its event images from main.
 
 ## Find all stowed files
 
@@ -43,4 +52,3 @@ while IFS= read -r -d '' symlink_path; do
     esac
 done
 ```
-
