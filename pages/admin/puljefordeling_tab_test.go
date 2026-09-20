@@ -251,11 +251,11 @@ func TestPuljefordelingTabContent_PinEmojiForManualWithoutInterest(t *testing.T)
 	}
 }
 
-func TestPuljeStatusToggles_ReflectLockedAndCompletedState(t *testing.T) {
+func TestPuljeStatusToggles_ReflectWarningLockedAndCompletedState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en pulje som er publisert (Completed).",
 		When:  "Når status-bryterne rendres.",
-		Then:  "Så skal begge bryterne være avkrysset.",
+		Then:  "Så skal lukking og publisering være avkrysset, og varselet være deaktivert.",
 	})
 
 	// Given
@@ -268,6 +268,44 @@ func TestPuljeStatusToggles_ReflectLockedAndCompletedState(t *testing.T) {
 	checked := doc.Find("input[type=checkbox][checked]")
 	if checked.Length() != 2 {
 		t.Fatalf("expected both toggles checked for Completed pulje, got %d checked", checked.Length())
+	}
+	if got := doc.Find("input[type=checkbox][disabled]").Length(); got != 1 {
+		t.Fatalf("expected closing warning toggle to be disabled for Completed pulje, got %d disabled toggles", got)
+	}
+}
+
+func TestPuljeStatusToggles_ReflectsActiveClosingWarning(t *testing.T) {
+	row := models.PuljeRow{
+		ID:                   models.PuljeFredagKveld,
+		Name:                 "Fredag Kveld",
+		Status:               models.PuljeStatusOpen,
+		ClosingWarningActive: true,
+	}
+
+	doc := templtest.Render(t, puljeStatusToggles(row))
+	warning := doc.Find("input[type=checkbox]").Eq(0)
+	if warning.Length() != 1 || !warning.Is("[checked]") {
+		t.Fatal("expected active closing warning toggle to be checked")
+	}
+}
+
+func TestUpdatePuljeStatus_ClosingClearsActiveWarning(t *testing.T) {
+	db, _ := testutil.CreateTestDBAndLogger(t, "puljefordeling_closing_warning_clears")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+
+	if err := updatePuljeClosingWarning(db, models.PuljeFredagKveld, true); err != nil {
+		t.Fatalf("activate closing warning: %v", err)
+	}
+	if err := updatePuljeStatus(db, models.PuljeFredagKveld, models.PuljeStatusLocked); err != nil {
+		t.Fatalf("lock pulje: %v", err)
+	}
+
+	var active bool
+	if err := db.QueryRow(`SELECT closing_warning_active FROM puljer WHERE id = ?`, models.PuljeFredagKveld).Scan(&active); err != nil {
+		t.Fatalf("load closing warning: %v", err)
+	}
+	if active {
+		t.Fatal("expected locking a pulje to clear its closing warning")
 	}
 }
 

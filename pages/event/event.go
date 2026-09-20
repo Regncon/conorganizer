@@ -14,9 +14,7 @@ import (
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
-	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
-	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -55,24 +53,11 @@ func interestErrorMessageFromError(err error) string {
 	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
 }
 
-func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
+func SetupEventRoute(router chi.Router, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
 	logger = logger.With("component", "event")
-	nc, err := ns.Client()
-	if err != nil {
-		return fmt.Errorf("error creating nats client: %w", err)
-	}
-
-	js, err := jetstream.New(nc)
-	if err != nil {
-		return fmt.Errorf("error creating jetstream client: %w", err)
-	}
-
-	if err := setupPuljeScheduledBroadcasts(context.Background(), js, liveManager, db, logger); err != nil {
-		return fmt.Errorf("error setting up pulje scheduled broadcasts: %w", err)
-	}
 
 	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
-	eventLayoutRoute(router, db, logger, eventImageDir, err)
+	eventLayoutRoute(router, db, logger, eventImageDir, nil)
 
 	router.Route("/event/api", func(eventApiRouter chi.Router) {
 		eventApiRouter.Route("/{idx}", func(eventIdRouter chi.Router) {

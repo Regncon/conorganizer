@@ -9,7 +9,7 @@ import (
 
 func GetActivePuljeForEvent(eventID string, db *sql.DB) ([]models.PuljeRow, error) {
 	const query = `
-		SELECT p.id, p.name, p.status, p.start_at, p.end_at
+		SELECT p.id, p.name, p.status, p.closing_warning_active, p.start_at, p.end_at
 		FROM puljer p
 		JOIN relation_event_puljer ep ON p.id = ep.pulje_id
 		WHERE ep.event_id = ? AND ep.is_in_pulje = TRUE AND ep.is_published = TRUE
@@ -27,7 +27,7 @@ func GetActivePuljeForEvent(eventID string, db *sql.DB) ([]models.PuljeRow, erro
 
 func GetAllPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 	const query = `
-		SELECT id, name, status, start_at, end_at
+		SELECT id, name, status, closing_warning_active, start_at, end_at
 		FROM puljer
 		ORDER BY start_at ASC
 	`
@@ -67,7 +67,8 @@ func scanPulje(rows *sql.Rows) ([]models.PuljeRow, error) {
 			startAt, endAt models.DBDateTime
 		)
 
-		if err := rows.Scan(&id, &name, &status, &startAt, &endAt); err != nil {
+		var closingWarningActive bool
+		if err := rows.Scan(&id, &name, &status, &closingWarningActive, &startAt, &endAt); err != nil {
 			return nil, fmt.Errorf("scan pulje row: %w", err)
 		}
 
@@ -75,6 +76,7 @@ func scanPulje(rows *sql.Rows) ([]models.PuljeRow, error) {
 		if err != nil {
 			return nil, err
 		}
+		pulje.ClosingWarningActive = closingWarningActive
 
 		puljer = append(puljer, pulje)
 	}

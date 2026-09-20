@@ -73,7 +73,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, authenticatedRouter, 
 		printfriendly.PrintFriendlyRoute(authenticatedRouter, db, eventImageDir, logger),
 		admin.SetupAdminRoute(routerAdmin, logger, liveManager, db, eventImageDir),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, liveManager, logger, db),
-		event.SetupEventRoute(authenticatedRouter, ns, liveManager, db, logger, eventImageDir),
+		event.SetupEventRoute(authenticatedRouter, liveManager, db, logger, eventImageDir),
 		login.SetupAuthRoute(publicRouter, authenticatedRouter, db, logger, sessionValidator),
 		profilepage.SetupProfileRoute(isLoggedInRouter, liveManager, db, eventImageDir, logger),
 	); err != nil {
