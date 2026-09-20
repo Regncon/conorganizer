@@ -20,15 +20,15 @@ func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventIm
 			userInfo,
             db,
             logger,
-			rootIndex(db, userInfo.IsAdmin, eventImageDir, r.URL.Query().Get(programDateQueryParam)),
+			rootIndex(db, eventImageDir, r.URL.Query().Get(programDateQueryParam)),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render root page: %w", err).Error(), "user_id", userInfo.Id)
 		}
 	})
 }
 
-templ rootIndex(db *sql.DB, isAdmin bool, eventImageDir *string, requestedDate string) {
+templ rootIndex(db *sql.DB, eventImageDir *string, requestedDate string) {
 	<div id="root-page-wrapper" data-init={ live.DatastarInit(rootAPIURL(requestedDate)) }>
-		@rootPageContentForDate(db, isAdmin, eventImageDir, requestedDate)
+		@rootPageContentForDate(db, eventImageDir, requestedDate)
 	</div>
 }

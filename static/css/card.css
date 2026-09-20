@@ -97,19 +97,10 @@
 .program-event-card {
 	grid-template-rows: 220px min-content min-content;
 
-	.event-card-subtitle,
-	.event-card-footer-gamemaster {
-		display: none;
-	}
-
 	.event-card-footer {
 		grid-template-columns: minmax(0, 1fr) auto;
 		border-top: 0;
 	}
-}
-
-.raffle-event-card {
-	grid-template-rows: 150px minmax(90px, 1fr) min-content;
 }
 
 .event-card-container:hover,
@@ -119,15 +110,6 @@
 
 .event-card-container:focus-visible {
     outline: 3px solid var(--color-secondary-focus-visible);
-}
-
-.event-card-status-tag {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background-color: hsl(0deg 0% 0% / 70%);
-    padding: 5px;
-    border-radius: 5px;
 }
 
 .event-card-thumbnail {

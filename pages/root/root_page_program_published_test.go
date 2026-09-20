@@ -25,7 +25,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsProgramDaySelector(t *te
 	insertRootPagePulje(t, db)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualDaySelectorVisible := templtest.HasSelector(doc, ".program-day-selector-container")
 
 	// Then
@@ -59,7 +59,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsProgramDaysWithActiveDay
 	insertRootPageEventPulje(t, db, "sunday-event", models.PuljeSondagMorgen, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContentForDate(db, false, nil, "2026-10-03"))
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-03"))
 	actualLabels := templtest.CollectTexts(doc, ".program-day-selector .btn")
 	actualActiveDay := doc.Find(".program-day-selector .is-active").Text()
 	actualEventTitles := templtest.CollectTexts(doc, ".event-card-title")
@@ -105,7 +105,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsAnnouncedActivePuljeEven
 	insertRootPageEventPulje(t, db, "published-submitted", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualTitles := templtest.CollectTexts(doc, ".event-card-title")
 
 	// Then
@@ -132,7 +132,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersEventLinksWithPulje(t 
 	insertRootPageEventPulje(t, db, "alpha-event", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualHrefs := collectRootPageHrefs(doc, ".event-card-container")
 
 	// Then
@@ -167,7 +167,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersSelectedDatePuljeSecti
 	insertRootPageEventPulje(t, db, "fredag-event", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContentForDate(db, false, nil, "2026-10-09"))
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09"))
 	actualPuljeHeadings := templtest.CollectTexts(doc, ".pulje-heading")
 
 	// Then
@@ -198,7 +198,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_SortsEventsAlphabeticallyWith
 	insertRootPageEventPulje(t, db, "alpha-event", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualTitles := templtest.CollectTexts(doc, ".event-card-title")
 
 	// Then
@@ -254,13 +254,13 @@ func TestRootPageContent_WhenProgramAndRaffleEventsAreMixed_DeduplicatesProgramA
 	insertRootPageEventPulje(t, db, "raffle-evening", models.PuljeLordagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContentForDate(db, false, nil, "2026-10-10"))
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-10"))
 	programTitles := templtest.CollectTexts(doc, ".program-event-card .event-card-title")
 	programCardCount := doc.Find(".program-event-card").Length()
 	programHiddenMetadataCount := doc.Find(".program-event-card .event-card-subtitle, .program-event-card .event-card-footer-gamemaster").Length()
 	programBodyDescriptionCount := doc.Find(".program-event-card .event-card-main-body .event-card-description").Length()
 	programFooterDescriptionCount := doc.Find(".program-event-card .event-card-footer-description").Length()
-	raffleCardCount := doc.Find(".raffle-eventcard-grid .raffle-event-card").Length()
+	raffleCardCount := doc.Find(".raffle-eventcard-grid > .event-card-container").Length()
 	programRowCount := doc.Find(".program-event-row").Length()
 	reversedProgramRowCount := doc.Find(".program-event-row.reversed").Length()
 

@@ -1,7 +1,6 @@
 package components
 
 import (
-	"fmt"
 	"net/url"
 
 	"github.com/Regncon/conorganizer/components/icons"
@@ -18,34 +17,18 @@ func eventCardHref(eventID string, pulje string, date string) string {
 		query.Set("pulje", pulje)
 	}
 
-	href := fmt.Sprintf("/event/%s", url.PathEscape(eventID))
+	href := "/event/" + url.PathEscape(eventID)
 	if encoded := query.Encode(); encoded != "" {
 		href += "?" + encoded
 	}
 	return href
 }
 
-templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStatus bool, pulje string, date string) {
-	{{ cardClass := "" }}
-	if pulje != "" {
-		{{ cardClass = "raffle-event-card" }}
-	}
-	@renderEventCard(eventCard, eventImageDir, showStatus, pulje, date, true, true, false, cardClass)
-}
-
-templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, pulje string, date string) {
-	@renderEventCard(eventCard, eventImageDir, false, pulje, date, false, false, true, "program-event-card")
-}
-
-templ renderEventCard(eventCard models.EventCardModel, eventImageDir *string, showStatus bool, pulje string, date string, showSystem bool, showHost bool, descriptionInFooter bool, cardClass string) {
+templ EventCard(eventCard models.EventCardModel, eventImageDir *string, pulje string, date string) {
 	{{ imageUrl := eventimage.GetEventImageUrl(eventCard.Id, "card", eventImageDir) }}
 	<a
-		if eventCard.Status == models.EventStatusDraft || eventCard.Status == models.EventStatusSubmitted || eventCard.Status == models.EventStatusArchived {
-			href={ templ.URL(fmt.Sprintf("/profile/new/%s", eventCard.Id)) }
-		} else {
-			href={ templ.URL(eventCardHref(eventCard.Id, pulje, date)) }
-		}
-		class={ "event-card-container", cardClass }
+		href={ templ.URL(eventCardHref(eventCard.Id, pulje, date)) }
+		class="event-card-container"
 	>
 		<img
 			src={ imageUrl }
@@ -61,93 +44,119 @@ templ renderEventCard(eventCard models.EventCardModel, eventImageDir *string, sh
 						Nytt arrangement
 					}
 				</h2>
-				if showSystem {
-					<h3 class="event-card-subtitle">
-						if eventCard.System != "" {
-							{ eventCard.System }
-						} else {
-							Game System
-						}
-					</h3>
+				<h3 class="event-card-subtitle">
+					if eventCard.System != "" {
+						{ eventCard.System }
+					} else {
+						Game System
 					}
+				</h3>
 			</div>
-			if !descriptionInFooter {
-				@eventCardDescription(eventCard, "")
-			}
+			<p class="event-card-description">
+				if eventCard.Intro != "" {
+					{ eventCard.Intro }
+				} else {
+					Legg til en kort beskrivelse
+				}
+			</p>
 		</div>
 		<div class="event-card-footer">
-			if descriptionInFooter {
-				@eventCardDescription(eventCard, "event-card-footer-description")
-			}
-			if showHost {
-				<div class="event-card-footer-gamemaster">
-					@icons.Icon(icons.Gamemaster, icons.Size24)
-					<p>
-						if eventCard.HostName != "" {
-							{ eventCard.HostName }
-						} else {
-							Arrangørnavn
-						}
-					</p>
-				</div>
-			}
+			<div class="event-card-footer-gamemaster">
+				@icons.Icon(icons.Gamemaster, icons.Size24)
+				<p>
+					if eventCard.HostName != "" {
+						{ eventCard.HostName }
+					} else {
+						Arrangørnavn
+					}
+				</p>
+			</div>
 			<div class="event-card-footer-tagicons">
-				if eventCard.EventType == models.EventTypeRoleplay {
-					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
-						@icons.Icon(icons.EventRoleplay, icons.Size20)
-					</div>
-				} else if eventCard.EventType == models.EventTypeBoardGame {
-					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
-						@icons.Icon(icons.EventBoardgame, icons.Size20)
-					</div>
-				} else if eventCard.EventType == models.EventTypeCardGame {
-					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
-						@icons.Icon(icons.EventCardgame, icons.Size20)
-					</div>
-				} else if eventCard.EventType == models.EventTypeOther {
-					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
-						@icons.Icon(icons.EventOtherGames, icons.Size20)
-					</div>
-				}
-				if eventCard.AgeGroup == models.AgeGroupAdultsOnly {
-					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.AgeGroup.BadgeLabel() }>
-						@icons.Icon(icons.EventAdultOnly, icons.Size20)
-					</div>
-				} else if eventCard.AgeGroup == models.AgeGroupChildFriendly {
-					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.AgeGroup.BadgeLabel() }>
-						@icons.Icon(icons.EventChildFriendly, icons.Size20)
-					</div>
-				}
-				if eventCard.Runtime == models.RunTimeLongRunning {
-					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.Runtime.BadgeLabel() }>
-						@icons.Icon(icons.TimeOver6Hours, icons.Size20)
-					</div>
-				} else if eventCard.Runtime == models.RunTimeShortRunning {
-					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.Runtime.BadgeLabel() }>
-						@icons.Icon(icons.TimeUnder3Hours, icons.Size20)
-					</div>
-				}
-				if eventCard.BeginnerFriendly {
-					<div class="event-card-tagicon-container" data-tippy-content="Nybegynnervennlig">
-						@icons.Icon(icons.EventBeginnerFriendly, icons.Size20)
-					</div>
-				}
-				if eventCard.CanBeRunInEnglish {
-					<div class="event-card-tagicon-container" data-tippy-content="Can be run in English">
-						@icons.Icon(icons.EventEnglish, icons.Size20)
-					</div>
-				}
+				@eventCardTagIcons(eventCard)
 			</div>
 		</div>
 	</a>
 }
 
-templ eventCardDescription(eventCard models.EventCardModel, className string) {
-	<p class={ "event-card-description", className }>
-		if eventCard.Intro != "" {
-			{ eventCard.Intro }
-		} else {
-			Legg til en kort beskrivelse
-		}
-	</p>
+templ eventCardTagIcons(eventCard models.EventCardModel) {
+	if eventCard.EventType == models.EventTypeRoleplay {
+		<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
+			@icons.Icon(icons.EventRoleplay, icons.Size20)
+		</div>
+	} else if eventCard.EventType == models.EventTypeBoardGame {
+		<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
+			@icons.Icon(icons.EventBoardgame, icons.Size20)
+		</div>
+	} else if eventCard.EventType == models.EventTypeCardGame {
+		<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
+			@icons.Icon(icons.EventCardgame, icons.Size20)
+		</div>
+	} else if eventCard.EventType == models.EventTypeOther {
+		<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
+			@icons.Icon(icons.EventOtherGames, icons.Size20)
+		</div>
+	}
+	if eventCard.AgeGroup == models.AgeGroupAdultsOnly {
+		<div class="event-card-tagicon-container" data-tippy-content={ eventCard.AgeGroup.BadgeLabel() }>
+			@icons.Icon(icons.EventAdultOnly, icons.Size20)
+		</div>
+	} else if eventCard.AgeGroup == models.AgeGroupChildFriendly {
+		<div class="event-card-tagicon-container" data-tippy-content={ eventCard.AgeGroup.BadgeLabel() }>
+			@icons.Icon(icons.EventChildFriendly, icons.Size20)
+		</div>
+	}
+	if eventCard.Runtime == models.RunTimeLongRunning {
+		<div class="event-card-tagicon-container" data-tippy-content={ eventCard.Runtime.BadgeLabel() }>
+			@icons.Icon(icons.TimeOver6Hours, icons.Size20)
+		</div>
+	} else if eventCard.Runtime == models.RunTimeShortRunning {
+		<div class="event-card-tagicon-container" data-tippy-content={ eventCard.Runtime.BadgeLabel() }>
+			@icons.Icon(icons.TimeUnder3Hours, icons.Size20)
+		</div>
+	}
+	if eventCard.BeginnerFriendly {
+		<div class="event-card-tagicon-container" data-tippy-content="Nybegynnervennlig">
+			@icons.Icon(icons.EventBeginnerFriendly, icons.Size20)
+		</div>
+	}
+	if eventCard.CanBeRunInEnglish {
+		<div class="event-card-tagicon-container" data-tippy-content="Can be run in English">
+			@icons.Icon(icons.EventEnglish, icons.Size20)
+		</div>
+	}
+}
+
+templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, pulje string, date string) {
+	{{ imageUrl := eventimage.GetEventImageUrl(eventCard.Id, "card", eventImageDir) }}
+	<a
+		href={ templ.URL(eventCardHref(eventCard.Id, pulje, date)) }
+		class="event-card-container program-event-card"
+	>
+		<img
+			src={ imageUrl }
+			alt="Bilde for arrangement"
+			class="event-card-thumbnail"
+		/>
+		<div class="event-card-main-body">
+			<h2 class="event-card-title">
+				if eventCard.Title != "" {
+					{ eventCard.Title }
+				} else {
+					Nytt arrangement
+				}
+			</h2>
+		</div>
+		<div class="event-card-footer">
+			<p class="event-card-description event-card-footer-description">
+				if eventCard.Intro != "" {
+					{ eventCard.Intro }
+				} else {
+					Legg til en kort beskrivelse
+				}
+			</p>
+			<div class="event-card-footer-tagicons">
+				@eventCardTagIcons(eventCard)
+			</div>
+		</div>
+	</a>
 }

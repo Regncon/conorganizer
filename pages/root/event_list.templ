@@ -153,15 +153,15 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 	return out, rows.Err()
 }
 
-templ flatEventList(events []models.EventCardModel, eventImageDir *string, isAdmin bool) {
+templ flatEventList(events []models.EventCardModel, eventImageDir *string) {
 	<div class="page-wide-eventcard-grid">
 		for _, event := range events {
-			@components.EventCard(event, eventImageDir, isAdmin, "", "")
+			@components.EventCard(event, eventImageDir, "", "")
 		}
 	</div>
 }
 
-templ eventPuljeBlock(block PuljeBlock, eventImageDir *string, isAdmin bool, date string) {
+templ eventPuljeBlock(block PuljeBlock, eventImageDir *string, date string) {
 	{{ events := RaffleEvents(block) }}
 	if len(events) > 0 {
 		<section class="container-inner-padding raffle-pulje-section">
@@ -171,14 +171,14 @@ templ eventPuljeBlock(block PuljeBlock, eventImageDir *string, isAdmin bool, dat
 			</h2>
 			<div class="raffle-eventcard-grid">
 				for _, event := range events {
-					@components.EventCard(event, eventImageDir, isAdmin, string(block.Pulje.ID), date)
+					@components.EventCard(event, eventImageDir, string(block.Pulje.ID), date)
 				}
 			</div>
 		</section>
 	}
 }
 
-templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublished bool, publishedDay *ProgramDay) {
+templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publishedDay *ProgramDay) {
 	<style>
 		.event-pulje-overview {
 			display: flex;
@@ -228,7 +228,7 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublishe
 					</section>
 				}
 				for _, block := range publishedDay.Blocks {
-					@eventPuljeBlock(block, eventImageDir, isAdmin, publishedDay.QueryValue())
+					@eventPuljeBlock(block, eventImageDir, publishedDay.QueryValue())
 				}
 			}
 		} else {
@@ -236,7 +236,7 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublishe
 			if err != nil {
 				<p class="root-page-error">{ rootEventsLoadErrorMessage }</p>
 			} else {
-				@flatEventList(events, eventImageDir, isAdmin)
+				@flatEventList(events, eventImageDir)
 			}
 		}
 	</div>

@@ -97,6 +97,10 @@
     gap: var(--spacing-4x);
 }
 
+.raffle-eventcard-grid > .event-card-container {
+    grid-template-rows: 150px minmax(90px, 1fr) min-content;
+}
+
 @container main (width <= 720px) {
     .program-event-row,
     .program-event-row.reversed {

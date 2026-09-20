@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/service/requestctx"
-	"log/slog"
 )
 
 func getProgramPublished(db *sql.DB) (bool, error) {
@@ -29,17 +27,17 @@ func getProgramPublished(db *sql.DB) (bool, error) {
 	return isPublished == 1, nil
 }
 
-templ rootPage(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin bool, eventImageDir *string, logger *slog.Logger, requestedDate string) {
+templ rootPage(db *sql.DB, eventImageDir *string, requestedDate string) {
 	<div id="root-page-wrapper">
-		@rootPageContentForDate(db, isAdmin, eventImageDir, requestedDate)
+		@rootPageContentForDate(db, eventImageDir, requestedDate)
 	</div>
 }
 
-templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
-	@rootPageContentForDate(db, isAdmin, eventImageDir, "")
+templ rootPageContent(db *sql.DB, eventImageDir *string) {
+	@rootPageContentForDate(db, eventImageDir, "")
 }
 
-templ rootPageContentForDate(db *sql.DB, isAdmin bool, eventImageDir *string, requestedDate string) {
+templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string) {
 	{{
 		programPublished, err := getProgramPublished(db)
 	}}
@@ -63,14 +61,14 @@ templ rootPageContentForDate(db *sql.DB, isAdmin bool, eventImageDir *string, re
 				@programDaySelector(programDays, selectedDayIndex)
 				@components.CallToAction()
 				{{ selectedDay := programDays[selectedDayIndex] }}
-				@eventList(db, isAdmin, eventImageDir, true, &selectedDay)
+				@eventList(db, eventImageDir, true, &selectedDay)
 			} else {
 				@components.CallToAction()
-				@eventList(db, isAdmin, eventImageDir, true, nil)
+				@eventList(db, eventImageDir, true, nil)
 			}
 		} else {
 			@components.CallToAction()
-			@eventList(db, isAdmin, eventImageDir, false, nil)
+			@eventList(db, eventImageDir, false, nil)
 		}
 	}
 }

@@ -25,7 +25,7 @@ func TestRootPageContent_WhenProgramPublishingIsOff_HidesProgramDaySelector(t *t
 	insertRootPagePulje(t, db)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualDaySelectorVisible := templtest.HasSelector(doc, ".program-day-selector-container")
 
 	// Then
@@ -54,7 +54,7 @@ func TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsAnnouncedEvents(t *
 	insertRootPageEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualTitles := templtest.CollectTexts(doc, ".event-card-title")
 
 	// Then
@@ -80,7 +80,7 @@ func TestRootPageContent_WhenProgramPublishingIsOff_RendersEventLinksWithoutPulj
 	insertRootPageEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(db, nil))
 	actualHrefs := collectRootPageHrefs(doc, ".event-card-container")
 
 	// Then
