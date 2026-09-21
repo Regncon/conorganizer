@@ -4,7 +4,7 @@ data/*
 database/*
 !database/Views.md
 !database/.gitkeep
-vendor/*
+vendor
 documentation/testing/*.pdf
 
 # Local-only brainstorming/spec scratch (superpowers)
