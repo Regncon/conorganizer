@@ -15,6 +15,7 @@ import (
 	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil"
@@ -529,6 +530,44 @@ func TestSelectedInterest_UnrelatedBillettholderDoesNotExposeNoticeContent(t *te
 	// Then
 	if response.Code != expectedStatus || strings.Contains(response.Body.String(), "datastar-patch-") {
 		t.Fatalf("expected forbidden without content patches, got %d: %s", response.Code, response.Body.String())
+	}
+}
+
+func TestInterestUpdateRoute_WhenSignalsArePosted_StoresChosenInterestLevel(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an open pulje and a billettholder with an existing interest.",
+		When:  "When the browser puts its interest signals to the update route.",
+		Then:  "Then the posted interest level is stored for that billettholder.",
+	})
+
+	// Given
+	expectedInterest := models.InterestLevelMedium
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
+	router := chi.NewRouter()
+	router.Put("/event/api/{idx}/interest/update/interest", interestUpdateHandler(&live.Manager{}, db, testutil.NewTestLogger()))
+	body := fmt.Sprintf(
+		`{"billettHolderId":%d,"puljeId":%q,"currentInterestLevelChoice":%q}`,
+		fixture.billettholderID, fixture.puljeID, expectedInterest,
+	)
+	request := httptest.NewRequest(http.MethodPut, "/event/api/"+fixture.eventID+"/interest/update/interest", strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	request = request.WithContext(authctx.WithUserToken(request.Context(), fixture.userExternalID, "event-interest-user@example.com"))
+	response := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(response, request)
+
+	// Then
+	// The zero live.Manager cannot broadcast, so the status is not part of this behavior.
+	for _, rejection := range []string{"Mangler arrangement.", "Vel billetthelder", "Vel pulje"} {
+		if strings.Contains(response.Body.String(), rejection) {
+			t.Fatalf("expected signals to be read, got rejection %q in: %s", rejection, response.Body.String())
+		}
+	}
+	actualInterest := getEventInterestTestInterest(t, db, fixture.eventID, fixture.billettholderID, fixture.puljeID)
+	if actualInterest != expectedInterest {
+		t.Fatalf("stored interest mismatch\nexpected: %v\nactual:   %v", expectedInterest, actualInterest)
 	}
 }
 
