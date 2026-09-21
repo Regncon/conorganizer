@@ -157,7 +157,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			>
 				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
-				@InterestContent(eventId, title, noticeState, models.InterestLevelNone, db, r, logger)
+				@InterestContent(eventId, title, noticeState, models.InterestLevelNone)
 			</div>
 			<div class="dialog-footer">
 				<p class="auto-save-message">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
@@ -185,7 +185,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 
 // Page morphs preserve this selection-dependent content. The selected-interest
 // endpoint replaces the wrapper explicitly after validating the current selection.
-templ InterestContent(eventID string, title string, state InterestNoticeState, interest models.InterestLevel, db *sql.DB, r *http.Request, logger *slog.Logger) {
+templ InterestContent(eventID string, title string, state InterestNoticeState, interest models.InterestLevel) {
 	<div
 		id="interest-content"
 		data-ignore-morph
@@ -200,7 +200,7 @@ templ InterestContent(eventID string, title string, state InterestNoticeState, i
 			@interestUnder18(title)
 		}
 		if state.CanChooseInterest {
-			@ticketholder.TicketHolderInterestPicker(eventID, db, r, logger)
+			@ticketholder.TicketHolderInterestPicker(eventID)
 		}
 	</div>
 }
@@ -361,7 +361,6 @@ type AssignedEvent struct {
 	Title    string
 	System   string
 	Role     string
-	Source   string
 	EventID  string
 	ImageURL string
 }
@@ -399,7 +398,7 @@ func LoadInterestNoticeState(billettholderID int, puljeID string, ageGroup model
 
 func getAssignedEventForBillettholder(billettholderID int, puljeID string, db *sql.DB) (AssignedEvent, error) {
 	query := `
-		SELECT e.title, e.system, bp.role, bp.source, e.id
+		SELECT e.title, e.system, bp.role, e.id
 		FROM relation_events_players bp
 		JOIN events e ON e.id = bp.event_id
 		WHERE bp.billettholder_id = ?1 AND bp.pulje_id = ?2
@@ -409,7 +408,7 @@ func getAssignedEventForBillettholder(billettholderID int, puljeID string, db *s
 	`
 	var assignedEvent AssignedEvent
 	err := db.QueryRow(query, billettholderID, puljeID).Scan(
-		&assignedEvent.Title, &assignedEvent.System, &assignedEvent.Role, &assignedEvent.Source, &assignedEvent.EventID,
+		&assignedEvent.Title, &assignedEvent.System, &assignedEvent.Role, &assignedEvent.EventID,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return AssignedEvent{}, nil

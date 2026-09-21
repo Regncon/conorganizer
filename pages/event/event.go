@@ -354,7 +354,7 @@ func selectedInterestHandler(db *sql.DB, logger *slog.Logger, eventImageDir *str
 		}
 		sse := datastar.NewSSE(w, r)
 		if err := sse.PatchElementTempl(
-			event_components.InterestContent(eventID, event.Title, notices, interest, db, r, logger),
+			event_components.InterestContent(eventID, event.Title, notices, interest),
 			datastar.WithModeReplace(),
 		); err != nil {
 			logger.Error(fmt.Errorf("failed to patch selected interest content: %w", err).Error())

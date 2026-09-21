@@ -1,29 +1,12 @@
 package ticketholder
 
 import (
-	"database/sql"
 	"fmt"
-	"log/slog"
-	"net/http"
 
 	"github.com/Regncon/conorganizer/models"
 )
 
-type BillettholderInterest struct {
-	BillettholderId int                  `json:"billettHolderId"`
-	PuljeId         string               `json:"puljeId"`
-	InterestLevel   models.InterestLevel `json:"interestLevel"`
-}
-
-type interestPickerSignals struct {
-	Interesser []BillettholderInterest `json:"interesser"`
-}
-
-templ TicketHolderInterestPicker(
-	eventId string,
-	db *sql.DB,
-	r *http.Request,
-	logger *slog.Logger) {
+templ TicketHolderInterestPicker(eventId string) {
 	<style>
 		.interest-buttons {
 			display: flex;
