@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
@@ -135,11 +136,13 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	<dialog
 		class="interest-dialog"
 		data-attr:open="$_interestIsOpen ? true : false"
-		data-signals:pulje-id={ fmt.Sprintf("'%s'", puljeId) }
-		data-signals:pulje-availability={ fmt.Sprintf("'%s'", selectedPuljeState.Availability) }
-		data-signals:pulje-can-edit={ fmt.Sprintf("%t", selectedPuljeState.CanEdit) }
-		data-signals:pulje-status-message={ fmt.Sprintf("%q", selectedPuljeState.Message) }
-		data-signals:pulje-show-profile-link={ fmt.Sprintf("%t", selectedPuljeState.ShowProfileLink) }
+		data-signals={ formsubmission.DataSignals(map[string]any{
+			"puljeId":              puljeId,
+			"puljeAvailability":    selectedPuljeState.Availability,
+			"puljeCanEdit":         selectedPuljeState.CanEdit,
+			"puljeStatusMessage":   selectedPuljeState.Message,
+			"puljeShowProfileLink": selectedPuljeState.ShowProfileLink,
+		}) }
 		data-effect={ fmt.Sprintf("if ($billettHolderId && $puljeId) { @put('/event/api/%s/interest/selected-interest') }", eventId) }
 		data-on:datastar-fetch__document={ fmt.Sprintf("if (el.isConnected && evt.detail.type === 'datastar-patch-elements' && evt.detail.el?.id === 'event-container' && $billettHolderId && $puljeId) { @put('/event/api/%s/interest/selected-interest') }", eventId) }
 	>
