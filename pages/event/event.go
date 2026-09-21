@@ -213,14 +213,19 @@ func updateInterest(
 	return nil
 }
 
+type interestSignals struct {
+	BillettHolderId int    `json:"billettHolderId"`
+	PuljeId         string `json:"puljeId"`
+}
+
+type interestUpdateSignals struct {
+	interestSignals
+	CurrentInterestLevelChoice models.InterestLevel `json:"currentInterestLevelChoice"`
+}
+
 func interestUpdateHandler(liveManager *live.Manager, db *sql.DB, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		type Put struct {
-			BillettHolderId            int                  `json:"billettHolderId"`
-			PuljeId                    string               `json:"puljeId"`
-			CurrentInterestLevelChoice models.InterestLevel `json:"currentInterestLevelChoice"`
-		}
-		signals := &Put{}
+		signals := &interestUpdateSignals{}
 
 		if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
 			logger.Error(fmt.Errorf("failed to read event interest signals: %w", readSignalErr).Error())
@@ -290,10 +295,7 @@ func interestUpdateHandler(liveManager *live.Manager, db *sql.DB, logger *slog.L
 func selectedInterestHandler(db *sql.DB, logger *slog.Logger, eventImageDir *string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		eventID := chi.URLParam(r, "idx")
-		var signals struct {
-			BillettHolderId int    `json:"billettHolderId"`
-			PuljeId         string `json:"puljeId"`
-		}
+		var signals interestSignals
 		if err := datastar.ReadSignals(r, &signals); err != nil {
 			http.Error(w, "Ugyldig billettholdervalg.", http.StatusBadRequest)
 			return
