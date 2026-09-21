@@ -13,6 +13,7 @@ import (
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
@@ -190,7 +191,7 @@ templ InterestContent(eventID string, title string, state InterestNoticeState, i
 		id="interest-content"
 		data-ignore-morph
 		data-signals:selected-interest-level={ fmt.Sprintf("%q", interest) }
-		data-signals:current-interest-level-choice="'Pending choice'"
+		data-signals:current-interest-level-choice={ fmt.Sprintf("'%s'", ticketholder.InterestChoicePending) }
 	>
 		<p class="label">Velg interesse</p>
 		if state.ShowAssignedEvent {
@@ -246,7 +247,7 @@ templ InterestAlreadyAssigned(eventID string, title string, assignedEvent Assign
 
     </style>
 	<section class="interest-already-assigned">
-		if assignedEvent.Role == "GM" {
+		if assignedEvent.Role == models.EventPlayerRoleGM {
 			@interestAlreadyAssignedGM(eventID, assignedEvent)
 		} else {
 			@interestAlreadyAssignedPlayer(eventID, title, assignedEvent)
@@ -360,7 +361,7 @@ templ ClickableEventCard(assignedEvent AssignedEvent) {
 type AssignedEvent struct {
 	Title    string
 	System   string
-	Role     string
+	Role     models.EventPlayerRole
 	EventID  string
 	ImageURL string
 }
@@ -402,12 +403,12 @@ func getAssignedEventForBillettholder(billettholderID int, puljeID string, db *s
 		FROM relation_events_players bp
 		JOIN events e ON e.id = bp.event_id
 		WHERE bp.billettholder_id = ?1 AND bp.pulje_id = ?2
-			AND (bp.source = 'manual' OR bp.role = 'GM')
-		ORDER BY CASE WHEN bp.role = 'GM' THEN 0 ELSE 1 END, e.id
+			AND (bp.source = ?3 OR bp.role = ?4)
+		ORDER BY CASE WHEN bp.role = ?4 THEN 0 ELSE 1 END, e.id
 		LIMIT 1
 	`
 	var assignedEvent AssignedEvent
-	err := db.QueryRow(query, billettholderID, puljeID).Scan(
+	err := db.QueryRow(query, billettholderID, puljeID, puljefordeling.SourceManual, string(models.EventPlayerRoleGM)).Scan(
 		&assignedEvent.Title, &assignedEvent.System, &assignedEvent.Role, &assignedEvent.EventID,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
