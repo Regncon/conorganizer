@@ -308,9 +308,8 @@ func selectedInterestHandler(db *sql.DB, logger *slog.Logger, eventImageDir *str
 		var hasAccess bool
 		err := db.QueryRowContext(r.Context(), `
 			SELECT EXISTS (
-				SELECT 1 FROM relation_billettholdere_users bu
-				JOIN users u ON u.id = bu.user_id
-				WHERE bu.billettholder_id = ?1 AND u.external_id = ?2
+				SELECT 1 FROM v_get_user_billettholder
+				WHERE billettholder_id = ?1 AND external_id = ?2
 			)
 		`, signals.BillettHolderId, userInfo.Id).Scan(&hasAccess)
 		if err != nil {
