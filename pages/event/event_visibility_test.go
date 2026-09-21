@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil"
@@ -421,6 +423,7 @@ func TestEventPageContent_WhenLegacyPuljePublishedFlagIsOff_StillRendersInterest
 	// Given
 	expectedDialogVisible := true
 	expectedHrefs := []string{"/", "/profile", "/profile/tickets"}
+	selectedBillettholderID := 901
 
 	db := createEventVisibilityTestDB(t)
 	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
@@ -428,10 +431,18 @@ func TestEventPageContent_WhenLegacyPuljePublishedFlagIsOff_StillRendersInterest
 	seedEventVisibilityPulje(t, db, models.PuljeFredagKveld)
 	seedEventVisibilityEventPulje(t, db, "unpublished-pulje-event", models.PuljeFredagKveld, false)
 	setEventVisibilityProgramPublishing(t, db, true)
+	// The interest choices only render for a selected billettholder, so the
+	// profile link inside them needs the selection cookie and its middleware.
+	seedEventVisibilityBillettholder(t, db, selectedBillettholderID)
 	request := httptest.NewRequest("GET", "/event/unpublished-pulje-event?pulje=fredag_kveld", nil)
+	request.AddCookie(&http.Cookie{Name: requestctx.SelectedBillettholderCookieName, Value: strconv.Itoa(selectedBillettholderID)})
+	var doc *goquery.Document
+	handler := requestctx.BillettholderSelectionMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		doc = templtest.Render(t, event_page_content("unpublished-pulje-event", false, logger, db, nil, r))
+	}))
 
 	// When
-	doc := templtest.Render(t, event_page_content("unpublished-pulje-event", false, logger, db, nil, request))
+	handler.ServeHTTP(httptest.NewRecorder(), request)
 	actualDialogVisible := templtest.HasSelector(doc, ".interest-dialog")
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 

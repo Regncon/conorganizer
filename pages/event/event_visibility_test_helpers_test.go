@@ -90,3 +90,13 @@ func mustExecEventVisibilityTest(t *testing.T, db *sql.DB, query string, args ..
 		t.Fatalf("exec failed: %v\nquery:\n%s", err, query)
 	}
 }
+
+func seedEventVisibilityBillettholder(t *testing.T, db *sql.DB, billettholderID int) {
+	t.Helper()
+
+	mustExecEventVisibilityTest(t, db, `
+		INSERT INTO billettholdere (
+			id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
+		) VALUES (?, 'Event', 'Visibility', 1, 'Ticket', 1, 7101, 8101)
+	`, billettholderID)
+}
