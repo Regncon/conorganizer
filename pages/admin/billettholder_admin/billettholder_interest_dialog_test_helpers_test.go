@@ -21,7 +21,6 @@ type expectedBillettholderInterestRow struct {
 	EventID       string
 	EventTitle    string
 	EventStatus   models.EventStatus
-	IsPublished   bool
 	InterestLevel models.InterestLevel
 	AssignedRole  models.EventPlayerRole
 }
@@ -61,7 +60,6 @@ func normalizeBillettholderInterestRows(rows []billettholderInterestEventRow) []
 			EventID:       row.EventID,
 			EventTitle:    row.EventTitle,
 			EventStatus:   row.EventStatus,
-			IsPublished:   row.IsPublished,
 			InterestLevel: row.InterestLevel,
 			AssignedRole:  row.AssignedRole,
 		})

@@ -72,9 +72,9 @@ func seedEventInterestUpdateFixture(
 		INSERT INTO events (
 			id, title, intro, description, system, event_type,
 			age_group, event_runtime, host_name, email, phone_number,
-			max_players, beginner_friendly, can_be_run_in_english,
-			status
-		) VALUES (?, 'Interest Event', 'intro', 'description', '', ?, ?, ?, 'Host', 'host@example.com', '11111111', 4, 1, 1, ?)
+		max_players, beginner_friendly, can_be_run_in_english,
+		is_in_puljefordeling, status
+	) VALUES (?, 'Interest Event', 'intro', 'description', '', ?, ?, ?, 'Host', 'host@example.com', '11111111', 4, 1, 1, 1, ?)
 	`, fixture.eventID, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusAnnounced)
 	mustExecEventInterestTest(t, db, `
 		INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published)

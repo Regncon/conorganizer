@@ -673,6 +673,20 @@ templ puljeStatusToggles(pulje models.PuljeRow) {
 	<div class="pulje-status-controls">
 		<label class="pulje-status-control">
 			<input
+				if pulje.ClosingWarningActive {
+					checked
+				}
+				if pulje.Status != models.PuljeStatusOpen {
+					disabled
+				}
+				data-on:click={ fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID) }
+				type="checkbox"
+				class="checkbox input"
+			/>
+			<span>Vis advarsel om at puljefordeling stenger snart</span>
+		</label>
+		<label class="pulje-status-control">
+			<input
 				if puljeIsLocked(pulje.Status) {
 					checked
 				}

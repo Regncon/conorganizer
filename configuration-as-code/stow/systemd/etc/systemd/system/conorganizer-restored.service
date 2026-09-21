@@ -1,0 +1,23 @@
+[Unit]
+Description=Conorganizer (restored backup)
+After=network.target
+
+[Service]
+User=deploy
+Group=www-data
+WorkingDirectory=/opt/conorganizer/restored
+RuntimeDirectory=conorganizer-restored
+
+EnvironmentFile=/etc/conorganizer/env
+Environment=PORT=19082
+
+ExecStart=/opt/conorganizer/restored/conorganizer-restored \
+  -dbp /mnt/HC_Volume_103911252/environments/restored/database/events.db \
+  -image-path /mnt/HC_Volume_103911252/environments/restored/event-images \
+  -nats-store-dir /run/conorganizer-restored/nats
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

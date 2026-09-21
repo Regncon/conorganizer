@@ -302,7 +302,7 @@ func assignedPlayers(
 
 func loadPuljer(db emulationQuerier) ([]models.PuljeRow, error) {
 	const query = `
-		SELECT id, name, status, start_at, end_at
+		SELECT id, name, status, closing_warning_active, start_at, end_at
 		FROM puljer
 		ORDER BY start_at ASC
 	`
@@ -315,7 +315,7 @@ func loadPuljer(db emulationQuerier) ([]models.PuljeRow, error) {
 	var puljer []models.PuljeRow
 	for rows.Next() {
 		var p models.PuljeRow
-		if err := rows.Scan(&p.ID, &p.Name, &p.Status, &p.StartAt, &p.EndAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Status, &p.ClosingWarningActive, &p.StartAt, &p.EndAt); err != nil {
 			return nil, fmt.Errorf("scan pulje row: %w", err)
 		}
 		puljer = append(puljer, p)
@@ -360,6 +360,7 @@ func loadEligibleEvents(db emulationQuerier) (map[models.Pulje]map[string]eligib
 		FROM relation_event_puljer ep
 		JOIN events e ON e.id = ep.event_id
 		WHERE ep.is_in_pulje = 1
+		  AND e.is_in_puljefordeling = 1
 	`
 	rows, err := db.Query(query)
 	if err != nil {

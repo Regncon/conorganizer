@@ -199,7 +199,7 @@ func tildelingsFixture(t *testing.T) (*sql.DB, http.Handler) {
 	seedAssignFixture(t, db, models.PuljeFredagKveld, models.AgeGroupDefault, true)
 	testutil.MustExec(t, db, `UPDATE events SET title='Arrangement X' WHERE id='evA'`)
 	for eventID, title := range map[string]string{"evB": "Arrangement Y", "evC": "Arrangement Z"} {
-		testutil.MustExec(t, db, `INSERT INTO events(id,title,intro,description,host_name,email,phone_number,max_players) VALUES (?,?,'','','','','',4)`, eventID, title)
+		testutil.MustExec(t, db, `INSERT INTO events(id,title,intro,description,host_name,email,phone_number,max_players,is_in_puljefordeling) VALUES (?,?,'','','','','',4,1)`, eventID, title)
 		testutil.MustExec(t, db, `INSERT INTO relation_event_puljer(event_id,pulje_id,is_in_pulje) VALUES (?,'FredagKveld',1)`, eventID)
 	}
 	router := chi.NewRouter()

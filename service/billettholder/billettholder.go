@@ -55,7 +55,7 @@ func GetBillettholdere(userId string, db *sql.DB) ([]models.Billettholder, error
 
 func GetBillettholdereWithFilters(userId string, db *sql.DB, filters BillettholderFilters) ([]models.Billettholder, error) {
 	query := `
-		WITH published_assignments AS (
+		WITH active_assignments AS (
 			SELECT
 				rep.billettholder_id,
 				rep.role,
@@ -64,7 +64,7 @@ func GetBillettholdereWithFilters(userId string, db *sql.DB, filters Billetthold
 			INNER JOIN relation_event_puljer AS ep
 				ON ep.event_id = rep.event_id
 				AND ep.pulje_id = rep.pulje_id
-				AND ep.is_published = 1
+				AND ep.is_in_pulje = 1
 			LEFT JOIN interests AS i
 				ON i.billettholder_id = rep.billettholder_id
 				AND i.event_id = rep.event_id
@@ -72,12 +72,12 @@ func GetBillettholdereWithFilters(userId string, db *sql.DB, filters Billetthold
 		),
 		first_choice_billettholdere AS (
 			SELECT DISTINCT billettholder_id
-			FROM published_assignments
+			FROM active_assignments
 			WHERE role = ? AND interest_level = ?
 		),
 		gm_billettholdere AS (
 			SELECT DISTINCT billettholder_id
-			FROM published_assignments
+			FROM active_assignments
 			WHERE role = ?
 		)
 		SELECT

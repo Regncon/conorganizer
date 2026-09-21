@@ -35,7 +35,6 @@ Client reuse mitigates repeated key retrieval but does not remove the upstream d
 - Do not use inherited Northstar placeholder-state names in live update code.
 - Live KV TTL is `26h`, giving a buffer over the current `24h` Gorilla session max age.
 - NATS live connection state is ephemeral and does not need persistence across restarts.
-- Scheduled NATS messages are rebuilt from the database on startup. Missed scheduled thresholds during downtime do not need catch-up broadcasts.
 
 ## Terminology
 
@@ -91,7 +90,7 @@ The bucket list should stay small. Pages may subscribe to multiple buckets when 
 
 | Bucket | Purpose | Typical broadcasters | Typical subscribers |
 | --- | --- | --- | --- |
-| `events` | Event, program, pulje, publishing, and event-form data. | Event form updates, event submission, approval changes, program publishing, pulje status updates, scheduled pulje threshold broadcasts. | Root page, event details, profile event list, profile event form, admin dashboard, admin approval, admin event edit. |
+| `events` | Event, program, pulje, publishing, and event-form data. | Event form updates, event submission, approval changes, program publishing, and pulje status updates. | Root page, event details, profile event list, profile event form, admin dashboard, admin approval, admin event edit. |
 | `interests` | Interest choices, first-choice data, player/GM assignment state, and views that show who is interested in an event. | User interest updates, admin approval player assignment updates, first-choice and GM changes. | Event details, admin approval, admin billettholder filters, profile views that show interest or assignment state. |
 | `billettholders` | Ticket holder and billettholder data. | Add/remove billettholder emails, ticket conversion, ticket fetch/check-in flows, billettholder admin updates. | Profile tickets, profile overview where ticket holders are shown, admin billettholder overview, add billettholder page, possibly event details if ticket holder choices are displayed. |
 | `rooms` | Room data and room assignment choices. | Create, update, delete room; assign room to an event pulje. | Admin rooms, event form pages that show room assignment choices, admin event edit. |
@@ -271,20 +270,6 @@ Recommended service tests:
 
 Use embedded NATS in service integration tests. Keep page rendering, database setup, and auth out of the initial service tests by using a tiny test renderer.
 
-## Scheduled NATS Messages
-
-Scheduled pulje broadcasts are not live connection state. They are derived jobs built from database pulje start times.
-
-Current behavior to preserve:
-
-- Create a scheduled stream for pulje warning thresholds.
-- Rebuild future schedules from the database on startup.
-- Ignore thresholds that are already in the past when startup runs.
-- Do not replay missed threshold broadcasts after downtime.
-- When a scheduled threshold fires while the app is running, broadcast the `events` bucket.
-
-This is sufficient because clients reconnect after a restart and receive a full page patch from the live endpoint.
-
 ## LLM Implementation Contract
 
 This section is intentionally explicit for AI coding agents.
@@ -305,7 +290,6 @@ When implementing or modifying live update code:
 - Broadcast by looping every key in the target bucket and writing a fresh timestamp/nonce.
 - Set live KV bucket TTL to `26h`.
 - Keep live NATS connection state ephemeral; do not add persistent NATS storage for live update buckets.
-- Scheduled NATS messages may use JetStream scheduling, but schedules must be rebuildable from durable database state.
 - Keep bucket definitions centralized.
 - Prefer broad buckets over premature fine-grained splitting unless the page/bucket matrix shows a real correctness issue.
 - Pages that render data from multiple domains should subscribe to multiple buckets.

@@ -60,10 +60,6 @@ templ TicketHolderInterestPicker(
 			}
 
 			.pulje-status-message--warning {
-				color: var(--color-warning, var(--color-error));
-			}
-
-			.pulje-status-message--urgent-warning {
 				color: var(--color-error);
 			}
 
@@ -90,7 +86,6 @@ templ TicketHolderInterestPicker(
 			class="pulje-status-message"
 			data-show="$puljeStatusMessage"
 			data-class:pulje-status-message--warning="$puljeAvailability === 'warning'"
-			data-class:pulje-status-message--urgent-warning="$puljeAvailability === 'urgent-warning'"
 			data-class:pulje-status-message--locked="$puljeAvailability === 'locked'"
 			data-class:pulje-status-message--completed="$puljeAvailability === 'completed'"
 		>

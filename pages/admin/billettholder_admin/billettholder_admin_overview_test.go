@@ -12,18 +12,18 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestBillettholderAdminOverview_RendersCountsFromPublishedPuljeAssignments(t *testing.T) {
+func TestBillettholderAdminOverview_RendersCountsFromActivePuljeAssignments(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given expected overview counts where unpublished first-choice and GM assignments do not count.",
+		Given: "Given expected overview counts from active pulje assignments.",
 		When:  "When the billettholder admin overview component renders.",
-		Then:  "Then the visible counts reflect only published-pulje first-choice and GM/DM status.",
+		Then:  "Then the visible counts reflect active-pulje first-choice and GM/DM status.",
 	})
 
 	// Given
 	expectedTexts := []string{
 		"Totalt: 5",
-		"Uten førstevalg: 4",
-		"GM/DM: 1",
+		"Uten førstevalg: 3",
+		"GM/DM: 2",
 	}
 
 	db, logger := testutil.CreateTestDBAndLogger(t, "billettholder_admin_overview")

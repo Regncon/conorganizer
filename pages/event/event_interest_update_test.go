@@ -78,16 +78,15 @@ func TestUpdateInterest_WhenProgramPublishingIsOff_RejectsInterestChangeAndKeeps
 	}
 }
 
-func TestUpdateInterest_WhenEventIsNotPublishedInPulje_RejectsInterestChangeAndKeepsExistingInterest(t *testing.T) {
+func TestUpdateInterest_WhenLegacyPuljePublishedFlagIsOff_AllowsInterestChange(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at arrangementet ikke er publisert i puljen.",
+		Given: "Gitt at arrangementet er i puljen, men den gamle publiseringsflagget står av.",
 		When:  "Når interessen forsøkes endret.",
-		Then:  "Så skal endringen avvises og eksisterende interesse beholdes.",
+		Then:  "Så skal endringen lagres fordi flagget ikke lenger styrer interessevalg.",
 	})
 
 	// Given
 	expectedInterest := models.InterestLevelHigh
-	expectedErrorText := "published"
 
 	db := createEventInterestTestDB(t)
 	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, expectedInterest)
@@ -109,12 +108,10 @@ func TestUpdateInterest_WhenEventIsNotPublishedInPulje_RejectsInterestChangeAndK
 	actualInterest := getEventInterestTestInterest(t, db, fixture.eventID, fixture.billettholderID, fixture.puljeID)
 
 	// Then
-	if err == nil {
-		t.Errorf("expected unpublished event pulje relation to reject interest update")
-	} else if !strings.Contains(strings.ToLower(err.Error()), expectedErrorText) {
-		t.Errorf("error mismatch\nexpected to contain: %q\nactual:              %v", expectedErrorText, err)
+	if err != nil {
+		t.Errorf("expected legacy publication flag to be ignored: %v", err)
 	}
-	if actualInterest != expectedInterest {
+	if actualInterest != models.InterestLevelLow {
 		t.Fatalf("interest level mismatch\nexpected: %s\nactual:   %s", expectedInterest, actualInterest)
 	}
 }

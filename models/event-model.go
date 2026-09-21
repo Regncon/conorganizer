@@ -147,6 +147,7 @@ type Event struct {
 	MaxPlayers          int            `json:"max_players"`
 	BeginnerFriendly    bool           `json:"beginner_friendly"`
 	CanBeRunInEnglish   bool           `json:"can_be_run_in_english"`
+	IsInPuljefordeling  bool           `json:"is_in_puljefordeling"`
 	Notes               string         `json:"notes"`
 	Status              EventStatus    `json:"status"`
 	CreatedAt           DBDateTime     `json:"created_at"`
@@ -159,16 +160,16 @@ type Event struct {
 }
 
 type EventCardModel struct {
-	Id                string      `json:"id"`
-	IsPublished       bool        `json:"is_published"`
-	Title             string      `json:"title"`
-	Intro             string      `json:"intro"`
-	Status            EventStatus `json:"status"`
-	System            string      `json:"system"`
-	HostName          string      `json:"host_name"`
-	EventType         EventType   `json:"event_type"`
-	AgeGroup          AgeGroup    `json:"age_group"`
-	Runtime           Runtime     `json:"runtime"`
-	BeginnerFriendly  bool        `json:"beginner_friendly"`
-	CanBeRunInEnglish bool        `json:"can_be_run_in_english"`
+	Id                 string      `json:"id"`
+	Title              string      `json:"title"`
+	Intro              string      `json:"intro"`
+	Status             EventStatus `json:"status"`
+	System             string      `json:"system"`
+	HostName           string      `json:"host_name"`
+	EventType          EventType   `json:"event_type"`
+	AgeGroup           AgeGroup    `json:"age_group"`
+	Runtime            Runtime     `json:"runtime"`
+	BeginnerFriendly   bool        `json:"beginner_friendly"`
+	CanBeRunInEnglish  bool        `json:"can_be_run_in_english"`
+	IsInPuljefordeling bool        `json:"is_in_puljefordeling"`
 }

@@ -14,11 +14,10 @@ import (
 	"github.com/Regncon/conorganizer/service/authctx"
 	eventservice "github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/program"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
-	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
-	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -42,7 +41,7 @@ func interestErrorMessageFromError(err error) string {
 	if strings.Contains(err.Error(), "does not have access") {
 		return "Du har ikkje tilgang til å endre interessa til denne billettheldaren. Kontakt styret."
 	}
-	if strings.Contains(err.Error(), "is not active and published for event") {
+	if strings.Contains(err.Error(), "is not active for event") {
 		return "Denne pulja er ikkje tilgjengeleg for dette arrangementet."
 	}
 	if strings.Contains(err.Error(), "is locked for event") {
@@ -57,24 +56,11 @@ func interestErrorMessageFromError(err error) string {
 	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
 }
 
-func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
+func SetupEventRoute(router chi.Router, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
 	logger = logger.With("component", "event")
-	nc, err := ns.Client()
-	if err != nil {
-		return fmt.Errorf("error creating nats client: %w", err)
-	}
-
-	js, err := jetstream.New(nc)
-	if err != nil {
-		return fmt.Errorf("error creating jetstream client: %w", err)
-	}
-
-	if err := setupPuljeScheduledBroadcasts(context.Background(), js, liveManager, db, logger); err != nil {
-		return fmt.Errorf("error setting up pulje scheduled broadcasts: %w", err)
-	}
 
 	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
-	eventLayoutRoute(router, db, logger, eventImageDir, err)
+	eventLayoutRoute(router, db, logger, eventImageDir, nil)
 
 	router.Route("/event/api", func(eventApiRouter chi.Router) {
 		eventApiRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
@@ -140,7 +126,7 @@ func updateInterest(
 		return fmt.Errorf("interest level is required")
 	}
 
-	programPublished, programPublishedErr := getProgramPublished(db)
+	programPublished, programPublishedErr := program.IsPublished(db)
 	if programPublishedErr != nil {
 		return fmt.Errorf("failed to check program publishing state: %w", programPublishedErr)
 	}
@@ -156,14 +142,14 @@ func updateInterest(
 		WHERE ep.event_id = $1
 			AND ep.pulje_id = $2
 			AND ep.is_in_pulje = 1
-			AND ep.is_published = 1
+			AND e.is_in_puljefordeling = 1
 			AND e.status = $3
 	`
 	var puljeStatus models.PuljeStatus
 	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId, models.EventStatusAnnounced).Scan(&puljeStatus)
 	if puljerErr != nil {
 		if puljerErr == sql.ErrNoRows {
-			return fmt.Errorf("pulje %s is not active and published for event %s", puljeId, eventID)
+			return fmt.Errorf("pulje %s is not active for event %s", puljeId, eventID)
 		}
 		return fmt.Errorf("failed to check if pulje %s exists for event %s: %w", puljeId, eventID, puljerErr)
 	}

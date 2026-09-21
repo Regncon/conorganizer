@@ -8,8 +8,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, selectedPuljeQuery string, programPublished bool, interestAvailable bool) {
-	{{ helperState, hasHelperState := ticketholder.BuildQueryPuljeInterestState(puljerForEvent, selectedPuljeQuery, time.Now()) }}
+templ eventInterestPanelFrame() {
 	<style>
     .event-interest-picker-container {
         container-type: inline-size;
@@ -53,11 +52,7 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, sele
         }
 
         .event-interest-helper.pulje-interest-state--warning {
-            color: var(--color-warning, var(--color-error));
-        }
-
-        .event-interest-helper.pulje-interest-state--urgent-warning {
-            color: var(--color-error);
+			color: var(--color-error);
         }
 
         .event-interest-helper.pulje-interest-state--locked {
@@ -104,59 +99,123 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, sele
 </style>
 	<div class="event-interest-picker-container">
 		<div class="card event-interest-picker">
-			if !programPublished {
-				<p class="event-interest-unavailable-message color-strong">
-					Interessevalget åpner når programmet er publisert.
-				</p>
-			} else if hasTickets {
-				if interestAvailable {
-					<div>
-						Tenker du dette arrangementet ser spennende ut?
-						Husk å melde interesse i god tid, aller senest en time før puljen til arrangementet starter.
-						<a
-							class="inline-link"
-							href="https://www.regncon.no/vanlege-sporsmal/"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							<span class="link-text">Hvordan fungerer interessevalget?</span>
-							@icons.Icon(icons.ExternalLink, icons.Size16)
-						</a>
-					</div>
-					if hasHelperState {
-						<p class={ "event-interest-helper", helperState.ClassName() }>
-							if helperState.IsWarning() {
-								@icons.Icon(icons.Warning, icons.Size16)
-							} else if helperState.IsLocked() {
-								@icons.Icon(icons.Lock, icons.Size16)
-							} else if helperState.IsCompleted() {
-								@icons.Icon(icons.ProgressComplete, icons.Size16)
-							}
-							<span>{ helperState.Message }</span>
-						</p>
-					}
-					<button
-						class="btn btn--cta event-interest-open-button"
-						data-on:click="$_interestIsOpen = true"
-					>
-						Meld interesse
-					</button>
-				} else {
-					<p class="event-interest-unavailable-message color-strong">
-						Interessevalg er ikke åpnet for dette arrangementet ennå.
-					</p>
-				}
-			} else {
-				<p class="color-strong">
-					For å kunne melde interesse må du først hente billetten din.
-				</p>
-				<a
-					href="/profile/tickets"
-					class="btn btn--cta"
-				>
-					Hent billett
-				</a>
-			}
+			{ children... }
 		</div>
 	</div>
+}
+
+templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, selectedPuljeQuery string, programPublished bool, interestAvailable bool) {
+	{{ helperState, hasHelperState := ticketholder.BuildQueryPuljeInterestState(puljerForEvent, selectedPuljeQuery, time.Now()) }}
+	@eventInterestPanelFrame() {
+		if !programPublished {
+			<p class="event-interest-unavailable-message color-strong">
+				Interessevalget åpner når programmet er publisert.
+			</p>
+		} else if hasTickets {
+			if interestAvailable {
+				<div>
+					Tenker du dette arrangementet ser spennende ut?
+					Husk å melde interesse i god tid, aller senest en time før puljen til arrangementet starter.
+					<a
+						class="inline-link"
+						href="https://www.regncon.no/vanlege-sporsmal/"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<span class="link-text">Hvordan fungerer interessevalget?</span>
+						@icons.Icon(icons.ExternalLink, icons.Size16)
+					</a>
+				</div>
+				if hasHelperState {
+					<p class={ "event-interest-helper", helperState.ClassName() }>
+						if helperState.IsWarning() {
+							@icons.Icon(icons.Warning, icons.Size16)
+						} else if helperState.IsLocked() {
+							@icons.Icon(icons.Lock, icons.Size16)
+						} else if helperState.IsCompleted() {
+							@icons.Icon(icons.ProgressComplete, icons.Size16)
+						}
+						<span>{ helperState.Message }</span>
+					</p>
+				}
+				<button
+					class="btn btn--cta event-interest-open-button"
+					data-on:click="$_interestIsOpen = true"
+				>
+					Meld interesse
+				</button>
+			} else {
+				<p class="event-interest-unavailable-message color-strong">
+					Interessevalg er ikke åpnet for dette arrangementet ennå.
+				</p>
+			}
+		} else {
+			<p class="color-strong">
+				For å kunne melde interesse må du først hente billetten din.
+			</p>
+			<a
+				href="/profile/tickets"
+				class="btn btn--cta"
+			>
+				Hent billett
+			</a>
+		}
+	}
+}
+
+templ ProgramEventInterestPanel(notice ProgramInterestNotice) {
+	<style>
+		.event-interest-program-message {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+			width: 100%;
+		}
+
+		.event-interest-program-message p {
+			margin: 0;
+		}
+
+		.event-interest-program-warning {
+			display: flex;
+			align-items: flex-start;
+			gap: var(--spacing-2x);
+			width: 100%;
+			color: var(--color-warning, var(--color-error));
+		}
+
+		.event-interest-program-warning .inline-icon {
+			flex: 0 0 auto;
+		}
+
+		.event-interest-program-warning a {
+			display: inline-flex;
+			margin-top: var(--spacing-2x);
+			color: inherit;
+		}
+	</style>
+	@eventInterestPanelFrame() {
+		<div class="event-interest-program-message">
+			<p class="color-strong">
+				Dette er et programarrangement som er åpent for alle. Du trenger ikke melde interesse eller reservere plass.
+			</p>
+			if notice.HasInterest() {
+				<div class="event-interest-program-warning">
+					@icons.Icon(icons.Warning, icons.Size16)
+					<div>
+						if len(notice.EventTitles) == 1 {
+							<p>
+								Du har meldt interesse for «{ notice.EventTitles[0] }» i puljen «{ notice.PuljeName }». Ved puljefordelingen kan du bli valgt ut som spiller på dette arrangementet.
+							</p>
+						} else {
+							<p>
+								Du har meldt interesse for { len(notice.EventTitles) } arrangementer i puljen «{ notice.PuljeName }». Ved puljefordelingen kan du bli valgt ut som spiller på ett av disse arrangementene.
+							</p>
+						}
+						<a href="/profile">Se og endre interessene dine</a>
+					</div>
+				</div>
+			}
+		</div>
+	}
 }
