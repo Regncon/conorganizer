@@ -249,7 +249,6 @@ templ InterestAlreadyAssigned(eventID string, assignedEvent AssignedEvent) {
                 border-radius: var(--border-radius-2x);
                 border: 1px solid var(--level-3-border);
 
-
                 .previous-next-buttons {
                     text-decoration: none;
                     color: inherit;
@@ -443,25 +442,50 @@ type InterestNoticeState struct {
 	AssignedEvent     AssignedEvent
 }
 
+const interestNoticeQuery = `
+	SELECT b.is_over_18, e.title, e.system, bp.role, e.id
+	FROM billettholdere b
+	LEFT JOIN relation_events_players bp
+		ON bp.billettholder_id = b.id
+		AND bp.pulje_id = ?2
+		AND (bp.source = ?3 OR bp.role = ?4)
+	LEFT JOIN events e ON e.id = bp.event_id
+	WHERE b.id = ?1
+	ORDER BY CASE WHEN bp.role = ?4 THEN 0 ELSE 1 END, e.id
+	LIMIT 1
+`
+
 func LoadInterestNoticeState(billettholderID int, puljeID string, ageGroup models.AgeGroup, eventImageDir *string, db *sql.DB) (InterestNoticeState, error) {
 	if billettholderID <= 0 {
 		return InterestNoticeState{}, nil
 	}
-	var isOver18 bool
-	err := db.QueryRow("SELECT is_over_18 FROM billettholdere WHERE id = ?1", billettholderID).Scan(&isOver18)
+
+	var (
+		isOver18            bool
+		title, system, role sql.NullString
+		eventID             sql.NullString
+	)
+	err := db.QueryRow(interestNoticeQuery, billettholderID, puljeID, puljefordeling.SourceManual, string(models.EventPlayerRoleGM)).Scan(
+		&isOver18, &title, &system, &role, &eventID,
+	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return InterestNoticeState{}, nil
 	}
 	if err != nil {
-		return InterestNoticeState{}, fmt.Errorf("failed to fetch billettholder age: %w", err)
+		return InterestNoticeState{}, fmt.Errorf("failed to fetch interest notice state: %w", err)
 	}
-	assignedEvent, err := getAssignedEventForBillettholder(billettholderID, puljeID, db)
-	if err != nil {
-		return InterestNoticeState{}, err
+
+	assignedEvent := AssignedEvent{}
+	if eventID.Valid {
+		assignedEvent = AssignedEvent{
+			Title:    title.String,
+			System:   system.String,
+			Role:     models.EventPlayerRole(role.String),
+			EventID:  eventID.String,
+			ImageURL: eventimage.GetEventImageUrl(eventID.String, "banner", eventImageDir),
+		}
 	}
-	if assignedEvent.EventID != "" {
-		assignedEvent.ImageURL = eventimage.GetEventImageUrl(assignedEvent.EventID, "banner", eventImageDir)
-	}
+
 	showUnder18 := !isOver18 && ageGroup == models.AgeGroupAdultsOnly
 	return InterestNoticeState{
 		ShowAssignedEvent: assignedEvent.EventID != "",
@@ -471,25 +495,3 @@ func LoadInterestNoticeState(billettholderID int, puljeID string, ageGroup model
 	}, nil
 }
 
-func getAssignedEventForBillettholder(billettholderID int, puljeID string, db *sql.DB) (AssignedEvent, error) {
-	query := `
-		SELECT e.title, e.system, bp.role, e.id
-		FROM relation_events_players bp
-		JOIN events e ON e.id = bp.event_id
-		WHERE bp.billettholder_id = ?1 AND bp.pulje_id = ?2
-			AND (bp.source = ?3 OR bp.role = ?4)
-		ORDER BY CASE WHEN bp.role = ?4 THEN 0 ELSE 1 END, e.id
-		LIMIT 1
-	`
-	var assignedEvent AssignedEvent
-	err := db.QueryRow(query, billettholderID, puljeID, puljefordeling.SourceManual, string(models.EventPlayerRoleGM)).Scan(
-		&assignedEvent.Title, &assignedEvent.System, &assignedEvent.Role, &assignedEvent.EventID,
-	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return AssignedEvent{}, nil
-	}
-	if err != nil {
-		return AssignedEvent{}, fmt.Errorf("failed to fetch assigned event for billettholder: %w", err)
-	}
-	return assignedEvent, nil
-}
