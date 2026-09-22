@@ -213,3 +213,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 # ------------------------------------------------------------------
+
+# Local link to .agents/skills, created by `task setup:skills`
+/.claude/skills
