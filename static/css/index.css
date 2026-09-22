@@ -402,6 +402,7 @@ input {
     width: 1rem;
     accent-color: var(--color-primary);
     color: var(--color-text-strong);
+    cursor: pointer;
 }
 
 *,
