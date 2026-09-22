@@ -234,11 +234,11 @@ templ fetchTicketsButton() {
 	<button
 		class="btn btn--cta profile-ticket-fetch-button"
 		data-on:click={ "@post('/profile/tickets/api/get-tickets')" }
-		data-indicator:fetching
-		data-attr:disabled="$fetching"
+		data-indicator:_fetching
+		data-attr:disabled="$_fetching"
 	>
-		<p data-text="$fetching ? '' : 'Hent billetter'">Hent billetter</p>
-		<span class="spinner show" data-class:show="$fetching">
+		<p data-text="$_fetching ? '' : 'Hent billetter'">Hent billetter</p>
+		<span class="spinner show" data-show="$_fetching">
 			@icons.Icon(icons.Loading, icons.Size24)
 		</span>
 	</button>
