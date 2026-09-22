@@ -517,6 +517,33 @@ func TestSelectedInterest_AssignmentOnlyBlocksItsOwnPulje(t *testing.T) {
 	}
 }
 
+func TestSelectedInterest_WhenMinorIsAlreadyAssigned_ShowsOnlyTheAgeNotice(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at ein billettholder under 18 år er tildelt eit arrangement i puljen.",
+		When:  "Når eit 18-års arrangement i same pulje vert vist.",
+		Then:  "Så skal berre aldersvarselet vises, ikkje tildelingsvarselet.",
+	})
+
+	// Given
+	expectedShowUnder18 := true
+	expectedShowAssigned := false
+	expectedCanChoose := false
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
+	seedNoticeBillettholder(t, db, 902, false)
+	seedNoticeAssignmentForBillettholder(t, db, fixture, 902, "Player", "manual", "Assigned elsewhere")
+	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupAdultsOnly)
+	mustExecEventInterestTest(t, db, `UPDATE events SET age_group = ? WHERE id = ?`, models.AgeGroupAdultsOnly, fixture.eventID)
+
+	// When
+	actual := decodeInterestContent(t, requestInterestContent(t, db, fixture, 902))
+
+	// Then
+	if actual.ShowUnder18 != expectedShowUnder18 || actual.ShowAssigned != expectedShowAssigned || actual.CanChoose != expectedCanChoose {
+		t.Fatalf("an assigned minor should see the age notice alone, got %+v", actual)
+	}
+}
+
 func TestSelectedInterest_UnrelatedBillettholderDoesNotExposeNoticeContent(t *testing.T) {
 	// Given
 	expectedStatus := http.StatusForbidden
