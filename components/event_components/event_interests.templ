@@ -222,13 +222,13 @@ templ InterestContent(eventID string, title string, state InterestNoticeState, i
 templ InterestAlreadyAssigned(eventID string, title string, assignedEvent AssignedEvent) {
 	<style>
         .interest-already-assigned {
-            padding: var(--spacing-5x);
+            padding: var(--spacing-3x);
             background-color: var(--level-2-background);
             border-radius: var(--border-radius-1x);
             color: var(--color-text-soft);
 
             > p {
-                margin-block: var(--spacing-5x);
+                margin-block: var(--spacing-3x);
             }
 
             .clickable-event-card{
@@ -245,12 +245,30 @@ templ InterestAlreadyAssigned(eventID string, title string, assignedEvent Assign
 
                     .text-container {
                         div {
-                            padding: var(--spacing-4x);
+                            padding: var(--spacing-3x);
                             color: var(--color-text-strong);
 
                             p {
                                 font-size: 12px;
                                 color: var(--color-primary);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @container interest-dialog (width > 375px) {
+            .interest-already-assigned {
+                padding: var(--spacing-5x);
+                    > p {
+                        margin-block: var(--spacing-5x);
+                    }
+                .clickable-event-card {
+                    .previous-next-buttons {
+                        .text-container {
+                            div {
+                                padding: var(--spacing-5x);
                             }
                         }
                     }
@@ -293,13 +311,21 @@ templ interestAlreadyAssignedGM(eventID string, assignedEvent AssignedEvent) {
 templ interestUnder18(title string) {
 	<style>
         .interest-under-18 {
-            padding: var(--spacing-5x);
+            padding: var(--spacing-3x);
             background-color: var(--level-2-background);
             border-radius: var(--border-radius-1x);
             color: var(--color-text-soft);
 
             p:first-of-type {
-                margin-block: var(--spacing-5x);
+                margin-block: var(--spacing-3x);
+            }
+        }
+        @container interest-dialog (width > 375px) {
+            .interest-under-18 {
+                padding: var(--spacing-5x);
+                p:first-of-type {
+                    margin-block: var(--spacing-5x);
+                }
             }
         }
     </style>
