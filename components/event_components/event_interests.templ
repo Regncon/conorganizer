@@ -51,10 +51,11 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 
 		.interest-dialog[open] {
 			--dialog-width: min(32.5rem, calc(100% - 16px));
-			--dialog-block-size: min(494px, calc(100dvb - 2rem));
+			--dialog-block-size: min(536px, calc(100dvb - 2rem));
 
 			visibility: visible;
 			inline-size: var(--dialog-width);
+            block-size: 100%;
 			max-block-size: var(--dialog-block-size);
 			background-color: var(--level-1-background);
 			border: none;
