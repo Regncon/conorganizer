@@ -24,7 +24,9 @@ services:
       # The first start generates templates and compiles the server.
       start_period: 10m
       start_interval: 2s
-      interval: 30s
+      # Caddy only waits for the first healthy result; a long interval keeps
+      # repeated /healthz requests out of the log.
+      interval: 1h
       timeout: 5s
       retries: 3
 
