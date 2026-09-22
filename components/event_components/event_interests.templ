@@ -52,12 +52,42 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 
 		.interest-dialog[open] {
 			--dialog-width: min(32.5rem, calc(100% - 16px));
-			--dialog-block-size: min(536px, calc(100dvb - 2rem));
+			/* The dialog is placed as though it were this tall, then grows downwards
+			   from there. The anchor has to come from something other than the
+			   content, otherwise swapping a short notice for a tall one re-centres
+			   the dialog and it jumps. It affects placement only, never how tall the
+			   dialog can get: a larger value starts the dialog higher and so leaves
+			   more room to grow before .dialog-content has to scroll. Phones need
+			   that room, because the bottom nav already takes 4rem off the viewport
+			   and the interest picker would otherwise scroll with space left unused
+			   above it. Desktop keeps 33.5rem, the height the dialog was pinned to
+			   before it became content-sized. */
+			--dialog-anchor-block-size: 40rem;
+			/* Two bars sit over the page and a fixed dialog escapes both, so each
+			   edge reserves whatever is pinned there. On phones the breadcrumb is
+			   sticky at the top (breadcrumbs.templ, same 600px breakpoint) and the
+			   nav is fixed at the bottom; past 600px they swap, the breadcrumb
+			   scrolls away and the nav becomes sticky at the top instead. Without
+			   this the dialog slides under a bar, and since it is a non-modal
+			   <dialog> the bar's z-index paints over it. env() covers the iOS home
+			   indicator, as index.css does. */
+			--dialog-top-inset: var(--nav-breadcrumb-height);
+			--dialog-bottom-inset: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+			/* Centred on the space left below the bottom bar, but never closer to the
+			   top bar than 1rem. On phones the floor always wins, which is what keeps
+			   the picker from scrolling; on desktop the centring wins. */
+			--dialog-anchor: max(
+				calc(var(--dialog-top-inset) + 1rem),
+				calc((100dvb - var(--dialog-bottom-inset) - var(--dialog-anchor-block-size)) / 2)
+			);
 
 			visibility: visible;
 			inline-size: var(--dialog-width);
-            block-size: 100%;
-			max-block-size: var(--dialog-block-size);
+			/* Height follows the content: a short notice makes a short dialog. It
+			   stops growing one rem short of the space the nav leaves, and
+			   .dialog-content scrolls from there. */
+			block-size: auto;
+			max-block-size: calc(100dvb - var(--dialog-anchor) - var(--dialog-bottom-inset) - 1rem);
 			background-color: var(--level-1-background);
 			border: none;
 			border-radius: var(--border-radius-2x);
@@ -68,12 +98,12 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			position: fixed;
 			inset-block: 0 auto;
 			inset-inline: 0;
-			/* Anchor the top edge where a full-height dialog would be centred. The
-			   offset comes from the viewport, not the content, so swapping the notice
-			   for another billettholder never moves the dialog. */
+			/* The top edge is anchored to the viewport, never to the content, so
+			   swapping the notice for another billettholder grows the dialog
+			   downwards instead of moving it. */
 			margin-inline: auto;
-			margin-block: calc(50dvb - var(--dialog-block-size) / 2) 0;
-            outline:none;
+			margin-block: var(--dialog-anchor) 0;
+			outline: none;
 
 			.no-marking {
 				user-select: none;
@@ -99,7 +129,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 
 					display: flex;
 					flex-direction: column;
-					flex: 1;
+					flex: 1 1 auto;
 					min-block-size: 0;
 					overflow: auto;
 
@@ -144,6 +174,16 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 						padding-inline: var(--spacing-2x);
 					}
 				}
+			}
+		}
+
+		/* Matches the breakpoint in menuStyles() where .main-menu-header stops
+		   being fixed to the bottom and becomes sticky at the top. */
+		@container main (width > 600px) {
+			.interest-dialog[open] {
+				--dialog-top-inset: var(--nav-height);
+				--dialog-bottom-inset: 0px;
+				--dialog-anchor-block-size: 33.5rem;
 			}
 		}
 	</style>
