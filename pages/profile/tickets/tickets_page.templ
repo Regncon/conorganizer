@@ -24,14 +24,29 @@ type fetchTicketsFeedback struct {
 	InfoMessage    string
 }
 
-func buildFetchTicketsFeedback(createdUserAssociations int) fetchTicketsFeedback {
+const staleCheckinTicketsMessage = "Vi fikk ikke oppdatert billettlisten fra Checkin, så vi bruker sist lagrede informasjon. Hvis billetten din ikke vises, prøv igjen senere. Fortsetter problemet, kontakt Regncon på Discord eller via e-post til regncon@gmail.com."
+const unavailableCheckinTicketsMessage = "Vi får ikke kontakt med Checkin akkurat nå og kan derfor ikke hente billettene dine. Prøv igjen senere. Fortsetter problemet, kontakt Regncon på Discord eller via e-post til regncon@gmail.com."
+
+func buildFetchTicketsFeedback(createdUserAssociations int, usedStaleCache bool) fetchTicketsFeedback {
+	feedback := fetchTicketsFeedback{}
 	if createdUserAssociations == 1 {
-		return fetchTicketsFeedback{SuccessMessage: "1 billett hentet!"}
+		feedback.SuccessMessage = "1 billett hentet!"
+	} else if createdUserAssociations > 1 {
+		feedback.SuccessMessage = fmt.Sprintf("%d billetter hentet!", createdUserAssociations)
+	} else if !usedStaleCache {
+		feedback.InfoMessage = "Ingen nye billetter funnet."
 	}
-	if createdUserAssociations > 1 {
-		return fetchTicketsFeedback{SuccessMessage: fmt.Sprintf("%d billetter hentet!", createdUserAssociations)}
+	if usedStaleCache {
+		feedback.InfoMessage = staleCheckinTicketsMessage
 	}
-	return fetchTicketsFeedback{InfoMessage: "Ingen nye billetter funnet."}
+	return feedback
+}
+
+func checkInFetchErrorMessage(result checkIn.TicketFetchResult, err error) string {
+	if err != nil && !result.UsedStaleCache {
+		return unavailableCheckinTicketsMessage
+	}
+	return ""
 }
 
 func shouldBroadcastTicketFetch(createdBillettholders int, createdUserAssociations int) bool {
@@ -59,18 +74,16 @@ func getTicketsRouter(
 		var ticketAssociationResult checkIn.TicketAssociationResult
 		var createdUserAssociations int
 
-		tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(logger, "")
-		if ticketsErr != nil {
-			logger.Error(ticketsErr.Error(), "user_id", user.Id)
-			errorMessage = "Feil ved henting av billetter: " + ticketsErr.Error()
-		}
+		ticketResult, ticketsErr := checkIn.GetTicketsFromCheckIn(ctx, logger.With("user_id", user.Id), "")
+		tickets := ticketResult.Tickets
+		errorMessage = checkInFetchErrorMessage(ticketResult, ticketsErr)
 
 		if errorMessage == "" {
 			var err error
 			ticketAssociationResult, err = checkIn.AssociateTicketsWithBillettholder(tickets, user.Email, db, logger)
 			if err != nil {
 				logger.Error(err.Error(), "user_id", user.Id)
-				errorMessage = "Feil ved henting av billetter: " + err.Error()
+				errorMessage = "Vi klarte ikke å oppdatere billettene dine akkurat nå. Prøv igjen senere."
 			}
 		}
 
@@ -80,13 +93,13 @@ func getTicketsRouter(
 			createdUserAssociations, err = checkIn.AssociateUserWithBillettholder(user.Id, db, logger)
 			if err != nil {
 				logger.Error(err.Error(), "user_id", user.Id)
-				errorMessage = "Feil ved henting av billetter: " + err.Error()
+				errorMessage = "Vi klarte ikke å oppdatere billettene dine akkurat nå. Prøv igjen senere."
 			}
 		}
 
 		feedback := fetchTicketsFeedback{}
 		if errorMessage == "" {
-			feedback = buildFetchTicketsFeedback(createdUserAssociations)
+			feedback = buildFetchTicketsFeedback(createdUserAssociations, ticketResult.UsedStaleCache)
 		}
 		signalJSON, marshalErr := json.Marshal(map[string]string{
 			"getTicketsErrorMessage":   errorMessage,
@@ -113,11 +126,6 @@ func getTicketsRouter(
 			}
 		}
 
-		if errorMessage != "" {
-			http.Error(w, errorMessage, http.StatusInternalServerError)
-			return
-		}
-		http.Error(w, "OK", http.StatusOK)
 	})
 }
 
