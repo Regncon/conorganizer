@@ -31,7 +31,7 @@ func collectEventNavigationHrefs(doc *goquery.Document) []string {
 }
 
 func collectEventNavigationText(doc *goquery.Document) string {
-	return strings.Join(templtest.CollectTexts(doc, ".breadcrumb-prev-next-buttons, .previous-next-buttons"), " ")
+	return strings.Join(templtest.CollectTexts(doc, ".breadcrumb-prev-next-buttons, div.previous-next-buttons"), " ")
 }
 
 func assertNoDisabledEventNavigationPlaceholders(t *testing.T, doc *goquery.Document) {
@@ -49,7 +49,8 @@ func assertEventNavigationNotRendered(t *testing.T, doc *goquery.Document) {
 	if templtest.HasSelector(doc, ".breadcrumb-prev-next-buttons") {
 		t.Fatalf("expected breadcrumb previous/next navigation not to render")
 	}
-	if templtest.HasSelector(doc, ".previous-next-buttons") {
+	// The assigned-event card uses the same class on its link, not a navigation div.
+	if templtest.HasSelector(doc, "div.previous-next-buttons") {
 		t.Fatalf("expected event previous/next navigation not to render")
 	}
 }

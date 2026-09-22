@@ -2,53 +2,81 @@ package event_components
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"fmt"
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventimage"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
 templ EventInterests(userInfo requestctx.UserRequestInfo,
 	eventId string,
 	puljeId string,
+	title string,
+	ageGroup models.AgeGroup,
+	eventImageDir *string,
+	associatedTicketHolders []ticketholder.BillettHolder,
 	db *sql.DB,
 	r *http.Request,
 	logger *slog.Logger) {
 	{{
-		puljer, puljerErr := ticketholder.GetPuljerFromEventId(eventId, db)
-		if puljerErr != nil {
-			logger.Error(puljerErr.Error(), "event_id", eventId)
-		}
-		selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
+	puljer, puljerErr := ticketholder.GetPuljerFromEventId(eventId, db)
+	if puljerErr != nil {
+		logger.Error(puljerErr.Error(), "event_id", eventId)
+	}
+	selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
+	billettholderID := ticketholder.ResolveSelectedBillettholderID(userInfo, associatedTicketHolders, requestctx.SelectedBillettholderID(r.Context()))
+	noticeState, noticeErr := LoadInterestNoticeState(billettholderID, puljeId, ageGroup, eventImageDir, db)
+	if noticeErr != nil {
+		logger.Error(noticeErr.Error(), "event_id", eventId, "pulje_id", puljeId, "billettholder_id", billettholderID)
+	}
 	}}
 	<style>
 		.dialog-container {
 			container-type: inline-size;
 			container-name: interest-dialog;
 			position: relative;
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-block-size: 0;
 		}
 
 		.interest-dialog[open] {
-			inset: 0;
 			--dialog-width: min(32.5rem, calc(100% - 16px));
+			--dialog-anchor-block-size: 40rem;
+			--dialog-top-inset: var(--nav-breadcrumb-height);
+			--dialog-bottom-inset: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+			--dialog-anchor: max(
+				calc(var(--dialog-top-inset) + 1rem),
+				calc((100dvb - var(--dialog-bottom-inset) - var(--dialog-anchor-block-size)) / 2)
+			);
+
 			visibility: visible;
-			width: var(--dialog-width);
-			background-color: var(--bg-surface);
+			inline-size: var(--dialog-width);
+			block-size: auto;
+			max-block-size: calc(100dvb - var(--dialog-anchor) - var(--dialog-bottom-inset) - 1rem);
+			background-color: var(--level-1-background);
 			border: none;
 			border-radius: var(--border-radius-2x);
 			padding: var(--responsive-pane-padding);
 			box-shadow: var(--shadow-dialog);
-			/* This always centers the dialog on the page */
+			display: flex;
+			flex-direction: column;
 			position: fixed;
-			top: 0;
-			bottom: 0;
-			left: 0;
-			right: 0;
-            outline:none;
+			inset-block: 0 auto;
+			inset-inline: 0;
+			margin-inline: auto;
+			margin-block: var(--dialog-anchor) 0;
+			outline: none;
 
 			.no-marking {
 				user-select: none;
@@ -64,6 +92,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					place-content: space-between;
 					place-items: center;
 					height: fit-content;
+					flex-shrink: 0;
 					color: var(--color-text-soft);
 					padding-bottom: var(--responsive-pane-padding);
 				}
@@ -73,7 +102,8 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 
 					display: flex;
 					flex-direction: column;
-					max-height: calc(100vh - 280px);
+					flex: 1 1 auto;
+					min-block-size: 0;
 					overflow: auto;
 
 					.label {
@@ -94,6 +124,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					flex-direction: row;
 					align-items: center;
 					justify-content: space-between;
+					flex-shrink: 0;
 					gap: var(--responsive-pane-padding);
 					padding-top: var(--responsive-pane-padding);
 					.auto-save-message {
@@ -118,16 +149,30 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				}
 			}
 		}
+
+		@container main (width > 600px) {
+			.interest-dialog[open] {
+				--dialog-top-inset: var(--nav-height);
+				--dialog-bottom-inset: 0px;
+				--dialog-anchor-block-size: 33.5rem;
+			}
+		}
 	</style>
-		<dialog
-			class="interest-dialog"
-			data-attr:open="$_interestIsOpen ? true : false"
-			data-signals:pulje-id={ fmt.Sprintf("'%s'", puljeId) }
-			data-signals:pulje-availability={ fmt.Sprintf("'%s'", selectedPuljeState.Availability) }
-			data-signals:pulje-can-edit={ fmt.Sprintf("%t", selectedPuljeState.CanEdit) }
-			data-signals:pulje-status-message={ fmt.Sprintf("%q", selectedPuljeState.Message) }
-			data-signals:pulje-show-profile-link={ fmt.Sprintf("%t", selectedPuljeState.ShowProfileLink) }
-		>
+	// Refresh the current browser selection when the page's live stream delivers HTML.
+	// The stream's original request may contain an earlier billettholder selection.
+	<dialog
+		class="interest-dialog"
+		data-attr:open="$_interestIsOpen ? true : false"
+		data-signals={ components.DataSignals(map[string]any{
+			"puljeId":              puljeId,
+			"puljeAvailability":    selectedPuljeState.Availability,
+			"puljeCanEdit":         selectedPuljeState.CanEdit,
+			"puljeStatusMessage":   selectedPuljeState.Message,
+			"puljeShowProfileLink": selectedPuljeState.ShowProfileLink,
+		}) }
+		data-effect={ fmt.Sprintf("if ($billettHolderId && $puljeId) { @put('/event/api/%s/interest/selected-interest') }", eventId) }
+		data-on:datastar-fetch__document={ fmt.Sprintf("if (el.isConnected && evt.detail.type === 'datastar-patch-elements' && evt.detail.el?.id === 'event-container' && $billettHolderId && $puljeId) { @put('/event/api/%s/interest/selected-interest') }", eventId) }
+	>
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
@@ -139,10 +184,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			>
 				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
-				<div>
-					<p class="label">Velg interesse</p>
-					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
-				</div>
+				@InterestContent(eventId, title, noticeState, models.InterestLevelNone)
 			</div>
 			<div class="dialog-footer">
 				<p class="auto-save-message">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
@@ -167,3 +209,289 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		});
 	</script>
 }
+
+// Page morphs preserve this selection-dependent content. The selected-interest
+// endpoint replaces the wrapper explicitly after validating the current selection.
+templ InterestContent(eventID string, title string, state InterestNoticeState, interest models.InterestLevel) {
+	<div
+		id="interest-content"
+		data-ignore-morph
+		data-signals:selected-interest-level={ fmt.Sprintf("%q", interest) }
+		data-signals:current-interest-level-choice={ fmt.Sprintf("'%s'", ticketholder.InterestChoicePending) }
+	>
+		<p class="label">Velg interesse</p>
+		if state.ShowAssignedEvent {
+			@InterestAlreadyAssigned(eventID, state.AssignedEvent)
+		}
+		if state.ShowUnder18 {
+			@interestUnder18(title)
+		}
+		if state.CanChooseInterest {
+			@ticketholder.TicketHolderInterestPicker(eventID)
+		}
+	</div>
+}
+
+templ InterestAlreadyAssigned(eventID string, assignedEvent AssignedEvent) {
+	<style>
+        .interest-already-assigned {
+            padding: var(--spacing-3x);
+            background-color: var(--level-2-background);
+            border-radius: var(--border-radius-1x);
+            color: var(--color-text-soft);
+
+            > p {
+                margin-block: var(--spacing-3x);
+            }
+
+            .clickable-event-card{
+                background-color: var(--level-3-background);
+                border-radius: var(--border-radius-2x);
+                border: 1px solid var(--level-3-border);
+
+                .previous-next-buttons {
+                    text-decoration: none;
+                    color: inherit;
+                    display: block;
+                    padding: 0;
+
+                    .text-container {
+                        div {
+                            padding: var(--spacing-3x);
+                            color: var(--color-text-strong);
+
+                            p {
+                                font-size: 12px;
+                                color: var(--color-primary);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @container interest-dialog (width > 375px) {
+            .interest-already-assigned {
+                padding: var(--spacing-5x);
+                    > p {
+                        margin-block: var(--spacing-5x);
+                    }
+                .clickable-event-card {
+                    .previous-next-buttons {
+                        .text-container {
+                            div {
+                                padding: var(--spacing-5x);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    </style>
+	<section class="interest-already-assigned">
+		if assignedEvent.Role == models.EventPlayerRoleGM {
+			@interestAlreadyAssignedGM(eventID, assignedEvent)
+		} else {
+			@interestAlreadyAssignedPlayer(eventID, assignedEvent)
+		}
+	</section>
+}
+
+templ interestAlreadyAssignedPlayer(eventID string, assignedEvent AssignedEvent) {
+	if assignedEvent.EventID == eventID {
+		<h3>Du har allerede blitt tildelt dette arrangementet.</h3>
+	} else {
+		<h3>Du har allerede blitt tildelt i denne puljen.</h3>
+		<p>
+			Du har allerede plass på et annet arrangement i denne puljen. <i>{ assignedEvent.Title }</i>.
+		</p>
+		@ClickableEventCard(assignedEvent)
+	}
+}
+
+templ interestAlreadyAssignedGM(eventID string, assignedEvent AssignedEvent) {
+	if assignedEvent.EventID == eventID {
+		<h3>Du er satt opp som arrangør for dette arrangementet.</h3>
+	} else {
+		<h3>Du er arrangør for et arrangement i denne puljen.</h3>
+		<p><i>{ assignedEvent.Title }</i> er satt opp med deg som arrangør.</p>
+		@ClickableEventCard(assignedEvent)
+	}
+}
+
+templ interestUnder18(title string) {
+	<style>
+        .interest-under-18 {
+            padding: var(--spacing-3x);
+            background-color: var(--level-2-background);
+            border-radius: var(--border-radius-1x);
+            color: var(--color-text-soft);
+
+            p:first-of-type {
+                margin-block: var(--spacing-3x);
+            }
+        }
+        @container interest-dialog (width > 375px) {
+            .interest-under-18 {
+                padding: var(--spacing-5x);
+                p:first-of-type {
+                    margin-block: var(--spacing-5x);
+                }
+            }
+        }
+    </style>
+	<section class="interest-under-18">
+		<h3>Dette er et 18-års arrangement!</h3>
+		<p>Arrangementet <i>{ title }</i> er satt opp med 18-års aldersgrense.</p>
+		<p>Billettholdere under 18 år kan ikke melde seg på.</p>
+	</section>
+}
+
+templ ClickableEventCard(assignedEvent AssignedEvent) {
+	<style>
+        .clickable-event-card {
+            .event-card-grid {
+                display: grid;
+                grid-template-rows: 1fr;
+                grid-template-columns: minmax(0, 1fr);
+                height: 100%;
+                position: relative;
+            }
+
+            .text-container {
+                display: flex;
+                align-items: center;
+                grid-row: 1 / 2;
+                grid-column: 1 / 2;
+                min-inline-size: 0;
+            }
+
+            .event-card-text {
+                display: flex;
+                flex-direction: column;
+                gap: var(--spacing-1x);
+                overflow: clip;
+                min-inline-size: 0;
+
+                strong {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                p {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+            }
+
+            /* --linear-gradient-mask comes from .previous-next-buttons in PreviousNextBar. */
+            .event-card-image {
+                grid-row: 1 / 2;
+                grid-column: 1 / 2;
+                mask-image: var(--linear-gradient-mask);
+                -webkit-mask-image: var(--linear-gradient-mask);
+                filter: opacity(0.5);
+                border-radius: var(--border-radius-2x);
+                position: absolute;
+                inset-block: 0;
+                inset-inline-end: 0;
+                block-size: 100%;
+                inline-size: auto;
+                max-inline-size: 100%;
+                object-fit: cover;
+            }
+        }
+    </style>
+	<section class="prev-next-button-container no-print clickable-event-card">
+		<a class="previous-next-buttons" href={ templ.URL("/event/" + assignedEvent.EventID) }>
+			<div class="event-card-grid">
+				<div class="text-container">
+					<div class="event-card-text">
+						<strong>{ assignedEvent.Title }</strong>
+						<p>{ assignedEvent.System }</p>
+					</div>
+				</div>
+				if assignedEvent.ImageURL != "" {
+					<img
+						class="event-card-image"
+						src={ assignedEvent.ImageURL }
+						alt=""
+						height="75"
+					/>
+				}
+			</div>
+		</a>
+	</section>
+}
+
+type AssignedEvent struct {
+	Title    string
+	System   string
+	Role     models.EventPlayerRole
+	EventID  string
+	ImageURL string
+}
+
+type InterestNoticeState struct {
+	ShowAssignedEvent bool
+	ShowUnder18       bool
+	CanChooseInterest bool
+	AssignedEvent     AssignedEvent
+}
+
+const interestNoticeQuery = `
+	SELECT b.is_over_18, e.title, e.system, bp.role, e.id
+	FROM billettholdere b
+	LEFT JOIN relation_events_players bp
+		ON bp.billettholder_id = b.id
+		AND bp.pulje_id = ?2
+		AND (bp.source = ?3 OR bp.role = ?4)
+	LEFT JOIN events e ON e.id = bp.event_id
+	WHERE b.id = ?1
+	ORDER BY CASE WHEN bp.role = ?4 THEN 0 ELSE 1 END, e.id
+	LIMIT 1
+`
+
+func LoadInterestNoticeState(billettholderID int, puljeID string, ageGroup models.AgeGroup, eventImageDir *string, db *sql.DB) (InterestNoticeState, error) {
+	if billettholderID <= 0 {
+		return InterestNoticeState{}, nil
+	}
+
+	var (
+		isOver18            bool
+		title, system, role sql.NullString
+		eventID             sql.NullString
+	)
+	err := db.QueryRow(interestNoticeQuery, billettholderID, puljeID, puljefordeling.SourceManual, string(models.EventPlayerRoleGM)).Scan(
+		&isOver18, &title, &system, &role, &eventID,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return InterestNoticeState{}, nil
+	}
+	if err != nil {
+		return InterestNoticeState{}, fmt.Errorf("failed to fetch interest notice state: %w", err)
+	}
+
+	assignedEvent := AssignedEvent{}
+	if eventID.Valid {
+		assignedEvent = AssignedEvent{
+			Title:    title.String,
+			System:   system.String,
+			Role:     models.EventPlayerRole(role.String),
+			EventID:  eventID.String,
+			ImageURL: eventimage.GetEventImageUrl(eventID.String, "banner", eventImageDir),
+		}
+	}
+
+	showUnder18 := !isOver18 && ageGroup == models.AgeGroupAdultsOnly
+	return InterestNoticeState{
+		ShowAssignedEvent: !showUnder18 && assignedEvent.EventID != "",
+		ShowUnder18:       showUnder18,
+		CanChooseInterest: !showUnder18 && assignedEvent.EventID == "",
+		AssignedEvent:     assignedEvent,
+	}, nil
+}
+

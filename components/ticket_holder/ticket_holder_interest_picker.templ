@@ -1,29 +1,17 @@
 package ticketholder
 
 import (
-	"database/sql"
 	"fmt"
-	"log/slog"
-	"net/http"
 
 	"github.com/Regncon/conorganizer/models"
 )
 
-type BillettholderInterest struct {
-	BillettholderId int                  `json:"billettHolderId"`
-	PuljeId         string               `json:"puljeId"`
-	InterestLevel   models.InterestLevel `json:"interestLevel"`
-}
+// InterestChoicePending marks the client-side choice signal as "not chosen yet".
+// The dialog initializes $currentInterestLevelChoice with it, and the buttons
+// compare against it, so both sides must use this constant.
+const InterestChoicePending = "Pending choice"
 
-type interestPickerSignals struct {
-	Interesser []BillettholderInterest `json:"interesser"`
-}
-
-templ TicketHolderInterestPicker(
-	eventId string,
-	db *sql.DB,
-	r *http.Request,
-	logger *slog.Logger) {
+templ TicketHolderInterestPicker(eventId string) {
 	<style>
 		.interest-buttons {
 			display: flex;
@@ -72,12 +60,10 @@ templ TicketHolderInterestPicker(
 			}
 		}
 	</style>
-	{{ pendingChoice := "Pending choice" }}
+	{{ pendingChoice := InterestChoicePending }}
 	<div
 		class="interest-buttons"
 		data-class:is-disabled="!$puljeCanEdit"
-		data-signals:current-interest-level-choice={ fmt.Sprintf("'%s'", pendingChoice) }
-		data-signals:selected-interest-level={ fmt.Sprintf("'%s'", models.InterestLevelNone) }
 	>
 		<strong
 			class="ticket-holder-error"
