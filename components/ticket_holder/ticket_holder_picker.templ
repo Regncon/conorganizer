@@ -21,10 +21,51 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
             .ticket-holder-picker-buttons {
                 column-gap:calc(var(--border-outline-width) - var(--spacing-2x));
                 row-gap: var(--spacing-2x);
-                display: grid;
-                grid-template-columns: repeat(3, auto);
+                display: flex;
+                flex-direction: column;
+
+                .ticket-holder-picker {
+                    div {
+                        width: 100%;
+                        width: stretch;
+                        width: --webkit-fill-available;
+                        place-content: center;
+                    }
+                }
             }
 		}
+
+        @container interest-dialog (width >= 308px) {
+            .ticket-holder-container {
+                .ticket-holder-picker-buttons {
+                    display: flex;
+                    flex-wrap: wrap;
+                    flex-direction: row;
+
+                    .ticket-holder-picker {
+                        div {
+                            width: 9.1rem;
+                        }
+                    }
+                }
+            }
+        }
+
+        @container interest-dialog (width >= 370px) {
+            .ticket-holder-container {
+                .ticket-holder-picker-buttons {
+                    display: grid;
+                    grid-template-columns: repeat(3, auto);
+
+                    .ticket-holder-picker {
+                        div {
+                            width: stretch;
+                            width: -webkit-fill-available;
+                        }
+                    }
+                }
+            }
+        }
 	</style>
 	{{
 		associatedTicketHolders, err := GetTicketHolders(userInfo, db)
