@@ -23,6 +23,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	title string,
 	ageGroup models.AgeGroup,
 	eventImageDir *string,
+	associatedTicketHolders []ticketholder.BillettHolder,
 	db *sql.DB,
 	r *http.Request,
 	logger *slog.Logger) {
@@ -32,7 +33,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		logger.Error(puljerErr.Error(), "event_id", eventId)
 	}
 	selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
-	billettholderID := requestctx.SelectedBillettholderID(r.Context())
+	billettholderID := ticketholder.ResolveSelectedBillettholderID(userInfo, associatedTicketHolders, requestctx.SelectedBillettholderID(r.Context()))
 	noticeState, noticeErr := LoadInterestNoticeState(billettholderID, puljeId, ageGroup, eventImageDir, db)
 	if noticeErr != nil {
 		logger.Error(noticeErr.Error(), "event_id", eventId, "pulje_id", puljeId, "billettholder_id", billettholderID)
@@ -209,7 +210,7 @@ templ InterestContent(eventID string, title string, state InterestNoticeState, i
 	>
 		<p class="label">Velg interesse</p>
 		if state.ShowAssignedEvent {
-			@InterestAlreadyAssigned(eventID, title, state.AssignedEvent)
+			@InterestAlreadyAssigned(eventID, state.AssignedEvent)
 		}
 		if state.ShowUnder18 {
 			@interestUnder18(title)
@@ -220,7 +221,7 @@ templ InterestContent(eventID string, title string, state InterestNoticeState, i
 	</div>
 }
 
-templ InterestAlreadyAssigned(eventID string, title string, assignedEvent AssignedEvent) {
+templ InterestAlreadyAssigned(eventID string, assignedEvent AssignedEvent) {
 	<style>
         .interest-already-assigned {
             padding: var(--spacing-3x);
@@ -282,18 +283,18 @@ templ InterestAlreadyAssigned(eventID string, title string, assignedEvent Assign
 		if assignedEvent.Role == models.EventPlayerRoleGM {
 			@interestAlreadyAssignedGM(eventID, assignedEvent)
 		} else {
-			@interestAlreadyAssignedPlayer(eventID, title, assignedEvent)
+			@interestAlreadyAssignedPlayer(eventID, assignedEvent)
 		}
 	</section>
 }
 
-templ interestAlreadyAssignedPlayer(eventID string, title string, assignedEvent AssignedEvent) {
+templ interestAlreadyAssignedPlayer(eventID string, assignedEvent AssignedEvent) {
 	if assignedEvent.EventID == eventID {
 		<h3>Du har allerede blitt tildelt dette arrangementet.</h3>
 	} else {
 		<h3>Du har allerede blitt tildelt i denne puljen.</h3>
 		<p>
-			Du har allerede plass på et annet arrangement i denne puljen. <i>{ title }</i>.
+			Du har allerede plass på et annet arrangement i denne puljen. <i>{ assignedEvent.Title }</i>.
 		</p>
 		@ClickableEventCard(assignedEvent)
 	}
@@ -333,7 +334,7 @@ templ interestUnder18(title string) {
 	<section class="interest-under-18">
 		<h3>Dette er et 18-års arrangement!</h3>
 		<p>Arrangementet <i>{ title }</i> er satt opp med 18-års aldersgrense.</p>
-		<p>Billetterholdere under 18 år kan ikke melde seg på.</p>
+		<p>Billettholdere under 18 år kan ikke melde seg på.</p>
 	</section>
 }
 
@@ -418,7 +419,11 @@ func LoadInterestNoticeState(billettholderID int, puljeID string, ageGroup model
 		return InterestNoticeState{}, nil
 	}
 	var isOver18 bool
-	if err := db.QueryRow("SELECT is_over_18 FROM billettholdere WHERE id = ?1", billettholderID).Scan(&isOver18); err != nil {
+	err := db.QueryRow("SELECT is_over_18 FROM billettholdere WHERE id = ?1", billettholderID).Scan(&isOver18)
+	if errors.Is(err, sql.ErrNoRows) {
+		return InterestNoticeState{}, nil
+	}
+	if err != nil {
 		return InterestNoticeState{}, fmt.Errorf("failed to fetch billettholder age: %w", err)
 	}
 	assignedEvent, err := getAssignedEventForBillettholder(billettholderID, puljeID, db)

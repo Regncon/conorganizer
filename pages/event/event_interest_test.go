@@ -13,6 +13,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/components/event_components"
+	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/live"
@@ -584,7 +585,7 @@ func TestEventInterests_RendersPermanentWrapperBeforeBillettholderSelection(t *t
 	request := httptest.NewRequest(http.MethodGet, "/event/"+fixture.eventID, nil)
 
 	// When
-	doc := templtest.Render(t, event_components.EventInterests(requestctx.UserRequestInfo{}, fixture.eventID, string(fixture.puljeID), "Event", models.AgeGroupAdultsOnly, nil, db, request, testutil.NewTestLogger()))
+	doc := templtest.Render(t, event_components.EventInterests(requestctx.UserRequestInfo{}, fixture.eventID, string(fixture.puljeID), "Event", models.AgeGroupAdultsOnly, nil, nil, db, request, testutil.NewTestLogger()))
 
 	// Then
 	if doc.Find("#interest-content[data-ignore-morph]").Length() != expectedWrapperCount {
@@ -608,9 +609,11 @@ func TestEventInterests_InitialRenderShowsAssignmentForSelectedBillettholder(t *
 	seedNoticeAssignment(t, db, fixture, "Player", "manual", expectedTitle)
 	request := httptest.NewRequest(http.MethodGet, "/event/"+fixture.eventID, nil)
 	request.AddCookie(&http.Cookie{Name: requestctx.SelectedBillettholderCookieName, Value: fmt.Sprint(fixture.billettholderID)})
+	userInfo := noticeUserInfo()
+	associated := noticeAssociatedBillettholdere(fixture.billettholderID)
 	var doc *goquery.Document
 	handler := requestctx.BillettholderSelectionMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		doc = templtest.Render(t, event_components.EventInterests(requestctx.UserRequestInfo{}, fixture.eventID, string(fixture.puljeID), "Viewed event", models.AgeGroupAdultsOnly, nil, db, r, testutil.NewTestLogger()))
+		doc = templtest.Render(t, event_components.EventInterests(userInfo, fixture.eventID, string(fixture.puljeID), "Viewed event", models.AgeGroupAdultsOnly, nil, associated, db, r, testutil.NewTestLogger()))
 	}))
 
 	// When
@@ -622,6 +625,41 @@ func TestEventInterests_InitialRenderShowsAssignmentForSelectedBillettholder(t *
 	}
 	if doc.Find("#interest-content .interest-buttons").Length() != 0 {
 		t.Fatal("assigned billettholder must not receive interest choices in initial HTML")
+	}
+}
+
+func TestEventInterests_InitialRenderIgnoresCookieForUnassociatedBillettholder(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at utvalgsinformasjonskapselen peker på en billettholder brukeren ikke er tilknyttet.",
+		When:  "Når interessedialogen rendres på serveren.",
+		Then:  "Så vises brukerens egen billettholder, og ingenting om den fremmede billettholderen lekker ut.",
+	})
+
+	// Given
+	leakedTitle := "Someone elses event"
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
+	seedNoticeBillettholder(t, db, 902, true)
+	mustExecEventInterestTest(t, db, `DELETE FROM relation_billettholdere_users WHERE billettholder_id = 902`)
+	seedNoticeAssignmentForBillettholder(t, db, fixture, 902, "Player", "manual", leakedTitle)
+	request := httptest.NewRequest(http.MethodGet, "/event/"+fixture.eventID, nil)
+	request.AddCookie(&http.Cookie{Name: requestctx.SelectedBillettholderCookieName, Value: "902"})
+	userInfo := noticeUserInfo()
+	associated := noticeAssociatedBillettholdere(fixture.billettholderID)
+	var doc *goquery.Document
+	handler := requestctx.BillettholderSelectionMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		doc = templtest.Render(t, event_components.EventInterests(userInfo, fixture.eventID, string(fixture.puljeID), "Viewed event", models.AgeGroupDefault, nil, associated, db, r, testutil.NewTestLogger()))
+	}))
+
+	// When
+	handler.ServeHTTP(httptest.NewRecorder(), request)
+
+	// Then
+	if strings.Contains(doc.Text(), leakedTitle) {
+		t.Fatalf("an unassociated billettholder's assignment leaked into the initial HTML: %s", doc.Text())
+	}
+	if doc.Find("#interest-content .interest-buttons").Length() == 0 {
+		t.Fatal("expected the fallback billettholder's interest choices to render")
 	}
 }
 
@@ -708,9 +746,28 @@ func seedNoticeBillettholder(t *testing.T, db *sql.DB, id int, over18 bool) {
 
 func seedNoticeAssignment(t *testing.T, db *sql.DB, fixture eventInterestUpdateFixture, role, source, title string) {
 	t.Helper()
+	seedNoticeAssignmentForBillettholder(t, db, fixture, fixture.billettholderID, role, source, title)
+}
+
+func seedNoticeAssignmentForBillettholder(t *testing.T, db *sql.DB, fixture eventInterestUpdateFixture, billettholderID int, role, source, title string) {
+	t.Helper()
 	mustExecEventInterestTest(t, db, `
 		INSERT INTO events(id, title, intro, description, system, event_type, age_group, event_runtime, host_name, email, phone_number, max_players, beginner_friendly, can_be_run_in_english, status)
 		SELECT 'assigned-event', ?, intro, description, 'Assigned system', event_type, age_group, event_runtime, host_name, email, phone_number, max_players, beginner_friendly, can_be_run_in_english, status FROM events WHERE id = ?
 	`, title, fixture.eventID)
-	mustExecEventInterestTest(t, db, `INSERT INTO relation_events_players(event_id, pulje_id, billettholder_id, role, source) VALUES ('assigned-event', ?, ?, ?, ?)`, fixture.puljeID, fixture.billettholderID, role, source)
+	mustExecEventInterestTest(t, db, `INSERT INTO relation_events_players(event_id, pulje_id, billettholder_id, role, source) VALUES ('assigned-event', ?, ?, ?, ?)`, fixture.puljeID, billettholderID, role, source)
+}
+
+// noticeUserInfo matches the user seeded by seedEventInterestUpdateFixture, so the
+// billettholder default resolves the same way it does in the running application.
+func noticeUserInfo() requestctx.UserRequestInfo {
+	return requestctx.UserRequestInfo{IsLoggedIn: true, Id: "event-interest-user", Email: "event-interest-user@example.com"}
+}
+
+func noticeAssociatedBillettholdere(ids ...int) []ticketholder.BillettHolder {
+	associated := make([]ticketholder.BillettHolder, 0, len(ids))
+	for _, id := range ids {
+		associated = append(associated, ticketholder.BillettHolder{Id: id, Email: noticeUserInfo().Email, Name: "Event Interest"})
+	}
+	return associated
 }

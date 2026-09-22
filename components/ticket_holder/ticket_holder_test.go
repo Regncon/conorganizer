@@ -271,3 +271,71 @@ func parsePuljeInterestStateTestTime(t *testing.T, value string) time.Time {
 	}
 	return parsed
 }
+
+func TestResolveSelectedBillettholderID_WhenSelectionIsAssociated_KeepsIt(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at utvalgsinformasjonskapselen peker på en billettholder brukeren er tilknyttet.",
+		When:  "Når utvalget valideres.",
+		Then:  "Så skal det valgte ID-et beholdes uendret.",
+	})
+
+	// Given
+	expectedID := 1
+	userInfo := requestctx.UserRequestInfo{Email: "user@example.com"}
+	associated := []BillettHolder{
+		{Id: expectedID, Email: "other@example.com"},
+		{Id: 2, Email: userInfo.Email},
+	}
+
+	// When
+	actualID := ResolveSelectedBillettholderID(userInfo, associated, expectedID)
+
+	// Then
+	if actualID != expectedID {
+		t.Fatalf("selected billettholder ID mismatch\nexpected: %d\nactual:   %d", expectedID, actualID)
+	}
+}
+
+func TestResolveSelectedBillettholderID_WhenSelectionIsNotAssociated_FallsBackToDefault(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at utvalgsinformasjonskapselen peker på en billettholder brukeren ikke er tilknyttet.",
+		When:  "Når utvalget valideres.",
+		Then:  "Så skal brukerens egen billettholder brukes i stedet.",
+	})
+
+	// Given
+	expectedID := 2
+	userInfo := requestctx.UserRequestInfo{Email: "user@example.com"}
+	associated := []BillettHolder{
+		{Id: 1, Email: "other@example.com"},
+		{Id: expectedID, Email: userInfo.Email},
+	}
+
+	// When
+	actualID := ResolveSelectedBillettholderID(userInfo, associated, 903)
+
+	// Then
+	if actualID != expectedID {
+		t.Fatalf("selected billettholder ID mismatch\nexpected: %d\nactual:   %d", expectedID, actualID)
+	}
+}
+
+func TestResolveSelectedBillettholderID_WhenNoBillettholdereExist_ReturnsNoSelection(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren ikke har noen tilknyttede billettholdere.",
+		When:  "Når en utvalgsinformasjonskapsel valideres.",
+		Then:  "Så skal ingen billettholder velges.",
+	})
+
+	// Given
+	expectedID := 0
+	userInfo := requestctx.UserRequestInfo{Email: "user@example.com"}
+
+	// When
+	actualID := ResolveSelectedBillettholderID(userInfo, nil, 903)
+
+	// Then
+	if actualID != expectedID {
+		t.Fatalf("selected billettholder ID mismatch\nexpected: %d\nactual:   %d", expectedID, actualID)
+	}
+}

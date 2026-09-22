@@ -91,6 +91,11 @@ func mustExecEventVisibilityTest(t *testing.T, db *sql.DB, query string, args ..
 	}
 }
 
+// eventVisibilityUserEmail owns every billettholder seeded by
+// seedEventVisibilityBillettholder. GetTicketHolders associates billettholdere by
+// email, so a selection cookie is only honoured for a billettholder reachable this way.
+const eventVisibilityUserEmail = "event-visibility-user@example.com"
+
 func seedEventVisibilityBillettholder(t *testing.T, db *sql.DB, billettholderID int) {
 	t.Helper()
 
@@ -99,4 +104,8 @@ func seedEventVisibilityBillettholder(t *testing.T, db *sql.DB, billettholderID 
 			id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
 		) VALUES (?, 'Event', 'Visibility', 1, 'Ticket', 1, 7101, 8101)
 	`, billettholderID)
+	mustExecEventVisibilityTest(t, db, `
+		INSERT INTO relation_billettholder_emails (billettholder_id, email, kind)
+		VALUES (?, ?, ?)
+	`, billettholderID, eventVisibilityUserEmail, models.BillettholderEmailKindTicket)
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
@@ -422,7 +423,7 @@ func TestEventPageContent_WhenLegacyPuljePublishedFlagIsOff_StillRendersInterest
 
 	// Given
 	expectedDialogVisible := true
-	expectedHrefs := []string{"/", "/profile", "/profile/tickets"}
+	expectedHrefs := []string{"/", "/profile", "https://www.regncon.no/vanlege-sporsmal/"}
 	selectedBillettholderID := 901
 
 	db := createEventVisibilityTestDB(t)
@@ -431,11 +432,14 @@ func TestEventPageContent_WhenLegacyPuljePublishedFlagIsOff_StillRendersInterest
 	seedEventVisibilityPulje(t, db, models.PuljeFredagKveld)
 	seedEventVisibilityEventPulje(t, db, "unpublished-pulje-event", models.PuljeFredagKveld, false)
 	setEventVisibilityProgramPublishing(t, db, true)
-	// The interest choices only render for a selected billettholder, so the
-	// profile link inside them needs the selection cookie and its middleware.
+	// The interest choices only render for a selected billettholder the signed-in
+	// user actually owns, so this needs the seeded email association, the selection
+	// cookie and its middleware. Owning a ticket is also what swaps the "Hent
+	// billett" link for the interest panel's own content.
 	seedEventVisibilityBillettholder(t, db, selectedBillettholderID)
 	request := httptest.NewRequest("GET", "/event/unpublished-pulje-event?pulje=fredag_kveld", nil)
 	request.AddCookie(&http.Cookie{Name: requestctx.SelectedBillettholderCookieName, Value: strconv.Itoa(selectedBillettholderID)})
+	request = request.WithContext(authctx.WithUserToken(request.Context(), "event-visibility-user", eventVisibilityUserEmail))
 	var doc *goquery.Document
 	handler := requestctx.BillettholderSelectionMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		doc = templtest.Render(t, event_page_content("unpublished-pulje-event", false, logger, db, nil, r))
