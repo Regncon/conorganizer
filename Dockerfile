@@ -58,5 +58,5 @@ RUN go tool templ version && \
     go tool air -v && \
     go tool task --version
 
-# Expose the application's main HTTP server.
-EXPOSE ${PORT:-8080}
+# Caddy is the public Docker endpoint; the Go server stays internal.
+EXPOSE 7332

@@ -18,7 +18,31 @@ Start the application using Docker Compose
 docker compose up --build
 ```
 
-Then open your browser and navigate to: [http://localhost:8080](http://localhost:8080)
+Docker serves the application through Caddy using HTTPS and HTTP/2. The Go
+server stays internal on port `7332`. Caddy uses `HTTPS_PORT` from `.env` as
+its public HTTPS port, falling back to `7331` when `HTTPS_PORT` is not set.
+With `HTTPS_PORT=7331`, open
+[https://localhost:7331](https://localhost:7331).
+
+The first time Caddy starts, trust its local certificate authority for your
+user account. Keep Docker Compose running, open another terminal, and run the
+command for your operating system.
+
+Windows PowerShell:
+
+```powershell
+.\scripts\trust-docker-ca.ps1
+```
+
+Linux or macOS:
+
+```bash
+sh scripts/trust-docker-ca.sh
+```
+
+Restart the browser after trusting the certificate, then open the HTTPS URL
+for the configured `HTTPS_PORT`. The certificate is retained in the
+`caddy_data` Docker volume across container rebuilds.
 
 ## Get the Latest Database Backup and Images
 
@@ -94,7 +118,8 @@ Common issues and solutions:
 go tool templ build
 ```
 
-- **Port in use**: Check if another service is using port 8080
+- **Docker HTTPS port in use**: Check if another service is using the port set
+  by `HTTPS_PORT` in `.env` (or port `7331` when it is unset)
 - **Build errors**: Run `go mod tidy` to fix dependencies
 
 ## Migrations

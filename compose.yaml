@@ -9,11 +9,31 @@ services:
     tty: true
     environment:
       HOT_RELOAD_BINARY_DIR: /tmp/conorganizer
-    ports:
-      - ${PORT:-8080}:${PORT:-8080}
+      PORT: 7332
+    expose:
+      - "7332"
     volumes:
       - type: bind
         source: ./
         target: /home/devuser/app
         read_only: false
     command: go tool task start
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    attach: false
+    depends_on:
+      - webserver
+    ports:
+      - "${HTTPS_PORT:-7331}:7331"
+    volumes:
+      - type: bind
+        source: ./Caddyfile.docker
+        target: /etc/caddy/Caddyfile
+        read_only: true
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
