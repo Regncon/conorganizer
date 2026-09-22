@@ -24,6 +24,9 @@ its public HTTPS port, falling back to `7331` when `HTTPS_PORT` is not set.
 With `HTTPS_PORT=7331`, open
 [https://localhost:7331](https://localhost:7331).
 
+Caddy starts once the Go server reports healthy, so the first start waits
+for templates to generate and the server to compile.
+
 The first time Caddy starts, trust its local certificate authority for your
 user account. Keep Docker Compose running, open another terminal, and run the
 command for your operating system.
@@ -40,9 +43,37 @@ Linux or macOS:
 sh scripts/trust-docker-ca.sh
 ```
 
+On Linux the script also adds the certificate to the Chrome and Firefox
+certificate databases, which needs `certutil` (`libnss3-tools` on
+Debian/Ubuntu, `nss-tools` on Fedora, `nss` on Arch).
+
 Restart the browser after trusting the certificate, then open the HTTPS URL
 for the configured `HTTPS_PORT`. The certificate is retained in the
-`caddy_data` Docker volume across container rebuilds.
+`caddy_data` Docker volume across container rebuilds. Removing that volume,
+for example with `docker compose down -v`, creates a new certificate
+authority. Run the trust script again afterwards; the old certificate stays
+trusted until you remove it from your certificate store.
+
+### Testing from a phone
+
+Set `DEV_LAN_IP` in `.env` to your computer's local network IP address, for
+example `DEV_LAN_IP=192.168.1.20`, and restart Docker Compose. Then:
+
+1. Run the trust script once so the certificate is saved to
+   `tmp/caddy/conorganizer-caddy-root.crt`.
+2. Copy that file to the phone and install it as a trusted certificate
+   authority.
+   - iOS: open the file, install the profile under Settings → General → VPN &
+     Device Management, then enable it under Settings → General → About →
+     Certificate Trust Settings.
+   - Android: Settings → Security → Encryption & credentials → Install a
+     certificate → CA certificate.
+3. Open `https://<DEV_LAN_IP>:7331` on the phone, using your `HTTPS_PORT`.
+
+While `DEV_LAN_IP` is set, use `https://localhost:7331` on the computer
+itself: connections to an IP address carry no hostname, so Caddy answers
+`127.0.0.1` with the LAN address certificate. If the phone cannot connect,
+check that the firewall allows inbound connections on the HTTPS port.
 
 ## Get the Latest Database Backup and Images
 

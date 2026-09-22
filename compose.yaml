@@ -9,6 +9,7 @@ services:
     tty: true
     environment:
       HOT_RELOAD_BINARY_DIR: /tmp/conorganizer
+      # Overrides PORT from .env; Task and godotenv never replace set variables.
       PORT: 7332
     expose:
       - "7332"
@@ -18,12 +19,23 @@ services:
         target: /home/devuser/app
         read_only: false
     command: go tool task start
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:7332/healthz"]
+      # The first start generates templates and compiles the server.
+      start_period: 10m
+      start_interval: 2s
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   caddy:
     image: caddy:2.10.2-alpine
     attach: false
     depends_on:
-      - webserver
+      webserver:
+        condition: service_healthy
+    environment:
+      DEV_LAN_IP: ${DEV_LAN_IP:-127.0.0.1}
     ports:
       - "${HTTPS_PORT:-7331}:7331"
     volumes:

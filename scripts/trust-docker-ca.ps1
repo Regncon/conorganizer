@@ -16,6 +16,7 @@ try {
     Import-Certificate -FilePath $certificatePath -CertStoreLocation "Cert:\CurrentUser\Root" | Out-Null
     Write-Host "Trusted the Conorganizer Docker certificate for the current Windows user."
     Write-Host "Open https://localhost on the port configured by HTTPS_PORT (default: 7331)."
+    Write-Host "To trust it on a phone, install this file on the phone: $certificatePath"
 }
 finally {
     Pop-Location
