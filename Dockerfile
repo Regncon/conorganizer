@@ -30,28 +30,19 @@ WORKDIR /home/devuser/app
 RUN mkdir -p /home/devuser/go/pkg/mod /home/devuser/.cache/go-build && \
     chown -R devuser:devuser /home/devuser/go /home/devuser/.cache
 
-# Switch to the 'devuser' user for subsequent commands
-USER devuser
-
 # Copy go.mod and go.sum with proper ownership
 COPY --chown=devuser:devuser go.mod go.sum ./
 
-# Download Go module dependencies
-RUN go mod download
-
-# Compile the project-pinned tools once while building the image.
-RUN GOBIN=/home/devuser/go/bin go install \
+# Compile the project-pinned tools straight into GOTOOLDIR so the existing
+# `go tool` commands resolve them directly instead of rebuilding them. The
+# temporary caches are removed in the same layer: module and build caches live
+# in the compose volumes, so keeping them here would store them twice.
+RUN tool_dir="$(go env GOTOOLDIR)" && \
+    GOBIN="$tool_dir" GOCACHE=/tmp/tool-gocache GOMODCACHE=/tmp/tool-gomodcache go install \
     github.com/a-h/templ/cmd/templ \
     github.com/air-verse/air \
-    github.com/go-task/task/v3/cmd/task
-
-# Keep the existing `go tool` commands, but resolve them directly instead of
-# rebuilding or validating the tools through Go's runtime build cache.
-USER root
-RUN tool_dir="$(go env GOTOOLDIR)" && \
-    install -m 0755 /home/devuser/go/bin/templ "$tool_dir/templ" && \
-    install -m 0755 /home/devuser/go/bin/air "$tool_dir/air" && \
-    install -m 0755 /home/devuser/go/bin/task "$tool_dir/task"
+    github.com/go-task/task/v3/cmd/task && \
+    rm -rf /tmp/tool-gocache /tmp/tool-gomodcache
 
 USER devuser
 RUN go tool templ version && \

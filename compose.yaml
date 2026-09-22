@@ -18,6 +18,10 @@ services:
         source: ./
         target: /home/devuser/app
         read_only: false
+      # Keep Go caches across container recreation so the first build after
+      # `docker compose up` does not recompile every dependency.
+      - go_build_cache:/home/devuser/.cache/go-build
+      - go_mod_cache:/home/devuser/go/pkg/mod
     command: go tool task start
     healthcheck:
       test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:7332/healthz"]
@@ -51,3 +55,5 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  go_build_cache:
+  go_mod_cache:
