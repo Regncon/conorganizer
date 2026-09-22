@@ -9,12 +9,6 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-// uniquePair is used for getting unique values when comparing tickets and billettholder
-type uniquePair struct {
-	TicketID int
-	Ticket   CheckInTicket
-}
-
 type TicketAssociationResult struct {
 	CreatedBillettholders int
 }
@@ -39,78 +33,29 @@ func AssociateTicketsWithEmail(tickets []CheckInTicket, email string) ([]CheckIn
 	return result, nil
 }
 
-// AssociateTicketsWithBillettholder is responsible for finding tickets registered on an email and
-// inserting new unique tickets into billettholder
+// AssociateTicketsWithBillettholder imports every non-dinner ticket from an
+// order containing a ticket registered to email.
 func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db *sql.DB, logger *slog.Logger) (TicketAssociationResult, error) {
 	var result TicketAssociationResult
 
-	// Filtrer tickets til de som er registrert på user email
 	associatedTickets, err := AssociateTicketsWithEmail(tickets, email)
 	if err != nil {
-		// No associated tickets found, quitting early
-		// fmt.Printf("Found no tickets associated with %s, quitting early\n", email)
 		return result, nil
 	}
-	// fmt.Printf("Found %d/%d tickets associated with %s\n", len(associatedTickets), len(tickets), email)
 
-	// get list of ticket ids to exclude when quering billettholder
-
-	// get existing billetterholdere registered to user email
-	var billettholdereIDs []models.Billettholder
-	rows, err := db.Query(`
-		SELECT DISTINCT b.ticket_id
-		FROM relation_billettholder_emails e
-		JOIN billettholdere b ON b.id = e.billettholder_id
-		WHERE e.email = ? COLLATE NOCASE;
-	`, email)
-	if err != nil {
-		return result, fmt.Errorf("unable to query billettholder for email %q: %w", email, err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var existingBillettholder models.Billettholder
-		err := rows.Scan(&existingBillettholder.TicketID)
-		if err != nil {
-			return result, fmt.Errorf("unable to scan billettholder for email %q: %w", email, err)
-		}
-		billettholdereIDs = append(billettholdereIDs, existingBillettholder)
-	}
-	if err := rows.Err(); err != nil {
-		return result, fmt.Errorf("unable to iterate billettholder rows for email %q: %w", email, err)
-	}
-	// fmt.Printf("Found %d existing billettholdere with email: %s\n", len(billettholdereIDs), email)
-
-	// Create new map of unique non-existing tickets
-	var uniqueNewTicketsMap = map[uniquePair]struct{}{}
+	associatedOrderIDs := make(map[int]struct{}, len(associatedTickets))
 	for _, associatedTicket := range associatedTickets {
-		var billettholderExists = false
+		associatedOrderIDs[associatedTicket.OrderID] = struct{}{}
+	}
 
-		for _, billetholderID := range billettholdereIDs {
-			if billetholderID.TicketID == associatedTicket.ID {
-				billettholderExists = true
-				break
-			}
+	for _, ticket := range tickets {
+		if ticket.TypeId == TicketTypeMiddag {
+			continue
+		}
+		if _, belongsToAssociatedOrder := associatedOrderIDs[ticket.OrderID]; !belongsToAssociatedOrder {
+			continue
 		}
 
-		if !billettholderExists {
-			uniqueNewTicketsMap[uniquePair{TicketID: associatedTicket.ID, Ticket: associatedTicket}] = struct{}{}
-		}
-	}
-
-	// Convert unique map back to array
-	var uniqueNewTickets []CheckInTicket
-	for pair := range uniqueNewTicketsMap {
-		uniqueNewTickets = append(uniqueNewTickets, pair.Ticket)
-	}
-
-	// No new unique tickets, quitting early
-	if len(uniqueNewTickets) == 0 {
-		// fmt.Println("Found no new unique tickets to add, quitting early")
-		return result, nil
-	}
-
-	// Enter new array into billettholdere ... newTicket needs to be unique?
-	for _, ticket := range uniqueNewTickets {
 		conversionResult, err := converTicketIdToNewBillettholder(ticket.ID, tickets, db, logger)
 		if err != nil {
 			return result, fmt.Errorf("unable to convert ticket %d to billettholder for email %q: %w", ticket.ID, email, err)
@@ -118,7 +63,6 @@ func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db
 		result.CreatedBillettholders += conversionResult.CreatedBillettholders
 	}
 
-	// fmt.Printf("Added %d new billettholdere from %d tickets\n", len(uniqueNewTickets), len(tickets))
 	return result, nil
 }
 
