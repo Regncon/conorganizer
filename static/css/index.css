@@ -82,7 +82,6 @@
     /* border */
     --border-radius-1x: 4px;
     --border-radius-2x: 8px;
-    --border-radius-3x: 12px;
 
     /* shadow */
     --shadow-dialog: 0 19px 38px hsl(0deg 0% 0% / 30%), 0 15px 12px hsl(0deg 0% 0% / 22%);
@@ -583,7 +582,7 @@ input {
     padding-left: var(--spacing-2x);
     padding-right: var(--spacing-2x);
     border: 1px solid;
-    border-radius: var(--border-radius-3x);
+    border-radius: 100vw;
 }
 
 .kladd {
