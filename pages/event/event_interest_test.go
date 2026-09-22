@@ -524,6 +524,7 @@ func TestSelectedInterest_UnrelatedBillettholderDoesNotExposeNoticeContent(t *te
 	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
 	seedNoticeBillettholder(t, db, 902, false)
 	mustExecEventInterestTest(t, db, `DELETE FROM relation_billettholdere_users WHERE billettholder_id = 902`)
+	mustExecEventInterestTest(t, db, `DELETE FROM relation_billettholder_emails WHERE billettholder_id = 902`)
 
 	// When
 	response := requestInterestContent(t, db, fixture, 902)
@@ -641,6 +642,7 @@ func TestEventInterests_InitialRenderIgnoresCookieForUnassociatedBillettholder(t
 	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
 	seedNoticeBillettholder(t, db, 902, true)
 	mustExecEventInterestTest(t, db, `DELETE FROM relation_billettholdere_users WHERE billettholder_id = 902`)
+	mustExecEventInterestTest(t, db, `DELETE FROM relation_billettholder_emails WHERE billettholder_id = 902`)
 	seedNoticeAssignmentForBillettholder(t, db, fixture, 902, "Player", "manual", leakedTitle)
 	request := httptest.NewRequest(http.MethodGet, "/event/"+fixture.eventID, nil)
 	request.AddCookie(&http.Cookie{Name: requestctx.SelectedBillettholderCookieName, Value: "902"})
@@ -742,6 +744,7 @@ func seedNoticeBillettholder(t *testing.T, db *sql.DB, id int, over18 bool) {
 	t.Helper()
 	mustExecEventInterestTest(t, db, `INSERT INTO billettholdere(id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id) VALUES (?, 'Selected', 'Holder', 1, 'Ticket', ?, 7002, ?)`, id, over18, id+8000)
 	mustExecEventInterestTest(t, db, `INSERT INTO relation_billettholdere_users(billettholder_id, user_id) VALUES (?, 501)`, id)
+	mustExecEventInterestTest(t, db, `INSERT INTO relation_billettholder_emails(billettholder_id, email, kind) VALUES (?, ?, ?)`, id, "event-interest-user@example.com", models.BillettholderEmailKindTicket)
 }
 
 func seedNoticeAssignment(t *testing.T, db *sql.DB, fixture eventInterestUpdateFixture, role, source, title string) {

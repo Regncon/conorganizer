@@ -307,13 +307,16 @@ func selectedInterestHandler(db *sql.DB, logger *slog.Logger, eventImageDir *str
 
 		userInfo := userctx.GetUserRequestInfo(r.Context())
 		logger := logger.With("event_id", eventID, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+		// Billettholdere are associated by email, which is also what GetTicketHolders
+		// uses to build the picker. Checking the same relation here keeps the endpoint
+		// from rejecting a billettholder the picker just offered.
 		var hasAccess bool
 		err := db.QueryRowContext(r.Context(), `
 			SELECT EXISTS (
-				SELECT 1 FROM v_get_user_billettholder
-				WHERE billettholder_id = ?1 AND external_id = ?2
+				SELECT 1 FROM relation_billettholder_emails
+				WHERE billettholder_id = ?1 AND email = ?2
 			)
-		`, signals.BillettHolderId, userInfo.Id).Scan(&hasAccess)
+		`, signals.BillettHolderId, userInfo.Email).Scan(&hasAccess)
 		if err != nil {
 			logger.Error(fmt.Errorf("failed to check billettholder access: %w", err).Error())
 			http.Error(w, "Kunne ikke hente billettholder.", http.StatusInternalServerError)
