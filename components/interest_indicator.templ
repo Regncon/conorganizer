@@ -1,0 +1,40 @@
+package components
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/Regncon/conorganizer/models"
+)
+
+type BillettholderInterest struct {
+	BillettholderID   int
+	BillettholderName string
+	InterestLevel     models.InterestLevel
+	IsSelected        bool
+}
+
+func (interest BillettholderInterest) Description() string {
+	firstName := interest.BillettholderName
+	if nameParts := strings.Fields(interest.BillettholderName); len(nameParts) > 0 {
+		firstName = nameParts[0]
+	}
+	return fmt.Sprintf("%s er %s", firstName, strings.ToLower(interest.InterestLevel.Label()))
+}
+
+func (interest BillettholderInterest) HeartStyle() templ.SafeCSS {
+	fill := "0%"
+	switch interest.InterestLevel {
+	case models.InterestLevelHigh:
+		fill = "100%"
+	case models.InterestLevelMedium:
+		fill = "65%"
+	case models.InterestLevelLow:
+		fill = "45%"
+	}
+	return templ.SafeCSS(fmt.Sprintf("--interest-fill: %s;", fill))
+}
+
+func (interest BillettholderInterest) SelectedExpression() string {
+	return fmt.Sprintf("$_menuBillettholder?.Id == %d", interest.BillettholderID)
+}
