@@ -43,6 +43,7 @@ func (interest BillettholderInterest) SelectedExpression() string {
 templ InterestIndicator(interests []BillettholderInterest) {
 	<style>
 		.interest-indicator {
+			--heart-size: 1.5rem;
 			--heart-overlap: 1rem;
 
 			flex-shrink: 0;
@@ -71,6 +72,18 @@ templ InterestIndicator(interests []BillettholderInterest) {
 				order: 1;
 			}
 
+			&:has(.interest-indicator-heart.selected) .interest-indicator-heart:not(.selected) {
+				mask-image: linear-gradient(#000 0 0), url("/static/icons/interest-indicator-half-heart-mask.svg");
+				mask-composite: subtract;
+				mask-position: 0 0, calc(var(--heart-size) - var(--heart-overlap)) 0;
+				mask-repeat: no-repeat;
+				mask-size: 100% 100%;
+			}
+
+			.interest-indicator-heart:not(.selected) ~ .interest-indicator-heart:not(.selected) {
+				display: none;
+			}
+
 			/*
 				The heart does not fill its 24px icon box: it starts 11% down
 				and is 76.5% of the box tall. This math makes --interest-fill: 45%
@@ -81,6 +94,10 @@ templ InterestIndicator(interests []BillettholderInterest) {
 				--heart-height: 0.765;
 
 				clip-path: inset(calc(var(--heart-top) + (100% - var(--interest-fill)) * var(--heart-height)) 0 0 0);
+			}
+
+			.interest-indicator-heart:not(.selected) .interest-indicator-heart-fill {
+				display: none;
 			}
 		}
 	</style>
