@@ -10,7 +10,7 @@ services:
     environment:
       HOT_RELOAD_BINARY_DIR: /tmp/conorganizer
     ports:
-      - 8080:8080
+      - ${PORT:-8080}:${PORT:-8080}
     volumes:
       - type: bind
         source: ./

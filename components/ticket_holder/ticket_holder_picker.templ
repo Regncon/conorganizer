@@ -21,10 +21,52 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
             .ticket-holder-picker-buttons {
                 column-gap:calc(var(--border-outline-width) - var(--spacing-2x));
                 row-gap: var(--spacing-2x);
-                display: grid;
-                grid-template-columns: repeat(3, auto);
+                display: flex;
+                flex-direction: column;
+
+                .ticket-holder-picker {
+                    div {
+                        width: 100%;
+                        width: stretch;
+                        width: --webkit-fill-available;
+                        place-content: center;
+                    }
+                }
             }
 		}
+
+        @container interest-dialog (width >= 308px) {
+            .ticket-holder-container {
+                .ticket-holder-picker-buttons {
+                    display: flex;
+                    flex-wrap: wrap;
+                    flex-direction: row;
+
+                    .ticket-holder-picker {
+                        div {
+                            width: 9.1rem;
+                            place-content: unset;
+                        }
+                    }
+                }
+            }
+        }
+
+        @container interest-dialog (width >= 370px) {
+            .ticket-holder-container {
+                .ticket-holder-picker-buttons {
+                    display: grid;
+                    grid-template-columns: repeat(3, auto);
+
+                    .ticket-holder-picker {
+                        div {
+                            width: stretch;
+                            width: -webkit-fill-available;
+                        }
+                    }
+                }
+            }
+        }
 	</style>
 	{{
 		associatedTicketHolders, err := GetTicketHolders(userInfo, db)
@@ -43,7 +85,6 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		class="ticket-holder-container"
 		data-signals__ifmissing:billett-holder-id=""
 		data-on:billettholder-selected="$billettHolderId = evt.detail"
-		data-effect={ fmt.Sprintf("if ($billettHolderId) { @put('/event/api/%s/interest/selected-interest') }", eventId) }
 		data-init={ fmt.Sprintf("const init = window.conorganizer.billettholderSelection.initialize(%s, %s); $billettHolderId = init?.Id ?? '';", associatedTicketHoldersJSON, defaultBillettholderJSON) }
 	>
 		if err != nil {

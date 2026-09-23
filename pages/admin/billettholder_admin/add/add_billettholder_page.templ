@@ -1,6 +1,7 @@
 package addbillettholder
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"log/slog"
@@ -69,11 +70,9 @@ func isBillettholder(ticketID int, bilettholdere []models.Billettholder) bool {
 	/>
 */
 
-templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
-	if ticketsErr != nil {
-		{{ logger.Error(ticketsErr.Error(), "search_term", searchTerm) }}
-	}
+templ AddBillettholderAdminPage(ctx context.Context, db *sql.DB, logger *slog.Logger) {
+	{{ ticketResult, ticketsErr := checkIn.GetTicketsFromCheckIn(ctx, logger, searchTerm) }}
+	{{ tickets := ticketResult.Tickets }}
 	{{ billettholdere, billettholdereErr := billettholderService.GetBillettholdere("", db) }}
 	if billettholdereErr != nil {
 		{{ logger.Error(billettholdereErr.Error()) }}
@@ -88,9 +87,14 @@ templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 		<article style="display:flex; flex-direction:column; gap:1rem; padding: 1rem;">
 			<h1 class="page-heading">Billetter</h1>
 			<p class="page-heading-help-text">Her kan du legge til en ny billettholder</p>
+			if ticketsErr != nil && !ticketResult.UsedStaleCache {
+				<p>Vi får ikke kontakt med Checkin akkurat nå. Prøv igjen senere.</p>
+			} else if ticketsErr != nil {
+				<p>Kunne ikke oppdatere billettlisten fra Checkin. Viser sist lagrede informasjon.</p>
+			}
 			<div class="add-billettholder-admin-grid">
-				if ticketsErr != nil || billettholdereErr != nil {
-					<p>Failed to load tickets:</p>
+				if billettholdereErr != nil {
+					<p>Kunne ikke hente eksisterende billettholdere.</p>
 				} else {
 					for _, ticket := range tickets {
 						@ticketCard(ticket, isBillettholder(ticket.ID, billettholdere), searchTerm)

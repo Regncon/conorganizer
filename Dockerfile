@@ -59,4 +59,4 @@ RUN go tool templ version && \
     go tool task --version
 
 # Expose the application's main HTTP server.
-EXPOSE 8080
+EXPOSE ${PORT:-8080}
