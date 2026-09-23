@@ -232,3 +232,13 @@ tasks:
             - killall -q templ
             - killall -q air
             - killall -q task
+
+    # Makes the Codex skills in .agents/skills visible to Claude Code as well.
+    # Run once per clone. Windows uses a junction so no admin rights are needed.
+    setup:skills:
+        desc: Link .agents/skills into .claude/skills so both tools read one copy
+        cmds:
+            - cmd: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/link-skills.ps1
+              platforms: [windows]
+            - cmd: ./scripts/link-skills.sh
+              platforms: [linux, darwin]

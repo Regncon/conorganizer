@@ -104,6 +104,54 @@ func TestAssociateTicketsWithBillettholder_WhenNoTicketsMatch_ReturnsNoCreatedBi
 	}
 }
 
+func TestAssociateTicketsWithBillettholder_WhenMatchingTicketSharesOrderWithAnotherEmail_ImportsAndAssociatesEntireOrder(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a user whose email matches one non-dinner ticket in a multi-email order.",
+		When:  "When that user's tickets are imported and associated.",
+		Then:  "Then every non-dinner ticket in that order is stored and linked to the user.",
+	})
+
+	// Given
+	expectedCreatedBillettholders := 2
+	expectedCreatedAssociations := 2
+	expectedTicketIDs := []int{101, 102}
+	userEmail := "user-a@example.com"
+	tickets := []CheckInTicket{
+		{ID: 101, OrderID: 10, TypeId: 9000, Type: "Festivalpass", FirstName: "User", LastName: "A", Email: userEmail, IsOver18: true},
+		{ID: 102, OrderID: 10, TypeId: 9000, Type: "Festivalpass", FirstName: "User", LastName: "B", Email: "user-b@example.com", IsOver18: true},
+		{ID: 103, OrderID: 10, TypeId: TicketTypeMiddag, Type: "Middag", FirstName: "Dinner", LastName: "Guest", Email: "user-b@example.com", IsOver18: true},
+		{ID: 104, OrderID: 11, TypeId: 9000, Type: "Festivalpass", FirstName: "Unrelated", LastName: "Person", Email: "other@example.com", IsOver18: true},
+	}
+	db, logger := createCheckInTestDB(t)
+	insertUser(t, db, 1, "user-a", userEmail)
+
+	// When
+	associationResult, err := AssociateTicketsWithBillettholder(tickets, userEmail, db, logger)
+	createdAssociations, associationErr := AssociateUserWithBillettholder("user-a", db, logger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected ticket import to succeed: %v", err)
+	}
+	if associationErr != nil {
+		t.Fatalf("expected user association to succeed: %v", associationErr)
+	}
+	if associationResult.CreatedBillettholders != expectedCreatedBillettholders {
+		t.Fatalf("created billettholder count mismatch\nexpected: %d\nactual:   %d", expectedCreatedBillettholders, associationResult.CreatedBillettholders)
+	}
+	if createdAssociations != expectedCreatedAssociations {
+		t.Fatalf("created user association count mismatch\nexpected: %d\nactual:   %d", expectedCreatedAssociations, createdAssociations)
+	}
+	actualTicketIDs := queryBillettholderTicketIDs(t, db)
+	if !slices.Equal(expectedTicketIDs, actualTicketIDs) {
+		t.Fatalf("billettholder ticket IDs mismatch\nexpected: %v\nactual:   %v", expectedTicketIDs, actualTicketIDs)
+	}
+	actualAssociatedTicketIDs := queryUserBillettholderTicketIDs(t, db, 1)
+	if !slices.Equal(expectedTicketIDs, actualAssociatedTicketIDs) {
+		t.Fatalf("associated billettholder ticket IDs mismatch\nexpected: %v\nactual:   %v", expectedTicketIDs, actualAssociatedTicketIDs)
+	}
+}
+
 func queryBillettholderTicketIDs(t testing.TB, db *sql.DB) []int {
 	t.Helper()
 
@@ -127,6 +175,36 @@ func queryBillettholderTicketIDs(t testing.TB, db *sql.DB) []int {
 	}
 	if err := rows.Err(); err != nil {
 		t.Fatalf("failed to iterate billettholder ticket IDs: %v", err)
+	}
+
+	return ticketIDs
+}
+
+func queryUserBillettholderTicketIDs(t testing.TB, db *sql.DB, userID int) []int {
+	t.Helper()
+
+	rows, err := db.Query(`
+		SELECT b.ticket_id
+		FROM billettholdere AS b
+		JOIN relation_billettholdere_users AS bu ON bu.billettholder_id = b.id
+		WHERE bu.user_id = ?
+		ORDER BY b.ticket_id
+	`, userID)
+	if err != nil {
+		t.Fatalf("failed to query user's billettholder ticket IDs: %v", err)
+	}
+	defer rows.Close()
+
+	var ticketIDs []int
+	for rows.Next() {
+		var ticketID int
+		if err := rows.Scan(&ticketID); err != nil {
+			t.Fatalf("failed to scan user's billettholder ticket ID: %v", err)
+		}
+		ticketIDs = append(ticketIDs, ticketID)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("failed to iterate user's billettholder ticket IDs: %v", err)
 	}
 
 	return ticketIDs

@@ -65,6 +65,10 @@ func seedEventInterestUpdateFixture(
 		VALUES (?, 501)
 	`, fixture.billettholderID)
 	mustExecEventInterestTest(t, db, `
+		INSERT INTO relation_billettholder_emails (billettholder_id, email, kind)
+		VALUES (?, ?, ?)
+	`, fixture.billettholderID, "event-interest-user@example.com", models.BillettholderEmailKindTicket)
+	mustExecEventInterestTest(t, db, `
 		INSERT INTO puljer (id, name, status, start_at, end_at)
 		VALUES (?, 'Fredag kveld', ?, '2026-10-09T18:30:00+02:00', '2026-10-09T23:00:00+02:00')
 	`, fixture.puljeID, puljeStatus)

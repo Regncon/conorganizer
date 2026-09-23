@@ -63,6 +63,24 @@ func (options BillettholderOptions) CanSwitchBillettholder() bool {
 	return len(options.Associated) > 1
 }
 
+// ResolveSelectedBillettholderID turns a selection hint into an id this user is
+// allowed to see. requestctx.SelectedBillettholderID only reads a cookie, so the
+// value can be stale, point at a deleted billettholder, or be set by hand.
+//
+// An id that is not associated falls back to the same default the header menu and
+// conorganizer.js use, so the server renders the billettholder the browser is about
+// to select instead of one it will immediately swap out. A user with no associated
+// billettholdere resolves to 0, which callers treat as "nothing to show".
+func ResolveSelectedBillettholderID(userInfo requestctx.UserRequestInfo, associated []BillettHolder, selectedID int) int {
+	if slices.ContainsFunc(associated, func(billettholder BillettHolder) bool {
+		return billettholder.Id == selectedID
+	}) {
+		return selectedID
+	}
+
+	return NewBillettholderOptions(userInfo, associated).Default.Id
+}
+
 type PuljeInterestAvailability string
 
 const (

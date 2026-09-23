@@ -266,7 +266,7 @@ func fetchTicketsFromCheckIn(ctx context.Context, client *http.Client, endpoint 
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, &checkInFetchError{outcome: "http_error", status: resp.StatusCode, err: fmt.Errorf("Checkin returned HTTP status %d", resp.StatusCode)}
+		return nil, &checkInFetchError{outcome: "http_error", status: resp.StatusCode, err: fmt.Errorf("checkin returned HTTP status %d", resp.StatusCode)}
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -278,10 +278,10 @@ func fetchTicketsFromCheckIn(ctx context.Context, client *http.Client, endpoint 
 		return nil, &checkInFetchError{outcome: "decode_error", err: fmt.Errorf("failed to decode Checkin response: %w", err)}
 	}
 	if len(result.Errors) > 0 {
-		return nil, &checkInFetchError{outcome: "graphql_error", err: errors.New("Checkin returned GraphQL errors")}
+		return nil, &checkInFetchError{outcome: "graphql_error", err: errors.New("checkin returned GraphQL errors")}
 	}
 	if result.Data == nil || result.Data.EventTickets == nil {
-		return nil, &checkInFetchError{outcome: "decode_error", err: errors.New("Checkin response did not contain ticket data")}
+		return nil, &checkInFetchError{outcome: "decode_error", err: errors.New("checkin response did not contain ticket data")}
 	}
 
 	tickets := make([]CheckInTicket, 0, len(*result.Data.EventTickets))

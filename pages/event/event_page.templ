@@ -125,10 +125,14 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		)
 	}
 	if isAdmin {
+		<style>
+			.admin-edit-event-link {
+				margin: var(--spacing-4x);
+			}
+		</style>
 		<a
 			href={ fmt.Sprintf("/admin/approval/edit/%s", event.ID) }
-			class="btn btn--primary"
-			style="margin:1rem;"
+			class="btn btn--primary admin-edit-event-link"
 		>Administrator - rediger arrangementer</a>
 	}
 	{{ roomAssignments, roomsErr := getEventRooms(db, eventId, programPublished) }}
@@ -139,7 +143,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		@eventRoomLocations(eventId, roomAssignments)
 	}
 	if showInterestControls {
-		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, db, r, logger)
+		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, event.Title, event.AgeGroup, eventImageDir, associatedTicketHolders, db, r, logger)
 	}
 }
 
