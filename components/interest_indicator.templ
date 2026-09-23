@@ -46,7 +46,9 @@ templ InterestIndicator(interests []BillettholderInterest) {
 			--heart-size: 1.5rem;
 			--heart-overlap: 1rem;
 
+			position: relative;
 			flex-shrink: 0;
+			cursor: help;
 
 			.interest-indicator-hearts {
 				display: flex;
@@ -98,6 +100,59 @@ templ InterestIndicator(interests []BillettholderInterest) {
 
 			.interest-indicator-heart:not(.selected) .interest-indicator-heart-fill {
 				display: none;
+			}
+
+			.interest-indicator-tooltip {
+				position: absolute;
+				inset-block-end: calc(100% + var(--spacing-3x));
+				inset-inline-end: 0;
+				z-index: 1;
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-1x);
+				inline-size: max-content;
+				max-inline-size: 16rem;
+				margin: 0;
+				padding: var(--spacing-2x) var(--spacing-3x);
+				list-style: none;
+				border-radius: var(--border-radius-1x);
+				background-color: var(--bg-tooltip);
+				color: var(--color-primary-text);
+				font-size: var(--text-body-small);
+				line-height: 1.4;
+				overflow-wrap: anywhere;
+				opacity: 0;
+				transform: scale(0.8);
+				transform-origin: calc(100% - var(--heart-size) / 2) 100%;
+				pointer-events: none;
+				transition: opacity 250ms, transform 250ms;
+
+				&::after {
+					content: "";
+					position: absolute;
+					inset-block-start: 100%;
+					inset-inline-end: calc(var(--heart-size) / 2 - var(--spacing-2x));
+					border: var(--spacing-2x) solid transparent;
+					border-block-start-color: var(--bg-tooltip);
+					border-block-end-width: 0;
+				}
+
+				.selected {
+					order: -1;
+				}
+			}
+
+			&[data-open] .interest-indicator-tooltip,
+			.event-card-container:focus-visible & .interest-indicator-tooltip {
+				opacity: 1;
+				transform: none;
+			}
+
+			@media (hover: hover) {
+				&:hover .interest-indicator-tooltip {
+					opacity: 1;
+					transform: none;
+				}
 			}
 		}
 	</style>
