@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
@@ -51,7 +52,7 @@ templ statusCard(event *models.Event, isAdmin bool) {
 			<select
 				name="status"
 				class="input"
-				data-signals={ dataSignals(map[string]models.EventStatus{"status": event.Status}) }
+				data-signals={ components.DataSignals(map[string]models.EventStatus{"status": event.Status}) }
 				{ errorfeedback.Attrs("status")... }
 				data-bind="status"
 				data-indicator="toastStatus"

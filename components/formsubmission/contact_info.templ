@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
@@ -120,13 +121,13 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					title="Bruk minst 2 teikn"
 					autocomplete="name"
 				/>
-				<div data-signals={ dataSignals(map[string]string{"name": name}) }></div>
+				<div data-signals={ components.DataSignals(map[string]string{"name": name}) }></div>
 				@errorfeedback.RenderMessage("name")
 			</label>
 			<label class="label color-strong form-group">
 				E-post
 				<input
-					data-signals={ dataSignals(map[string]string{"email": email}) }
+					data-signals={ components.DataSignals(map[string]string{"email": email}) }
 					{ errorfeedback.Attrs("email")... }
 					type="email"
 					data-bind="email"
@@ -144,7 +145,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 				Telefon
 				<input
 					type="tel"
-					data-signals={ dataSignals(map[string]string{"phone": phone}) }
+					data-signals={ components.DataSignals(map[string]string{"phone": phone}) }
 					{ errorfeedback.Attrs("phone")... }
 					data-bind="phone"
 					data-indicator="toastPhone"
