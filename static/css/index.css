@@ -48,11 +48,11 @@
     --bg-item-border-hover: #7f8198;
     --bg-item-border: #494D62;
     --item-flat-active: hsl(230deg 40% 86% / 20%);
-    
+
     --level-1-background: #1B1E2C;
-    
+
     --level-2-background: #232638;
-    
+
     --level-3-background: #2B3045;
     --level-3-border: #495174;
 
@@ -584,10 +584,8 @@ input {
 .event-status {
     display: flex;
     gap: var(--spacing-1x);
-    padding-top: var(--spacing-1x);
-    padding-bottom: var(--spacing-1x);
-    padding-left: var(--spacing-2x);
-    padding-right: var(--spacing-2x);
+    padding-inline: var(--spacing-2x);
+    padding-block: var(--spacing-1x);
     border: 1px solid;
     border-radius: 100vw;
 }
