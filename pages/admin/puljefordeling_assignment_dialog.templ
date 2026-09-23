@@ -135,22 +135,6 @@ func puljeAssignmentInterestState(em puljefordeling.Emulation, current models.Pu
 }
 
 func loadPuljeAssignmentEventInterests(db *sql.DB, pulje models.Pulje, em puljefordeling.Emulation) ([]puljeAssignmentEventInterests, error) {
-	rows, err := db.Query(`
-		SELECT e.id, e.title, i.billettholder_id, b.first_name, b.last_name, b.ticket_type, b.is_over_18, i.interest_level
-		FROM relation_event_puljer ep
-		JOIN events e ON e.id = ep.event_id
-		JOIN interests i ON i.event_id = ep.event_id AND i.pulje_id = ep.pulje_id
-		JOIN billettholdere b ON b.id = i.billettholder_id
-		WHERE ep.pulje_id = ? AND ep.is_in_pulje = 1
-		ORDER BY e.title COLLATE NOCASE,
-			CASE i.interest_level WHEN ? THEN 1 WHEN ? THEN 2 WHEN ? THEN 3 END,
-			b.first_name COLLATE NOCASE, b.last_name COLLATE NOCASE, b.id
-	`, pulje, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
-	if err != nil {
-		return nil, fmt.Errorf("hent interesser for puljefordeling: %w", err)
-	}
-	defer rows.Close()
-
 	assignedInPulje, previousFirstChoice := puljeAssignmentInterestState(em, pulje)
 	gmRows, err := db.Query(`SELECT DISTINCT billettholder_id FROM relation_events_players WHERE pulje_id = ? AND role = ?`, pulje, models.EventPlayerRoleGM)
 	if err != nil {
@@ -167,6 +151,26 @@ func loadPuljeAssignmentEventInterests(db *sql.DB, pulje models.Pulje, em puljef
 	if err := gmRows.Err(); err != nil {
 		return nil, fmt.Errorf("gå gjennom spillederne for puljefordeling: %w", err)
 	}
+	if err := gmRows.Close(); err != nil {
+		return nil, fmt.Errorf("lukk spillederne for puljefordeling: %w", err)
+	}
+
+	rows, err := db.Query(`
+		SELECT e.id, e.title, i.billettholder_id, b.first_name, b.last_name, b.ticket_type, b.is_over_18, i.interest_level
+		FROM relation_event_puljer ep
+		JOIN events e ON e.id = ep.event_id
+		JOIN interests i ON i.event_id = ep.event_id AND i.pulje_id = ep.pulje_id
+		JOIN billettholdere b ON b.id = i.billettholder_id
+		WHERE ep.pulje_id = ? AND ep.is_in_pulje = 1
+		ORDER BY e.title COLLATE NOCASE,
+			CASE i.interest_level WHEN ? THEN 1 WHEN ? THEN 2 WHEN ? THEN 3 END,
+			b.first_name COLLATE NOCASE, b.last_name COLLATE NOCASE, b.id
+	`, pulje, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
+	if err != nil {
+		return nil, fmt.Errorf("hent interesser for puljefordeling: %w", err)
+	}
+	defer rows.Close()
+
 	eventsByID := make(map[string]int)
 	events := make([]puljeAssignmentEventInterests, 0)
 	for rows.Next() {

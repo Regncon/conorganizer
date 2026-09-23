@@ -8,10 +8,12 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
@@ -81,6 +83,52 @@ func TestPuljefordelingTabContent_RendersAddPickerAndManualRemove(t *testing.T) 
 	addClick := doc.Find(".pulje-add").AttrOr("data-on:click", "")
 	if !strings.Contains(addClick, "$assignmentEventId = 'evA'") {
 		t.Errorf("+ button should set assignmentEventId to the event; got %q", addClick)
+	}
+}
+
+func TestLoadPuljeAssignmentEventInterests_UsesOneSQLiteConnectionAtATime(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt ei SQLite-database med berre éin tilgjengeleg tilkopling.",
+		When:  "Når dialogen lastar interesser og spelarleiarar.",
+		Then:  "Så blir kvar spørjing ferdig før den neste bruker tilkoplinga.",
+	})
+
+	// Given
+	db, _ := testutil.CreateTestDBAndLogger(t, "puljefordeling_assignment_interest_connection")
+	const pulje = models.PuljeFredagKveld
+	seedTabPulje(t, db, pulje, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+		VALUES ('evA', 'Alpha', '', '', '', '', '', 4, 1)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA', ?, 1)`, string(pulje))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1, 'Kari', 'Nordmann', 0, '', 0, 1)`)
+	testutil.MustExec(t, db, `INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level) VALUES (1, 'evA', ?, 'High')`, string(pulje))
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	expectedEventCount := 1
+	result := make(chan error, 1)
+
+	// When
+	go func() {
+		interests, err := loadPuljeAssignmentEventInterests(db, pulje, puljefordeling.Emulation{})
+		if err == nil && len(interests) != expectedEventCount {
+			err = fmt.Errorf("interest event count = %d, want %d", len(interests), expectedEventCount)
+		}
+		result <- err
+	}()
+
+	// Then
+	select {
+	case err := <-result:
+		if err != nil {
+			t.Fatalf("load assignment interests: %v", err)
+		}
+	case <-time.After(time.Second):
+		// Unblock the goroutine so the test failure cannot leak it if this
+		// regression returns.
+		db.SetMaxOpenConns(2)
+		<-result
+		t.Fatal("loading assignment interests blocked on the only SQLite connection")
 	}
 }
 
