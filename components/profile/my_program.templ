@@ -9,6 +9,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/program"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/service/puljer"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
@@ -206,6 +207,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 					AND assigned_event_pulje.is_in_pulje = 1
 					AND (
 						assigned.role = ?
+						OR assigned.source = ?
 						OR assigned_pulje.status = ?
 					)
 			)
@@ -233,6 +235,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 		models.EventStatusAnnounced,
 		models.EventStatusAnnounced,
 		models.EventPlayerRoleGM,
+		puljefordeling.SourceManual,
 		models.PuljeStatusCompleted,
 		models.InterestLevelHigh,
 		models.InterestLevelMedium,
@@ -298,6 +301,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 			AND event_pulje.is_in_pulje = 1
 			AND (
 				ep.role = ?
+				OR ep.source = ?
 				OR p.status = ?
 			)
 		GROUP BY
@@ -318,6 +322,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 		userInfo.Id,
 		models.EventStatusAnnounced,
 		models.EventPlayerRoleGM,
+		puljefordeling.SourceManual,
 		models.PuljeStatusCompleted,
 	)
 	if queryErr != nil {
