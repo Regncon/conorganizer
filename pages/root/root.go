@@ -28,7 +28,7 @@ func SetupRootRoute(router chi.Router, logger *slog.Logger, liveManager *live.Ma
 			rootApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				requestedDate := r.URL.Query().Get(programDateQueryParam)
 				liveManager.Stream(w, r, live.Page{
-					Buckets: []live.Bucket{live.BucketEvents},
+					Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests, live.BucketBillettholders},
 					Render: func(ctx context.Context, r *http.Request) templ.Component {
 						interests := loadBillettholderInterestsForPage(ctx, userctx.GetUserRequestInfo(ctx), db, logger)
 						return rootPage(db, eventImageDir, requestedDate, interests)
