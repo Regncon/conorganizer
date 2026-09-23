@@ -58,9 +58,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		})
 	})
 
-	// SSE endpoint: streams just the tab content for the viewed pulje. The
-	// distribution is driven by interests and manual pins, so it refreshes on both
-	// BucketEvents and BucketInterests (the add endpoints broadcast Interests).
+	// SSE endpoint: refreshes the complete puljefordeling work area for the
+	// viewed pulje. Keeping the dialog inside this boundary lets its content stay
+	// current while its local open state survives the morph.
 	router.Get("/api/puljefordeling/{pulje}", func(w http.ResponseWriter, r *http.Request) {
 		puljeQuery := chi.URLParam(r, "pulje")
 		puljeID, ok := models.ParsePulje(puljeQuery)
@@ -72,20 +72,7 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		liveManager.Stream(w, r, live.Page{
 			Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests},
 			Render: func(ctx context.Context, r *http.Request) templ.Component {
-				return PuljefordelingTabContent(db, logger, puljeID, eventImageDir)
-			},
-		})
-	})
-	router.Get("/api/puljefordeling/{pulje}/assignment-interests", func(w http.ResponseWriter, r *http.Request) {
-		puljeID, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
-		if !ok {
-			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
-			return
-		}
-		liveManager.Stream(w, r, live.Page{
-			Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests},
-			Render: func(context.Context, *http.Request) templ.Component {
-				return puljeAssignmentInterests(db, logger, puljeID)
+				return puljefordelingPage(db, logger, puljeID, eventImageDir)
 			},
 		})
 	})
@@ -206,28 +193,35 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		{Name: "Admin", Url: "/admin/"},
 		{Name: "Puljefordeling", Url: ""},
 	})
+	@puljefordelingPage(db, logger, current, eventImageDir)
+}
+
+templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, eventImageDir *string) {
 	<div
+		id="puljefordeling-page"
 		class="page-content-container flex flex-col"
-		data-signals:assignment-event-id="''"
-		data-signals:assignment-pulje-id="''"
-		data-signals:assignment-billettholder-id="0"
-		data-signals:assignment-interest-level="''"
-		data-signals:assignment-close-dialog="false"
-		data-signals:assignment-action-completed="false"
-		data-signals:clear-input="0"
-		data-signals:dragged-billettholder-id="0"
-		data-signals:dragged-event-id="''"
-		data-signals:dragged-manual-seat="false"
-		data-signals:drag-over-event="''"
-		data-signals:assignment-age-confirmed="false"
-		data-signals:age-warning-text="''"
-		data-signals:age-warning-billettholder-id="0"
-		data-signals:age-warning-event-id="''"
-		data-signals:age-warning-pulje-id="''"
-		data-signals:age-warning-role="'Player'"
-		data-signals:age-warning-from-add-menu="false"
-		data-signals:age-warning-from-event-id="''"
-		data-signals:age-warning-from-manual-seat="false"
+		data-init={ live.DatastarInit(fmt.Sprintf("/admin/api/puljefordeling/%s", current)) }
+		data-signals__ifmissing:assignment-event-id="''"
+		data-signals__ifmissing:assignment-pulje-id="''"
+		data-signals__ifmissing:assignment-billettholder-id="0"
+		data-signals__ifmissing:assignment-interest-level="''"
+		data-signals__ifmissing:assignment-close-dialog="false"
+		data-signals__ifmissing:assignment-action-completed="false"
+		data-signals__ifmissing:clear-input="0"
+		data-signals__ifmissing:dragged-billettholder-id="0"
+		data-signals__ifmissing:dragged-event-id="''"
+		data-signals__ifmissing:dragged-manual-seat="false"
+		data-signals__ifmissing:drag-over-event="''"
+		data-signals__ifmissing:assignment-age-confirmed="false"
+		data-signals__ifmissing:age-warning-text="''"
+		data-signals__ifmissing:age-warning-billettholder-id="0"
+		data-signals__ifmissing:age-warning-event-id="''"
+		data-signals__ifmissing:age-warning-pulje-id="''"
+		data-signals__ifmissing:age-warning-role="'Player'"
+		data-signals__ifmissing:age-warning-from-add-menu="false"
+		data-signals__ifmissing:age-warning-from-event-id="''"
+		data-signals__ifmissing:age-warning-from-manual-seat="false"
+		data-signals__ifmissing:_puljefordeling-assign-dialog-open="false"
 	>
 		<style>
             .tabs {
@@ -554,7 +548,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 	<section
 		id="puljefordeling-tab"
 		class="rooms-section"
-		data-init={ live.DatastarInit(fmt.Sprintf("/admin/api/puljefordeling/%s", pulje)) }
 		data-signals:pulje-status={ fmt.Sprintf("'%s'", string(row.Status)) }
 	>
 		<div class="pulje-tab-header">
@@ -798,7 +791,7 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 			<button
 				type="button"
 				class="pulje-add"
-				data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; document.getElementById('puljefordeling-assign-dialog').showModal()", ev.EventID, string(pulje)) }
+				data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $_puljefordelingAssignDialogOpen = true", ev.EventID, string(pulje)) }
 			>+ Legg til deltaker</button>
 		}
 	</div>

@@ -84,10 +84,7 @@ func TestPuljefordelingTabContent_RendersAddPickerAndManualRemove(t *testing.T) 
 	}
 }
 
-// The picker is a modal dialog. If it renders inside the SSE-updated section
-// (#puljefordeling-tab), every add re-renders the section and orphans the open
-// modal's backdrop, locking the page. It must live in the stable outer wrapper.
-func TestPuljefordelingIndex_DialogRendersOutsideLiveRegion(t *testing.T) {
+func TestPuljefordelingIndex_PreservesAssignmentDialogDuringLiveRefresh(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_dialog_placement")
 
 	const fredag = models.PuljeFredagKveld
@@ -99,7 +96,17 @@ func TestPuljefordelingIndex_DialogRendersOutsideLiveRegion(t *testing.T) {
 		t.Fatalf("expected exactly one assign dialog, got %d", got)
 	}
 	if got := doc.Find("#puljefordeling-tab #puljefordeling-assign-dialog").Length(); got != 0 {
-		t.Errorf("assign dialog must NOT be inside the live #puljefordeling-tab section (orphans the modal backdrop on SSE re-render)")
+		t.Errorf("assign dialog must not be inside the board-only #puljefordeling-tab section")
+	}
+	page := doc.Find("#puljefordeling-page")
+	if page.Length() != 1 {
+		t.Fatalf("expected one live puljefordeling page boundary, got %d", page.Length())
+	}
+	if init := page.AttrOr("data-init", ""); !strings.Contains(init, "/admin/api/puljefordeling/FredagKveld") {
+		t.Errorf("page should own the puljefordeling live stream, got %q", init)
+	}
+	if got := doc.Find("#puljefordeling-assignment-interests[data-init]").Length(); got != 0 {
+		t.Errorf("interest list must not open its own nested live stream")
 	}
 }
 
@@ -217,6 +224,12 @@ func TestPuljefordelingAssignDialog_RendersSixActionsAndClosesAfterSuccess(t *te
 	}
 	if effect := dialog.AttrOr("data-effect", ""); !strings.Contains(effect, "assignmentActionCompleted") || !strings.Contains(effect, ".close()") {
 		t.Errorf("dialog should close only after a successful server signal patch, got %q", effect)
+	}
+	if dialog.AttrOr("data-preserve-attr", "") != "open" {
+		t.Error("dialog should preserve its native open state during a page morph")
+	}
+	if effect := dialog.AttrOr("data-effect", ""); !strings.Contains(effect, "$_puljefordelingAssignDialogOpen") {
+		t.Errorf("dialog should be controlled by its local open signal, got %q", effect)
 	}
 }
 

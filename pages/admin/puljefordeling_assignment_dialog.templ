@@ -8,7 +8,6 @@ import (
 
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
 )
 
@@ -242,7 +241,7 @@ templ puljeAssignmentInterestGroup(level models.InterestLevel, candidates []pulj
 templ puljeAssignmentInterests(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
 	{{ em, emErr := puljefordeling.EmulateSeatings(db) }}
 	{{ interests, err := loadPuljeAssignmentEventInterests(db, pulje, em) }}
-	<section id="puljefordeling-assignment-interests" class="pulje-assignment-interests" data-init={ live.DatastarInit("/admin/api/puljefordeling/" + string(pulje) + "/assignment-interests") }>
+	<section id="puljefordeling-assignment-interests" class="pulje-assignment-interests">
 		<h4>Hurtigtildel fra interesser</h4>
 		if err != nil {
 			{{ logger.Error(err.Error(), "pulje_id", pulje) }}
@@ -268,11 +267,19 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
 	if err != nil {
 		{{ logger.Error(err.Error(), "pulje_id", pulje) }}
 	} else if !puljeIsCompleted(status) {
-		<dialog id="puljefordeling-assign-dialog" class="puljefordeling-assign-dialog" closedBy="any" data-effect="$assignmentActionCompleted && document.getElementById('puljefordeling-assign-dialog').close()" data-on:close="$assignmentActionCompleted = false; $assignmentBillettholderId = 0; $clearInput = $clearInput + 1">
+		<dialog
+			id="puljefordeling-assign-dialog"
+			class="puljefordeling-assign-dialog"
+			closedBy="any"
+			data-preserve-attr="open"
+			data-effect="$assignmentActionCompleted && ($_puljefordelingAssignDialogOpen = false); $_puljefordelingAssignDialogOpen ? (!el.open && el.showModal()) : (el.open && el.close())"
+			data-on:close="$_puljefordelingAssignDialogOpen = false; $assignmentActionCompleted = false; $assignmentBillettholderId = 0; $clearInput = $clearInput + 1"
+			data-on:click__stop="if (evt.target === el) $_puljefordelingAssignDialogOpen = false"
+		>
 			<h3>Administrer deltaker</h3>
 			@puljeAssignmentPicker(db, logger)
 			@puljeAssignmentInterests(db, logger, pulje)
-			<button class="btn btn--outline" type="button" data-on:click="document.getElementById('puljefordeling-assign-dialog').close()">Lukk</button>
+			<button class="btn btn--outline" type="button" data-on:click="$_puljefordelingAssignDialogOpen = false">Lukk</button>
 		</dialog>
 	}
 	<style>
