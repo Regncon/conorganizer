@@ -12,9 +12,9 @@ import (
 )
 
 type puljeAssignmentCandidate struct {
-	ID        int    `json:"id"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
+	ID        int    `json:"Id"`
+	FirstName string `json:"FirstName"`
+	LastName  string `json:"LastName"`
 }
 
 func loadPuljeAssignmentCandidates(db *sql.DB) ([]puljeAssignmentCandidate, error) {

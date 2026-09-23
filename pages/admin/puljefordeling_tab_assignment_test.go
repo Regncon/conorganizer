@@ -2,6 +2,7 @@ package admin
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -258,6 +259,14 @@ func TestPuljefordelingAssignDialog_RendersSixActionsAndClosesAfterSuccess(t *te
 	}
 	if dialog.Find("admin-billettholder-search").Length() != 1 {
 		t.Fatal("expected the billettholder search input")
+	}
+	var pickerCandidates []map[string]any
+	pickerJSON := dialog.Find("admin-billettholder-search").AttrOr("data-billettholdere", "")
+	if err := json.Unmarshal([]byte(pickerJSON), &pickerCandidates); err != nil {
+		t.Fatalf("decode billettholder picker data: %v", err)
+	}
+	if len(pickerCandidates) != 1 || pickerCandidates[0]["Id"] != float64(1) || pickerCandidates[0]["FirstName"] != "Kari" || pickerCandidates[0]["LastName"] != "Nordmann" {
+		t.Fatalf("picker data must use the web component's {Id, FirstName, LastName} contract, got %#v", pickerCandidates)
 	}
 	if actions := dialog.Find("button[data-attr\\:disabled]"); actions.Length() != 6 {
 		t.Fatalf("expected six selection-dependent actions, got %d", actions.Length())
