@@ -66,12 +66,32 @@ templ InterestIndicator(interests []BillettholderInterest) {
 					display: grid;
 					grid-area: 1 / 1;
 				}
-			}
 
-			.interest-indicator-heart.selected {
-				--heart-color: var(--color-primary);
+				/*
+					The heart does not fill its 24px icon box: it starts 11% down
+					and is 76.5% of the box tall. This math makes --interest-fill: 45%
+					fill 45% of the heart, not 45% of the box.
+				*/
+				.interest-indicator-heart-fill {
+					--heart-top: 11%;
+					--heart-height: 0.765;
 
-				order: 1;
+					clip-path: inset(calc(var(--heart-top) + (100% - var(--interest-fill)) * var(--heart-height)) 0 0 0);
+				}
+
+				&.selected {
+					--heart-color: var(--color-primary);
+
+					order: 1;
+				}
+
+				&:not(.selected) .interest-indicator-heart-fill {
+					display: none;
+				}
+
+				&:not(.selected) ~ &:not(.selected) {
+					display: none;
+				}
 			}
 
 			&:has(.interest-indicator-heart.selected) .interest-indicator-heart:not(.selected) {
@@ -80,26 +100,6 @@ templ InterestIndicator(interests []BillettholderInterest) {
 				mask-position: 0 0, calc(var(--heart-size) - var(--heart-overlap)) 0;
 				mask-repeat: no-repeat;
 				mask-size: 100% 100%;
-			}
-
-			.interest-indicator-heart:not(.selected) ~ .interest-indicator-heart:not(.selected) {
-				display: none;
-			}
-
-			/*
-				The heart does not fill its 24px icon box: it starts 11% down
-				and is 76.5% of the box tall. This math makes --interest-fill: 45%
-				fill 45% of the heart, not 45% of the box.
-			*/
-			.interest-indicator-heart-fill {
-				--heart-top: 11%;
-				--heart-height: 0.765;
-
-				clip-path: inset(calc(var(--heart-top) + (100% - var(--interest-fill)) * var(--heart-height)) 0 0 0);
-			}
-
-			.interest-indicator-heart:not(.selected) .interest-indicator-heart-fill {
-				display: none;
 			}
 
 			.interest-indicator-tooltip {
