@@ -12,7 +12,7 @@ import (
 templ flatEventList(events []models.EventCardModel, eventImageDir *string) {
 	<div class="page-wide-eventcard-grid">
 		for _, event := range events {
-			@components.EventCard(event, eventImageDir, "", "")
+			@components.EventCard(event, eventImageDir, "", "", nil)
 		}
 	</div>
 }
@@ -27,7 +27,7 @@ templ eventPuljeBlock(block program.PuljeBlock, eventImageDir *string, date stri
 			</h2>
 			<div class="raffle-eventcard-grid">
 				for _, event := range events {
-					@components.EventCard(event, eventImageDir, string(block.Pulje.ID), date)
+					@components.EventCard(event, eventImageDir, string(block.Pulje.ID), date, nil)
 				}
 			</div>
 		</section>
