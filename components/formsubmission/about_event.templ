@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
@@ -184,7 +185,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 			<label class="label-small color-strong form-group title">
 				Tittel
 				<div
-					data-signals={ dataSignals(map[string]string{"title": title}) }
+					data-signals={ components.DataSignals(map[string]string{"title": title}) }
 				></div>
 				<input
 					name="title"
@@ -223,7 +224,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 			<label class="label-small color-strong form-group type">
 				Type arrangement
 				<select
-					data-signals={ dataSignals(map[string]models.EventType{"type": eventType}) }
+					data-signals={ components.DataSignals(map[string]models.EventType{"type": eventType}) }
 					data-bind="type"
 					data-indicator="toastType"
 					{ errorfeedback.Attrs("type")... }
@@ -278,7 +279,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 			</section>
 			<label class="label-small color-strong form-group system">
 				<p
-					data-signals={ dataSignals(map[string]string{"system": system}) }
+					data-signals={ components.DataSignals(map[string]string{"system": system}) }
 				>
 					System
 				</p>
