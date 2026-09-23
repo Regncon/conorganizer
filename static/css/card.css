@@ -157,7 +157,11 @@
 }
 
 .event-card-description {
-    overflow: clip;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
     font-size: var(--text-body-small);
     height: 40px;
     margin: 0;
