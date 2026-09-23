@@ -15,7 +15,7 @@ import (
 
 templ ProfileMainColumn(user requestctx.UserRequestInfo, events []models.EventCardModel, selectedBillettholderID int, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
 	<div id="profile-main-column" class="profile-content-column">
-		@profilecomponent.MyEvents(events)
+		@profilecomponent.MyEvents(events, user.Email)
 		@profilecomponent.MyProgram(user, selectedBillettholderID, db, logger, eventImageDir)
 	</div>
 }
