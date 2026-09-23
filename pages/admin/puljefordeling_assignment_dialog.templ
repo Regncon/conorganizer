@@ -242,8 +242,7 @@ templ puljeAssignmentInterestGroup(level models.InterestLevel, candidates []pulj
 	}
 }
 
-templ puljeAssignmentInterests(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
-	{{ em, emErr := puljefordeling.EmulateSeatings(db) }}
+templ puljeAssignmentInterests(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em puljefordeling.Emulation, emErr error) {
 	{{ interests, err := loadPuljeAssignmentEventInterests(db, pulje, em) }}
 	<section id="puljefordeling-assignment-interests" class="pulje-assignment-interests">
 		<h4>Hurtigtildel fra interesser</h4>
@@ -266,7 +265,7 @@ templ puljeAssignmentInterests(db *sql.DB, logger *slog.Logger, pulje models.Pul
 	</section>
 }
 
-templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em puljefordeling.Emulation, emErr error) {
 	{{ status, err := getPuljeStatus(db, pulje) }}
 	if err != nil {
 		{{ logger.Error(err.Error(), "pulje_id", pulje) }}
@@ -282,7 +281,7 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
 		>
 			<h3>Administrer deltaker</h3>
 			@puljeAssignmentPicker(db, logger)
-			@puljeAssignmentInterests(db, logger, pulje)
+			@puljeAssignmentInterests(db, logger, pulje, em, emErr)
 			<button class="btn btn--outline" type="button" data-on:click="$_puljefordelingAssignDialogOpen = false">Lukk</button>
 		</dialog>
 	}

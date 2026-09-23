@@ -98,8 +98,15 @@ func TestTildeling_DialogSurvivesDistributionRefresh(t *testing.T) {
 	// When
 	doc := templtest.Render(t, puljefordelingIndex(db, testutil.NewTestLogger(), models.PuljeFredagKveld, nil))
 	// Then
-	if doc.Find(selector).Length() != 1 || doc.Find("#puljefordeling-tab "+selector).Length() != 0 {
+	dialog := doc.Find(selector)
+	if dialog.Length() != 1 || doc.Find("#puljefordeling-tab "+selector).Length() != 0 {
 		t.Fatal("assignment confirmation must live once outside the refreshed distribution")
+	}
+	if dialog.AttrOr("data-preserve-attr", "") != "open" {
+		t.Error("assignment confirmation should preserve its native open state during a page morph")
+	}
+	if effect := dialog.AttrOr("data-effect", ""); !strings.Contains(effect, "$tildelingOpen") || !strings.Contains(effect, "el.showModal()") {
+		t.Errorf("assignment confirmation should be controlled by its signal, got %q", effect)
 	}
 }
 

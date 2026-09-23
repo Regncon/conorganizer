@@ -6,14 +6,15 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-type tildelingssignaler struct {
+const puljeTildelingsURL = "/admin/api/puljefordeling/assign"
+
+type puljeTildelingssignaler struct {
 	BillettholderID int                    `json:"assignmentBillettholderId"`
 	EventID         string                 `json:"assignmentEventId"`
 	PuljeID         string                 `json:"assignmentPuljeId"`
@@ -23,24 +24,13 @@ type tildelingssignaler struct {
 	FraManuellPlass bool                   `json:"assignmentFromManualSeat"`
 	Bekreftelse     string                 `json:"assignmentConfirmation"`
 	AlderBekreftet  bool                   `json:"assignmentAgeConfirmed"`
-	Fjern           bool                   `json:"assignmentRemove"`
-	IsPlayer        bool                   `json:"assignmentIsPlayer"`
-	IsGM            bool                   `json:"assignmentIsGm"`
 	LukkDialog      bool                   `json:"assignmentCloseDialog"`
 }
 
-type tildelingsrute struct {
-	URL        string
-	Role       models.EventPlayerRole
-	FraLeggTil bool
-	Forstevalg bool
-	Oppdater   bool
-}
-
-func tildelingsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Logger, rute tildelingsrute) http.HandlerFunc {
+func puljeTildelingsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Logger) http.HandlerFunc {
 	logger = logger.With("component", "admin_tildelinger")
 	return func(w http.ResponseWriter, r *http.Request) {
-		var signaler tildelingssignaler
+		var signaler puljeTildelingssignaler
 		if err := datastar.ReadSignals(r, &signaler); err != nil {
 			http.Error(w, "Ugyldige tildelingsdata", http.StatusBadRequest)
 			return
@@ -51,38 +41,23 @@ func tildelingsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Logge
 			return
 		}
 		role := signaler.Role
-		if rute.Role != "" {
-			role = rute.Role
-		} else if role == "" {
+		if role == "" {
 			role = models.EventPlayerRolePlayer
-			if signaler.IsGM {
-				role = models.EventPlayerRoleGM
-			}
-			if rute.Oppdater && !signaler.IsPlayer && !signaler.IsGM {
-				signaler.Fjern = true
-			}
 		}
-		if signaler.Fjern && rute.Oppdater {
-			if err := puljefordeling.FjernTildeling(db, pulje, signaler.EventID, signaler.BillettholderID, role); err != nil {
-				tildelingsfeil(w, logger, err)
-				return
-			}
-		} else {
-			valg := puljefordeling.Tildelingsvalg{
-				PuljeID: pulje, EventID: signaler.EventID, BillettholderID: signaler.BillettholderID,
-				Role: role, FraLeggTil: rute.FraLeggTil || signaler.FraLeggTil,
-				Bekreftelse: signaler.Bekreftelse, AlderBekreftet: signaler.AlderBekreftet,
-				Forstevalg: rute.Forstevalg, FraEventID: signaler.FraEventID, FraManuellPlass: signaler.FraManuellPlass,
-			}
-			varsel, err := puljefordeling.TildelBillettholder(db, valg)
-			if err != nil {
-				tildelingsfeil(w, logger, err)
-				return
-			}
-			if varsel != nil {
-				sendTildelingsvarsel(w, r, logger, *varsel, valg, rute.URL)
-				return
-			}
+		valg := puljefordeling.Tildelingsvalg{
+			PuljeID: pulje, EventID: signaler.EventID, BillettholderID: signaler.BillettholderID,
+			Role: role, FraLeggTil: signaler.FraLeggTil,
+			Bekreftelse: signaler.Bekreftelse, AlderBekreftet: signaler.AlderBekreftet,
+			FraEventID: signaler.FraEventID, FraManuellPlass: signaler.FraManuellPlass,
+		}
+		varsel, err := puljefordeling.TildelBillettholder(db, valg)
+		if err != nil {
+			tildelingsfeil(w, logger, err)
+			return
+		}
+		if varsel != nil {
+			sendTildelingsvarsel(w, r, logger, *varsel, valg)
+			return
 		}
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketInterests, live.BucketRooms); err != nil {
 			logger.Error(err.Error(), "pulje_id", pulje, "event_id", signaler.EventID, "billettholder_id", signaler.BillettholderID)
@@ -112,7 +87,7 @@ func tildelingsfeil(w http.ResponseWriter, logger *slog.Logger, err error) {
 	}
 }
 
-func sendTildelingsvarsel(w http.ResponseWriter, r *http.Request, logger *slog.Logger, varsel puljefordeling.Tildelingsvarsel, valg puljefordeling.Tildelingsvalg, retryURL string) {
+func sendTildelingsvarsel(w http.ResponseWriter, r *http.Request, logger *slog.Logger, varsel puljefordeling.Tildelingsvarsel, valg puljefordeling.Tildelingsvalg) {
 	sse := datastar.NewSSE(w, r)
 	if len(varsel.Tildelinger) == 0 && varsel.Aldersvarsel != "" && varsel.Kapasitetsvarsel == "" {
 		if err := sse.MarshalAndPatchSignals(map[string]any{
@@ -121,13 +96,12 @@ func sendTildelingsvarsel(w http.ResponseWriter, r *http.Request, logger *slog.L
 			"ageWarningIsPlayer": valg.Role == models.EventPlayerRolePlayer, "ageWarningIsGm": valg.Role == models.EventPlayerRoleGM,
 			"ageWarningRole": string(valg.Role), "ageWarningFromAddMenu": valg.FraLeggTil,
 			"ageWarningFromEventId": valg.FraEventID, "ageWarningFromManualSeat": valg.FraManuellPlass,
-			"ageWarningMethod": r.Method, "ageWarningUrl": retryURL,
 		}); err != nil {
 			logger.Error(err.Error())
 		}
 		return
 	}
-	if err := sse.PatchElementTempl(formsubmission.TildelingsDialogInnhold(varsel, valg, r.Method, retryURL)); err != nil {
+	if err := sse.PatchElementTempl(puljeTildelingsDialogInnhold(varsel, valg)); err != nil {
 		logger.Error(err.Error())
 		return
 	}
