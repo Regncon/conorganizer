@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 )
 
@@ -37,4 +38,39 @@ func (interest BillettholderInterest) HeartStyle() templ.SafeCSS {
 
 func (interest BillettholderInterest) SelectedExpression() string {
 	return fmt.Sprintf("$_menuBillettholder?.Id == %d", interest.BillettholderID)
+}
+
+templ InterestIndicator(interests []BillettholderInterest) {
+	<span
+		class="interest-indicator"
+		data-on:click__prevent__stop="el.toggleAttribute('data-open')"
+		data-on:click__outside="el.removeAttribute('data-open')"
+	>
+		<span class="interest-indicator-hearts" aria-hidden="true">
+			for _, interest := range interests {
+				<span
+					class={ "interest-indicator-heart", templ.KV("selected", interest.IsSelected) }
+					data-class:selected={ interest.SelectedExpression() }
+					style={ interest.HeartStyle() }
+				>
+					<span class="interest-indicator-heart-fill">
+						@icons.Icon(icons.HeartFilled, icons.Size24)
+					</span>
+					<span class="interest-indicator-heart-outline">
+						@icons.Icon(icons.HeartUnfilled, icons.Size24)
+					</span>
+				</span>
+			}
+		</span>
+		<ul class="interest-indicator-tooltip">
+			for _, interest := range interests {
+				<li
+					class={ templ.KV("selected", interest.IsSelected) }
+					data-class:selected={ interest.SelectedExpression() }
+				>
+					{ interest.Description() }
+				</li>
+			}
+		</ul>
+	</span>
 }
