@@ -41,6 +41,37 @@ func (interest BillettholderInterest) SelectedExpression() string {
 }
 
 templ InterestIndicator(interests []BillettholderInterest) {
+	<style>
+		.interest-indicator {
+			--heart-overlap: 1rem;
+
+			flex-shrink: 0;
+
+			.interest-indicator-hearts {
+				display: flex;
+				padding-inline-start: var(--heart-overlap);
+			}
+
+			.interest-indicator-heart {
+				--heart-color: var(--color-accent-blue);
+
+				display: grid;
+				margin-inline-start: calc(var(--heart-overlap) * -1);
+				color: var(--heart-color);
+
+				> span {
+					display: grid;
+					grid-area: 1 / 1;
+				}
+			}
+
+			.interest-indicator-heart.selected {
+				--heart-color: var(--color-primary);
+
+				order: 1;
+			}
+		}
+	</style>
 	<span
 		class="interest-indicator"
 		data-on:click__prevent__stop="el.toggleAttribute('data-open')"
