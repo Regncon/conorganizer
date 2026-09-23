@@ -15,14 +15,6 @@ func tildelingsrolle(role models.EventPlayerRole) string {
 	return "Spiller"
 }
 
-func tildelingsvelgerAction(pulje models.Pulje, role models.EventPlayerRole, url string) string {
-	return fmt.Sprintf("$assignmentPuljeId = %q; $assignmentRole = %q; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentRemove = false; @post(%q); $assignmentFromAddMenu = false; evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", string(pulje), string(role), url)
-}
-
-func tildelingsrolleAction(eventID string, pulje models.Pulje, billettholderID int, role models.EventPlayerRole, fjern bool) string {
-	return fmt.Sprintf("$assignmentEventId = %q; $assignmentPuljeId = %q; $assignmentBillettholderId = %d; $assignmentRole = %q; $assignmentRemove = %t; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; @put(%q); $assignmentRemove = false; $assignmentFromAddMenu = false", eventID, string(pulje), billettholderID, string(role), fjern, UpdatePlayerStatusURL)
-}
-
 func tildelingsoppsummering(tildelinger []puljefordelingservice.Tildeling) string {
 	var gms, spillere int
 	for _, tildeling := range tildelinger {
@@ -44,7 +36,7 @@ func tildelingsbekreftelse(varsel puljefordelingservice.Tildelingsvarsel, valg p
 	if method == http.MethodPut {
 		action = "@put"
 	}
-	return fmt.Sprintf("$assignmentBillettholderId = %d; $assignmentEventId = %q; $assignmentPuljeId = %q; $assignmentRole = %q; $assignmentFromAddMenu = %t; $assignmentFromEventId = %q; $assignmentFromManualSeat = %t; $assignmentConfirmation = %q; $assignmentAgeConfirmed = true; $assignmentRemove = false; $tildelingOpen = false; document.getElementById('tildeling-dialog').close(); %s(%q); $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentFromAddMenu = false; $assignmentBillettholderId = 0",
+	return fmt.Sprintf("$assignmentBillettholderId = %d; $assignmentEventId = %q; $assignmentPuljeId = %q; $assignmentRole = %q; $assignmentFromAddMenu = %t; $assignmentFromEventId = %q; $assignmentFromManualSeat = %t; $assignmentConfirmation = %q; $assignmentAgeConfirmed = true; $assignmentRemove = false; $assignmentCloseDialog = true; $tildelingOpen = false; document.getElementById('tildeling-dialog').close(); %s(%q); $assignmentCloseDialog = false; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentFromAddMenu = false; $assignmentBillettholderId = 0",
 		valg.BillettholderID, valg.EventID, string(valg.PuljeID), string(valg.Role), valg.FraLeggTil, valg.FraEventID, valg.FraManuellPlass, varsel.Bekreftelse, action, retryURL)
 }
 

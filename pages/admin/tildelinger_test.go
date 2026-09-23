@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -108,11 +109,11 @@ func TestTildeling_AddGMRetainsPlayerOnSameArrangement(t *testing.T) {
 	const expectedRoles = 3
 	db, _ := tildelingsFixture(t)
 	testutil.MustExec(t, db, `INSERT INTO relation_events_players(event_id,pulje_id,billettholder_id,role) VALUES ('evA','FredagKveld',1,'Player'), ('evB','FredagKveld',1,'GM')`)
-	router := approvalRouterFor(t, db)
-	warning := postApprovalSignals(t, router, http.MethodPost, approvalAddGMPath, 1, "evA", "FredagKveld", "")
+	router := assignmentRouterFor(t, db)
+	warning := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 1, "evA", "FredagKveld", `,"assignmentRole":"GM","assignmentFromAddMenu":true`)
 	confirmation := confirmationFromResponse(t, warning)
 	// When
-	rec := postApprovalSignals(t, router, http.MethodPost, approvalAddGMPath, 1, "evA", "FredagKveld", `,"assignmentConfirmation":"`+confirmation+`"`)
+	rec := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 1, "evA", "FredagKveld", `,"assignmentRole":"GM","assignmentFromAddMenu":true,"assignmentConfirmation":"`+confirmation+`"`)
 	// Then
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("GM confirmation failed: %d %s", rec.Code, rec.Body.String())
@@ -122,27 +123,6 @@ func TestTildeling_AddGMRetainsPlayerOnSameArrangement(t *testing.T) {
 	}
 	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_events_players WHERE event_id='evA' AND role='Player'`); got != 1 {
 		t.Fatal("adding GM removed the player seat")
-	}
-}
-
-func TestTildeling_RemovingPlayerRetainsGMOnSameArrangement(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{Given: "Kari has both GM and Player roles on X.", When: "An admin removes her Player role.", Then: "The GM role remains."})
-	// Given
-	const expectedGMs = 1
-	db, _ := tildelingsFixture(t)
-	testutil.MustExec(t, db, `INSERT INTO relation_events_players(event_id,pulje_id,billettholder_id,role) VALUES ('evA','FredagKveld',1,'Player'), ('evA','FredagKveld',1,'GM')`)
-	router := approvalRouterFor(t, db)
-	// When
-	rec := postApprovalSignals(t, router, http.MethodPut, approvalUpdatePath, 1, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentRemove":true`)
-	// Then
-	if rec.Code != http.StatusNoContent {
-		t.Fatalf("role removal failed: %d %s", rec.Code, rec.Body.String())
-	}
-	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_events_players WHERE role='GM'`); got != expectedGMs {
-		t.Fatalf("want %d GM, got %d", expectedGMs, got)
-	}
-	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_events_players WHERE role='Player'`); got != 0 {
-		t.Fatalf("player role remained: %d", got)
 	}
 }
 
@@ -214,6 +194,23 @@ func postTildeling(t *testing.T, router http.Handler, eventID, role string, from
 		t.Fatal(err)
 	}
 	req := httptest.NewRequest(http.MethodPost, "/api/puljefordeling/assign", strings.NewReader(string(data)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	return rec
+}
+
+func assignmentRouterFor(t *testing.T, db *sql.DB) http.Handler {
+	t.Helper()
+	router := chi.NewRouter()
+	puljefordelingRoute(router, db, &live.Manager{}, testutil.NewTestLogger(), nil)
+	return router
+}
+
+func postAssignmentSignals(t *testing.T, router http.Handler, method, path string, billettholderID int, eventID, pulje, extra string) *httptest.ResponseRecorder {
+	t.Helper()
+	body := fmt.Sprintf(`{"assignmentBillettholderId":%d,"assignmentEventId":%q,"assignmentPuljeId":%q%s}`, billettholderID, eventID, pulje, extra)
+	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)

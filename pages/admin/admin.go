@@ -50,7 +50,6 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 					})
 				})
 
-				approvalEventPlayersRoute(apiRouter, db, liveManager, baseLogger)
 			})
 
 			approvalRouter.Route("/edit", func(editEventRouter chi.Router) {

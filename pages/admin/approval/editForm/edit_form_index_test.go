@@ -10,14 +10,11 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-// The live stream morphs everything inside #edit-form-container. A <dialog> in
-// that subtree loses its `open` attribute on the next patch without a `close`
-// event, which would leave the age warning wedged shut. It must sit outside.
-func TestEditFormIndex_AgeDialogRendersOutsideLiveRegion(t *testing.T) {
+func TestEditFormIndex_HasNoPlayerAssignmentDialogs(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt redigeringssida for eit arrangement.",
 		When:  "Når sida blir rendra.",
-		Then:  "Så ligg aldersgrense-dialogen utanfor det live-oppdaterte området.",
+		Then:  "Så inneheld ho ikkje lenger spelartildeling.",
 	})
 
 	db := testutil.CreateTestDB(t, "edit-form-index-age-dialog")
@@ -27,10 +24,7 @@ func TestEditFormIndex_AgeDialogRendersOutsideLiveRegion(t *testing.T) {
 
 	doc := templtest.Render(t, editFormIndex("submitted-event", context.Background(), db, nil, logger))
 
-	if got := doc.Find("#approval-age-dialog").Length(); got != 1 {
-		t.Fatalf("expected exactly one age warning dialog on the page, got %d", got)
-	}
-	if got := doc.Find("#edit-form-container #approval-age-dialog").Length(); got != 0 {
-		t.Errorf("age dialog must NOT be inside the live #edit-form-container")
+	if got := doc.Find("#approval-age-dialog, #tildeling-dialog, .who-is-interested").Length(); got != 0 {
+		t.Fatalf("expected no player assignment UI on the event form, got %d elements", got)
 	}
 }

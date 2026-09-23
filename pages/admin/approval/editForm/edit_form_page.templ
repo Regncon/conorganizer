@@ -47,7 +47,4 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		</form>
 		@event.EventFormPreview(eventData, eventImageDir)
 	}
-	<div class="page-content-container wide-content">
-		@formsubmission.WhoIsInterested(eventId, db, logger)
-	</div>
 }

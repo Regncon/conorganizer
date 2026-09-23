@@ -2,18 +2,18 @@ package admin
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"slices"
 	"strings"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
-	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 	"github.com/go-chi/chi/v5"
 )
@@ -103,52 +103,6 @@ func TestPuljefordelingIndex_DialogRendersOutsideLiveRegion(t *testing.T) {
 	}
 }
 
-func TestAddFirstChoiceThenEmulate_PinsAddedPlayer(t *testing.T) {
-	db, _ := testutil.CreateTestDBAndLogger(t, "puljefordeling_add_then_pin")
-
-	const fredag = models.PuljeFredagKveld
-	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
-		VALUES ('evA','Alpha','','','','','',4,1)`)
-	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
-	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
-		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
-
-	// Add Kari through the real picker add path (the + button's endpoint).
-	rec := postApprovalSignals(t, approvalRouterFor(t, db), http.MethodPost, approvalFirstChoicePath, 1, "evA", string(fredag), "")
-	if rec.Code != http.StatusNoContent {
-		t.Fatalf("add first choice: %d %s", rec.Code, rec.Body.String())
-	}
-
-	// A subsequent emulation must pin her into evA, marked as a manual placement.
-	em, err := puljefordeling.EmulateSeatings(db)
-	if err != nil {
-		t.Fatalf("EmulateSeatings: %v", err)
-	}
-	var evA puljefordeling.EmulatedEvent
-	for _, p := range em.Puljer {
-		if p.PuljeID == fredag {
-			for _, e := range p.Events {
-				if e.EventID == "evA" {
-					evA = e
-				}
-			}
-		}
-	}
-	names := make([]string, len(evA.AssignedPlayers))
-	for i, ap := range evA.AssignedPlayers {
-		names[i] = ap.Name
-	}
-	if !slices.Contains(names, "Kari Nordmann") {
-		t.Fatalf("added player should be pinned into evA, got %v", names)
-	}
-	for _, ap := range evA.AssignedPlayers {
-		if ap.Name == "Kari Nordmann" && !ap.Manual {
-			t.Errorf("added player should be marked as a manual placement")
-		}
-	}
-}
-
 func postAssignSignals(t *testing.T, router http.Handler, bhID int, eventID, pulje string) *httptest.ResponseRecorder {
 	t.Helper()
 	body := fmt.Sprintf(`{"assignmentBillettholderId":%d,"assignmentEventId":%q,"assignmentPuljeId":%q}`, bhID, eventID, pulje)
@@ -157,6 +111,162 @@ func postAssignSignals(t *testing.T, router http.Handler, bhID int, eventID, pul
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 	return rec
+}
+
+func TestPuljefordelingInterestRoute_WhenPuljeIsLocked_UpdatesInterest(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en låst pulje med en eksisterende interesse.",
+		When:  "Når en administrator endrer interessa i puljefordeling.",
+		Then:  "Så blir interessa oppdatert.",
+	})
+
+	// Given
+	expectedLevel := models.InterestLevelMedium
+	db, router := puljeInterestFixture(t, models.PuljeStatusLocked)
+	testutil.MustExec(t, db, `INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level) VALUES (1, 'evA', 'FredagKveld', ?)`, models.InterestLevelHigh)
+
+	// When
+	rec := postInterestSignals(t, router, models.InterestLevelMedium)
+
+	// Then
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("expected locked-pulje interest update to succeed: %d %s", rec.Code, rec.Body.String())
+	}
+	if actual := puljeInterestLevel(t, db); actual != expectedLevel {
+		t.Fatalf("interest level = %q, want %q", actual, expectedLevel)
+	}
+	if count := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM interests WHERE billettholder_id = 1 AND event_id = 'evA' AND pulje_id = 'FredagKveld'`); count != 1 {
+		t.Fatalf("expected one interest row after upsert, got %d", count)
+	}
+}
+
+func TestPuljefordelingInterestRoute_WhenSetToNone_DeletesOnlyCurrentInterest(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en åpen pulje med interesse for eitt arrangement.",
+		When:  "Når administratoren vel Ikkje interessert.",
+		Then:  "Så blir berre interessa for det arrangementet fjerna.",
+	})
+
+	// Given
+	db, router := puljeInterestFixture(t, models.PuljeStatusOpen)
+	testutil.MustExec(t, db, `INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level) VALUES (1, 'evA', 'FredagKveld', ?)`, models.InterestLevelLow)
+
+	// When
+	rec := postInterestSignals(t, router, models.InterestLevelNone)
+
+	// Then
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("expected interest removal to succeed: %d %s", rec.Code, rec.Body.String())
+	}
+	if actual := puljeInterestLevel(t, db); actual != models.InterestLevelNone {
+		t.Fatalf("interest level = %q, want no interest", actual)
+	}
+}
+
+func TestPuljefordelingInterestRoute_WhenPuljeIsCompleted_RejectsChange(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en publisert pulje med ei interesse.",
+		When:  "Når administratoren prøver å fjerne interessa.",
+		Then:  "Så blir endringa avvist og interessa står urørt.",
+	})
+
+	// Given
+	expectedLevel := models.InterestLevelLow
+	db, router := puljeInterestFixture(t, models.PuljeStatusCompleted)
+	testutil.MustExec(t, db, `INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level) VALUES (1, 'evA', 'FredagKveld', ?)`, expectedLevel)
+
+	// When
+	rec := postInterestSignals(t, router, models.InterestLevelNone)
+
+	// Then
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected completed-pulje interest change to be rejected: %d %s", rec.Code, rec.Body.String())
+	}
+	if actual := puljeInterestLevel(t, db); actual != expectedLevel {
+		t.Fatalf("interest level = %q after rejected change, want %q", actual, expectedLevel)
+	}
+}
+
+func TestPuljefordelingAssignDialog_RendersSixActionsAndClosesAfterSuccess(t *testing.T) {
+	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_assignment_dialog_actions")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id) VALUES (1, 'Kari', 'Nordmann', 0, '', 0, 1)`)
+
+	// When
+	doc := templtest.Render(t, puljefordelingIndex(db, logger, models.PuljeFredagKveld, nil))
+
+	// Then
+	dialog := doc.Find("#puljefordeling-assign-dialog")
+	if dialog.Find("h3").Text() != "Administrer deltaker" {
+		t.Fatalf("dialog heading = %q", dialog.Find("h3").Text())
+	}
+	if dialog.Find("admin-billettholder-search").Length() != 1 {
+		t.Fatal("expected the billettholder search input")
+	}
+	if actions := dialog.Find("button[data-attr\\:disabled]"); actions.Length() != 6 {
+		t.Fatalf("expected six selection-dependent actions, got %d", actions.Length())
+	}
+	for _, label := range []string{"Tildel som spilleder", "Tildel som spiller", "Veldig interessert", "Middels interessert", "Litt interessert", "Ikkje interessert"} {
+		if dialog.Find("button").FilterFunction(func(_ int, s *goquery.Selection) bool { return strings.TrimSpace(s.Text()) == label }).Length() != 1 {
+			t.Errorf("expected one %q action", label)
+		}
+	}
+	if action := dialog.Find("button").First().AttrOr("data-on:click", ""); !strings.Contains(action, "/admin/api/puljefordeling/assign") || !strings.Contains(action, "assignmentCloseDialog = true") {
+		t.Fatalf("expected assignment action to request and then await server-side dialog close, got %q", action)
+	}
+	if effect := dialog.AttrOr("data-effect", ""); !strings.Contains(effect, "assignmentActionCompleted") || !strings.Contains(effect, ".close()") {
+		t.Errorf("dialog should close only after a successful server signal patch, got %q", effect)
+	}
+}
+
+func TestPuljefordelingAssignDialog_WhenPuljeIsCompleted_IsNotRendered(t *testing.T) {
+	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_assignment_dialog_completed")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
+
+	// When
+	doc := templtest.Render(t, puljefordelingIndex(db, logger, models.PuljeFredagKveld, nil))
+
+	// Then
+	if dialogCount := doc.Find("#puljefordeling-assign-dialog").Length(); dialogCount != 0 {
+		t.Fatalf("published pulje must not render an actionable assignment dialog, got %d", dialogCount)
+	}
+}
+
+func puljeInterestFixture(t *testing.T, status models.PuljeStatus) (*sql.DB, http.Handler) {
+	t.Helper()
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_interest_route")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", status, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling) VALUES ('evA', 'Alpha', '', '', '', '', '', 4, 1)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA', 'FredagKveld', 1)`)
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id) VALUES (1, 'Kari', 'Nordmann', 0, '', 0, 1)`)
+	router := chi.NewRouter()
+	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
+	return db, router
+}
+
+func postInterestSignals(t *testing.T, router http.Handler, level models.InterestLevel) *httptest.ResponseRecorder {
+	t.Helper()
+	body := fmt.Sprintf(`{"assignmentBillettholderId":1,"assignmentEventId":"evA","assignmentPuljeId":"FredagKveld","assignmentInterestLevel":%q}`, level)
+	req := httptest.NewRequest(http.MethodPut, "/api/puljefordeling/interest", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	return rec
+}
+
+func puljeInterestLevel(t *testing.T, db *sql.DB) models.InterestLevel {
+	t.Helper()
+	var level models.InterestLevel
+	err := db.QueryRow(`SELECT interest_level FROM interests WHERE billettholder_id = 1 AND event_id = 'evA' AND pulje_id = 'FredagKveld'`).Scan(&level)
+	if errors.Is(err, sql.ErrNoRows) {
+		return models.InterestLevelNone
+	}
+	if err != nil {
+		t.Fatalf("read interest level: %v", err)
+	}
+	return level
 }
 
 func TestPuljefordelingCommitRoute_PersistsSolverPicks(t *testing.T) {

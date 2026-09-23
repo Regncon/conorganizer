@@ -26,6 +26,7 @@ type tildelingssignaler struct {
 	Fjern           bool                   `json:"assignmentRemove"`
 	IsPlayer        bool                   `json:"assignmentIsPlayer"`
 	IsGM            bool                   `json:"assignmentIsGm"`
+	LukkDialog      bool                   `json:"assignmentCloseDialog"`
 }
 
 type tildelingsrute struct {
@@ -85,6 +86,13 @@ func tildelingsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Logge
 		}
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketInterests, live.BucketRooms); err != nil {
 			logger.Error(err.Error(), "pulje_id", pulje, "event_id", signaler.EventID, "billettholder_id", signaler.BillettholderID)
+		}
+		if signaler.LukkDialog {
+			sse := datastar.NewSSE(w, r)
+			if err := sse.MarshalAndPatchSignals(map[string]bool{"assignmentActionCompleted": true}); err != nil {
+				logger.Error(err.Error(), "pulje_id", pulje, "event_id", signaler.EventID, "billettholder_id", signaler.BillettholderID)
+			}
+			return
 		}
 		w.WriteHeader(http.StatusNoContent)
 	}

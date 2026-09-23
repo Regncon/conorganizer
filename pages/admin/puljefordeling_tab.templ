@@ -76,6 +76,19 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 			},
 		})
 	})
+	router.Get("/api/puljefordeling/{pulje}/assignment-interests", func(w http.ResponseWriter, r *http.Request) {
+		puljeID, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
+		if !ok {
+			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+			return
+		}
+		liveManager.Stream(w, r, live.Page{
+			Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests},
+			Render: func(context.Context, *http.Request) templ.Component {
+				return puljeAssignmentInterests(db, logger, puljeID)
+			},
+		})
+	})
 
 	// Commit (+publish-independent). Persists the current distribution so it shows
 	// in other views; solver picks become source='solver', manual pins stay manual.
@@ -103,6 +116,7 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 	// Add a manual pin (+). Force-pins the chosen billettholder into the event
 	// without touching their interests; removing the pin reverts them to emulation.
 	router.Post("/api/puljefordeling/assign", tildelingsHandler(db, liveManager, logger, tildelingsrute{URL: "/admin/api/puljefordeling/assign"}))
+	router.Put("/api/puljefordeling/interest", puljeInteresseHandler(db, liveManager, logger))
 
 	// Remove a manual pin (×). Manual-only: solver/GM rows are untouched. The
 	// player's interest is kept, so the solver may re-seat them by simulation.
@@ -197,6 +211,9 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		data-signals:assignment-event-id="''"
 		data-signals:assignment-pulje-id="''"
 		data-signals:assignment-billettholder-id="0"
+		data-signals:assignment-interest-level="''"
+		data-signals:assignment-close-dialog="false"
+		data-signals:assignment-action-completed="false"
 		data-signals:clear-input="0"
 		data-signals:dragged-billettholder-id="0"
 		data-signals:dragged-event-id="''"
@@ -604,21 +621,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 	</section>
 }
 
-// puljeAssignDialog is the single shared picker dialog for the page. The + button
-// on each event box sets $assignmentEventId before opening it, so the picker adds
-// the chosen billettholder to that event (reusing the approval add endpoints).
-templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
-	<dialog id="puljefordeling-assign-dialog" closedBy="any">
-		<h3>Legg til deltaker</h3>
-		@formsubmission.PuljeAssignmentSearch(db, logger, pulje)
-		<button
-			class="btn btn--outline"
-			type="button"
-			data-on:click="document.getElementById('puljefordeling-assign-dialog').close()"
-		>Lukk</button>
-	</dialog>
-}
-
 // puljeAgeConfirmAction re-posts the pending placement with the age confirmation
 // flag set. The flag is page-global and travels with every request, so it is
 // reset on the very next statement: datastar serialises the signal payload
@@ -636,7 +638,9 @@ func puljeAgeConfirmAction() string {
 		"$assignmentFromManualSeat = $ageWarningFromManualSeat; " +
 		"$assignmentConfirmation = ''; " +
 		"$assignmentAgeConfirmed = true; " +
+		"$assignmentCloseDialog = true; " +
 		"@post('/admin/api/puljefordeling/assign'); " +
+		"$assignmentCloseDialog = false; " +
 		"$assignmentAgeConfirmed = false; " +
 		"$assignmentFromAddMenu = false; " +
 		"$ageWarningText = ''; " +
