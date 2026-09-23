@@ -47,9 +47,19 @@ templ Event_mobile(
 					.title {
 						margin: 0;
 						line-height: var(--line-height);
+						white-space: nowrap;
+						overflow: hidden;
+						text-overflow: ellipsis;
 					}
 					.intro {
+						--intro-lines: 2;
+
 						line-height: var(--line-height);
+						display: -webkit-box;
+						-webkit-box-orient: vertical;
+						-webkit-line-clamp: var(--intro-lines);
+						line-clamp: var(--intro-lines);
+						overflow: hidden;
 					}
 				}
 			}
@@ -292,6 +302,10 @@ templ Event_mobile(
 				.stack {
 					.event-header {
 						margin-inline: min(9.75rem, 100%);
+
+						.intro {
+							--intro-lines: 1;
+						}
 					}
 				}
 
