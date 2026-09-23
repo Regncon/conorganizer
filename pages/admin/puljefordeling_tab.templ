@@ -12,21 +12,20 @@ import (
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/event_components"
-	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/live"
-    "github.com/Regncon/conorganizer/service/puljefordeling"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 )
 
 // puljefordelingRoute wires the per-pulje tabbed puljefordeling view. The page
 // mirrors the bordfordeling (rooms assignment) layout: a tab strip per pulje and
-// a connected panel that live-updates over SSE. It is a read-only what-if view of
-// the emulated distribution — nothing is written to assignment tables here.
+// a connected panel that live-updates over SSE. It shows the emulated
+// distribution and lets administrators make manual placements and set interests.
 func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger, eventImageDir *string) {
 	logger = logger.With("component", "admin_puljefordeling_tab")
 
@@ -58,9 +57,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		})
 	})
 
-	// SSE endpoint: streams just the tab content for the viewed pulje. The
-	// distribution is driven by interests and manual pins, so it refreshes on both
-	// BucketEvents and BucketInterests (the add endpoints broadcast Interests).
+	// SSE endpoint: refreshes the complete puljefordeling work area for the
+	// viewed pulje. Keeping the dialog inside this boundary lets its content stay
+	// current while its local open state survives the morph.
 	router.Get("/api/puljefordeling/{pulje}", func(w http.ResponseWriter, r *http.Request) {
 		puljeQuery := chi.URLParam(r, "pulje")
 		puljeID, ok := models.ParsePulje(puljeQuery)
@@ -72,7 +71,7 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		liveManager.Stream(w, r, live.Page{
 			Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests},
 			Render: func(ctx context.Context, r *http.Request) templ.Component {
-				return PuljefordelingTabContent(db, logger, puljeID, eventImageDir)
+				return puljefordelingPage(db, logger, puljeID, eventImageDir)
 			},
 		})
 	})
@@ -102,7 +101,8 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 
 	// Add a manual pin (+). Force-pins the chosen billettholder into the event
 	// without touching their interests; removing the pin reverts them to emulation.
-	router.Post("/api/puljefordeling/assign", tildelingsHandler(db, liveManager, logger, tildelingsrute{URL: "/admin/api/puljefordeling/assign"}))
+	router.Post("/api/puljefordeling/assign", puljeTildelingsHandler(db, liveManager, logger))
+	router.Put("/api/puljefordeling/interest", puljeInteresseHandler(db, liveManager, logger))
 
 	// Remove a manual pin (×). Manual-only: solver/GM rows are untouched. The
 	// player's interest is kept, so the solver may re-seat them by simulation.
@@ -192,25 +192,41 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		{Name: "Admin", Url: "/admin/"},
 		{Name: "Puljefordeling", Url: ""},
 	})
+	@puljefordelingPage(db, logger, current, eventImageDir)
+}
+
+templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, eventImageDir *string) {
+	{{
+		em, emErr := puljefordeling.EmulateSeatings(db)
+		if emErr != nil {
+			logger.Error(fmt.Errorf("emulation failed: %w", emErr).Error())
+		}
+	}}
 	<div
+		id="puljefordeling-page"
 		class="page-content-container flex flex-col"
-		data-signals:assignment-event-id="''"
-		data-signals:assignment-pulje-id="''"
-		data-signals:assignment-billettholder-id="0"
-		data-signals:clear-input="0"
-		data-signals:dragged-billettholder-id="0"
-		data-signals:dragged-event-id="''"
-		data-signals:dragged-manual-seat="false"
-		data-signals:drag-over-event="''"
-		data-signals:assignment-age-confirmed="false"
-		data-signals:age-warning-text="''"
-		data-signals:age-warning-billettholder-id="0"
-		data-signals:age-warning-event-id="''"
-		data-signals:age-warning-pulje-id="''"
-		data-signals:age-warning-role="'Player'"
-		data-signals:age-warning-from-add-menu="false"
-		data-signals:age-warning-from-event-id="''"
-		data-signals:age-warning-from-manual-seat="false"
+		data-init={ live.DatastarInit(fmt.Sprintf("/admin/api/puljefordeling/%s", current)) }
+		data-signals__ifmissing:assignment-event-id="''"
+		data-signals__ifmissing:assignment-pulje-id="''"
+		data-signals__ifmissing:assignment-billettholder-id="0"
+		data-signals__ifmissing:assignment-interest-level="''"
+		data-signals__ifmissing:assignment-close-dialog="false"
+		data-signals__ifmissing:assignment-action-completed="false"
+		data-signals__ifmissing:clear-input="0"
+		data-signals__ifmissing:dragged-billettholder-id="0"
+		data-signals__ifmissing:dragged-event-id="''"
+		data-signals__ifmissing:dragged-manual-seat="false"
+		data-signals__ifmissing:drag-over-event="''"
+		data-signals__ifmissing:assignment-age-confirmed="false"
+		data-signals__ifmissing:age-warning-text="''"
+		data-signals__ifmissing:age-warning-billettholder-id="0"
+		data-signals__ifmissing:age-warning-event-id="''"
+		data-signals__ifmissing:age-warning-pulje-id="''"
+		data-signals__ifmissing:age-warning-role="'Player'"
+		data-signals__ifmissing:age-warning-from-add-menu="false"
+		data-signals__ifmissing:age-warning-from-event-id="''"
+		data-signals__ifmissing:age-warning-from-manual-seat="false"
+		data-signals__ifmissing:_puljefordeling-assign-dialog-open="false"
 	>
 		<style>
             .tabs {
@@ -262,14 +278,24 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 				>{ pulje.Label() }</a>
 			}
 		</div>
-		@PuljefordelingTabContent(db, logger, current, eventImageDir)
-		@puljeAssignDialog(db, logger, current)
+		@puljefordelingTabContent(db, logger, current, eventImageDir, em, emErr)
+		@puljeAssignDialog(db, logger, current, em, emErr)
 		@puljeAgeWarningDialog()
-		@formsubmission.TildelingsDialog()
+		@puljeTildelingsDialog()
 	</div>
 }
 
 templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
+	{{
+		em, emErr := puljefordeling.EmulateSeatings(db)
+		if emErr != nil {
+			logger.Error(fmt.Errorf("emulation failed: %w", emErr).Error())
+		}
+	}}
+	@puljefordelingTabContent(db, logger, pulje, eventImageDir, em, emErr)
+}
+
+templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string, em puljefordeling.Emulation, emErr error) {
 	{{
 		puljer, puljerErr := getPuljer(db)
 		if puljerErr != nil {
@@ -277,10 +303,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		}
 		row, hasRow := findPuljeRow(puljer, pulje)
 
-		em, emErr := puljefordeling.EmulateSeatings(db)
-		if emErr != nil {
-			logger.Error(fmt.Errorf("emulation failed: %w", emErr).Error())
-		}
 		result, hasResult := findEmulatedPulje(em, pulje)
 		unsatisfied, hasUnsatisfied := unsatisfiedAfter(em, pulje)
 		var fordelingsvarsler []puljefordeling.Fordelingsvarsel
@@ -537,7 +559,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 	<section
 		id="puljefordeling-tab"
 		class="rooms-section"
-		data-init={ live.DatastarInit(fmt.Sprintf("/admin/api/puljefordeling/%s", pulje)) }
 		data-signals:pulje-status={ fmt.Sprintf("'%s'", string(row.Status)) }
 	>
 		<div class="pulje-tab-header">
@@ -604,21 +625,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 	</section>
 }
 
-// puljeAssignDialog is the single shared picker dialog for the page. The + button
-// on each event box sets $assignmentEventId before opening it, so the picker adds
-// the chosen billettholder to that event (reusing the approval add endpoints).
-templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
-	<dialog id="puljefordeling-assign-dialog" closedBy="any">
-		<h3>Legg til deltaker</h3>
-		@formsubmission.PuljeAssignmentSearch(db, logger, pulje)
-		<button
-			class="btn btn--outline"
-			type="button"
-			data-on:click="document.getElementById('puljefordeling-assign-dialog').close()"
-		>Lukk</button>
-	</dialog>
-}
-
 // puljeAgeConfirmAction re-posts the pending placement with the age confirmation
 // flag set. The flag is page-global and travels with every request, so it is
 // reset on the very next statement: datastar serialises the signal payload
@@ -636,7 +642,9 @@ func puljeAgeConfirmAction() string {
 		"$assignmentFromManualSeat = $ageWarningFromManualSeat; " +
 		"$assignmentConfirmation = ''; " +
 		"$assignmentAgeConfirmed = true; " +
+		"$assignmentCloseDialog = true; " +
 		"@post('/admin/api/puljefordeling/assign'); " +
+		"$assignmentCloseDialog = false; " +
 		"$assignmentAgeConfirmed = false; " +
 		"$assignmentFromAddMenu = false; " +
 		"$ageWarningText = ''; " +
@@ -794,7 +802,7 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 			<button
 				type="button"
 				class="pulje-add"
-				data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; document.getElementById('puljefordeling-assign-dialog').showModal()", ev.EventID, string(pulje)) }
+				data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $_puljefordelingAssignDialogOpen = true", ev.EventID, string(pulje)) }
 			>+ Legg til deltaker</button>
 		}
 	</div>

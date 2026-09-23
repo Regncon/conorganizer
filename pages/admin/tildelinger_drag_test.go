@@ -312,7 +312,7 @@ func TestTildeling_DragUnsavedPreviewAgeWarningRetainsSource(t *testing.T) {
 	if signals.FromEventID != "evA" || !strings.Contains(signals.Text, "under 18") {
 		t.Fatalf("age warning must retain source evA and explain the age limit: %+v; response %s", signals, warning.Body.String())
 	}
-	response := postApprovalSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 1, "evC", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":false,"assignmentFromEventId":"`+signals.FromEventID+`","assignmentAgeConfirmed":true`)
+	response := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 1, "evC", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":false,"assignmentFromEventId":"`+signals.FromEventID+`","assignmentAgeConfirmed":true`)
 	if response.Code != http.StatusNoContent {
 		t.Fatalf("confirmed age warning: %d %s", response.Code, response.Body.String())
 	}
@@ -340,7 +340,7 @@ func postTildelingDrag(t *testing.T, router http.Handler, source, destination, c
 	if confirmation != "" {
 		extra += `,"assignmentConfirmation":"` + confirmation + `"`
 	}
-	return postApprovalSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 1, destination, "FredagKveld", extra)
+	return postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 1, destination, "FredagKveld", extra)
 }
 
 func assertTildelingDragPins(t *testing.T, db *sql.DB, expected []string) {
