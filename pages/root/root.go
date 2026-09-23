@@ -8,6 +8,8 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
 )
@@ -28,7 +30,8 @@ func SetupRootRoute(router chi.Router, logger *slog.Logger, liveManager *live.Ma
 				liveManager.Stream(w, r, live.Page{
 					Buckets: []live.Bucket{live.BucketEvents},
 					Render: func(ctx context.Context, r *http.Request) templ.Component {
-						return rootPage(db, eventImageDir, requestedDate)
+						interests := loadBillettholderInterestsForPage(ctx, userctx.GetUserRequestInfo(ctx), db, logger)
+						return rootPage(db, eventImageDir, requestedDate, interests)
 					},
 				})
 			})
@@ -36,6 +39,15 @@ func SetupRootRoute(router chi.Router, logger *slog.Logger, liveManager *live.Ma
 	})
 
 	return nil
+}
+
+func loadBillettholderInterestsForPage(ctx context.Context, userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) billettholderInterestsByEvent {
+	interests, err := loadBillettholderInterests(userInfo, requestctx.SelectedBillettholderID(ctx), db)
+	if err != nil {
+		logger.Error(err.Error(), "user_id", userInfo.Id)
+		return nil
+	}
+	return interests
 }
 
 func MustJSONMarshal(v any) string {

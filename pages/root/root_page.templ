@@ -8,17 +8,17 @@ import (
 	"github.com/Regncon/conorganizer/service/program"
 )
 
-templ rootPage(db *sql.DB, eventImageDir *string, requestedDate string) {
+templ rootPage(db *sql.DB, eventImageDir *string, requestedDate string, interests billettholderInterestsByEvent) {
 	<div id="root-page-wrapper">
-		@rootPageContentForDate(db, eventImageDir, requestedDate)
+		@rootPageContentForDate(db, eventImageDir, requestedDate, interests)
 	</div>
 }
 
 templ rootPageContent(db *sql.DB, eventImageDir *string) {
-	@rootPageContentForDate(db, eventImageDir, "")
+	@rootPageContentForDate(db, eventImageDir, "", nil)
 }
 
-templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string) {
+templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string, interests billettholderInterestsByEvent) {
 	{{ programPublished, err := program.IsPublished(db) }}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
@@ -40,14 +40,14 @@ templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate st
 				@programDaySelector(programDays, selectedDayIndex)
 				@components.CallToAction()
 				{{ selectedDay := programDays[selectedDayIndex] }}
-				@eventList(db, eventImageDir, true, &selectedDay)
+				@eventList(db, eventImageDir, true, &selectedDay, interests)
 			} else {
 				@components.CallToAction()
-				@eventList(db, eventImageDir, true, nil)
+				@eventList(db, eventImageDir, true, nil, interests)
 			}
 		} else {
 			@components.CallToAction()
-			@eventList(db, eventImageDir, false, nil)
+			@eventList(db, eventImageDir, false, nil, interests)
 		}
 	}
 }
