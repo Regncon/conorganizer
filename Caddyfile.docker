@@ -1,0 +1,18 @@
+{
+	auto_https disable_redirects
+	# Clients connecting to an IP address send no SNI, so Caddy needs to know
+	# which certificate to present. DEV_LAN_IP lets a phone on the same network
+	# connect; without it, 127.0.0.1 gets the fallback certificate instead.
+	default_sni {$DEV_LAN_IP:127.0.0.1}
+	servers {
+		protocols h1 h2
+	}
+}
+
+https://localhost:7331 https://127.0.0.1:7331 https://{$DEV_LAN_IP:127.0.0.1}:7331 {
+	tls internal
+	reverse_proxy webserver:7332 {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+}
