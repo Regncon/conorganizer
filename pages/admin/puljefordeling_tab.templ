@@ -375,6 +375,21 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             display: flex;
             flex-direction: column;
             gap: var(--spacing-3x);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .pulje-step-number {
+            display: inline-grid;
+            place-content: center;
+            flex: 0 0 auto;
+            inline-size: 1.75rem;
+            aspect-ratio: 1;
+            border: 1px solid var(--level-3-border);
+            border-radius: 50%;
+            color: var(--color-text-soft);
+            font-size: var(--text-body-small);
+            font-weight: 700;
         }
         .pulje-status-control {
             display: flex;
@@ -393,6 +408,12 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             }
             &:has(input:checked) {
                 color: var(--color-text-strong);
+
+                .pulje-step-number {
+                    border-color: var(--color-primary);
+                    background-color: var(--color-primary);
+                    color: var(--level-1-background);
+                }
             }
             &:has(input:disabled) {
                 cursor: not-allowed;
@@ -442,14 +463,14 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-event-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: var(--responsive-page-section-spacing);
+            gap: var(--spacing-4x);
         }
         .pulje-event {
             container: pulje-event / inline-size;
             display: flex;
             flex-direction: column;
-            gap: var(--spacing-5x);
-            padding: var(--spacing-4x);
+            gap: var(--spacing-3x);
+            padding: var(--spacing-3x);
             border: 1px solid var(--level-3-border);
             border-radius: var(--border-radius-2x);
             background-color: var(--level-1-background);
@@ -470,7 +491,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-event-thumb {
             display: block;
             flex: 0 0 auto;
-            inline-size: clamp(5rem, 25cqi, 7.5rem);
+            inline-size: clamp(4rem, 22cqi, 6rem);
             block-size: auto;
             aspect-ratio: 2 / 1;
             object-fit: cover;
@@ -485,7 +506,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 
             h3 {
                 color: var(--color-text-strong);
-                font-size: 1.25rem;
+                font-size: var(--text-body);
                 font-weight: 700;
                 overflow-wrap: anywhere;
             }
@@ -493,6 +514,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-event-system {
             margin: 0;
             color: var(--color-primary);
+            font-size: var(--text-body-small);
         }
         /* Game type with its label, then icon-only property badges. */
         .pulje-tags {
@@ -523,7 +545,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-event-group {
             display: flex;
             flex-direction: column;
-            gap: var(--spacing-2x);
+            gap: var(--spacing-1x);
         }
         .pulje-group-header {
             display: flex;
@@ -587,7 +609,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             list-style: none;
             display: flex;
             flex-direction: column;
-            gap: var(--spacing-2x);
+            gap: var(--spacing-1x);
 
         }
         .pulje-players li,
@@ -595,13 +617,14 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             display: flex;
             place-items: center;
             gap: var(--spacing-2x);
-            min-block-size: var(--btn-height);
+            min-block-size: 2.25rem;
             margin: 0;
-            padding: var(--spacing-2x) var(--spacing-4x);
+            padding: var(--spacing-1x) var(--spacing-3x);
             border: 1px solid var(--level-3-border);
             border-radius: var(--border-radius-1x);
             background-color: var(--level-3-background);
             color: var(--color-text-strong);
+            font-size: var(--text-body-small);
         }
         .pulje-player-name {
             flex: 1 1 auto;
@@ -643,14 +666,15 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             place-items: center;
             gap: var(--spacing-2x) var(--spacing-4x);
             inline-size: 100%;
-            min-block-size: var(--btn-height);
+            min-block-size: 2.25rem;
             margin: 0;
-            padding: var(--spacing-2x) var(--spacing-4x);
+            padding: var(--spacing-1x) var(--spacing-3x);
             border: 1px dashed var(--level-3-border);
             border-radius: var(--border-radius-1x);
             background-color: var(--level-2-background);
             color: var(--color-text-soft);
             font: inherit;
+            font-size: var(--text-body-small);
             text-align: start;
         }
         button.pulje-row {
@@ -709,12 +733,12 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-error {
             color: var(--color-text-error, #e05050);
         }
-        @container pulje-section (width > 1000px) {
+        @container pulje-section (width > 640px) {
             .pulje-event-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
-        @container pulje-section (width > 1600px) {
+        @container pulje-section (width > 1000px) {
             .pulje-event-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
@@ -865,55 +889,73 @@ templ puljeAgeWarningDialog() {
 	</dialog>
 }
 
+// puljeStatusToggles renders the three puljefordeling steps. Each step is
+// disabled until the previous one is done, and locked once the next one is done;
+// puljeStatusStepAllowed enforces the same order on the server.
 templ puljeStatusToggles(pulje models.PuljeRow) {
-	<div class="pulje-status-controls">
-		<label class="pulje-status-control">
-			<input
-				if pulje.ClosingWarningActive {
-					checked
-				}
-				if pulje.Status != models.PuljeStatusOpen {
-					disabled
-				}
-				data-on:click={ fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID) }
-				type="checkbox"
-				class="checkbox input"
-			/>
-			<span>Vis advarsel om at puljefordeling stenger snart</span>
-		</label>
-		<label class="pulje-status-control">
-			<input
-				if puljeIsLocked(pulje.Status) {
-					checked
-				}
-				data-on:click={ puljeStatusUpdateAction(
-					pulje,
-					fmt.Sprintf("Vil du endre lukking for %s?", pulje.Name),
-					models.PuljeStatusLocked,
-					models.PuljeStatusOpen,
-				) }
-				type="checkbox"
-				class="checkbox input"
-			/>
-			<span>Puljefordeling lukket</span>
-		</label>
-		<label class="pulje-status-control">
-			<input
-				if puljeIsCompleted(pulje.Status) {
-					checked
-				}
-				data-on:click={ puljeStatusUpdateAction(
-					pulje,
-					fmt.Sprintf("Vil du endre publisering av puljefordeling for %s?", pulje.Name),
-					models.PuljeStatusCompleted,
-					models.PuljeStatusLocked,
-				) }
-				type="checkbox"
-				class="checkbox input"
-			/>
-			<span>Puljefordeling publisert</span>
-		</label>
-	</div>
+	<ol class="pulje-status-controls" aria-label="Steg for puljefordeling">
+		<li>
+			<label class="pulje-status-control">
+				<span class="pulje-step-number" aria-hidden="true">1</span>
+				<input
+					if puljeClosingWarningStepDone(pulje) {
+						checked
+					}
+					if pulje.Status != models.PuljeStatusOpen {
+						disabled
+					}
+					data-on:click={ fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID) }
+					type="checkbox"
+					class="checkbox input"
+				/>
+				<span>Vis advarsel om at puljefordeling stenger snart</span>
+			</label>
+		</li>
+		<li>
+			<label class="pulje-status-control">
+				<span class="pulje-step-number" aria-hidden="true">2</span>
+				<input
+					if puljeIsLocked(pulje.Status) {
+						checked
+					}
+					if !puljeStatusStepAllowed(pulje, models.PuljeStatusLocked) || !puljeStatusStepAllowed(pulje, models.PuljeStatusOpen) {
+						disabled
+					}
+					data-on:click={ puljeStatusUpdateAction(
+						pulje,
+						fmt.Sprintf("Vil du endre lukking for %s?", pulje.Name),
+						models.PuljeStatusLocked,
+						models.PuljeStatusOpen,
+					) }
+					type="checkbox"
+					class="checkbox input"
+				/>
+				<span>Puljefordeling lukket</span>
+			</label>
+		</li>
+		<li>
+			<label class="pulje-status-control">
+				<span class="pulje-step-number" aria-hidden="true">3</span>
+				<input
+					if puljeIsCompleted(pulje.Status) {
+						checked
+					}
+					if !puljeStatusStepAllowed(pulje, models.PuljeStatusCompleted) {
+						disabled
+					}
+					data-on:click={ puljeStatusUpdateAction(
+						pulje,
+						fmt.Sprintf("Vil du endre publisering av puljefordeling for %s?", pulje.Name),
+						models.PuljeStatusCompleted,
+						models.PuljeStatusLocked,
+					) }
+					type="checkbox"
+					class="checkbox input"
+				/>
+				<span>Puljefordeling publisert</span>
+			</label>
+		</li>
+	</ol>
 }
 
 templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, published bool, eventImageDir *string) {
@@ -1092,13 +1134,13 @@ templ puljeEventTags(ev puljefordeling.EmulatedEvent) {
 		<span class="pulje-event-type">
 			switch ev.EventType {
 				case models.EventTypeRoleplay:
-					@icons.Icon(icons.EventRoleplay, icons.Size32)
+					@icons.Icon(icons.EventRoleplay, icons.Size24)
 				case models.EventTypeBoardGame:
-					@icons.Icon(icons.EventBoardgame, icons.Size32)
+					@icons.Icon(icons.EventBoardgame, icons.Size24)
 				case models.EventTypeCardGame:
-					@icons.Icon(icons.EventCardgame, icons.Size32)
+					@icons.Icon(icons.EventCardgame, icons.Size24)
 				case models.EventTypeOther:
-					@icons.Icon(icons.EventOtherGames, icons.Size32)
+					@icons.Icon(icons.EventOtherGames, icons.Size24)
 			}
 			{ ev.EventType.Label() }
 		</span>
@@ -1127,6 +1169,6 @@ templ puljeEventTags(ev puljefordeling.EmulatedEvent) {
 
 templ puljeTagIcon(label string, icon icons.IconType) {
 	<li title={ label } aria-label={ label }>
-		@icons.Icon(icon, icons.Size32)
+		@icons.Icon(icon, icons.Size24)
 	</li>
 }

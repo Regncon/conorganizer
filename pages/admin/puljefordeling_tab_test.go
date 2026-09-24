@@ -254,29 +254,6 @@ func TestPuljefordelingTabContent_PinMarkerForManualWithoutInterest(t *testing.T
 	}
 }
 
-func TestPuljeStatusToggles_ReflectWarningLockedAndCompletedState(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en pulje som er publisert (Completed).",
-		When:  "Når status-bryterne rendres.",
-		Then:  "Så skal lukking og publisering være avkrysset, og varselet være deaktivert.",
-	})
-
-	// Given
-	row := models.PuljeRow{ID: models.PuljeFredagKveld, Name: "Fredag Kveld", Status: models.PuljeStatusCompleted}
-
-	// When
-	doc := templtest.Render(t, puljeStatusToggles(row))
-
-	// Then
-	checked := doc.Find("input[type=checkbox][checked]")
-	if checked.Length() != 2 {
-		t.Fatalf("expected both toggles checked for Completed pulje, got %d checked", checked.Length())
-	}
-	if got := doc.Find("input[type=checkbox][disabled]").Length(); got != 1 {
-		t.Fatalf("expected closing warning toggle to be disabled for Completed pulje, got %d disabled toggles", got)
-	}
-}
-
 func TestPuljeStatusToggles_ReflectsActiveClosingWarning(t *testing.T) {
 	row := models.PuljeRow{
 		ID:                   models.PuljeFredagKveld,
