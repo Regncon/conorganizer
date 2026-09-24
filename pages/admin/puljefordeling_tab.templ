@@ -104,6 +104,28 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 	router.Post("/api/puljefordeling/assign", puljeTildelingsHandler(db, liveManager, logger))
 	router.Put("/api/puljefordeling/interest", puljeInteresseHandler(db, liveManager, logger))
 
+	router.Delete("/api/puljefordeling/{pulje}/{event}/{billettholderId}/gm", func(w http.ResponseWriter, r *http.Request) {
+		pulje, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
+		if !ok {
+			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+			return
+		}
+		billettholderID, err := strconv.Atoi(chi.URLParam(r, "billettholderId"))
+		if err != nil || billettholderID <= 0 {
+			http.Error(w, "Invalid billettholder ID", http.StatusBadRequest)
+			return
+		}
+		eventID := chi.URLParam(r, "event")
+		if err := puljefordeling.FjernTildeling(db, pulje, eventID, billettholderID, models.EventPlayerRoleGM); err != nil {
+			tildelingsfeil(w, logger, err)
+			return
+		}
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketInterests, live.BucketRooms); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast GM removal: %w", err).Error(), "pulje_id", pulje, "event_id", eventID)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	// Remove a manual pin (×). Manual-only: solver/GM rows are untouched. The
 	// player's interest is kept, so the solver may re-seat them by simulation.
 	router.Delete("/api/puljefordeling/{pulje}/{event}/{billettholderId}", func(w http.ResponseWriter, r *http.Request) {
@@ -193,6 +215,7 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		{Name: "Puljefordeling", Url: ""},
 	})
 	@puljefordelingPage(db, logger, current, eventImageDir)
+	@puljeTildelingsDialog()
 }
 
 templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, eventImageDir *string) {
@@ -209,6 +232,8 @@ templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, 
 		data-signals__ifmissing:assignment-event-id="''"
 		data-signals__ifmissing:assignment-pulje-id="''"
 		data-signals__ifmissing:assignment-billettholder-id="0"
+		data-signals__ifmissing:assignment-picker-gm-only="false"
+		data-signals__ifmissing:assignment-picker-title="'Administrer deltaker'"
 		data-signals__ifmissing:assignment-interest-level="''"
 		data-signals__ifmissing:assignment-close-dialog="false"
 		data-signals__ifmissing:assignment-action-completed="false"
@@ -281,7 +306,6 @@ templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, 
 		@puljefordelingTabContent(db, logger, current, eventImageDir, em, emErr)
 		@puljeAssignDialog(db, logger, current, em, emErr)
 		@puljeAgeWarningDialog()
-		@puljeTildelingsDialog()
 	</div>
 }
 
@@ -306,9 +330,13 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		result, hasResult := findEmulatedPulje(em, pulje)
 		unsatisfied, hasUnsatisfied := unsatisfiedAfter(em, pulje)
 		var fordelingsvarsler []puljefordeling.Fordelingsvarsel
+		var kapasitetsvarsler []puljefordeling.Kapasitetsvarsel
 		var varslerErr error
 		if emErr == nil && hasResult {
 			fordelingsvarsler, varslerErr = puljefordeling.FinnFordelingsvarsler(db, result)
+			if varslerErr == nil {
+				kapasitetsvarsler, varslerErr = puljefordeling.FinnKapasitetsvarsler(db, result)
+			}
 			if varslerErr != nil {
 				logger.Error(varslerErr.Error(), "component", "puljefordeling", "pulje_id", pulje)
 			}
@@ -458,6 +486,10 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             white-space: nowrap;
         }
         .pulje-gm {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-2x);
+            place-items: center;
             color: var(--color-text-soft);
             font-style: italic;
         }
@@ -466,6 +498,17 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         }
         .pulje-event.missing-dm {
             border-color: var(--color-text-error, #e05050);
+        }
+        .pulje-missing-gm {
+            place-self: start;
+            block-size: auto;
+            min-block-size: var(--btn-height);
+            max-inline-size: 100%;
+            padding-block: var(--spacing-1x);
+            white-space: normal;
+            text-align: start;
+            color: var(--color-text-error, #e05050);
+            border-color: currentColor;
         }
         .pulje-badge {
             align-self: flex-start;
@@ -606,9 +649,9 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			<p class="pulje-empty">Ingen fordeling å vise for denne puljen ennå.</p>
 		} else {
 			if varslerErr != nil {
-				<p class="pulje-error">Kunne ikke kontrollere overlappende tildelinger.</p>
+				<p class="pulje-error">Kunne ikke kontrollere tildelinger og kapasitet.</p>
 			} else {
-				@puljeFordelingsvarsler(pulje, fordelingsvarsler)
+				@puljeFordelingsvarsler(pulje, fordelingsvarsler, kapasitetsvarsler)
 			}
 			<div class="pulje-event-grid">
 				for _, ev := range result.Events {
@@ -747,15 +790,28 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 			<span class="pulje-cap">{ fmt.Sprintf("%d / %d", len(ev.AssignedPlayers), ev.Capacity) }</span>
 		</div>
 		@puljeEventTags(ev)
-		if ev.GMName != "" {
-			<p class="pulje-gm">
-				Spilleder: { ev.GMName }
-				if ev.AgeGroup == models.AgeGroupAdultsOnly && !ev.GMIsOver18 {
-					<span class="pulje-badge pulje-badge--error">Under 18</span>
-				}
-			</p>
-		} else {
+		if len(ev.AssignedGMs) > 0 {
+			for _, gm := range ev.AssignedGMs {
+				<p class="pulje-gm">
+					<span>Spilleder: { gm.Name }</span>
+					if ev.AgeGroup == models.AgeGroupAdultsOnly && !gm.IsOver18 {
+						<span class="pulje-badge pulje-badge--error">Under 18</span>
+					}
+					if !published {
+						<button type="button" class="pulje-remove" aria-label={ "Fjern spilleder " + gm.Name } title={ "Fjern spilleder " + gm.Name } data-on:click={ fmt.Sprintf("@delete('/admin/api/puljefordeling/%s/%s/%d/gm')", string(pulje), ev.EventID, gm.BillettholderID) }>×</button>
+					}
+				</p>
+			}
+		} else if published {
 			<span class="pulje-badge pulje-badge--error">Mangler spilleder</span>
+		} else {
+			<button
+				type="button"
+				class="btn btn--outline pulje-missing-gm"
+				aria-haspopup="dialog"
+				aria-controls="puljefordeling-assign-dialog"
+				data-on:click={ puljeAssignDialogAction(pulje, ev, true) }
+			>Mangler spilleder · Legg til spilleder</button>
 		}
 		if ev.Undersubscribed {
 			<span class="pulje-badge">Få deltakere</span>
@@ -802,7 +858,9 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 			<button
 				type="button"
 				class="pulje-add"
-				data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $_puljefordelingAssignDialogOpen = true", ev.EventID, string(pulje)) }
+				aria-haspopup="dialog"
+				aria-controls="puljefordeling-assign-dialog"
+				data-on:click={ puljeAssignDialogAction(pulje, ev, false) }
 			>+ Legg til deltaker</button>
 		}
 	</div>

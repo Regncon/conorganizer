@@ -92,14 +92,16 @@ func TestTildeling_DragCannotConfirmGMOverlap(t *testing.T) {
 }
 
 func TestTildeling_DialogSurvivesDistributionRefresh(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "An admin is confirming a player assignment while the distribution receives live updates.", When: "The initial page and subsequent live refresh are rendered.", Then: "The confirmation dialog is rendered once outside the refreshed work area, so live updates cannot clear its pending action."})
 	// Given
 	const selector = "#tildeling-dialog"
 	db, _ := tildelingsFixture(t)
 	// When
 	doc := templtest.Render(t, puljefordelingIndex(db, testutil.NewTestLogger(), models.PuljeFredagKveld, nil))
+	refresh := templtest.Render(t, puljefordelingPage(db, testutil.NewTestLogger(), models.PuljeFredagKveld, nil))
 	// Then
 	dialog := doc.Find(selector)
-	if dialog.Length() != 1 || doc.Find("#puljefordeling-tab "+selector).Length() != 0 {
+	if dialog.Length() != 1 || doc.Find("#puljefordeling-page "+selector).Length() != 0 || refresh.Find(selector).Length() != 0 {
 		t.Fatal("assignment confirmation must live once outside the refreshed distribution")
 	}
 	if dialog.AttrOr("data-preserve-attr", "") != "open" {
