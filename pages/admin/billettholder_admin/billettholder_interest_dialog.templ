@@ -65,16 +65,7 @@ func billettholderFirstPuljeID(sections []billettholderInterestPuljeSection) mod
 }
 
 func billettholderInterestLevelIcon(level models.InterestLevel) string {
-	switch level {
-	case models.InterestLevelHigh:
-		return "🤩"
-	case models.InterestLevelMedium:
-		return "🙂"
-	case models.InterestLevelLow:
-		return "🤨"
-	default:
-		return "•"
-	}
+	return level.Emoji()
 }
 
 func billettholderInterestRoleLabel(role models.EventPlayerRole) string {
