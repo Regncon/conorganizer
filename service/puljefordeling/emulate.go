@@ -68,9 +68,21 @@ type EmulatedPulje struct {
 	PuljeID        models.Pulje
 	Name           string
 	Events         []EmulatedEvent
-	Unassigned     []string // names of interested participants who got no seat
-	NewlySatisfied int      // participants who got a top-choice seat this pulje
-	TotalScore     int      // sum of actual (unadjusted) interest scores
+	Unassigned     []string        // names of interested participants who got no seat
+	NewlySatisfied int             // participants who got a top-choice seat this pulje
+	TotalScore     int             // sum of actual (unadjusted) interest scores
+	FikkForstevalg []PuljeDeltaker // participants who got their førstevalg this pulje, by name
+	UtenForstevalg []PuljeDeltaker // participants still without førstevalg after this pulje; those who wanted it here first
+}
+
+// PuljeDeltaker is one participant in a pulje's førstevalg lists.
+type PuljeDeltaker struct {
+	BillettholderID  int
+	Name             string
+	EventTitle       string               // their seat this pulje; empty when they have none
+	Level            models.InterestLevel // their interest in that seat
+	IsGM             bool                 // they run EventTitle this pulje
+	WantedForstevalg bool                 // gave Veldig interessert on an event they could be seated in this pulje
 }
 
 // Emulation is the full preview across all puljer.
@@ -197,7 +209,9 @@ func emulateSeatings(db emulationQuerier) (Emulation, error) {
 		} else {
 			res = state.SolveSlotFixed(slot, players, pins[pulje.ID])
 		}
-		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, over18, prefs, dmSet, pins[pulje.ID], events[pulje.ID]))
+		shaped := shapePulje(pulje, slot, res, gms, names, over18, prefs, dmSet, pins[pulje.ID], events[pulje.ID])
+		shaped.FikkForstevalg, shaped.UtenForstevalg = forstevalgLister(shaped, slot, res, players, state.IsSatisfied)
+		emulation.Puljer = append(emulation.Puljer, shaped)
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
 
@@ -272,6 +286,71 @@ func shapePulje(
 	}
 
 	return out
+}
+
+// forstevalgLister lists who got their førstevalg in this pulje, and who is
+// still without it once this pulje is done, each with their seat this pulje.
+// satisfied reports the fairness state after the pulje has been solved.
+func forstevalgLister(
+	pulje EmulatedPulje,
+	slot smodel.Slot,
+	res smodel.SlotResult,
+	players []smodel.Player,
+	satisfied func(playerID string) bool,
+) (fikk, uten []PuljeDeltaker) {
+	seats := make(map[int]PuljeDeltaker)
+	for _, ev := range pulje.Events {
+		for _, pl := range ev.AssignedPlayers {
+			seats[pl.BillettholderID] = PuljeDeltaker{EventTitle: ev.Title, Level: pl.Level}
+		}
+		for _, gm := range ev.AssignedGMs {
+			seats[gm.BillettholderID] = PuljeDeltaker{EventTitle: ev.Title, IsGM: true}
+		}
+	}
+	deltaker := func(p smodel.Player) PuljeDeltaker {
+		bh, _ := strconv.Atoi(p.ID)
+		d := seats[bh]
+		d.BillettholderID = bh
+		d.Name = p.Name
+		d.WantedForstevalg = wantedForstevalg(p, slot)
+		return d
+	}
+
+	newly := make(map[string]bool, len(res.NewlySatisfied))
+	for _, pid := range res.NewlySatisfied {
+		newly[pid] = true
+	}
+	for _, p := range players {
+		switch {
+		case newly[p.ID]:
+			fikk = append(fikk, deltaker(p))
+		case !satisfied(p.ID):
+			uten = append(uten, deltaker(p))
+		}
+	}
+	sort.SliceStable(fikk, func(i, j int) bool { return fikk[i].Name < fikk[j].Name })
+	sort.SliceStable(uten, func(i, j int) bool {
+		if uten[i].WantedForstevalg != uten[j].WantedForstevalg {
+			return uten[i].WantedForstevalg
+		}
+		return uten[i].Name < uten[j].Name
+	})
+	return fikk, uten
+}
+
+// wantedForstevalg reports whether the player gave Veldig interessert on an
+// event in this slot that they could be seated in (an 18+ game does not count
+// for a minor).
+func wantedForstevalg(p smodel.Player, slot smodel.Slot) bool {
+	for _, ev := range slot.Events {
+		if ev.AdultsOnly && !p.IsOver18 {
+			continue
+		}
+		if p.Prefs[slot.ID][ev.ID] == smodel.MaxScore {
+			return true
+		}
+	}
+	return false
 }
 
 // assignedPlayers turns solver player IDs into display rows: name, DM flag, the

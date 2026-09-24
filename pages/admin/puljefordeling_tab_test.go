@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
@@ -107,21 +108,15 @@ func TestPuljefordelingTabContent_ShowsRunningUnsatisfiedCount(t *testing.T) {
 	seedTabEventWithInterest(t, db, "kveldsspill", "Kveldsspill", models.PuljeLordagKveld)
 
 	// When / Then: earlier pulje — participant not yet satisfied.
-	fredag := strings.Join(
-		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil)), "#puljefordeling-tab"),
-		" ",
-	)
-	if !strings.Contains(fredag, "1 uten førstevalg så langt") {
-		t.Fatalf("expected Fredag tab to report 1 still without first choice\nactual text: %s", fredag)
+	fredag := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+	if got := utenForstevalgTile(fredag); got != "1" {
+		t.Fatalf("expected Fredag tab to report 1 still without first choice, got %q", got)
 	}
 
 	// When / Then: later pulje — participant gets their first choice.
-	lordag := strings.Join(
-		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeLordagKveld, nil)), "#puljefordeling-tab"),
-		" ",
-	)
-	if !strings.Contains(lordag, "0 uten førstevalg så langt") {
-		t.Fatalf("expected Lørdag tab to report 0 still without first choice\nactual text: %s", lordag)
+	lordag := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeLordagKveld, nil))
+	if got := utenForstevalgTile(lordag); got != "0" {
+		t.Fatalf("expected Lørdag tab to report 0 still without first choice, got %q", got)
 	}
 }
 
@@ -397,4 +392,8 @@ func TestPuljefordelingTabContent_AdultGMInAdultsOnlyHasNoBadge(t *testing.T) {
 	if n := doc.Find(".pulje-gm .pulje-badge--error").Length(); n != 0 {
 		t.Fatalf("an adult GM must not get an under-18 badge, got %d", n)
 	}
+}
+
+func utenForstevalgTile(doc *goquery.Document) string {
+	return strings.TrimSpace(doc.Find(`.pulje-stat[aria-controls="pulje-liste-uten-forstevalg"] .pulje-stat-value`).Text())
 }

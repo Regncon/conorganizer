@@ -1,0 +1,222 @@
+package admin
+
+import (
+	"strconv"
+
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
+)
+
+// puljeForstevalgStats shows the pulje's førstevalg numbers as tiles. Each tile
+// opens a modal with the participants behind the number.
+templ puljeForstevalgStats(result puljefordeling.EmulatedPulje) {
+	<div class="pulje-stats">
+		@puljeStatTile("fikk-forstevalg", len(result.FikkForstevalg), "Fikk førstevalg", "i denne puljen", "success")
+		@puljeStatTile("uten-forstevalg", len(result.UtenForstevalg), "Uten førstevalg så langt", "etter denne puljen", puljeStatTone(len(result.UtenForstevalg), "warning"))
+		@puljeStatTile("uten-plass", len(result.Unassigned), "Uten plass", "i denne puljen", puljeStatTone(len(result.Unassigned), "error"))
+	</div>
+	@puljeListDialog("fikk-forstevalg", "Fikk førstevalg", "Deltakere som fikk et arrangement de ga Veldig interessert, for første gang i denne puljen.") {
+		@puljeDeltakerList(result.FikkForstevalg)
+	}
+	@puljeListDialog("uten-forstevalg", "Uten førstevalg så langt", "Deltakere som ennå ikke har fått et arrangement de ga Veldig interessert. De som ville ha førstevalg i denne puljen står øverst.") {
+		@puljeDeltakerList(result.UtenForstevalg)
+	}
+	@puljeListDialog("uten-plass", "Uten plass", "Interesserte deltakere som ikke fikk plass på noe arrangement i denne puljen.") {
+		if len(result.Unassigned) == 0 {
+			<p class="pulje-list-empty">Ingen.</p>
+		} else {
+			<ul class="pulje-list">
+				for _, name := range result.Unassigned {
+					<li><span class="pulje-list-name">{ name }</span></li>
+				}
+			</ul>
+		}
+	}
+}
+
+// puljeStatTone only colours a tile when there is something to look at.
+func puljeStatTone(count int, tone string) string {
+	if count == 0 {
+		return "neutral"
+	}
+	return tone
+}
+
+templ puljeStatTile(list string, count int, label, hint, tone string) {
+	<button
+		type="button"
+		class="pulje-stat"
+		data-tone={ tone }
+		aria-haspopup="dialog"
+		aria-controls={ "pulje-liste-" + list }
+		data-on:click={ "$_puljeListe = '" + list + "'" }
+	>
+		<span class="pulje-stat-value">{ strconv.Itoa(count) }</span>
+		<span class="pulje-stat-label">{ label }</span>
+		<span class="pulje-stat-hint">{ hint } · Vis liste</span>
+	</button>
+}
+
+templ puljeListDialog(list, title, description string) {
+	<dialog
+		id={ "pulje-liste-" + list }
+		class="pulje-list-dialog"
+		closedby="any"
+		aria-labelledby={ "pulje-liste-" + list + "-title" }
+		data-preserve-attr="open"
+		data-effect={ "$_puljeListe === '" + list + "' ? (!el.open && el.showModal()) : (el.open && el.close())" }
+		data-on:close={ "$_puljeListe === '" + list + "' && ($_puljeListe = '')" }
+		data-on:click__stop="if (evt.target === el) $_puljeListe = ''"
+	>
+		<header>
+			<h3 id={ "pulje-liste-" + list + "-title" }>{ title }</h3>
+			<button type="button" class="btn btn--outline" data-on:click="$_puljeListe = ''">Lukk</button>
+		</header>
+		<p class="pulje-list-description">{ description }</p>
+		{ children... }
+	</dialog>
+}
+
+templ puljeDeltakerList(deltakere []puljefordeling.PuljeDeltaker) {
+	if len(deltakere) == 0 {
+		<p class="pulje-list-empty">Ingen.</p>
+	} else {
+		<ul class="pulje-list">
+			for _, d := range deltakere {
+				<li>
+					<span class="pulje-list-name">{ d.Name }</span>
+					if d.WantedForstevalg && d.Level != models.InterestLevelHigh {
+						<span class="pulje-list-tag">Ville ha førstevalg her</span>
+					}
+					<span class="pulje-list-seat">
+						switch {
+							case d.IsGM:
+								{ "Spilleder på " + d.EventTitle }
+							case d.EventTitle == "":
+								<em>Uten plass</em>
+							default:
+								<span aria-hidden="true">{ d.Level.Emoji() }</span>
+								{ d.EventTitle }
+						}
+					</span>
+				</li>
+			}
+		</ul>
+	}
+}
+
+templ puljeForstevalgStyles() {
+	<style>
+		.pulje-stats {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+			gap: var(--spacing-3x);
+		}
+		.pulje-stat {
+			--tone: var(--color-text-strong);
+
+			display: grid;
+			gap: var(--spacing-1x);
+			padding: var(--spacing-3x) var(--spacing-4x);
+			border: 1px solid var(--level-3-border);
+			border-inline-start: 4px solid var(--tone);
+			border-radius: var(--border-radius-1x);
+			background-color: var(--level-2-background);
+			color: var(--color-text-soft);
+			font: inherit;
+			text-align: start;
+			cursor: pointer;
+			transition: border-color 200ms ease, background-color 200ms ease;
+
+			&:hover,
+			&:focus-visible {
+				border-color: var(--tone);
+				background-color: color-mix(in srgb, var(--tone) 8%, var(--level-2-background));
+			}
+			&[data-tone="neutral"] {
+				--tone: var(--level-3-border);
+			}
+			&[data-tone="success"] {
+				--tone: var(--color-success);
+			}
+			&[data-tone="warning"] {
+				--tone: var(--color-warning);
+			}
+			&[data-tone="error"] {
+				--tone: var(--color-error);
+			}
+		}
+		.pulje-stat-value {
+			color: var(--color-text-strong);
+			font-size: 1.75rem;
+			font-variant-numeric: tabular-nums;
+			font-weight: 700;
+			line-height: 1.1;
+		}
+		.pulje-stat-label {
+			color: var(--color-text-strong);
+			font-weight: 600;
+		}
+		.pulje-stat-hint {
+			font-size: var(--text-body-small);
+		}
+		.pulje-list-dialog {
+			inline-size: min(36rem, calc(100dvw - 2rem));
+			max-block-size: calc(100dvh - 2rem);
+			padding: var(--spacing-5x);
+			border: 1px solid var(--level-3-border);
+			border-radius: var(--border-radius-2x);
+			background-color: var(--level-1-background);
+			color: var(--color-text-strong);
+
+			&::backdrop {
+				background-color: rgb(0 0 0 / 60%);
+			}
+			header {
+				display: flex;
+				place-content: space-between;
+				place-items: center;
+				gap: var(--spacing-3x);
+			}
+		}
+		.pulje-list-description,
+		.pulje-list-empty {
+			margin-block: var(--spacing-2x) var(--spacing-4x);
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+		}
+		.pulje-list {
+			display: grid;
+			gap: var(--spacing-1x);
+			margin: 0;
+			padding: 0;
+			list-style: none;
+
+			li {
+				display: flex;
+				flex-wrap: wrap;
+				place-items: center;
+				gap: var(--spacing-1x) var(--spacing-3x);
+				padding: var(--spacing-2x) var(--spacing-3x);
+				border: 1px solid var(--level-3-border);
+				border-radius: var(--border-radius-1x);
+				background-color: var(--level-3-background);
+			}
+		}
+		.pulje-list-name {
+			font-weight: 600;
+		}
+		.pulje-list-tag {
+			padding: 0 var(--spacing-2x);
+			border-radius: 999px;
+			background-color: color-mix(in srgb, var(--color-warning) 20%, transparent);
+			color: var(--color-warning);
+			font-size: var(--text-body-small);
+		}
+		.pulje-list-seat {
+			margin-inline-start: auto;
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+		}
+	</style>
+}
