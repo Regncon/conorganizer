@@ -148,13 +148,15 @@ templ InterestIndicator(interests []BillettholderInterest) {
 				}
 			}
 
-			&[data-open] .interest-indicator-tooltip {
-				opacity: 1;
-				transform: none;
+			@media (hover: none) {
+				&[data-open] .interest-indicator-tooltip {
+					opacity: 1;
+					transform: none;
+				}
 			}
 
 			@media (hover: hover) {
-				&:hover .interest-indicator-tooltip {
+				&:is(:hover, :focus-visible) .interest-indicator-tooltip {
 					opacity: 1;
 					transform: none;
 				}
@@ -163,12 +165,9 @@ templ InterestIndicator(interests []BillettholderInterest) {
 	</style>
 	<span
 		class="interest-indicator"
-		role="button"
 		tabindex="0"
 		data-on:click__prevent="el.toggleAttribute('data-open')"
-		data-on:keydown="(evt.key === 'Enter' || evt.key === ' ') && (evt.preventDefault(), el.toggleAttribute('data-open'))"
 		data-on:click__outside="el.removeAttribute('data-open')"
-		data-on:focusout="el.removeAttribute('data-open')"
 	>
 		<span class="interest-indicator-hearts" aria-hidden="true">
 			for _, interest := range interests {
