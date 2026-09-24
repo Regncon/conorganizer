@@ -1,6 +1,7 @@
 package profilecomponent
 
 import (
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ui/button"
 	"github.com/Regncon/conorganizer/models"
 )
@@ -20,7 +21,7 @@ templ singleEvent(event models.EventCardModel) {
 	</a>
 }
 
-templ MyEvents(events []models.EventCardModel) {
+templ MyEvents(events []models.EventCardModel, email string) {
 	<style>
     .submit-event-message {
         display: flex;
@@ -33,6 +34,24 @@ templ MyEvents(events []models.EventCardModel) {
         button {
             align-self: flex-end;
             flex-shrink: 0;
+        }
+    }
+
+    .my-events-account-info {
+        display: flex;
+        place-items: center;
+        gap: var(--spacing-1x);
+        margin: 0;
+        font-size: var(--text-body-small);
+        color: var(--color-text-soft);
+        overflow-wrap: anywhere;
+
+        .inline-icon {
+            flex-shrink: 0;
+        }
+
+        strong {
+            color: var(--color-text-strong);
         }
     }
 
@@ -60,5 +79,11 @@ templ MyEvents(events []models.EventCardModel) {
 			</p>
 			<button type="submit" class="btn btn--outline">Send inn arrangement</button>
 		</form>
+		if email != "" {
+			<p class="my-events-account-info">
+				@icons.Icon(icons.Info, icons.Size16)
+				<span>Arrangementene lagres på kontoen <strong>{ email }</strong></span>
+			</p>
+		}
 	</div>
 }

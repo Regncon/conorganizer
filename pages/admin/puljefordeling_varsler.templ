@@ -16,11 +16,32 @@ func fordelingsvarselOppsummering(varsel puljefordeling.Fordelingsvarsel) string
 	return fmt.Sprintf("%d spillederoppdrag · %d %s", varsel.AntallGMOppdrag, varsel.AntallSpillerplasser, plasser)
 }
 
-templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordelingsvarsel) {
-	if len(varsler) > 0 {
+templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordelingsvarsel, kapasitetsvarsler []puljefordeling.Kapasitetsvarsel) {
+	if len(varsler) > 0 || len(kapasitetsvarsler) > 0 {
 		<section class="fordelingsvarsler" aria-labelledby={ "fordelingsvarsler-" + string(pulje) }>
-			<h3 id={ "fordelingsvarsler-" + string(pulje) }><span aria-hidden="true">⚠</span> Overlappende tildelinger</h3>
-			<p>Disse billettholderne har flere tildelinger i samme pulje. Åpne navnet for å se alle arrangementer og roller.</p>
+			<h3 id={ "fordelingsvarsler-" + string(pulje) }><span aria-hidden="true">⚠</span> Varsler om tildelinger</h3>
+			if len(kapasitetsvarsler) > 0 {
+				<h4>Over kapasitet</h4>
+				<p>Disse arrangementene har flere spillere enn oppgitt kapasitet. Manuelle spillerplasser beholdes. Åpne arrangementet for å se spillerne.</p>
+				for _, varsel := range kapasitetsvarsler {
+					<details
+						id={ fmt.Sprintf("kapasitetsvarsel-%s-%s", pulje, varsel.EventID) }
+						data-kapasitetsvarsel={ varsel.EventID }
+						data-preserve-attr="open"
+					>
+						<summary><strong>{ varsel.EventTitle }</strong><span>{ fmt.Sprintf("%d / %d spillerplasser", varsel.AntallSpillerplasser, varsel.Kapasitet) }</span></summary>
+						<ul>
+							for _, navn := range varsel.Spillere {
+								<li>{ navn }</li>
+							}
+						</ul>
+					</details>
+				}
+			}
+			if len(varsler) > 0 {
+				<h4>Overlappende tildelinger</h4>
+				<p>Disse billettholderne har flere tildelinger i samme pulje. Åpne navnet for å se alle arrangementer og roller.</p>
+			}
 			for _, varsel := range varsler {
 				<details
 					id={ fmt.Sprintf("fordelingsvarsel-%s-%d", pulje, varsel.BillettholderID) }

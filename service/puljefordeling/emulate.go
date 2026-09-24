@@ -29,6 +29,12 @@ type AssignedPlayer struct {
 	IsOver18        bool                 // participant is over 18; a seated minor in an AdultsOnly game is always an admin pin
 }
 
+type AssignedGM struct {
+	BillettholderID int
+	Name            string
+	IsOver18        bool
+}
+
 // Seat sources recorded on relation_events_players. Manual seats are admin pins
 // the solver must honour; solver seats are produced by a committed distribution.
 const (
@@ -43,6 +49,7 @@ type EmulatedEvent struct {
 	EventID           string
 	Title             string
 	Capacity          int
+	AssignedGMs       []AssignedGM
 	GMName            string           // sorted GM names, empty if the event has no GM assigned
 	GMIsOver18        bool             // true when all GMs are adults; any minor keeps the 18+ warning visible
 	AssignedPlayers   []AssignedPlayer // sorted by name
@@ -245,8 +252,15 @@ func shapePulje(
 			emEv.GMIsOver18 = true
 			for _, gmID := range gmIDs {
 				gmNames = append(gmNames, names[gmID])
+				emEv.AssignedGMs = append(emEv.AssignedGMs, AssignedGM{BillettholderID: gmID, Name: names[gmID], IsOver18: over18[gmID]})
 				emEv.GMIsOver18 = emEv.GMIsOver18 && over18[gmID]
 			}
+			sort.Slice(emEv.AssignedGMs, func(i, j int) bool {
+				if emEv.AssignedGMs[i].Name != emEv.AssignedGMs[j].Name {
+					return emEv.AssignedGMs[i].Name < emEv.AssignedGMs[j].Name
+				}
+				return emEv.AssignedGMs[i].BillettholderID < emEv.AssignedGMs[j].BillettholderID
+			})
 			sort.Strings(gmNames)
 			emEv.GMName = strings.Join(gmNames, ", ")
 		}

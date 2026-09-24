@@ -198,8 +198,8 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 					placeholder="Tittel på arrangementet"
 					required
 					pattern=".{3,}"
-					maxlength="45"
-					title="Bruk mellom 3 og 45 teikn"
+					maxlength="50"
+					title="Bruk mellom 3 og 50 teikn"
 				/>
 				@errorfeedback.RenderMessage("title")
 			</label>
@@ -216,7 +216,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 					placeholder="Kjapp introduksjon til arrangementet"
 					required
 					minlength="3"
-					maxlength="85"
+					maxlength="110"
 				>
 					{ shouldShowStringValue(intro) }
 				</textarea>

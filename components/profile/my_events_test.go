@@ -22,7 +22,7 @@ func TestMyEvents_WhenUserHasNoEvents_RendersCreateEventEntry(t *testing.T) {
 	expectedButtonText := []string{"Send inn arrangement"}
 
 	// When
-	doc := templtest.Render(t, MyEvents(nil))
+	doc := templtest.Render(t, MyEvents(nil, ""))
 	actualFormAction, actualFormActionExists := doc.Find(`form.submit-event-message`).Attr("action")
 	actualFormMethod, actualFormMethodExists := doc.Find(`form.submit-event-message`).Attr("method")
 	actualButtonText := templtest.CollectTexts(doc, `form.submit-event-message button[type="submit"]`)
@@ -36,6 +36,51 @@ func TestMyEvents_WhenUserHasNoEvents_RendersCreateEventEntry(t *testing.T) {
 	}
 	if !slices.Equal(expectedButtonText, actualButtonText) {
 		t.Fatalf("create button text mismatch\nexpected: %v\nactual:   %v", expectedButtonText, actualButtonText)
+	}
+}
+
+func TestMyEvents_RendersAccountEmailInfo(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren er logget inn med en e-postadresse.",
+		When:  "Når Mine arrangementer vises.",
+		Then:  "Så skal brukeren se hvilken konto arrangementene lagres på.",
+	})
+
+	// Given
+	expectedInfoText := []string{"Arrangementene lagres på kontoen ola.nordmann@example.no"}
+	expectedEmail := []string{"ola.nordmann@example.no"}
+
+	// When
+	doc := templtest.Render(t, MyEvents(nil, "ola.nordmann@example.no"))
+	actualInfoText := templtest.CollectTexts(doc, ".my-events-account-info")
+	actualEmail := templtest.CollectTexts(doc, ".my-events-account-info strong")
+
+	// Then
+	if !slices.Equal(expectedInfoText, actualInfoText) {
+		t.Fatalf("account info text mismatch\nexpected: %v\nactual:   %v", expectedInfoText, actualInfoText)
+	}
+	if !slices.Equal(expectedEmail, actualEmail) {
+		t.Fatalf("account email mismatch\nexpected: %v\nactual:   %v", expectedEmail, actualEmail)
+	}
+}
+
+func TestMyEvents_WhenEmailIsMissing_HidesAccountInfo(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren mangler e-postadresse.",
+		When:  "Når Mine arrangementer vises.",
+		Then:  "Så skal kontoinformasjonen ikke vises.",
+	})
+
+	// Given
+	expectedInfoCount := 0
+
+	// When
+	doc := templtest.Render(t, MyEvents(nil, ""))
+	actualInfoCount := doc.Find(".my-events-account-info").Length()
+
+	// Then
+	if actualInfoCount != expectedInfoCount {
+		t.Fatalf("account info count mismatch\nexpected: %d\nactual:   %d", expectedInfoCount, actualInfoCount)
 	}
 }
 
@@ -61,7 +106,7 @@ func TestMyEvents_RendersStatusAwareEventLinks(t *testing.T) {
 	}
 
 	// When
-	doc := templtest.Render(t, MyEvents(events))
+	doc := templtest.Render(t, MyEvents(events, ""))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then
@@ -83,7 +128,7 @@ func TestMyEvents_WhenEventTitleIsMissing_RendersFallbackTitle(t *testing.T) {
 	}
 
 	// When
-	doc := templtest.Render(t, MyEvents(events))
+	doc := templtest.Render(t, MyEvents(events, ""))
 	actualTitle := templtest.CollectTexts(doc, ".profile-event-bar-title")
 	actualHref, actualHrefExists := doc.Find(".profile-event-bar").Attr("href")
 
