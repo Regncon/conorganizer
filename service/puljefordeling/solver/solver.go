@@ -238,13 +238,15 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 	// Solve the free pool over the reduced-capacity events.
 	assignments := make(map[string][]string)
 	var moved map[string]struct{}
+	var scores map[string]model.ScoreBreakdown
 	if len(interested) > 0 {
 		rng := rand.New(rand.NewPCG(uint64(seed), 0)) //nolint:gosec
 		rng.Shuffle(len(interested), func(i, j int) {
 			interested[i], interested[j] = interested[j], interested[i]
 		})
-		assignments, moved = s.runMCMF(slot.ID, events, interested)
+		assignments, moved, scores = s.runMCMF(slot.ID, events, interested)
 	}
+	result.Scores = scores
 
 	// Merge pinned placements into the assignment.
 	for evID, pids := range pinnedByEvent {
@@ -364,16 +366,17 @@ func adultsOnlyEvents(events []model.Event) map[string]struct{} {
 }
 
 // runMCMF builds and solves the flow network for the given events and players,
-// returning the raw assignment map (eventID -> []playerID, unsorted) and the set
-// of player IDs that were bumped off an event by a residual-edge augmentation.
+// returning the raw assignment map (eventID -> []playerID, unsorted), the set
+// of player IDs that were bumped off an event by a residual-edge augmentation,
+// and the score breakdown of each seated player's final edge.
 func (s *State) runMCMF(
 	slotID string,
 	events []model.Event,
 	players []model.Player,
-) (map[string][]string, map[string]struct{}) {
+) (map[string][]string, map[string]struct{}, map[string]model.ScoreBreakdown) {
 	assignments := make(map[string][]string)
 	if len(events) == 0 {
-		return assignments, nil
+		return assignments, nil, nil
 	}
 
 	// Node layout:
@@ -410,16 +413,7 @@ func (s *State) runMCMF(
 			if ev.AdultsOnly && !p.IsOver18 {
 				continue
 			}
-			_, satisfied := s.satisfied[p.ID]
-			_, seated := s.seated[p.ID]
-			_, isDM := s.isDM[p.ID]
-			w := adjustScore(
-				score,
-				satisfied,
-				!seated,
-				isDM,
-				s.misses[p.ID],
-			)
+			w := s.playerScore(p.ID, score).Total
 			// Cost is negated (we minimise cost = maximise weight). The
 			// participation bonus is folded into every assignment edge so the
 			// flow stops once a new seat would cost more than it is worth.
@@ -450,6 +444,7 @@ func (s *State) runMCMF(
 	}
 
 	finalScore := make(map[string]model.Score, len(players))
+	scores := make(map[string]model.ScoreBreakdown, len(players))
 	for i, p := range players {
 		for _, eid := range g.adj[i+1] {
 			e := g.edges[eid]
@@ -459,6 +454,7 @@ func (s *State) runMCMF(
 			evID := events[e.to-P-1].ID
 			assignments[evID] = append(assignments[evID], p.ID)
 			finalScore[p.ID] = p.Prefs[slotID][evID]
+			scores[p.ID] = s.playerScore(p.ID, finalScore[p.ID])
 		}
 	}
 
@@ -473,7 +469,16 @@ func (s *State) runMCMF(
 		}
 	}
 
-	return assignments, moved
+	return assignments, moved, scores
+}
+
+// playerScore values a seat with the given interest for playerID, using the
+// fairness state as it stands before this slot's result is applied.
+func (s *State) playerScore(playerID string, score model.Score) model.ScoreBreakdown {
+	_, satisfied := s.satisfied[playerID]
+	_, seated := s.seated[playerID]
+	_, isDM := s.isDM[playerID]
+	return scoreBreakdown(score, satisfied, !seated, isDM, s.misses[playerID])
 }
 
 // adjustScore returns the priority weight for a (player, event) edge. Larger =
@@ -484,22 +489,29 @@ func (s *State) runMCMF(
 //     player is unsatisfied.
 //   - The DM bump applies to every edge but stays within its band.
 func adjustScore(score model.Score, satisfied, neverSeated, isDM bool, misses int) int {
-	w := bandBase(score, satisfied)
+	return scoreBreakdown(score, satisfied, neverSeated, isDM, misses).Total
+}
+
+// scoreBreakdown is adjustScore with each part kept, so the UI can explain it.
+func scoreBreakdown(score model.Score, satisfied, neverSeated, isDM bool, misses int) model.ScoreBreakdown {
+	b := model.ScoreBreakdown{
+		Score:     score,
+		Satisfied: satisfied,
+		Band:      bandBase(score, satisfied),
+	}
 
 	if !satisfied && score == model.MaxScore {
-		bonus := misses * missStep
-		if bonus > missCap {
-			bonus = missCap
-		}
-		w += bonus
+		b.Misses = misses
+		b.MissBonus = min(misses*missStep, missCap)
 	}
 	if !satisfied && neverSeated {
-		w += neverSeatedBump
+		b.NeverSeatedBump = neverSeatedBump
 	}
 	if isDM {
-		w += dmBump
+		b.DMBump = dmBump
 	}
-	return w
+	b.Total = b.Band + b.MissBonus + b.NeverSeatedBump + b.DMBump
+	return b
 }
 
 // bandBase returns the category base weight for an edge.

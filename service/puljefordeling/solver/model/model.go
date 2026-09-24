@@ -48,14 +48,28 @@ type Weekend struct {
 	Players []Player
 }
 
+// ScoreBreakdown is how the solver valued one player's seat: the interest band
+// plus the fairness bumps. Total is the edge weight the solver maximised.
+type ScoreBreakdown struct {
+	Score           Score // the player's interest in the event
+	Satisfied       bool  // already had a top choice before this slot
+	Band            int
+	Misses          int // prior puljer with a missed top choice
+	MissBonus       int
+	NeverSeatedBump int
+	DMBump          int
+	Total           int
+}
+
 // SlotResult is the assignment output for a single slot.
 type SlotResult struct {
 	SlotID                string
-	Assignments           map[string][]string // eventID -> assigned playerIDs
-	UndersubscribedEvents []string            // eventIDs assigned fewer players than MinPlayers — flagged for organiser review (not cancelled)
-	Unassigned            []string            // playerIDs with interest but no seat
-	NewlySatisfied        []string            // playerIDs satisfied for the first time this slot
-	MovedPlayers          []string            // playerIDs bumped down to a strictly lower-interest event to make room (lateral, equal-interest swaps are excluded)
-	TotalScore            int                 // sum of actual (unadjusted) scores for all assignments
-	Seed                  int64               // seed used for tie-breaking shuffle this slot
+	Assignments           map[string][]string       // eventID -> assigned playerIDs
+	UndersubscribedEvents []string                  // eventIDs assigned fewer players than MinPlayers — flagged for organiser review (not cancelled)
+	Unassigned            []string                  // playerIDs with interest but no seat
+	NewlySatisfied        []string                  // playerIDs satisfied for the first time this slot
+	MovedPlayers          []string                  // playerIDs bumped down to a strictly lower-interest event to make room (lateral, equal-interest swaps are excluded)
+	TotalScore            int                       // sum of actual (unadjusted) scores for all assignments
+	Scores                map[string]ScoreBreakdown // playerID -> how the solver valued their seat; free-pool seats only (not pins or replayed puljer)
+	Seed                  int64                     // seed used for tie-breaking shuffle this slot
 }

@@ -22,11 +22,12 @@ import (
 type AssignedPlayer struct {
 	BillettholderID int // participant id, for manual-seat removal from the UI
 	Name            string
-	IsDM            bool                 // runs at least one game in the weekend (DM bump)
-	Level           models.InterestLevel // their interest in the game they got
-	Moved           bool                 // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
-	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
-	IsOver18        bool                 // participant is over 18; a seated minor in an AdultsOnly game is always an admin pin
+	IsDM            bool                   // runs at least one game in the weekend (DM bump)
+	Level           models.InterestLevel   // their interest in the game they got
+	Moved           bool                   // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
+	Manual          bool                   // manually pinned into this event by an admin (source='manual'), not placed by the solver
+	IsOver18        bool                   // participant is over 18; a seated minor in an AdultsOnly game is always an admin pin
+	Score           *smodel.ScoreBreakdown // how the solver valued this seat; nil for pins and replayed (published) puljer
 }
 
 type AssignedGM struct {
@@ -239,7 +240,7 @@ func shapePulje(
 			EventID:         ev.ID,
 			Title:           ev.Name,
 			Capacity:        ev.Capacity,
-			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, over18, prefs, dmSet, moved, manual),
+			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, over18, prefs, dmSet, moved, manual, res.Scores),
 			Undersubscribed: under[ev.ID],
 		}
 		if m, ok := meta[ev.ID]; ok {
@@ -286,6 +287,7 @@ func assignedPlayers(
 	dmSet map[int]bool,
 	moved map[string]bool,
 	manual map[string][]string,
+	scores map[string]smodel.ScoreBreakdown,
 ) []AssignedPlayer {
 	if len(ids) == 0 {
 		return nil
@@ -304,6 +306,9 @@ func assignedPlayers(
 			Moved:           moved[id],
 			Manual:          slices.Contains(manual[id], eventID),
 			IsOver18:        over18[bh],
+		}
+		if score, ok := scores[id]; ok {
+			ap.Score = &score
 		}
 		if byPulje, ok := prefs[bh]; ok {
 			got := byPulje[puljeID][eventID]
