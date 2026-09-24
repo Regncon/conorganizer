@@ -1,0 +1,47 @@
+package profilecomponent
+
+import "github.com/Regncon/conorganizer/components/icons"
+
+templ LoggedInAccount(email string) {
+	<style>
+    .logged-in-account {
+        display: flex;
+        place-items: center;
+        gap: var(--spacing-3x);
+        padding-block: var(--spacing-4x);
+        padding-inline: var(--spacing-4x);
+        margin-block-end: var(--spacing-4x);
+        background-color: var(--level-3-background);
+        border: 1px solid var(--level-3-border);
+        border-radius: var(--border-radius-2x);
+        color: var(--color-text-soft);
+
+        p {
+            margin: 0;
+        }
+    }
+
+    .logged-in-account-text {
+        display: flex;
+        flex-direction: column;
+        min-inline-size: 0;
+    }
+
+    .logged-in-account-label {
+        font-size: var(--text-body-small);
+    }
+
+    .logged-in-account-email {
+        font-weight: bold;
+        color: var(--color-text-strong);
+        overflow-wrap: anywhere;
+    }
+    </style>
+	<div class="logged-in-account">
+		@icons.Icon(icons.User, icons.Size32)
+		<div class="logged-in-account-text">
+			<p class="logged-in-account-label">Innlogget som</p>
+			<p class="logged-in-account-email">{ email }</p>
+		</div>
+	</div>
+}
