@@ -39,14 +39,15 @@ func TestSolveSlot_RecordsScoreBreakdownForSeatedPlayers(t *testing.T) {
 	assertScoreBreakdown(t, second, winner, expectedWinner)
 }
 
-func TestSolveSlotFixed_PinnedPlayersHaveNoScoreBreakdown(t *testing.T) {
+func TestSolveSlotFixed_PinnedPlayerIsScoredByTheirInterest(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "a player pinned into a game by an admin",
+		Given: "a player with top-choice interest pinned into that game by an admin",
 		When:  "the slot is solved",
-		Then:  "no score breakdown is recorded, because the solver never valued that seat",
+		Then:  "the pin is scored by their interest and fulfils their top choice",
 	})
 
 	// Given
+	expected := model.ScoreBreakdown{Score: 5, Band: bandUnsatVeldig, NeverSeatedBump: neverSeatedBump, Total: bandUnsatVeldig + neverSeatedBump}
 	s1 := slot("s1", event("e1", 2))
 	players := []model.Player{player("p1", prefs("s1", map[string]model.Score{"e1": 5}))}
 	state := NewState(2026, weekendOf(s1))
@@ -55,8 +56,30 @@ func TestSolveSlotFixed_PinnedPlayersHaveNoScoreBreakdown(t *testing.T) {
 	result := state.SolveSlotFixed(s1, players, map[string][]string{"p1": {"e1"}})
 
 	// Then
+	assertScoreBreakdown(t, result, "p1", expected)
+	if !state.IsSatisfied("p1") {
+		t.Fatal("expected a top-choice pin to count as the player's førstevalg")
+	}
+}
+
+func TestSolveSlotFixed_PinWithoutInterestHasNoScoreBreakdown(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "a player pinned into a game they expressed no interest in",
+		When:  "the slot is solved",
+		Then:  "no score breakdown is recorded, because there is no interest to value",
+	})
+
+	// Given
+	s1 := slot("s1", event("e1", 2), event("e2", 2))
+	players := []model.Player{player("p1", prefs("s1", map[string]model.Score{"e2": 5}))}
+	state := NewState(2026, weekendOf(s1))
+
+	// When
+	result := state.SolveSlotFixed(s1, players, map[string][]string{"p1": {"e1"}})
+
+	// Then
 	if _, ok := result.Scores["p1"]; ok {
-		t.Fatalf("expected no score breakdown for a pinned player, got %+v", result.Scores["p1"])
+		t.Fatalf("expected no score breakdown without interest, got %+v", result.Scores["p1"])
 	}
 }
 

@@ -70,6 +70,6 @@ type SlotResult struct {
 	NewlySatisfied        []string                  // playerIDs satisfied for the first time this slot
 	MovedPlayers          []string                  // playerIDs bumped down to a strictly lower-interest event to make room (lateral, equal-interest swaps are excluded)
 	TotalScore            int                       // sum of actual (unadjusted) scores for all assignments
-	Scores                map[string]ScoreBreakdown // playerID -> how the solver valued their seat; free-pool seats only (not pins or replayed puljer)
+	Scores                map[string]ScoreBreakdown // playerID -> how the solver valued their seat, pins included when the player has interest in the event; empty for replayed puljer
 	Seed                  int64                     // seed used for tie-breaking shuffle this slot
 }

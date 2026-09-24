@@ -778,9 +778,62 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
                 font-weight: 700;
             }
         }
+        .pulje-score-note {
+            font-style: italic;
+        }
         .pulje-score-title {
             color: var(--color-text-strong);
             font-weight: 700;
+        }
+        .pulje-interest-trigger {
+            padding: 0;
+            border: none;
+            border-radius: var(--border-radius-1x);
+            background: transparent;
+            font: inherit;
+            cursor: pointer;
+
+            &:hover,
+            &:focus-visible {
+                background-color: var(--level-2-background);
+            }
+        }
+        .pulje-interest-menu {
+            position-area: block-end span-inline-start;
+            position-try-fallbacks: flip-block;
+            margin: var(--spacing-1x) 0;
+            padding: var(--spacing-1x);
+            border: 1px solid var(--level-3-border);
+            border-radius: var(--border-radius-1x);
+            background-color: var(--level-1-background);
+            box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+            color: var(--color-text-strong);
+
+            &:popover-open {
+                display: grid;
+            }
+            button {
+                display: flex;
+                place-items: center;
+                gap: var(--spacing-2x);
+                padding: var(--spacing-1x) var(--spacing-3x);
+                border: none;
+                border-radius: var(--border-radius-1x);
+                background: transparent;
+                color: inherit;
+                font: inherit;
+                font-size: var(--text-body-small);
+                text-align: start;
+                cursor: pointer;
+
+                &:hover,
+                &:focus-visible {
+                    background-color: var(--level-3-background);
+                }
+            }
+            .is-current {
+                font-weight: 700;
+            }
         }
         .pulje-emoji {
             flex: 0 0 auto;
@@ -1128,9 +1181,9 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 								</span>
 							}
 							if pl.Score != nil {
-								@puljeScore(*pl.Score, fmt.Sprintf("pulje-score-%s-%d", ev.EventID, pl.BillettholderID))
+								@puljeScore(*pl.Score, pl.Manual, puljeDOMID("pulje-score", ev.EventID, strconv.Itoa(pl.BillettholderID)))
 							}
-							<span class="pulje-emoji" title={ pl.Level.Label() }>{ pl.Level.Emoji() }</span>
+							@puljeInterest(pulje, ev.EventID, pl, published)
 							if pl.Manual && !published {
 								<button
 									type="button"
@@ -1175,13 +1228,49 @@ func puljeCapacityPercent(ev puljefordeling.EmulatedEvent) int {
 	return min(100, len(ev.AssignedPlayers)*100/ev.Capacity)
 }
 
+// puljeInterest shows the participant's interest in this event. Outside a
+// published pulje the face opens a menu that sets that interest, so an admin
+// who moves or pins someone can record how interested they are and have the
+// fordeling (førstevalg and algoritmepoeng) use it.
+templ puljeInterest(pulje models.Pulje, eventID string, pl puljefordeling.AssignedPlayer, published bool) {
+	if published {
+		<span class="pulje-emoji" title={ pl.Level.Label() }>{ pl.Level.Emoji() }</span>
+	} else {
+		{{ menuID := puljeDOMID("pulje-interest", eventID, strconv.Itoa(pl.BillettholderID)) }}
+		<button
+			type="button"
+			class="pulje-emoji pulje-interest-trigger"
+			popovertarget={ menuID }
+			title={ "Interesse: " + pl.Level.Label() + ". Klikk for å endre." }
+			aria-label={ "Endre interesse for " + pl.Name + ", nå " + pl.Level.Label() }
+			style={ templ.SafeCSS("anchor-name: --" + menuID + ";") }
+		>{ pl.Level.Emoji() }</button>
+		<div id={ menuID } class="pulje-interest-menu" popover style={ templ.SafeCSS("position-anchor: --" + menuID + ";") }>
+			for _, level := range []models.InterestLevel{models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow, models.InterestLevelNone} {
+				<button
+					type="button"
+					class={ templ.KV("is-current", level == pl.Level) }
+					aria-pressed={ strconv.FormatBool(level == pl.Level) }
+					data-on:click={ puljeRowInterestAction(pulje, eventID, pl.BillettholderID, level) }
+				>
+					<span aria-hidden="true">{ level.Emoji() }</span>
+					{ puljeInterestLabel(level) }
+				</button>
+			}
+		</div>
+	}
+}
+
 // puljeScore shows the solver's score for a seat, with the calculation in a
 // tooltip that opens on hover or keyboard focus.
-templ puljeScore(score smodel.ScoreBreakdown, id string) {
+templ puljeScore(score smodel.ScoreBreakdown, manual bool, id string) {
 	<span class="pulje-score" tabindex="0" aria-describedby={ id }>
 		<span class="pulje-score-value">{ strconv.Itoa(score.Total) }</span>
 		<span class="pulje-score-details" id={ id } role="tooltip">
 			<span class="pulje-score-title">Algoritmepoeng</span>
+			if manual {
+				<span class="pulje-score-note">Manuelt plassert. Poengene følger interessen for arrangementet.</span>
+			}
 			<dl>
 				for _, line := range puljeScoreLines(score) {
 					<dt>{ line.Label }</dt>

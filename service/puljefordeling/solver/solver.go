@@ -246,13 +246,25 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 		})
 		assignments, moved, scores = s.runMCMF(slot.ID, events, interested)
 	}
-	result.Scores = scores
 
-	// Merge pinned placements into the assignment.
+	// Merge pinned placements into the assignment. A pin is valued by the
+	// player's own interest in the event, the same way a solver seat is; a pin
+	// without interest has nothing to value and gets no score.
 	for evID, pids := range pinnedByEvent {
 		assignments[evID] = append(assignments[evID], pids...)
+		for _, pid := range pids {
+			score := playerByID[pid].Prefs[slot.ID][evID]
+			if score <= 0 {
+				continue
+			}
+			if scores == nil {
+				scores = make(map[string]model.ScoreBreakdown)
+			}
+			scores[pid] = s.playerScore(pid, score)
+		}
 	}
 	result.Assignments = assignments
+	result.Scores = scores
 
 	// Flag events with fewer than minViablePlayers (against final counts).
 	for _, ev := range slot.Events {
