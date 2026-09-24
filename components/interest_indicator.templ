@@ -50,6 +50,12 @@ templ InterestIndicator(interests []BillettholderInterest) {
 			flex-shrink: 0;
 			cursor: help;
 
+			&:focus-visible {
+				outline: 3px solid var(--color-secondary-focus-visible);
+				outline-offset: 2px;
+				border-radius: var(--border-radius-1x);
+			}
+
 			.interest-indicator-hearts {
 				display: flex;
 				padding-inline-start: var(--heart-overlap);
@@ -142,8 +148,7 @@ templ InterestIndicator(interests []BillettholderInterest) {
 				}
 			}
 
-			&[data-open] .interest-indicator-tooltip,
-			.event-card-container:focus-visible & .interest-indicator-tooltip {
+			&[data-open] .interest-indicator-tooltip {
 				opacity: 1;
 				transform: none;
 			}
@@ -158,8 +163,12 @@ templ InterestIndicator(interests []BillettholderInterest) {
 	</style>
 	<span
 		class="interest-indicator"
-		data-on:click__prevent__stop="el.toggleAttribute('data-open')"
+		role="button"
+		tabindex="0"
+		data-on:click__prevent="el.toggleAttribute('data-open')"
+		data-on:keydown="(evt.key === 'Enter' || evt.key === ' ') && (evt.preventDefault(), el.toggleAttribute('data-open'))"
 		data-on:click__outside="el.removeAttribute('data-open')"
+		data-on:focusout="el.removeAttribute('data-open')"
 	>
 		<span class="interest-indicator-hearts" aria-hidden="true">
 			for _, interest := range interests {
