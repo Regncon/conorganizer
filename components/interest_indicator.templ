@@ -48,7 +48,6 @@ templ InterestIndicator(interests []BillettholderInterest) {
 
 			position: relative;
 			flex-shrink: 0;
-			cursor: help;
 
 			&:focus-visible {
 				outline: 3px solid var(--color-secondary-focus-visible);
@@ -166,7 +165,7 @@ templ InterestIndicator(interests []BillettholderInterest) {
 	<span
 		class="interest-indicator"
 		tabindex="0"
-		data-on:click__prevent="el.toggleAttribute('data-open')"
+		data-on:click="matchMedia('(hover: none)').matches && (evt.preventDefault(), el.toggleAttribute('data-open'))"
 		data-on:click__outside="el.removeAttribute('data-open')"
 	>
 		<span class="interest-indicator-hearts" aria-hidden="true">
