@@ -1,13 +1,15 @@
 package root
 
 import (
+	"bytes"
+	"context"
 	"database/sql"
 	"slices"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
@@ -16,7 +18,7 @@ const interestTestUserEmail = "forelder@example.com"
 
 func TestRootPageContent_WhenBillettholdereOnTheAccountHaveInterest_ListsTheSelectedFirstThenTheMostInterested(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at tre billettholdere på kontoen har meldt interesse på et arrangement i en pulje, og Anders er valgt i menyen.",
+		Given: "Gitt at tre billettholdere på kontoen har meldt interesse på et arrangement i en pulje, og Anders er kontoens egen billettholder.",
 		When:  "Når forsiden vises.",
 		Then:  "Så skal arrangementskortet vise ett hjerte per billettholder, og lista skal vise Anders først og deretter de mest interesserte.",
 	})
@@ -28,14 +30,16 @@ func TestRootPageContent_WhenBillettholdereOnTheAccountHaveInterest_ListsTheSele
 
 	db := createInterestRootPageTestDB(t)
 	andersID := insertRootPageBillettholder(t, db, "Anders", "Andersen", 1, interestTestUserEmail)
-	amalieID := insertRootPageBillettholder(t, db, "Amalie", "Berg", 2, interestTestUserEmail)
-	bjornID := insertRootPageBillettholder(t, db, "Bjørn", "Berg", 3, interestTestUserEmail)
+	amalieID := insertRootPageBillettholder(t, db, "Amalie", "Berg", 2, "amalie@example.com")
+	bjornID := insertRootPageBillettholder(t, db, "Bjørn", "Berg", 3, "bjorn@example.com")
+	associateRootPageBillettholder(t, db, amalieID, interestTestUserEmail)
+	associateRootPageBillettholder(t, db, bjornID, interestTestUserEmail)
 	insertRootPageInterest(t, db, andersID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelLow)
 	insertRootPageInterest(t, db, amalieID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelHigh)
 	insertRootPageInterest(t, db, bjornID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelMedium)
 
 	// When
-	doc := renderRootPageWithInterests(t, db, interestTestUserEmail, andersID)
+	doc := renderRootPageAs(t, db, interestTestUserEmail)
 
 	// Then
 	assertTexts(t, "interest descriptions", expectedDescriptions, templtest.CollectTexts(doc, ".interest-indicator-tooltip li"))
@@ -63,7 +67,7 @@ func TestRootPageContent_WhenOnlyAnotherAccountHasInterest_ShowsNoInterestIndica
 	insertRootPageInterest(t, db, strangerID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelHigh)
 
 	// When
-	doc := renderRootPageWithInterests(t, db, interestTestUserEmail, 0)
+	doc := renderRootPageAs(t, db, interestTestUserEmail)
 
 	// Then
 	if actual := templtest.HasSelector(doc, ".interest-indicator"); actual != expectedInterestIndicatorVisible {
@@ -88,7 +92,7 @@ func TestRootPageContent_WhenInterestIsInAnotherPulje_ShowsNoInterestIndicatorOn
 	insertRootPageInterest(t, db, andersID, "alpha-event", models.PuljeLordagMorgen, models.InterestLevelHigh)
 
 	// When
-	doc := renderRootPageWithInterests(t, db, interestTestUserEmail, 0)
+	doc := renderRootPageAs(t, db, interestTestUserEmail)
 
 	// Then
 	if actual := templtest.HasSelector(doc, ".interest-indicator"); actual != expectedInterestIndicatorVisible {
@@ -108,14 +112,19 @@ func createInterestRootPageTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
-func renderRootPageWithInterests(t *testing.T, db *sql.DB, email string, selectedBillettholderID int) *goquery.Document {
+func renderRootPageAs(t *testing.T, db *sql.DB, email string) *goquery.Document {
 	t.Helper()
 
-	interests, err := loadBillettholderInterests(requestctx.UserRequestInfo{IsLoggedIn: true, Email: email}, selectedBillettholderID, db)
-	if err != nil {
-		t.Fatalf("expected billettholder interests to load: %v", err)
+	ctx := authctx.WithUserToken(context.Background(), "interest-test-user", email)
+	var html bytes.Buffer
+	if err := rootPageContentForDate(db, nil, "2026-10-09").Render(ctx, &html); err != nil {
+		t.Fatalf("render root page: %v", err)
 	}
-	return templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09", interests))
+	doc, err := goquery.NewDocumentFromReader(&html)
+	if err != nil {
+		t.Fatalf("parse root page html: %v", err)
+	}
+	return doc
 }
 
 func insertRootPageBillettholder(t *testing.T, db *sql.DB, firstName string, lastName string, ticketID int, email string) int {
@@ -137,6 +146,15 @@ func insertRootPageBillettholder(t *testing.T, db *sql.DB, firstName string, las
 		VALUES(?, ?, ?)
 	`, id, email, models.BillettholderEmailKindTicket)
 	return int(id)
+}
+
+func associateRootPageBillettholder(t *testing.T, db *sql.DB, billettholderID int, email string) {
+	t.Helper()
+
+	mustExec(t, db, `
+		INSERT INTO relation_billettholder_emails(billettholder_id, email, kind)
+		VALUES(?, ?, ?)
+	`, billettholderID, email, models.BillettholderEmailKindAssociated)
 }
 
 func insertRootPageInterest(t *testing.T, db *sql.DB, billettholderID int, eventID string, puljeID models.Pulje, level models.InterestLevel) {

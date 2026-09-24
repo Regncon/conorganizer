@@ -2,8 +2,10 @@ package root
 
 import (
 	"cmp"
+	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 
@@ -11,15 +13,23 @@ import (
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/service/userctx"
 )
 
-type billettholderInterestsByEvent map[models.Pulje]map[string][]components.BillettholderInterest
+type billettholderInterestsByEvent map[string][]components.BillettholderInterest
 
-func (interests billettholderInterestsByEvent) forEvent(puljeID models.Pulje, eventID string) []components.BillettholderInterest {
-	return interests[puljeID][eventID]
+func loadPuljeInterests(ctx context.Context, db *sql.DB, puljeID models.Pulje) billettholderInterestsByEvent {
+	logger := slog.Default().With("component", "root")
+	userInfo := userctx.GetUserRequestInfo(ctx)
+	interests, err := loadBillettholderInterests(userInfo, requestctx.SelectedBillettholderID(ctx), puljeID, db)
+	if err != nil {
+		logger.Error(err.Error(), "user_id", userInfo.Id, "pulje_id", puljeID)
+		return nil
+	}
+	return interests
 }
 
-func loadBillettholderInterests(userInfo requestctx.UserRequestInfo, selectedBillettholderHint int, db *sql.DB) (billettholderInterestsByEvent, error) {
+func loadBillettholderInterests(userInfo requestctx.UserRequestInfo, selectedBillettholderHint int, puljeID models.Pulje, db *sql.DB) (billettholderInterestsByEvent, error) {
 	if userInfo.Email == "" {
 		return nil, nil
 	}
@@ -39,16 +49,16 @@ func loadBillettholderInterests(userInfo requestctx.UserRequestInfo, selectedBil
 	}
 
 	placeholders := make([]string, 0, len(billettholdere))
-	args := make([]any, 0, len(billettholdere))
+	args := []any{puljeID}
 	for id := range billettholdere {
 		placeholders = append(placeholders, "?")
 		args = append(args, id)
 	}
 
 	query := fmt.Sprintf(`
-		SELECT billettholder_id, event_id, pulje_id, interest_level
+		SELECT billettholder_id, event_id, interest_level
 		FROM interests
-		WHERE billettholder_id IN (%s)
+		WHERE pulje_id = ? AND billettholder_id IN (%s)
 	`, strings.Join(placeholders, ", "))
 	rows, err := db.Query(query, args...)
 	if err != nil {
@@ -59,20 +69,16 @@ func loadBillettholderInterests(userInfo requestctx.UserRequestInfo, selectedBil
 	interests := make(billettholderInterestsByEvent)
 	for rows.Next() {
 		var billettholderID int
-		var eventID, puljeID string
+		var eventID string
 		var level models.InterestLevel
-		if err := rows.Scan(&billettholderID, &eventID, &puljeID, &level); err != nil {
+		if err := rows.Scan(&billettholderID, &eventID, &level); err != nil {
 			return nil, fmt.Errorf("failed to scan billettholder interest: %w", err)
 		}
 		if level.Score() == 0 {
 			continue
 		}
 
-		pulje := models.Pulje(puljeID)
-		if interests[pulje] == nil {
-			interests[pulje] = make(map[string][]components.BillettholderInterest)
-		}
-		interests[pulje][eventID] = append(interests[pulje][eventID], components.BillettholderInterest{
+		interests[eventID] = append(interests[eventID], components.BillettholderInterest{
 			BillettholderID:   billettholderID,
 			BillettholderName: billettholdere[billettholderID].Name,
 			InterestLevel:     level,
@@ -83,10 +89,8 @@ func loadBillettholderInterests(userInfo requestctx.UserRequestInfo, selectedBil
 		return nil, fmt.Errorf("failed to iterate billettholder interests: %w", err)
 	}
 
-	for _, interestsByEvent := range interests {
-		for _, eventInterests := range interestsByEvent {
-			slices.SortFunc(eventInterests, compareBillettholderInterests)
-		}
+	for _, eventInterests := range interests {
+		slices.SortFunc(eventInterests, compareBillettholderInterests)
 	}
 
 	return interests, nil

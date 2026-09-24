@@ -17,9 +17,10 @@ templ flatEventList(events []models.EventCardModel, eventImageDir *string) {
 	</div>
 }
 
-templ eventPuljeBlock(block program.PuljeBlock, eventImageDir *string, date string, interests billettholderInterestsByEvent) {
+templ eventPuljeBlock(block program.PuljeBlock, db *sql.DB, eventImageDir *string, date string) {
 	{{ events := block.RaffleEvents() }}
 	if len(events) > 0 {
+		{{ interests := loadPuljeInterests(ctx, db, block.Pulje.ID) }}
 		<section class="container-inner-padding raffle-pulje-section">
 			<h2 class="pulje-heading">
 				{ block.Pulje.Name }
@@ -27,7 +28,7 @@ templ eventPuljeBlock(block program.PuljeBlock, eventImageDir *string, date stri
 			</h2>
 			<div class="raffle-eventcard-grid">
 				for _, event := range events {
-					@components.EventCard(event, eventImageDir, string(block.Pulje.ID), date, interests.forEvent(block.Pulje.ID, event.Id))
+					@components.EventCard(event, eventImageDir, string(block.Pulje.ID), date, interests[event.Id])
 				}
 			</div>
 		</section>
@@ -48,7 +49,7 @@ templ programDaySchedule(day program.Day) {
 	}
 }
 
-templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publishedDay *program.Day, interests billettholderInterestsByEvent) {
+templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publishedDay *program.Day) {
 	<style>
 		.event-pulje-overview {
 			display: flex;
@@ -99,7 +100,7 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 					</section>
 				}
 				for _, block := range publishedDay.Blocks {
-					@eventPuljeBlock(block, eventImageDir, publishedDay.QueryValue(), interests)
+					@eventPuljeBlock(block, db, eventImageDir, publishedDay.QueryValue())
 				}
 			}
 		} else {
