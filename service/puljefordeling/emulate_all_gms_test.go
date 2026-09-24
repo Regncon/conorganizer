@@ -119,6 +119,7 @@ func TestEmulateSeatings_DisplaysAllGMsAndPreservesMinorWarning(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{Given: "an event has an adult GM and a minor GM", When: "the emulation is displayed", Then: "both names appear and the minor warning remains available"})
 	// Given
 	expectedNames := "Alice GM, Bob GM"
+	expectedGMs := []AssignedGM{{BillettholderID: 1, Name: "Alice GM", IsOver18: false}, {BillettholderID: 2, Name: "Bob GM", IsOver18: true}}
 	db, _ := testutil.CreateTestDBAndLogger(t, "all_gms_display")
 	const fredag = models.PuljeFredagKveld
 	seedPulje(t, db, fredag, "Fredag", "2026-09-04T18:00:00Z")
@@ -137,6 +138,9 @@ func TestEmulateSeatings_DisplaysAllGMsAndPreservesMinorWarning(t *testing.T) {
 		t.Fatal(err)
 	}
 	ev, _ := findEvent(em.Puljer[0], "run")
+	if !slices.Equal(ev.AssignedGMs, expectedGMs) {
+		t.Errorf("GM identities: got %+v, want %+v", ev.AssignedGMs, expectedGMs)
+	}
 	if ev.GMName != expectedNames {
 		t.Errorf("GM names: got %q, want %q", ev.GMName, expectedNames)
 	}

@@ -29,6 +29,9 @@ func TestPuljeEventBox_MissingGMShortcutRequiresEditablePulje(t *testing.T) {
 			// Given
 			expectedButtons := tc.expected
 			event := puljefordeling.EmulatedEvent{EventID: "evA", Title: "Drager", GMName: tc.gm}
+			if tc.gm != "" {
+				event.AssignedGMs = []puljefordeling.AssignedGM{{BillettholderID: 1, Name: tc.gm}}
+			}
 
 			// When
 			doc := templtest.Render(t, puljeEventBox(models.PuljeFredagKveld, event, tc.published, nil))

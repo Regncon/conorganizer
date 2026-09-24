@@ -304,6 +304,10 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em 
 			overflow: auto;
 			container: pulje-assignment-dialog / inline-size;
 
+			h3 {
+				margin-block-end: var(--spacing-3x);
+			}
+
 			.pulje-assignment-picker,
 			.pulje-assignment-interesse-actions,
 			.pulje-assignment-interests,
