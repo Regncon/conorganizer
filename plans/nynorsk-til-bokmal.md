@@ -1,6 +1,6 @@
 # Kartlegging: nynorsk → bokmål
 
-Fullstendig oversikt over nynorsk i koden (kartlagt på commit 5887e4ac, kontrollert på nytt mot 8e0d0369). Målet er å gjøre om alt til bokmål.
+Fullstendig oversikt over nynorsk i koden (kartlagt på commit 5887e4ac, kontrollert på nytt mot 8e0d0369 og 608074fd). Målet er å gjøre om alt til bokmål.
 
 **310 forekomster i 43 filer.** 127 vises garantert for brukeren, 21 kanskje, 89 gjør det ikke (feilmeldinger Datastar ignorerer), 72 er testtekst.
 
@@ -156,7 +156,7 @@ Kolonner: **Type** = ui (synlig markup/label), http.Error, error, js, test, komm
 | 159 | http.Error | nei | nynorsk | manglar | Arrangement-ID manglar | Arrangement-ID mangler |
 | 165 | http.Error | nei | nynorsk | ikkje, skildringa | Klarte ikkje å oppdatere skildringa for arrangementet i databasen | Klarte ikke å oppdatere beskrivelsen for arrangementet i databasen |
 | 170 | http.Error | nei | nynorsk | ikkje | Klarte ikkje å sende oppdatering | Klarte ikke å sende oppdatering |
-| 202 | ui | ja | nynorsk | teikn | Bruk mellom 3 og 45 teikn | Bruk mellom 3 og 45 tegn |
+| 202 | ui | ja | nynorsk | teikn | Bruk mellom 3 og 50 teikn | Bruk mellom 3 og 50 tegn |
 | 248 | ui | ja | nynorsk | Arrangementbilete | Arrangementbilete | Arrangementsbilde |
 | 258 | ui | ja | nynorsk | eit, bilete | Finn eit bilete som presenterer arrangementet godt og | Finn et bilde som presenterer arrangementet godt og |
 | 259 | ui | ja | nynorsk | gjer, lettare, kjenne att | gjer det lettare å kjenne att arrangementet. | gjør det lettere å kjenne igjen arrangementet. |
