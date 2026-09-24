@@ -83,15 +83,15 @@ func TestSolveSlotFixed_PinWithoutInterestHasNoScoreBreakdown(t *testing.T) {
 	}
 }
 
-func TestScoreBreakdown_TotalMatchesAdjustScore(t *testing.T) {
+func TestScoreBreakdown_ListsEveryBumpAndSumsThem(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "an unsatisfied, never-seated GM with two prior misses",
 		When:  "their top-choice seat is scored",
-		Then:  "the breakdown lists every bump and its total equals the solver's edge weight",
+		Then:  "the breakdown lists every bump and its total is their sum",
 	})
 
 	// Given
-	expected := model.ScoreBreakdown{Score: 5, Band: bandUnsatVeldig, Misses: 2, MissBonus: 2 * missStep, NeverSeatedBump: neverSeatedBump, DMBump: dmBump, Total: adjustScore(5, false, true, true, 2)}
+	expected := model.ScoreBreakdown{Score: 5, Band: bandUnsatVeldig, Misses: 2, MissBonus: 2 * missStep, NeverSeatedBump: neverSeatedBump, DMBump: dmBump, Total: 910} // 800 + 2×20 + 10 + 60
 
 	// When
 	actual := scoreBreakdown(5, false, true, true, 2)

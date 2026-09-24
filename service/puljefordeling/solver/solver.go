@@ -493,18 +493,14 @@ func (s *State) playerScore(playerID string, score model.Score) model.ScoreBreak
 	return scoreBreakdown(score, satisfied, !seated, isDM, s.misses[playerID])
 }
 
-// adjustScore returns the priority weight for a (player, event) edge. Larger =
-// higher priority for that seat. See the band constants for the declared order.
+// scoreBreakdown returns the priority weight for a (player, event) edge, with
+// each part kept so the UI can explain it. Larger Total = higher priority for
+// that seat. See the band constants for the declared order.
 //
 //   - The unsatisfied advantage applies only to the top choice (Veldig).
 //   - The scarcity (miss) bonus and never-seated bump apply only while the
 //     player is unsatisfied.
 //   - The DM bump applies to every edge but stays within its band.
-func adjustScore(score model.Score, satisfied, neverSeated, isDM bool, misses int) int {
-	return scoreBreakdown(score, satisfied, neverSeated, isDM, misses).Total
-}
-
-// scoreBreakdown is adjustScore with each part kept, so the UI can explain it.
 func scoreBreakdown(score model.Score, satisfied, neverSeated, isDM bool, misses int) model.ScoreBreakdown {
 	b := model.ScoreBreakdown{
 		Score:     score,
