@@ -2,12 +2,128 @@ package puljefordeling
 
 import (
 	"database/sql"
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
+
+func TestFinnKapasitetsvarsler_ManuellePlasserOgForhandsvisningTellesEnGang(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "Fem manuelle spillere er tildelt et arrangement med fire plasser, og fire vises også i forhåndsvisningen.", When: "Kapasitetsvarsler beregnes.", Then: "Ett varsel teller hver spiller én gang og viser fem av fire plasser."})
+	// Given
+	expectedPlayers := []string{"Spiller 1 Nordmann", "Spiller 2 Nordmann", "Spiller 3 Nordmann", "Spiller 4 Nordmann", "Spiller 5 Nordmann"}
+	db := capacityWarningFixture(t)
+	for id := 1; id <= 5; id++ {
+		seedWarningAssignment(t, db, id, "ev-a", models.PuljeFredagKveld, models.EventPlayerRolePlayer, SourceManual)
+	}
+	pulje := capacityWarningPreview(1, 2, 3, 4)
+
+	// When
+	varsler, err := FinnKapasitetsvarsler(db, pulje)
+
+	// Then
+	if err != nil {
+		t.Fatalf("finn kapasitetsvarsler: %v", err)
+	}
+	if len(varsler) != 1 {
+		t.Fatalf("antall kapasitetsvarsler = %d, vil ha 1", len(varsler))
+	}
+	varsel := varsler[0]
+	if varsel.EventID != "ev-a" || varsel.Kapasitet != 4 || varsel.AntallSpillerplasser != 5 {
+		t.Errorf("kapasitetsvarsel = %+v, vil ha ev-a med 5 av 4 plasser", varsel)
+	}
+	if !reflect.DeepEqual(varsel.Spillere, expectedPlayers) {
+		t.Errorf("spillere = %v, vil ha %v", varsel.Spillere, expectedPlayers)
+	}
+}
+
+func TestFinnKapasitetsvarsler_FulltArrangementUtenUtdaterteSolverplasserVarslesIkke(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "Fire viste manuelle spillere fyller fire plasser, og en gammel solverplass og et GM-oppdrag er lagret på samme arrangement.", When: "Kapasitetsvarsler beregnes.", Then: "Arrangementet regnes som fullt, uten å varsle om overkapasitet."})
+	// Given
+	expectedWarnings := 0
+	db := capacityWarningFixture(t)
+	for id := 1; id <= 4; id++ {
+		seedWarningAssignment(t, db, id, "ev-a", models.PuljeFredagKveld, models.EventPlayerRolePlayer, SourceManual)
+	}
+	seedWarningAssignment(t, db, 5, "ev-a", models.PuljeFredagKveld, models.EventPlayerRolePlayer, SourceSolver)
+	seedWarningAssignment(t, db, 6, "ev-a", models.PuljeFredagKveld, models.EventPlayerRoleGM, SourceManual)
+	pulje := capacityWarningPreview(1, 2, 3, 4)
+
+	// When
+	varsler, err := FinnKapasitetsvarsler(db, pulje)
+
+	// Then
+	if err != nil {
+		t.Fatalf("finn kapasitetsvarsler: %v", err)
+	}
+	if len(varsler) != expectedWarnings {
+		t.Errorf("antall kapasitetsvarsler = %d, vil ha %d: %+v", len(varsler), expectedWarnings, varsler)
+	}
+}
+
+func TestFinnKapasitetsvarsler_ManuellePlasserUtenforForhandsvisningVarsles(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "Et arrangement utenfor den synlige listen har fem manuelle spillere og fire plasser.", When: "Kapasitetsvarsler beregnes.", Then: "De lagrede manuelle plassene gir ett varsel med arrangementets kapasitet."})
+	// Given
+	expectedEventID := "ev-b"
+	db := capacityWarningFixture(t)
+	for id := 1; id <= 5; id++ {
+		seedWarningAssignment(t, db, id, "ev-b", models.PuljeFredagKveld, models.EventPlayerRolePlayer, SourceManual)
+	}
+	pulje := capacityWarningPreview()
+
+	// When
+	varsler, err := FinnKapasitetsvarsler(db, pulje)
+
+	// Then
+	if err != nil {
+		t.Fatalf("finn kapasitetsvarsler: %v", err)
+	}
+	if len(varsler) != 1 || varsler[0].EventID != expectedEventID || varsler[0].AntallSpillerplasser != 5 || varsler[0].Kapasitet != 4 {
+		t.Errorf("kapasitetsvarsler = %+v, vil ha ev-b med 5 av 4 plasser", varsler)
+	}
+}
+
+func TestFinnKapasitetsvarsler_TildelingerIAndrePuljerTellesIkke(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "Et arrangement har fire spillere i én pulje og en manuell spillerplass i en annen pulje.", When: "Kapasitetsvarsler beregnes for den første puljen.", Then: "Plassen i den andre puljen gir ikke kapasitetsvarsel."})
+	// Given
+	expectedWarnings := 0
+	db := capacityWarningFixture(t)
+	seedPulje(t, db, models.PuljeLordagKveld, "Lørdag kveld", "2026-09-16T18:00:00Z")
+	seedWarningAssignment(t, db, 5, "ev-a", models.PuljeLordagKveld, models.EventPlayerRolePlayer, SourceManual)
+	pulje := capacityWarningPreview(1, 2, 3, 4)
+
+	// When
+	varsler, err := FinnKapasitetsvarsler(db, pulje)
+
+	// Then
+	if err != nil {
+		t.Fatalf("finn kapasitetsvarsler: %v", err)
+	}
+	if len(varsler) != expectedWarnings {
+		t.Errorf("antall kapasitetsvarsler = %d, vil ha %d: %+v", len(varsler), expectedWarnings, varsler)
+	}
+}
+
+func capacityWarningFixture(t *testing.T) *sql.DB {
+	t.Helper()
+	db := testutil.CreateTestDB(t, "kapasitetsvarsler")
+	seedWarningBase(t, db, models.PuljeFredagKveld)
+	for id := 1; id <= 6; id++ {
+		seedParticipant(t, db, id, fmt.Sprintf("Spiller %d", id), "Nordmann")
+	}
+	return db
+}
+
+func capacityWarningPreview(ids ...int) EmulatedPulje {
+	event := EmulatedEvent{EventID: "ev-a", Title: "Alpha", Capacity: 4}
+	for _, id := range ids {
+		event.AssignedPlayers = append(event.AssignedPlayers, AssignedPlayer{BillettholderID: id, Name: fmt.Sprintf("Spiller %d Nordmann", id)})
+	}
+	return EmulatedPulje{PuljeID: models.PuljeFredagKveld, Events: []EmulatedEvent{event}}
+}
 
 func TestFinnFordelingsvarsler_FlereGMOppdragVarslesOgSorteres(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{

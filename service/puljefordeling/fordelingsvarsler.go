@@ -23,6 +23,93 @@ type Fordelingsvarsel struct {
 	AntallGMOppdrag      int
 }
 
+type Kapasitetsvarsel struct {
+	EventID              string
+	EventTitle           string
+	AntallSpillerplasser int
+	Kapasitet            int
+	Spillere             []string
+}
+
+type kapasitetsvarselgrunnlag struct {
+	varsel   Kapasitetsvarsel
+	spillere map[int]string
+}
+
+func FinnKapasitetsvarsler(db *sql.DB, pulje EmulatedPulje) ([]Kapasitetsvarsel, error) {
+	grunnlag := make(map[string]*kapasitetsvarselgrunnlag)
+	for _, event := range pulje.Events {
+		arrangement := &kapasitetsvarselgrunnlag{
+			varsel: Kapasitetsvarsel{
+				EventID: event.EventID, EventTitle: event.Title, Kapasitet: event.Capacity,
+			},
+			spillere: make(map[int]string),
+		}
+		for _, player := range event.AssignedPlayers {
+			if player.BillettholderID > 0 {
+				arrangement.spillere[player.BillettholderID] = player.Name
+			}
+		}
+		grunnlag[event.EventID] = arrangement
+	}
+
+	const query = `
+		SELECT ep.event_id, e.title, e.max_players, ep.billettholder_id, b.first_name, b.last_name
+		FROM relation_events_players ep
+		JOIN events e ON e.id = ep.event_id
+		JOIN billettholdere b ON b.id = ep.billettholder_id
+		WHERE ep.pulje_id = ? AND ep.role = ? AND ep.source = ?
+	`
+	rows, err := db.Query(query, pulje.PuljeID, models.EventPlayerRolePlayer, SourceManual)
+	if err != nil {
+		return nil, fmt.Errorf("hent manuelle spillerplasser for kapasitetsvarsler i %s: %w", pulje.PuljeID, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			eventID, eventTitle, firstName, lastName string
+			kapasitet, billettholderID               int
+		)
+		if err := rows.Scan(&eventID, &eventTitle, &kapasitet, &billettholderID, &firstName, &lastName); err != nil {
+			return nil, fmt.Errorf("les manuell spillerplass for kapasitetsvarsel i %s: %w", pulje.PuljeID, err)
+		}
+		arrangement := grunnlag[eventID]
+		if arrangement == nil {
+			arrangement = &kapasitetsvarselgrunnlag{
+				varsel:   Kapasitetsvarsel{EventID: eventID, EventTitle: eventTitle, Kapasitet: kapasitet},
+				spillere: make(map[int]string),
+			}
+			grunnlag[eventID] = arrangement
+		}
+		arrangement.spillere[billettholderID] = strings.TrimSpace(firstName + " " + lastName)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("gå gjennom manuelle spillerplasser for kapasitetsvarsler i %s: %w", pulje.PuljeID, err)
+	}
+
+	var varsler []Kapasitetsvarsel
+	for _, arrangement := range grunnlag {
+		varsel := arrangement.varsel
+		varsel.AntallSpillerplasser = len(arrangement.spillere)
+		if varsel.AntallSpillerplasser <= varsel.Kapasitet {
+			continue
+		}
+		for _, navn := range arrangement.spillere {
+			varsel.Spillere = append(varsel.Spillere, navn)
+		}
+		sort.Strings(varsel.Spillere)
+		varsler = append(varsler, varsel)
+	}
+	sort.Slice(varsler, func(i, j int) bool {
+		if varsler[i].EventTitle != varsler[j].EventTitle {
+			return varsler[i].EventTitle < varsler[j].EventTitle
+		}
+		return varsler[i].EventID < varsler[j].EventID
+	})
+	return varsler, nil
+}
+
 type fordelingstildelingKey struct {
 	eventID string
 	role    models.EventPlayerRole

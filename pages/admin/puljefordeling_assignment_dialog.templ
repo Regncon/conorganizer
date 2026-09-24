@@ -38,6 +38,17 @@ func loadPuljeAssignmentCandidates(db *sql.DB) ([]puljeAssignmentCandidate, erro
 	return candidates, nil
 }
 
+func puljeAssignDialogAction(pulje models.Pulje, event puljefordeling.EmulatedEvent, gmOnly bool) string {
+	title := "Legg til deltaker på " + event.Title
+	role := models.EventPlayerRolePlayer
+	if gmOnly {
+		title = "Legg til spilleder på " + event.Title
+		role = models.EventPlayerRoleGM
+	}
+	return fmt.Sprintf("$assignmentEventId = %q; $assignmentPuljeId = %q; $assignmentRole = %q; $assignmentPickerGmOnly = %t; $assignmentPickerTitle = %q; $assignmentBillettholderId = 0; $clearInput = $clearInput + 1; $assignmentActionCompleted = false; $_puljefordelingAssignDialogOpen = true",
+		event.EventID, string(pulje), string(role), gmOnly, title)
+}
+
 func puljeAssignmentAction(role models.EventPlayerRole) string {
 	return fmt.Sprintf("$assignmentRole = %q; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentRemove = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentCloseDialog = true; @post('/admin/api/puljefordeling/assign'); $assignmentCloseDialog = false; $assignmentFromAddMenu = false", string(role))
 }
@@ -64,15 +75,15 @@ templ puljeAssignmentPicker(db *sql.DB, logger *slog.Logger) {
 			<h4>Søk etter billettholder</h4>
 			<admin-billettholder-search
 				data-billettholdere={ string(candidatesJSON) }
-				data-attr:clear-input="$clearInput"
+				data-attr:data-clear-input="$clearInput"
 				data-on:billettholder-select="$assignmentBillettholderId = evt.detail.id"
 				input-tippy="Søk etter billettholder"
 			></admin-billettholder-search>
 			<div class="pulje-assignment-actions">
-				<button type="button" class="btn btn--secondary" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeAssignmentAction(models.EventPlayerRoleGM) }>Tildel som spilleder</button>
-				<button type="button" class="btn btn--secondary" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeAssignmentAction(models.EventPlayerRolePlayer) }>Tildel som spiller</button>
+				<button type="button" class="btn btn--secondary" data-class:btn--primary="$assignmentPickerGmOnly" data-class:btn--secondary="!$assignmentPickerGmOnly" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeAssignmentAction(models.EventPlayerRoleGM) }>Tildel som spilleder</button>
+				<button type="button" class="btn btn--secondary" data-show="!$assignmentPickerGmOnly" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeAssignmentAction(models.EventPlayerRolePlayer) }>Tildel som spiller</button>
 			</div>
-			<div class="pulje-assignment-interesse-actions">
+			<div class="pulje-assignment-interesse-actions" data-show="!$assignmentPickerGmOnly">
 				<h4>Sett interesse</h4>
 				<div>
 					for _, level := range []models.InterestLevel{models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow, models.InterestLevelNone} {
@@ -244,7 +255,7 @@ templ puljeAssignmentInterestGroup(level models.InterestLevel, candidates []pulj
 
 templ puljeAssignmentInterests(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em puljefordeling.Emulation, emErr error) {
 	{{ interests, err := loadPuljeAssignmentEventInterests(db, pulje, em) }}
-	<section id="puljefordeling-assignment-interests" class="pulje-assignment-interests">
+	<section id="puljefordeling-assignment-interests" class="pulje-assignment-interests" data-show="!$assignmentPickerGmOnly">
 		<h4>Hurtigtildel fra interesser</h4>
 		if err != nil {
 			{{ logger.Error(err.Error(), "pulje_id", pulje) }}
@@ -274,12 +285,13 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em 
 			id="puljefordeling-assign-dialog"
 			class="puljefordeling-assign-dialog"
 			closedBy="any"
+			aria-labelledby="puljefordeling-assign-title"
 			data-preserve-attr="open"
-			data-effect="$assignmentActionCompleted && ($_puljefordelingAssignDialogOpen = false); $_puljefordelingAssignDialogOpen ? (!el.open && el.showModal()) : (el.open && el.close())"
+			data-effect="$assignmentActionCompleted && ($_puljefordelingAssignDialogOpen = false); $_puljefordelingAssignDialogOpen ? (!el.open && (el.showModal(), el.querySelector('admin-billettholder-search')?.shadowRoot?.querySelector('input')?.focus())) : (el.open && el.close())"
 			data-on:close="$_puljefordelingAssignDialogOpen = false; $assignmentActionCompleted = false; $assignmentBillettholderId = 0; $clearInput = $clearInput + 1"
 			data-on:click__stop="if (evt.target === el) $_puljefordelingAssignDialogOpen = false"
 		>
-			<h3>Administrer deltaker</h3>
+			<h3 id="puljefordeling-assign-title" data-text="$assignmentPickerTitle">Administrer deltaker</h3>
 			@puljeAssignmentPicker(db, logger)
 			@puljeAssignmentInterests(db, logger, pulje, em, emErr)
 			<button class="btn btn--outline" type="button" data-on:click="$_puljefordelingAssignDialogOpen = false">Lukk</button>
@@ -291,6 +303,10 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em 
 			max-block-size: calc(100dvh - 2rem);
 			overflow: auto;
 			container: pulje-assignment-dialog / inline-size;
+
+			h3 {
+				margin-block-end: var(--spacing-3x);
+			}
 
 			.pulje-assignment-picker,
 			.pulje-assignment-interesse-actions,
