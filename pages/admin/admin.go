@@ -126,7 +126,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 
 							room, err := roomService.GetRoomByID(db, int(roomID))
 							if err != nil {
-								store.FormTitle = "Finner ikkje rom"
+								store.FormTitle = "Finner ikke rom"
 								feedback.Set("error", err.Error())
 							} else {
 								store.FormTitle = "Oppdaterer rom " + room.RoomNumber

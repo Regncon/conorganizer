@@ -163,11 +163,11 @@ func FjernTildeling(db *sql.DB, pulje models.Pulje, eventID string, billettholde
 		eventID, pulje, billettholderID, role,
 	)
 	if err != nil {
-		return fmt.Errorf("fjern %s-tildeling for billettholder %d frå %s i %s: %w", role, billettholderID, eventID, pulje, err)
+		return fmt.Errorf("fjern %s-tildeling for billettholder %d fra %s i %s: %w", role, billettholderID, eventID, pulje, err)
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("les fjerna %s-tildeling: %w", role, err)
+		return fmt.Errorf("les fjernet %s-tildeling: %w", role, err)
 	}
 	if rowsAffected == 0 {
 		return fmt.Errorf("finn %s-tildeling for billettholder %d på %s i %s: %w", role, billettholderID, eventID, pulje, sql.ErrNoRows)
@@ -315,7 +315,7 @@ func validerTildelingsvalg(valg Tildelingsvalg) error {
 		return fmt.Errorf("%w: ukjent rolle", ErrUgyldigTildeling)
 	}
 	if !valg.FraLeggTil && valg.Role != models.EventPlayerRolePlayer {
-		return fmt.Errorf("%w: dra-og-slipp kan berre flytte ein spelar", ErrUgyldigTildeling)
+		return fmt.Errorf("%w: dra-og-slipp kan bare flytte en spiller", ErrUgyldigTildeling)
 	}
 	return nil
 }
@@ -364,7 +364,7 @@ func lagTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tild
 	}
 	if !valg.FraLeggTil && harGM {
 		varsel.KanBekrefte = false
-		varsel.Handling = "Bruk Legg til for å plassere ein GM som spelar."
+		varsel.Handling = "Bruk Legg til for å plassere en GM som spiller."
 	}
 	varsel.Bekreftelse = bekreftelse
 	return varsel
@@ -393,14 +393,14 @@ func tildelingshandling(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) string
 		return fmt.Sprintf("Legg til som GM på «%s»", grunnlag.eventTitle)
 	}
 	if valg.FraLeggTil {
-		return fmt.Sprintf("Legg til som spelar på «%s»", grunnlag.eventTitle)
+		return fmt.Sprintf("Legg til som spiller på «%s»", grunnlag.eventTitle)
 	}
 	for _, tildeling := range grunnlag.tildelinger {
 		if tildeling.Role == models.EventPlayerRolePlayer && tildeling.EventID == valg.FraEventID && tildeling.EventID != valg.EventID {
 			return fmt.Sprintf("Flytt spillerplassen fra «%s» til «%s»", tildeling.EventTitle, grunnlag.eventTitle)
 		}
 	}
-	return fmt.Sprintf("Legg til som spelar på «%s»", grunnlag.eventTitle)
+	return fmt.Sprintf("Legg til som spiller på «%s»", grunnlag.eventTitle)
 }
 
 func tildelingsbekreftelse(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) string {

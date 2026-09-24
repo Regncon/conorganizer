@@ -151,7 +151,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 		<nav class="main-menu page-content-container wide-content" data-attr:data-menu-open="$_phoneMenuOpen">
 			<section id="main-menu-logo">
 				<a href="/" class="logo-link">
-					<img src="/static/RegnconLogo.svg" alt="Regncon framside"/>
+					<img src="/static/RegnconLogo.svg" alt="Regncon forside"/>
 				</a>
 			</section>
 			<section id="main-menu-nav-buttons">
@@ -623,7 +623,7 @@ templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, billettholde
 					rel="noopener noreferrer"
 					class="external-link"
 				>
-					<span>Vanlege Spørsmål</span>
+					<span>Vanlige Spørsmål</span>
 					@icons.Icon(icons.ExternalLink, icons.Size24)
 				</a>
 			</div>
@@ -878,7 +878,7 @@ templ phoneMenuDialog(userInfo requestctx.UserRequestInfo, billettholderOptions 
 				}
 				<a href="/profile">Min Profil</a>
 				<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" rel="noopener noreferrer" class="border-bottom external-link">
-					Vanlege Spørsmål
+					Vanlige Spørsmål
 					@icons.Icon(icons.ExternalLink, icons.Size24)
 				</a>
 			</div>

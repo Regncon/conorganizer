@@ -221,9 +221,9 @@ func TestGetAllEventsForUser_WhenAssignedAsPlayerAndGMOnSameEvent_ReturnsOneGMEv
 
 func TestGetAllEventsForUser_WhenManualPlayerAssignmentIsInOpenPulje_ReturnsPlayerResult(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en manuell spillerplassering i ei open pulje.",
-		When:  "Når festivalprogrammet blir lasta.",
-		Then:  "Så viser programmet arrangementet med ein gong, slik varselet i interessedialogen gjer.",
+		Given: "Gitt en manuell spillerplassering i en åpen pulje.",
+		When:  "Når festivalprogrammet blir lastet.",
+		Then:  "Så viser programmet arrangementet med en gang, slik varselet i interessedialogen gjør.",
 	})
 
 	// Given
@@ -255,9 +255,9 @@ func TestGetAllEventsForUser_WhenManualPlayerAssignmentIsInOpenPulje_ReturnsPlay
 
 func TestGetAllEventsForUser_WhenManualPlayerAssignmentIsInLockedPulje_ReturnsPlayerResult(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en manuell spillerplassering i ei låst pulje.",
-		When:  "Når festivalprogrammet blir lasta.",
-		Then:  "Så viser programmet arrangementet sjølv om puljefordelinga ikkje er ferdig.",
+		Given: "Gitt en manuell spillerplassering i en låst pulje.",
+		When:  "Når festivalprogrammet blir lastet.",
+		Then:  "Så viser programmet arrangementet selv om puljefordelingen ikke er ferdig.",
 	})
 
 	// Given

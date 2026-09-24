@@ -21,7 +21,7 @@ func UpdateIsInPuljefordeling(eventRouter chi.Router, db *sql.DB, liveManager *l
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID mangler", http.StatusBadRequest)
 			return
 		}
 
@@ -30,19 +30,19 @@ func UpdateIsInPuljefordeling(eventRouter chi.Router, db *sql.DB, liveManager *l
 		}
 		if err := datastar.ReadSignals(r, &store); err != nil {
 			logger.Error(fmt.Errorf("failed to read puljefordeling signal: %w", err).Error())
-			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
+			http.Error(w, "Klarte ikke å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "is_in_puljefordeling = ?", store.IsInPuljefordeling); err != nil {
 			logger.Error(fmt.Errorf("failed to update puljefordeling flag for event %s: %w", eventID, err).Error())
-			http.Error(w, "Klarte ikkje å oppdatere puljefordeling", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikke å oppdatere puljefordeling", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			logger.Error(fmt.Errorf("failed to broadcast puljefordeling update for event %s: %w", eventID, err).Error())
-			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikke å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 
@@ -57,14 +57,14 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, liveManager *live.Ma
 			eventID := chi.URLParam(r, "id")
 			if eventID == "" {
 				logger.Warn("Event ID is missing in the request")
-				http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+				http.Error(w, "Arrangement-ID mangler", http.StatusBadRequest)
 				return
 			}
 
 			puljeId := chi.URLParam(r, "puljeId")
 			if puljeId == "" {
 				logger.Warn("Pulje ID is missing in the request")
-				http.Error(w, "Pulje-ID manglar", http.StatusBadRequest)
+				http.Error(w, "Pulje-ID mangler", http.StatusBadRequest)
 				return
 			}
 
@@ -78,7 +78,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, liveManager *live.Ma
 
 			if err := datastar.ReadSignals(r, store); err != nil {
 				logger.Error(fmt.Errorf("failed to read signals from request: %w", err).Error())
-				http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
+				http.Error(w, "Klarte ikke å lese skjemadata", http.StatusBadRequest)
 				return
 			}
 
@@ -98,13 +98,13 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, liveManager *live.Ma
 
 			if err := SetEventInPulje(r.Context(), db, logger, eventID, puljeId, isInPulje); err != nil {
 				logger.Error(fmt.Errorf("failed to upsert relation_event_puljer for event %s and pulje %s: %w", eventID, puljeId, err).Error())
-				http.Error(w, "Klarte ikkje å oppdatere arrangementet i puljen", http.StatusInternalServerError)
+				http.Error(w, "Klarte ikke å oppdatere arrangementet i puljen", http.StatusInternalServerError)
 				return
 			}
 
 			if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 				logger.Error(fmt.Errorf("failed to broadcast pulje update for event %s and pulje %s: %w", eventID, puljeId, err).Error())
-				http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
+				http.Error(w, "Klarte ikke å sende oppdatering", http.StatusInternalServerError)
 				return
 			}
 
@@ -119,14 +119,14 @@ func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, liveManager *live.Mana
 			eventID := chi.URLParam(r, "id")
 			if eventID == "" {
 				logger.Warn("Event ID is missing in the request")
-				http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+				http.Error(w, "Arrangement-ID mangler", http.StatusBadRequest)
 				return
 			}
 
 			puljeId := chi.URLParam(r, "puljeId")
 			if puljeId == "" {
 				logger.Warn("Pulje ID is missing in the request")
-				http.Error(w, "Pulje-ID manglar", http.StatusBadRequest)
+				http.Error(w, "Pulje-ID mangler", http.StatusBadRequest)
 				return
 			}
 
@@ -137,20 +137,20 @@ func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, liveManager *live.Mana
 			store := &Store{}
 			if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
 				fmt.Println(readSignalErr.Error())
-				http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
+				http.Error(w, "Klarte ikke å lese skjemadata", http.StatusBadRequest)
 			}
 
 			roomID := store.RoomAssignment[models.Pulje(puljeId)]
 
 			if err := updateRoomInRelationEventPuljeWithAudit(r.Context(), db, logger, eventID, puljeId, roomID); err != nil {
 				logger.Error(fmt.Errorf("failed to upsert room %s in relation_event_puljer for event %s and pulje %s: %w", roomID, eventID, puljeId, err).Error())
-				http.Error(w, "Klarte ikkje å oppdatere rommet for puljen", http.StatusInternalServerError)
+				http.Error(w, "Klarte ikke å oppdatere rommet for puljen", http.StatusInternalServerError)
 				return
 			}
 
 			if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketRooms); err != nil {
 				logger.Error(fmt.Errorf("failed to broadcast room %s update for event %s and pulje %s: %w", roomID, eventID, puljeId, err).Error())
-				http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
+				http.Error(w, "Klarte ikke å sende oppdatering", http.StatusInternalServerError)
 				return
 			}
 
@@ -232,12 +232,12 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 		roomErrorKey := fmt.Sprintf("puljeRoom%s", pulje.ID)
 	}}
 	if err != nil {
-		<p>Klarte ikkje å hente arrangementspulje: { err.Error() }</p>
+		<p>Klarte ikke å hente arrangementspulje: { err.Error() }</p>
 		return
 	}
 	{{ roomStatus := getRoomsPuljeByFloor(db, pulje.ID) }}
 	if len(roomStatus) == 0 {
-		<p style="color: red;">Klarte ikkje å hente rom</p>
+		<p style="color: red;">Klarte ikke å hente rom</p>
 	}
 	<div style="display: flex; gap: 1rem; align-items: center;">
 		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
@@ -284,7 +284,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 								disabled
 							}
 						>
-							<option value="0">Ikkje tildelt</option>
+							<option value="0">Ikke tildelt</option>
 							for _, floor := range roomStatus {
 								<optgroup label={ fmt.Sprintf("%d. Etg", floor.Floor) }>
 									for _, room := range floor.Rooms {
@@ -323,7 +323,7 @@ templ puljefordeling(eventId string, isInPuljefordeling bool, db *sql.DB) {
 		<section class="puljefordeling-section">
 			{{ puljer, err := puljerService.GetAllPuljer(db) }}
 			if err != nil {
-				<p>Klarte ikkje å hente puljer: { err.Error() }</p>
+				<p>Klarte ikke å hente puljer: { err.Error() }</p>
 				return
 			}
 			for _, pulje := range puljer {

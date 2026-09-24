@@ -40,11 +40,11 @@ templ ScheduleBoardContent(db *sql.DB, logger *slog.Logger, eventImageDir *strin
 		data-signals:drag-over-pulje="''"
 	>
 		if err != nil {
-			<p style="color: var(--color-error);">Klarte ikkje å byggje brettet: { err.Error() }</p>
+			<p style="color: var(--color-error);">Klarte ikke å bygge brettet: { err.Error() }</p>
 		} else {
 			if board.CollisionCount > 0 {
 				<p class="board-collision-summary">
-					⚠ { fmt.Sprintf("%d spelleiar-kollisjon(ar)", board.CollisionCount) }
+					⚠ { fmt.Sprintf("%d spilleder-kollisjon(er)", board.CollisionCount) }
 				</p>
 			}
 			<div class="board-columns">
@@ -61,7 +61,7 @@ templ poolColumn(games []BoardGame, eventImageDir *string) {
 	<div class="board-col board-col--pool">
 		<header class="board-col-head">
 			<h3>I ingen pulje</h3>
-			<p class="board-stats">{ fmt.Sprintf("%d spel", len(games)) }</p>
+			<p class="board-stats">{ fmt.Sprintf("%d spill", len(games)) }</p>
 		</header>
 		<div class="board-col-body">
 			for _, g := range games {
@@ -81,13 +81,13 @@ templ slotColumn(col SlotColumn, eventImageDir *string) {
 		<header class="board-col-head">
 			<h3>{ col.Pulje.Name } <span>({ col.Pulje.TimeRange() })</span></h3>
 			<p class="board-stats">
-				{ fmt.Sprintf("%d spel · %d 18+ · %d nyb.", col.Stats.Games, col.Stats.Adults, col.Stats.Beginner) }
+				{ fmt.Sprintf("%d spill · %d 18+ · %d nyb.", col.Stats.Games, col.Stats.Adults, col.Stats.Beginner) }
 			</p>
 		</header>
 		if len(col.Collisions) > 0 {
 			<div class="board-collision">
 				for _, c := range col.Collisions {
-					<p>⚠ Spelleiar-kollisjon — { c.HostName } har { fmt.Sprintf("%d", c.Count) } spel i denne puljen</p>
+					<p>⚠ Spilleder-kollisjon — { c.HostName } har { fmt.Sprintf("%d", c.Count) } spill i denne puljen</p>
 				}
 			</div>
 		}
@@ -216,7 +216,7 @@ func puljeoppsettRoute(router chi.Router, db *sql.DB, liveManager *live.Manager,
 func setMembership(w http.ResponseWriter, r *http.Request, db *sql.DB, liveManager *live.Manager, logger *slog.Logger, inPulje bool) {
 	eventID := chi.URLParam(r, "event")
 	if eventID == "" {
-		http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+		http.Error(w, "Arrangement-ID mangler", http.StatusBadRequest)
 		return
 	}
 	puljeID, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
@@ -226,7 +226,7 @@ func setMembership(w http.ResponseWriter, r *http.Request, db *sql.DB, liveManag
 	}
 	if err := formsubmission.SetEventInPulje(r.Context(), db, logger, eventID, string(puljeID), inPulje); err != nil {
 		logger.Error(fmt.Errorf("set membership event %s pulje %s: %w", eventID, puljeID, err).Error())
-		http.Error(w, "Klarte ikkje å oppdatere puljen", http.StatusInternalServerError)
+		http.Error(w, "Klarte ikke å oppdatere puljen", http.StatusInternalServerError)
 		return
 	}
 	// Live broadcast is best-effort: the write is already committed, so a failed
