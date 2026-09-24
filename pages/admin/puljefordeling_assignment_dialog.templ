@@ -1,0 +1,370 @@
+package admin
+
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
+)
+
+type puljeAssignmentCandidate struct {
+	ID        int    `json:"Id"`
+	FirstName string `json:"FirstName"`
+	LastName  string `json:"LastName"`
+}
+
+func loadPuljeAssignmentCandidates(db *sql.DB) ([]puljeAssignmentCandidate, error) {
+	rows, err := db.Query(`SELECT id, first_name, last_name FROM billettholdere ORDER BY first_name, last_name`)
+	if err != nil {
+		return nil, fmt.Errorf("hent kandidater til puljefordeling: %w", err)
+	}
+	defer rows.Close()
+
+	candidates := make([]puljeAssignmentCandidate, 0)
+	for rows.Next() {
+		var candidate puljeAssignmentCandidate
+		if err := rows.Scan(&candidate.ID, &candidate.FirstName, &candidate.LastName); err != nil {
+			return nil, fmt.Errorf("les kandidat til puljefordeling: %w", err)
+		}
+		candidates = append(candidates, candidate)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("gå gjennom kandidater til puljefordeling: %w", err)
+	}
+	return candidates, nil
+}
+
+func puljeAssignDialogAction(pulje models.Pulje, event puljefordeling.EmulatedEvent, gmOnly bool) string {
+	title := "Legg til deltaker på " + event.Title
+	role := models.EventPlayerRolePlayer
+	if gmOnly {
+		title = "Legg til spilleder på " + event.Title
+		role = models.EventPlayerRoleGM
+	}
+	return fmt.Sprintf("$assignmentEventId = %q; $assignmentPuljeId = %q; $assignmentRole = %q; $assignmentPickerGmOnly = %t; $assignmentPickerTitle = %q; $assignmentBillettholderId = 0; $clearInput = $clearInput + 1; $assignmentActionCompleted = false; $_puljefordelingAssignDialogOpen = true",
+		event.EventID, string(pulje), string(role), gmOnly, title)
+}
+
+func puljeAssignmentAction(role models.EventPlayerRole) string {
+	return fmt.Sprintf("$assignmentRole = %q; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentRemove = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentCloseDialog = true; @post('/admin/api/puljefordeling/assign'); $assignmentCloseDialog = false; $assignmentFromAddMenu = false", string(role))
+}
+
+func puljeInterestAction(level models.InterestLevel) string {
+	return fmt.Sprintf("$assignmentInterestLevel = %q; $assignmentCloseDialog = true; @put('/admin/api/puljefordeling/interest'); $assignmentCloseDialog = false", string(level))
+}
+
+func puljeInterestLabel(level models.InterestLevel) string {
+	if level == models.InterestLevelMedium {
+		return "Middels interessert"
+	}
+	return level.Label()
+}
+
+templ puljeAssignmentPicker(db *sql.DB, logger *slog.Logger) {
+	{{ candidates, err := loadPuljeAssignmentCandidates(db) }}
+	if err != nil {
+		{{ logger.Error(err.Error()) }}
+		<p class="pulje-error">Kunne ikke hente billettholdere.</p>
+	} else {
+		{{ candidatesJSON, _ := json.Marshal(candidates) }}
+		<section class="pulje-assignment-picker">
+			<h4>Søk etter billettholder</h4>
+			<admin-billettholder-search
+				data-billettholdere={ string(candidatesJSON) }
+				data-attr:data-clear-input="$clearInput"
+				data-on:billettholder-select="$assignmentBillettholderId = evt.detail.id"
+				input-tippy="Søk etter billettholder"
+			></admin-billettholder-search>
+			<div class="pulje-assignment-actions">
+				<button type="button" class="btn btn--secondary" data-class:btn--primary="$assignmentPickerGmOnly" data-class:btn--secondary="!$assignmentPickerGmOnly" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeAssignmentAction(models.EventPlayerRoleGM) }>Tildel som spilleder</button>
+				<button type="button" class="btn btn--secondary" data-show="!$assignmentPickerGmOnly" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeAssignmentAction(models.EventPlayerRolePlayer) }>Tildel som spiller</button>
+			</div>
+			<div class="pulje-assignment-interesse-actions" data-show="!$assignmentPickerGmOnly">
+				<h4>Sett interesse</h4>
+				<div>
+					for _, level := range []models.InterestLevel{models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow, models.InterestLevelNone} {
+						<button type="button" class="btn btn--outline" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeInterestAction(level) }>{ puljeInterestLabel(level) }</button>
+					}
+				</div>
+			</div>
+			<script src="/static/web_components/admin_billettholder_search.js"></script>
+		</section>
+	}
+}
+
+type puljeAssignmentInterestCandidate struct {
+	BillettholderID        int
+	FirstName              string
+	LastName               string
+	TicketType             string
+	IsOver18               bool
+	IsAssignedInPulje      bool
+	HasPreviousFirstChoice bool
+}
+
+type puljeAssignmentEventInterests struct {
+	EventID    string
+	EventTitle string
+	High       []puljeAssignmentInterestCandidate
+	Medium     []puljeAssignmentInterestCandidate
+	Low        []puljeAssignmentInterestCandidate
+}
+
+func puljeAssignmentInterestState(em puljefordeling.Emulation, current models.Pulje) (map[int]bool, map[int]bool) {
+	assignedInCurrent := map[int]bool{}
+	previousFirstChoice := map[int]bool{}
+	currentIndex := -1
+	for index, pulje := range em.Puljer {
+		if pulje.PuljeID == current {
+			currentIndex = index
+			break
+		}
+	}
+	if currentIndex < 0 {
+		return assignedInCurrent, previousFirstChoice
+	}
+	for index, pulje := range em.Puljer {
+		if index > currentIndex {
+			break
+		}
+		for _, event := range pulje.Events {
+			for _, player := range event.AssignedPlayers {
+				if index == currentIndex {
+					assignedInCurrent[player.BillettholderID] = true
+				}
+				if index < currentIndex && player.Level == models.InterestLevelHigh {
+					previousFirstChoice[player.BillettholderID] = true
+				}
+			}
+		}
+	}
+	return assignedInCurrent, previousFirstChoice
+}
+
+func loadPuljeAssignmentEventInterests(db *sql.DB, pulje models.Pulje, em puljefordeling.Emulation) ([]puljeAssignmentEventInterests, error) {
+	assignedInPulje, previousFirstChoice := puljeAssignmentInterestState(em, pulje)
+	gmRows, err := db.Query(`SELECT DISTINCT billettholder_id FROM relation_events_players WHERE pulje_id = ? AND role = ?`, pulje, models.EventPlayerRoleGM)
+	if err != nil {
+		return nil, fmt.Errorf("hent spillederne for puljefordeling: %w", err)
+	}
+	defer gmRows.Close()
+	for gmRows.Next() {
+		var billettholderID int
+		if err := gmRows.Scan(&billettholderID); err != nil {
+			return nil, fmt.Errorf("les spilleder for puljefordeling: %w", err)
+		}
+		assignedInPulje[billettholderID] = true
+	}
+	if err := gmRows.Err(); err != nil {
+		return nil, fmt.Errorf("gå gjennom spillederne for puljefordeling: %w", err)
+	}
+	if err := gmRows.Close(); err != nil {
+		return nil, fmt.Errorf("lukk spillederne for puljefordeling: %w", err)
+	}
+
+	rows, err := db.Query(`
+		SELECT e.id, e.title, i.billettholder_id, b.first_name, b.last_name, b.ticket_type, b.is_over_18, i.interest_level
+		FROM relation_event_puljer ep
+		JOIN events e ON e.id = ep.event_id
+		JOIN interests i ON i.event_id = ep.event_id AND i.pulje_id = ep.pulje_id
+		JOIN billettholdere b ON b.id = i.billettholder_id
+		WHERE ep.pulje_id = ? AND ep.is_in_pulje = 1
+		ORDER BY e.title COLLATE NOCASE,
+			CASE i.interest_level WHEN ? THEN 1 WHEN ? THEN 2 WHEN ? THEN 3 END,
+			b.first_name COLLATE NOCASE, b.last_name COLLATE NOCASE, b.id
+	`, pulje, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
+	if err != nil {
+		return nil, fmt.Errorf("hent interesser for puljefordeling: %w", err)
+	}
+	defer rows.Close()
+
+	eventsByID := make(map[string]int)
+	events := make([]puljeAssignmentEventInterests, 0)
+	for rows.Next() {
+		var eventID, eventTitle string
+		var candidate puljeAssignmentInterestCandidate
+		var level models.InterestLevel
+		if err := rows.Scan(&eventID, &eventTitle, &candidate.BillettholderID, &candidate.FirstName, &candidate.LastName, &candidate.TicketType, &candidate.IsOver18, &level); err != nil {
+			return nil, fmt.Errorf("les interesse for puljefordeling: %w", err)
+		}
+		index, exists := eventsByID[eventID]
+		if !exists {
+			index = len(events)
+			eventsByID[eventID] = index
+			events = append(events, puljeAssignmentEventInterests{EventID: eventID, EventTitle: eventTitle})
+		}
+		candidate.IsAssignedInPulje = assignedInPulje[candidate.BillettholderID]
+		candidate.HasPreviousFirstChoice = previousFirstChoice[candidate.BillettholderID]
+		switch level {
+		case models.InterestLevelHigh:
+			events[index].High = append(events[index].High, candidate)
+		case models.InterestLevelMedium:
+			events[index].Medium = append(events[index].Medium, candidate)
+		case models.InterestLevelLow:
+			events[index].Low = append(events[index].Low, candidate)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("gå gjennom interesser for puljefordeling: %w", err)
+	}
+	return events, nil
+}
+
+func puljeQuickAssignmentAction(billettholderID int) string {
+	return fmt.Sprintf("$assignmentBillettholderId = %d; $assignmentRole = 'Player'; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentRemove = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentCloseDialog = true; @post('/admin/api/puljefordeling/assign'); $assignmentCloseDialog = false; $assignmentFromAddMenu = false", billettholderID)
+}
+
+templ puljeAssignmentInterestRow(candidate puljeAssignmentInterestCandidate) {
+	<li>
+		<button type="button" class={ "pulje-assignment-interest", templ.KV("is-assigned", candidate.IsAssignedInPulje) } data-on:click={ puljeQuickAssignmentAction(candidate.BillettholderID) }>
+			<span class="pulje-assignment-interest-primary">
+				<span>{ candidate.FirstName } { candidate.LastName }</span>
+				<span class="pulje-assignment-interest-icons">
+					if candidate.IsAssignedInPulje {
+						<span class="pulje-assignment-interest-icon is-assigned" data-tippy-content="Allerede tildelt et arrangement i denne puljen" aria-label="Allerede tildelt et arrangement i denne puljen">@icons.Icon(icons.Shield, icons.Size16)</span>
+					}
+					if !candidate.IsOver18 {
+						<span class="pulje-assignment-interest-icon is-under-18" data-tippy-content="Under 18 år" aria-label="Under 18 år">@icons.Icon(icons.EventChildFriendly, icons.Size16)</span>
+					}
+					if candidate.HasPreviousFirstChoice {
+						<span class="pulje-assignment-interest-icon has-first-choice" data-tippy-content="Har fått førstevalget sitt i en tidligere pulje" aria-label="Har fått førstevalget sitt i en tidligere pulje">@icons.Icon(icons.ProgressComplete, icons.Size16)</span>
+					}
+				</span>
+			</span>
+			<span class="pulje-assignment-interest-ticket">{ candidate.TicketType }</span>
+		</button>
+	</li>
+}
+
+templ puljeAssignmentInterestGroup(level models.InterestLevel, candidates []puljeAssignmentInterestCandidate) {
+	if len(candidates) > 0 {
+		<section class="pulje-assignment-interest-group">
+			<h5>{ level.Emoji() } { level.Label() }</h5>
+			<ul>
+				for _, candidate := range candidates {
+					@puljeAssignmentInterestRow(candidate)
+				}
+			</ul>
+		</section>
+	}
+}
+
+templ puljeAssignmentInterests(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em puljefordeling.Emulation, emErr error) {
+	{{ interests, err := loadPuljeAssignmentEventInterests(db, pulje, em) }}
+	<section id="puljefordeling-assignment-interests" class="pulje-assignment-interests" data-show="!$assignmentPickerGmOnly">
+		<h4>Hurtigtildel fra interesser</h4>
+		if err != nil {
+			{{ logger.Error(err.Error(), "pulje_id", pulje) }}
+			<p class="pulje-error">Kunne ikke hente interesser.</p>
+		} else {
+			if emErr != nil {
+				<p class="pulje-error">Status for tildelinger og tidligere førstevalg er midlertidig utilgjengelig.</p>
+			}
+			for _, eventInterests := range interests {
+				<div class="pulje-assignment-event-interests" data-show={ fmt.Sprintf("$assignmentEventId === %q", eventInterests.EventID) }>
+					<p class="pulje-assignment-interest-help">Klikk på en person for å tildele dem som spiller i { eventInterests.EventTitle }.</p>
+					@puljeAssignmentInterestGroup(models.InterestLevelHigh, eventInterests.High)
+					@puljeAssignmentInterestGroup(models.InterestLevelMedium, eventInterests.Medium)
+					@puljeAssignmentInterestGroup(models.InterestLevelLow, eventInterests.Low)
+				</div>
+			}
+		}
+	</section>
+}
+
+templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em puljefordeling.Emulation, emErr error) {
+	{{ status, err := getPuljeStatus(db, pulje) }}
+	if err != nil {
+		{{ logger.Error(err.Error(), "pulje_id", pulje) }}
+	} else if !puljeIsCompleted(status) {
+		<dialog
+			id="puljefordeling-assign-dialog"
+			class="puljefordeling-assign-dialog"
+			closedBy="any"
+			aria-labelledby="puljefordeling-assign-title"
+			data-preserve-attr="open"
+			data-effect="$assignmentActionCompleted && ($_puljefordelingAssignDialogOpen = false); $_puljefordelingAssignDialogOpen ? (!el.open && (el.showModal(), el.querySelector('admin-billettholder-search')?.shadowRoot?.querySelector('input')?.focus())) : (el.open && el.close())"
+			data-on:close="$_puljefordelingAssignDialogOpen = false; $assignmentActionCompleted = false; $assignmentBillettholderId = 0; $clearInput = $clearInput + 1"
+			data-on:click__stop="if (evt.target === el) $_puljefordelingAssignDialogOpen = false"
+		>
+			<h3 id="puljefordeling-assign-title" data-text="$assignmentPickerTitle">Administrer deltaker</h3>
+			@puljeAssignmentPicker(db, logger)
+			@puljeAssignmentInterests(db, logger, pulje, em, emErr)
+			<button class="btn btn--outline" type="button" data-on:click="$_puljefordelingAssignDialogOpen = false">Lukk</button>
+		</dialog>
+	}
+	<style>
+		.puljefordeling-assign-dialog {
+			inline-size: min(42rem, calc(100dvw - 2rem));
+			max-block-size: calc(100dvh - 2rem);
+			overflow: auto;
+			container: pulje-assignment-dialog / inline-size;
+
+			.pulje-assignment-picker,
+			.pulje-assignment-interesse-actions,
+			.pulje-assignment-interests,
+			.pulje-assignment-event-interests,
+			.pulje-assignment-interest-group {
+				display: grid;
+				gap: var(--spacing-2x);
+			}
+
+			.pulje-assignment-picker,
+			.pulje-assignment-interests {
+				margin-block-end: var(--spacing-5x);
+			}
+
+			.pulje-assignment-interesse-actions,
+			.pulje-assignment-interests {
+				padding-block-start: var(--spacing-4x);
+				border-block-start: 1px solid var(--bg-item-border);
+			}
+
+			.pulje-assignment-actions,
+			.pulje-assignment-interesse-actions > div {
+				display: grid;
+				gap: var(--spacing-2x);
+			}
+
+			.pulje-assignment-interest-group ul {
+				display: grid;
+				gap: var(--spacing-1x);
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+
+			.pulje-assignment-interest {
+				display: grid;
+				gap: var(--spacing-1x);
+				inline-size: 100%;
+				padding: var(--spacing-2x) var(--spacing-3x);
+				border: 1px solid var(--bg-item-border);
+				border-radius: var(--border-radius-1x);
+				background: var(--bg-item);
+				color: var(--color-text-strong);
+				text-align: start;
+				cursor: pointer;
+			}
+
+			.pulje-assignment-interest:hover { border-color: var(--color-primary); }
+			.pulje-assignment-interest.is-assigned { opacity: 0.7; }
+			.pulje-assignment-interest-primary { display: flex; gap: var(--spacing-2x); place-content: space-between; font-weight: 700; }
+			.pulje-assignment-interest-icons { display: inline-flex; gap: var(--spacing-1x); }
+			.pulje-assignment-interest-icon.is-under-18 { color: var(--color-warning); }
+			.pulje-assignment-interest-icon.has-first-choice { color: var(--color-success); }
+			.pulje-assignment-interest-ticket, .pulje-assignment-interest-help { color: var(--color-text-soft); font-size: var(--text-body-small); }
+		}
+
+		@container pulje-assignment-dialog (width > 500px) {
+			.puljefordeling-assign-dialog {
+				.pulje-assignment-actions { grid-template-columns: repeat(2, 1fr); }
+				.pulje-assignment-interesse-actions > div { grid-template-columns: repeat(2, 1fr); }
+			}
+		}
+	</style>
+}

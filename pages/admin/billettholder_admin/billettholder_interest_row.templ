@@ -65,10 +65,6 @@ templ billettholderInterestRowStyles() {
 				outline: none;
 			}
 
-			&.is-unpublished {
-				opacity: 0.55;
-			}
-
 			& .billettholder-interest-row-title {
 				display: block;
 				overflow: hidden;
@@ -159,9 +155,6 @@ templ billettholderInterestGroup(title string, rows []billettholderInterestEvent
 templ billettholderInterestRow(row billettholderInterestEventRow, isAssigned bool) {
 	{{
 		rowClass := "billettholder-interest-row"
-		if !row.IsPublished {
-			rowClass += " is-unpublished"
-		}
 		assignedRoleClass := "billettholder-interest-assigned-role"
 		chipClass := "billettholder-interest-row-chip"
 		if isAssigned && row.AssignedRole == models.EventPlayerRoleGM {
@@ -185,11 +178,6 @@ templ billettholderInterestRow(row billettholderInterestEventRow, isAssigned boo
 				</span>
 			}
 			<span>{ billettholderInterestLevelIcon(row.InterestLevel) } { billettholderInterestLabel(row.InterestLevel) }</span>
-			if !row.IsPublished {
-				<span>Ikke publisert i pulje</span>
-			} else {
-				<span>Publisert i pulje</span>
-			}
 		</span>
 		<span class={ chipClass }>
 			if isAssigned {

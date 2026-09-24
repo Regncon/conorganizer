@@ -432,7 +432,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	})
 	<article
 		class="page-content-container"
-		data-signals__ifmissing={ formsubmission.DataSignals(map[string]any{
+		data-signals__ifmissing={ components.DataSignals(map[string]any{
             "_add_drag_over": false,
             "_uploading": false,
             "_uploadProgress": 0,
@@ -459,7 +459,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		<h1>Legg til bilete</h1>
 		<div
 			class="img-upload-form-content"
-			data-signals={ formsubmission.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
+			data-signals={ components.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
 		>
 			<div class="surface-pane info-text-content">
 				<div>

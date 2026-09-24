@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
@@ -23,7 +24,7 @@ func TestGetAllEventsForUser_WhenPlayerAssignmentIsInOpenPulje_ReturnsInterestsI
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusOpen)
 	insertProfileProgramPublishedEvent(t, db, "open-assigned-event", "Open Assigned Event")
 	insertProfileProgramPublishedEvent(t, db, "open-wish-event", "Open Wish Event")
-	insertProfileProgramPlayer(t, db, "open-assigned-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramPlayer(t, db, "open-assigned-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, puljefordeling.SourceSolver)
 	insertProfileProgramInterest(t, db, "open-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When
@@ -57,7 +58,7 @@ func TestGetAllEventsForUser_WhenPlayerAssignmentIsInLockedPulje_ReturnsInterest
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusLocked)
 	insertProfileProgramPublishedEvent(t, db, "locked-assigned-event", "Locked Assigned Event")
 	insertProfileProgramPublishedEvent(t, db, "locked-wish-event", "Locked Wish Event")
-	insertProfileProgramPlayer(t, db, "locked-assigned-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramPlayer(t, db, "locked-assigned-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, puljefordeling.SourceSolver)
 	insertProfileProgramInterest(t, db, "locked-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When
@@ -91,7 +92,7 @@ func TestGetAllEventsForUser_WhenPlayerAssignmentIsInCompletedPulje_ReturnsPlaye
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
 	insertProfileProgramPublishedEvent(t, db, "completed-assigned-event", "Completed Assigned Event")
 	insertProfileProgramPublishedEvent(t, db, "completed-wish-event", "Completed Wish Event")
-	insertProfileProgramPlayer(t, db, "completed-assigned-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramPlayer(t, db, "completed-assigned-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, puljefordeling.SourceSolver)
 	insertProfileProgramInterest(t, db, "completed-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When
@@ -123,7 +124,7 @@ func TestGetAllEventsForUser_WhenGMEventIsInOpenPulje_ReturnsGMEvent(t *testing.
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusOpen)
 	insertProfileProgramPublishedEvent(t, db, "open-gm-event", "Open GM Event")
-	insertProfileProgramPlayer(t, db, "open-gm-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM)
+	insertProfileProgramPlayer(t, db, "open-gm-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM, puljefordeling.SourceManual)
 
 	// When
 	events, err := GetAllEventsForUser(userInfo, billettholderID, db, logger)
@@ -150,7 +151,7 @@ func TestGetAllEventsForUser_WhenGMEventIsInLockedPulje_ReturnsGMEvent(t *testin
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusLocked)
 	insertProfileProgramPublishedEvent(t, db, "locked-gm-event", "Locked GM Event")
-	insertProfileProgramPlayer(t, db, "locked-gm-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM)
+	insertProfileProgramPlayer(t, db, "locked-gm-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM, puljefordeling.SourceManual)
 
 	// When
 	events, err := GetAllEventsForUser(userInfo, billettholderID, db, logger)
@@ -177,7 +178,7 @@ func TestGetAllEventsForUser_WhenGMEventIsInCompletedPulje_ReturnsGMEvent(t *tes
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
 	insertProfileProgramPublishedEvent(t, db, "completed-gm-event", "Completed GM Event")
-	insertProfileProgramPlayer(t, db, "completed-gm-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM)
+	insertProfileProgramPlayer(t, db, "completed-gm-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM, puljefordeling.SourceManual)
 
 	// When
 	events, err := GetAllEventsForUser(userInfo, billettholderID, db, logger)
@@ -204,8 +205,8 @@ func TestGetAllEventsForUser_WhenAssignedAsPlayerAndGMOnSameEvent_ReturnsOneGMEv
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
 	insertProfileProgramPublishedEvent(t, db, "dual-role-event", "Dual Role Event")
-	insertProfileProgramPlayer(t, db, "dual-role-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
-	insertProfileProgramPlayer(t, db, "dual-role-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM)
+	insertProfileProgramPlayer(t, db, "dual-role-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, puljefordeling.SourceSolver)
+	insertProfileProgramPlayer(t, db, "dual-role-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM, puljefordeling.SourceManual)
 
 	// When
 	events, err := GetAllEventsForUser(userInfo, billettholderID, db, logger)
@@ -216,4 +217,72 @@ func TestGetAllEventsForUser_WhenAssignedAsPlayerAndGMOnSameEvent_ReturnsOneGMEv
 	}
 	assertProfileProgramEventTitles(t, expectedEventTitles, events)
 	assertProfileProgramEventsAreGM(t, events)
+}
+
+func TestGetAllEventsForUser_WhenManualPlayerAssignmentIsInOpenPulje_ReturnsPlayerResult(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en manuell spillerplassering i ei open pulje.",
+		When:  "Når festivalprogrammet blir lasta.",
+		Then:  "Så viser programmet arrangementet med ein gong, slik varselet i interessedialogen gjer.",
+	})
+
+	// Given
+	expectedEventTitles := []string{"Open Manual Event"}
+	expectedInterestNames := []string{}
+
+	db, logger := createProfileProgramTestDB(t)
+	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusOpen)
+	insertProfileProgramPublishedEvent(t, db, "open-manual-event", "Open Manual Event")
+	insertProfileProgramPublishedEvent(t, db, "open-manual-wish-event", "Open Manual Wish Event")
+	insertProfileProgramPlayer(t, db, "open-manual-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, puljefordeling.SourceManual)
+	insertProfileProgramInterest(t, db, "open-manual-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
+
+	// When
+	events, eventsErr := GetAllEventsForUser(userInfo, billettholderID, db, logger)
+	interests, interestsErr := getAllInterestsForUser(userInfo, billettholderID, db, logger)
+
+	// Then
+	if eventsErr != nil {
+		t.Fatalf("expected event query to succeed: %v", eventsErr)
+	}
+	if interestsErr != nil {
+		t.Fatalf("expected interest query to succeed: %v", interestsErr)
+	}
+	assertProfileProgramEventTitles(t, expectedEventTitles, events)
+	assertProfileProgramInterestNames(t, expectedInterestNames, interests)
+}
+
+func TestGetAllEventsForUser_WhenManualPlayerAssignmentIsInLockedPulje_ReturnsPlayerResult(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en manuell spillerplassering i ei låst pulje.",
+		When:  "Når festivalprogrammet blir lasta.",
+		Then:  "Så viser programmet arrangementet sjølv om puljefordelinga ikkje er ferdig.",
+	})
+
+	// Given
+	expectedEventTitles := []string{"Locked Manual Event"}
+	expectedInterestNames := []string{}
+
+	db, logger := createProfileProgramTestDB(t)
+	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusLocked)
+	insertProfileProgramPublishedEvent(t, db, "locked-manual-event", "Locked Manual Event")
+	insertProfileProgramPublishedEvent(t, db, "locked-manual-wish-event", "Locked Manual Wish Event")
+	insertProfileProgramPlayer(t, db, "locked-manual-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, puljefordeling.SourceManual)
+	insertProfileProgramInterest(t, db, "locked-manual-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
+
+	// When
+	events, eventsErr := GetAllEventsForUser(userInfo, billettholderID, db, logger)
+	interests, interestsErr := getAllInterestsForUser(userInfo, billettholderID, db, logger)
+
+	// Then
+	if eventsErr != nil {
+		t.Fatalf("expected event query to succeed: %v", eventsErr)
+	}
+	if interestsErr != nil {
+		t.Fatalf("expected interest query to succeed: %v", interestsErr)
+	}
+	assertProfileProgramEventTitles(t, expectedEventTitles, events)
+	assertProfileProgramInterestNames(t, expectedInterestNames, interests)
 }

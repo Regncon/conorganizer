@@ -23,8 +23,8 @@ func seedPulje(t *testing.T, db *sql.DB, id models.Pulje, name, startAt string) 
 func seedEvent(t *testing.T, db *sql.DB, id, title string, maxPlayers int, pulje models.Pulje) {
 	t.Helper()
 	_, err := db.Exec(
-		`INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		 VALUES (?, ?, '', '', '', '', '', ?)`,
+		`INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, is_in_puljefordeling)
+			 VALUES (?, ?, '', '', '', '', '', ?, 1)`,
 		id, title, maxPlayers,
 	)
 	if err != nil {

@@ -5,9 +5,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
+	"strings"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
@@ -410,16 +414,17 @@ func TestEventPageContent_WhenProgramPublishingIsOff_DoesNotRenderInterestDialog
 	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
 }
 
-func TestEventPageContent_WhenEventIsNotPublishedInPulje_DoesNotRenderInterestDialog(t *testing.T) {
+func TestEventPageContent_WhenLegacyPuljePublishedFlagIsOff_StillRendersInterestDialog(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at programmet er publisert, men arrangementet ikke er publisert i puljen.",
+		Given: "Gitt at programmet og arrangementet er publisert, men den gamle puljeflagget står av.",
 		When:  "Når arrangementssiden vises.",
-		Then:  "Så skal dialogen ikke rendres og brukeren fortsatt se lenken for å hente billett.",
+		Then:  "Så skal dialogen fortsatt rendres fordi flagget ikke lenger styrer synlighet.",
 	})
 
 	// Given
-	expectedDialogVisible := false
-	expectedHrefs := []string{"/", "/profile/tickets"}
+	expectedDialogVisible := true
+	expectedHrefs := []string{"/", "/profile", "https://www.regncon.no/vanlege-sporsmal/"}
+	selectedBillettholderID := 901
 
 	db := createEventVisibilityTestDB(t)
 	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
@@ -427,10 +432,21 @@ func TestEventPageContent_WhenEventIsNotPublishedInPulje_DoesNotRenderInterestDi
 	seedEventVisibilityPulje(t, db, models.PuljeFredagKveld)
 	seedEventVisibilityEventPulje(t, db, "unpublished-pulje-event", models.PuljeFredagKveld, false)
 	setEventVisibilityProgramPublishing(t, db, true)
+	// The interest choices only render for a selected billettholder the signed-in
+	// user actually owns, so this needs the seeded email association, the selection
+	// cookie and its middleware. Owning a ticket is also what swaps the "Hent
+	// billett" link for the interest panel's own content.
+	seedEventVisibilityBillettholder(t, db, selectedBillettholderID)
 	request := httptest.NewRequest("GET", "/event/unpublished-pulje-event?pulje=fredag_kveld", nil)
+	request.AddCookie(&http.Cookie{Name: requestctx.SelectedBillettholderCookieName, Value: strconv.Itoa(selectedBillettholderID)})
+	request = request.WithContext(authctx.WithUserToken(request.Context(), "event-visibility-user", eventVisibilityUserEmail))
+	var doc *goquery.Document
+	handler := requestctx.BillettholderSelectionMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		doc = templtest.Render(t, event_page_content("unpublished-pulje-event", false, logger, db, nil, r))
+	}))
 
 	// When
-	doc := templtest.Render(t, event_page_content("unpublished-pulje-event", false, logger, db, nil, request))
+	handler.ServeHTTP(httptest.NewRecorder(), request)
 	actualDialogVisible := templtest.HasSelector(doc, ".interest-dialog")
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
@@ -466,5 +482,42 @@ func TestEventPageContent_WhenProgramAndPuljeArePublished_RendersInterestDialog(
 	// Then
 	if actualDialogVisible != expectedDialogVisible {
 		t.Fatalf("interest dialog visibility mismatch\nexpected: %v\nactual:   %v", expectedDialogVisible, actualDialogVisible)
+	}
+}
+
+func TestEventPageContent_WhenEventIsNotInPuljefordeling_RendersProgramInfoPanel(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at et annonsert arrangement ikke er med i puljefordelingen, men er lagt i en pulje.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal informasjonspanelet vises uten interessevalg-dialogen.",
+	})
+
+	// Given
+	expectedPanelVisible := true
+	expectedDialogVisible := false
+	expectedMessagePart := "åpent for alle"
+	db := createEventVisibilityTestDB(t)
+	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
+	seedEventVisibilityEvent(t, db, "program-only-event", "Program Only Event", models.EventStatusAnnounced, sql.NullInt64{})
+	seedEventVisibilityPulje(t, db, models.PuljeFredagKveld)
+	seedEventVisibilityEventPulje(t, db, "program-only-event", models.PuljeFredagKveld, true)
+	mustExecEventVisibilityTest(t, db, `UPDATE events SET is_in_puljefordeling = 0 WHERE id = 'program-only-event'`)
+	request := httptest.NewRequest("GET", "/event/program-only-event?pulje=FredagKveld", nil)
+
+	// When
+	doc := templtest.Render(t, event_page_content("program-only-event", false, logger, db, nil, request))
+	actualPanelVisible := templtest.HasSelector(doc, ".event-interest-picker-container")
+	actualDialogVisible := templtest.HasSelector(doc, ".interest-dialog")
+	message := strings.Join(strings.Fields(doc.Find(".event-interest-program-message").Text()), " ")
+
+	// Then
+	if actualPanelVisible != expectedPanelVisible {
+		t.Fatalf("program information panel visibility mismatch\nexpected: %v\nactual:   %v", expectedPanelVisible, actualPanelVisible)
+	}
+	if actualDialogVisible != expectedDialogVisible {
+		t.Fatalf("interest dialog visibility mismatch\nexpected: %v\nactual:   %v", expectedDialogVisible, actualDialogVisible)
+	}
+	if !strings.Contains(message, expectedMessagePart) {
+		t.Fatalf("program information message = %q, want it to contain %q", message, expectedMessagePart)
 	}
 }

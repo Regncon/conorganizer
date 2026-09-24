@@ -2,35 +2,17 @@ package admin
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/program"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 const programPublishingStateID = 1
-
-func getProgramPublished(db *sql.DB) (bool, error) {
-	const query = `
-		SELECT is_published
-		FROM program_publishing_state
-		WHERE id = ?
-	`
-
-	var isPublished int
-	if err := db.QueryRow(query, programPublishingStateID).Scan(&isPublished); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
-		}
-		return false, fmt.Errorf("query program publishing state: %w", err)
-	}
-
-	return isPublished == 1, nil
-}
 
 func updateProgramPublished(db *sql.DB, programPublished bool) error {
 	const query = `
@@ -82,9 +64,7 @@ func programPublishingRoute(router chi.Router, db *sql.DB, liveManager *live.Man
 }
 
 templ publiserProgram(db *sql.DB) {
-	{{
-		programPublished, err := getProgramPublished(db)
-	}}
+	{{ programPublished, err := program.IsPublished(db) }}
 	<style>
 		.publiser-program {
 			display: flex;

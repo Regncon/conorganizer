@@ -3,14 +3,13 @@ package eventservice
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/eventimage"
+	"github.com/Regncon/conorganizer/service/program"
 )
 
 type rootEventNavigationItem struct {
@@ -18,6 +17,7 @@ type rootEventNavigationItem struct {
 	title   string
 	url     string
 	puljeID models.Pulje
+	program bool
 }
 
 func GetPreviousNextForRootEventList(
@@ -43,7 +43,7 @@ func getPreviousNextForAnnouncedRootEventList(
 ) (components.PreviousNext, error) {
 	_ = ctx
 
-	events, err := root.GetAnnouncedEventsAlphabetically(db)
+	events, err := program.GetAnnouncedEvents(db)
 	if err != nil {
 		return components.PreviousNext{}, err
 	}
@@ -53,7 +53,7 @@ func getPreviousNextForAnnouncedRootEventList(
 		items = append(items, rootEventNavigationItem{
 			eventID: event.Id,
 			title:   event.Title,
-			url:     fmt.Sprintf("/event/%s", event.Id),
+			url:     program.EventURL(event.Id, "", ""),
 		})
 	}
 
@@ -71,7 +71,8 @@ func getPreviousNextForPublishedRootEventList(
 ) (components.PreviousNext, error) {
 	_ = ctx
 
-	currentPuljeValue := r.URL.Query().Get("pulje")
+	query := r.URL.Query()
+	currentPuljeValue := query.Get("pulje")
 	if currentPuljeValue == "" {
 		return components.PreviousNext{}, nil
 	}
@@ -81,24 +82,68 @@ func getPreviousNextForPublishedRootEventList(
 		return components.PreviousNext{}, nil
 	}
 
-	occurrences, err := root.GetPublishedEventOccurrences(db)
+	programDays, err := program.GetDays(db)
 	if err != nil {
 		return components.PreviousNext{}, err
 	}
 
-	items := make([]rootEventNavigationItem, 0, len(occurrences))
-	for _, occurrence := range occurrences {
+	requestedDate := query.Get("date")
+	if requestedDate == "" {
+		requestedDate = dateForPulje(programDays, currentPuljeID)
+	}
+
+	var selectedDay *program.Day
+	for index := range programDays {
+		if programDays[index].QueryValue() == requestedDate {
+			selectedDay = &programDays[index]
+			break
+		}
+	}
+	if selectedDay == nil {
+		return components.PreviousNext{}, nil
+	}
+
+	items := make([]rootEventNavigationItem, 0)
+	for _, programEvent := range selectedDay.ProgramEvents {
 		items = append(items, rootEventNavigationItem{
-			eventID: occurrence.Event.Id,
-			title:   occurrence.Event.Title,
-			url:     fmt.Sprintf("/event/%s?pulje=%s", occurrence.Event.Id, occurrence.PuljeID),
-			puljeID: occurrence.PuljeID,
+			eventID: programEvent.Event.Id,
+			title:   programEvent.Event.Title,
+			url:     program.EventURL(programEvent.Event.Id, string(programEvent.PuljeID), selectedDay.QueryValue()),
+			puljeID: programEvent.PuljeID,
+			program: true,
 		})
+	}
+	for _, block := range selectedDay.Blocks {
+		for _, event := range block.RaffleEvents() {
+			items = append(items, rootEventNavigationItem{
+				eventID: event.Id,
+				title:   event.Title,
+				url:     program.EventURL(event.Id, string(block.Pulje.ID), selectedDay.QueryValue()),
+				puljeID: block.Pulje.ID,
+			})
+		}
 	}
 
 	return previousNextFromRootEventNavigationItems(items, func(item rootEventNavigationItem) bool {
-		return item.eventID == currentID && item.puljeID == currentPuljeID
+		if item.eventID != currentID {
+			return false
+		}
+		if item.program {
+			return true
+		}
+		return item.puljeID == currentPuljeID
 	}, eventImageDir), nil
+}
+
+func dateForPulje(days []program.Day, puljeID models.Pulje) string {
+	for _, day := range days {
+		for _, block := range day.Blocks {
+			if block.Pulje.ID == puljeID {
+				return day.QueryValue()
+			}
+		}
+	}
+	return ""
 }
 
 func previousNextFromRootEventNavigationItems(

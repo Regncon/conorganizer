@@ -1,11 +1,13 @@
 package profileticketspage
 
 import (
+	"errors"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
@@ -67,7 +69,7 @@ func TestBuildFetchTicketsFeedback_WhenOneTicketIsAssociated_ReturnsSingularSucc
 	expected := fetchTicketsFeedback{SuccessMessage: "1 billett hentet!"}
 
 	// When
-	actual := buildFetchTicketsFeedback(1)
+	actual := buildFetchTicketsFeedback(1, false)
 
 	// Then
 	if actual != expected {
@@ -86,7 +88,7 @@ func TestBuildFetchTicketsFeedback_WhenMultipleTicketsAreAssociated_ReturnsPlura
 	expected := fetchTicketsFeedback{SuccessMessage: "3 billetter hentet!"}
 
 	// When
-	actual := buildFetchTicketsFeedback(3)
+	actual := buildFetchTicketsFeedback(3, false)
 
 	// Then
 	if actual != expected {
@@ -105,11 +107,32 @@ func TestBuildFetchTicketsFeedback_WhenNoTicketsAreAssociated_ReturnsNeutralInfo
 	expected := fetchTicketsFeedback{InfoMessage: "Ingen nye billetter funnet."}
 
 	// When
-	actual := buildFetchTicketsFeedback(0)
+	actual := buildFetchTicketsFeedback(0, false)
 
 	// Then
 	if actual != expected {
 		t.Fatalf("feedback mismatch\nexpected: %+v\nactual:   %+v", expected, actual)
+	}
+}
+
+func TestBuildFetchTicketsFeedback_WhenStaleCacheFindsTickets_ReturnsSuccessAndWarning(t *testing.T) {
+	actual := buildFetchTicketsFeedback(1, true)
+	if actual.SuccessMessage != "1 billett hentet!" || actual.InfoMessage != staleCheckinTicketsMessage {
+		t.Fatalf("expected stale success and warning\nactual: %+v", actual)
+	}
+}
+
+func TestBuildFetchTicketsFeedback_WhenStaleCacheHasNoMatch_SuppressesNoTicketsMessage(t *testing.T) {
+	actual := buildFetchTicketsFeedback(0, true)
+	if actual.SuccessMessage != "" || actual.InfoMessage != staleCheckinTicketsMessage {
+		t.Fatalf("expected only stale-cache warning\nactual: %+v", actual)
+	}
+}
+
+func TestUnavailableCheckinTicketsMessage_IsSafeUserFeedback(t *testing.T) {
+	actual := checkInFetchErrorMessage(checkIn.TicketFetchResult{}, errors.New("Checkin returned HTTP status 500"))
+	if actual != unavailableCheckinTicketsMessage || strings.Contains(strings.ToLower(actual), "checkin returned") {
+		t.Fatalf("expected safe no-cache feedback\nactual: %q", actual)
 	}
 }
 

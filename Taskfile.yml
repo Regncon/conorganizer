@@ -79,7 +79,11 @@ tasks:
                 rmdir "$lock_dir"
               }
 
-              generate_dirs full components pages layouts service
+              for dir in components pages layouts service; do
+                if [ -d "$dir" ]; then
+                  hash_templates "$dir" > "tmp/templ-watch/$dir.sha256"
+                fi
+              done
 
               while true; do
                 changed_dirs=""
@@ -134,8 +138,9 @@ tasks:
     start:reload:
         cmds:
             - |
+              hot_reload_url="http://localhost:${PORT:-8080}/hotreload"
               go tool air \
-              --build.cmd "curl -fsS http://localhost:8080/hotreload >/dev/null || true" \
+              --build.cmd "curl -fsS --retry 30 --retry-delay 1 --retry-all-errors --retry-max-time 30 --connect-timeout 2 --max-time 5 $hot_reload_url >/dev/null 2>&1 || true" \
               --build.entrypoint "/bin/true" \
               --build.delay "200" \
               --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,data,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
@@ -147,17 +152,27 @@ tasks:
               --proxy.enabled "false" \
               --misc.clean_on_exit true
 
-    start:
-        deps:
-            - start:templ
-            - start:reload
-            - start:server
-
-    start:demo:
+    start:watch:
+        vars:
+            APP_DB_PATH: '{{.APP_DB_PATH | default "database/events.db"}}'
+            APP_IMAGE_PATH: '{{.APP_IMAGE_PATH | default "local-event-images"}}'
         deps:
             - start:templ
             - start:reload
             - task: start:server
+              vars:
+                  APP_DB_PATH: '{{.APP_DB_PATH}}'
+                  APP_IMAGE_PATH: '{{.APP_IMAGE_PATH}}'
+
+    start:
+        cmds:
+            - task: build:templ
+            - task: start:watch
+
+    start:demo:
+        cmds:
+            - task: build:templ
+            - task: start:watch
               vars:
                   APP_DB_PATH: database/events-demo.db
 
@@ -232,3 +247,13 @@ tasks:
             - killall -q templ
             - killall -q air
             - killall -q task
+
+    # Makes the Codex skills in .agents/skills visible to Claude Code as well.
+    # Run once per clone. Windows uses a junction so no admin rights are needed.
+    setup:skills:
+        desc: Link .agents/skills into .claude/skills so both tools read one copy
+        cmds:
+            - cmd: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/link-skills.ps1
+              platforms: [windows]
+            - cmd: ./scripts/link-skills.sh
+              platforms: [linux, darwin]

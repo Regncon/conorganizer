@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
@@ -26,7 +27,7 @@ func TestMyProgram_WhenPuljeIsNotCompleted_RendersInterestsAndHidesPlayerResult(
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusOpen)
 	insertProfileProgramPublishedEvent(t, db, "hidden-player-result", hiddenVisibleText)
 	insertProfileProgramPublishedEvent(t, db, "visible-wish-event", expectedVisibleText)
-	insertProfileProgramPlayer(t, db, "hidden-player-result", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramPlayer(t, db, "hidden-player-result", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, puljefordeling.SourceSolver)
 	insertProfileProgramInterest(t, db, "visible-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When
@@ -62,7 +63,7 @@ func TestMyProgram_WhenPuljeIsCompleted_RendersPlayerResult(t *testing.T) {
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
 	insertProfileProgramPublishedEvent(t, db, "completed-player-result", expectedVisibleText)
 	insertProfileProgramPublishedEvent(t, db, "completed-wish-event", hiddenVisibleText)
-	insertProfileProgramPlayer(t, db, "completed-player-result", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramPlayer(t, db, "completed-player-result", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, puljefordeling.SourceSolver)
 	insertProfileProgramInterest(t, db, "completed-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When
@@ -95,7 +96,7 @@ func TestMyProgram_WhenGMEventIsInNotCompletedPulje_RendersGMEventOverInterests(
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusLocked)
 	insertProfileProgramPublishedEvent(t, db, "locked-gm-event", expectedVisibleText)
 	insertProfileProgramPublishedEvent(t, db, "locked-wish-event", hiddenVisibleText)
-	insertProfileProgramPlayer(t, db, "locked-gm-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM)
+	insertProfileProgramPlayer(t, db, "locked-gm-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM, puljefordeling.SourceManual)
 	insertProfileProgramInterest(t, db, "locked-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When
@@ -129,7 +130,7 @@ func TestMyProgram_WhenProgramIsNotReady_HidesPlayerResult(t *testing.T) {
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
 	insertProfileProgramPublishedEvent(t, db, "completed-player-result", expectedVisibleText)
 	insertProfileProgramPublishedEvent(t, db, "completed-wish-event", hiddenVisibleText)
-	insertProfileProgramPlayer(t, db, "completed-player-result", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramPlayer(t, db, "completed-player-result", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, puljefordeling.SourceSolver)
 	insertProfileProgramInterest(t, db, "completed-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When

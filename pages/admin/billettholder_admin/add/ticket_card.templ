@@ -56,9 +56,9 @@ func ConvertTicketToBillettholderRoute(
 				return
 			}
 
-			err = checkIn.ConvertTicketToBillettholder(ticketID, db, logger)
+			err = checkIn.ConvertTicketToBillettholder(r.Context(), ticketID, db, logger)
 			if err != nil {
-				http.Error(w, fmt.Sprintf("failed to convert ticket to billettholder: %v", err), http.StatusInternalServerError)
+				http.Error(w, "Kunne ikke hente billettinformasjon fra Checkin. Prøv igjen senere.", http.StatusInternalServerError)
 				return
 			}
 

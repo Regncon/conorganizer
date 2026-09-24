@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
@@ -247,7 +248,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				Aldersgruppe
 				<select
 					id="age-group"
-					data-signals={ dataSignals(map[string]models.AgeGroup{"ageGroup": ageGroup}) }
+					data-signals={ components.DataSignals(map[string]models.AgeGroup{"ageGroup": ageGroup}) }
 					{ errorfeedback.Attrs("ageGroup")... }
 					data-bind="ageGroup"
 					data-indicator="toastAgeGroup"
@@ -271,7 +272,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					id="runtime"
 					name="runtime"
 					class="input"
-					data-signals={ dataSignals(map[string]models.Runtime{"runtime": runtime}) }
+					data-signals={ components.DataSignals(map[string]models.Runtime{"runtime": runtime}) }
 					{ errorfeedback.Attrs("runtime")... }
 					data-bind="runtime"
 					data-indicator="toastRuntime"
@@ -352,7 +353,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				<input
 					name="max-players"
 					class="input"
-					data-signals={ dataSignals(map[string]int{"maxPlayers": maxPlayers}) }
+					data-signals={ components.DataSignals(map[string]int{"maxPlayers": maxPlayers}) }
 					{ errorfeedback.Attrs("maxPlayers")... }
 					data-bind="maxPlayers"
 					data-indicator="toastMaxPlayers"
@@ -376,7 +377,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				Andre merknader – er det til dømes nokre tidspunkt det ikkje passar å halde arrangementet?
 				<textarea
 					name="other-notes"
-					data-signals={ dataSignals(map[string]string{"notes": notes}) }
+					data-signals={ components.DataSignals(map[string]string{"notes": notes}) }
 					{ errorfeedback.Attrs("notes")... }
 					data-bind="notes"
 					data-indicator="toastNotes"

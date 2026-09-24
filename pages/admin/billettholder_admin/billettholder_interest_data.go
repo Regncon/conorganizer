@@ -12,7 +12,6 @@ type billettholderInterestEventRow struct {
 	EventID       string
 	EventTitle    string
 	EventStatus   models.EventStatus
-	IsPublished   bool
 	InterestLevel models.InterestLevel
 	AssignedRole  models.EventPlayerRole
 	IsPlayer      bool
@@ -74,7 +73,6 @@ func getBillettholderInterestSectionsByBillettholderID(
 				e.id AS event_id,
 				e.title AS event_title,
 				e.status AS event_status,
-				COALESCE(ep.is_published, 0) AS is_published,
 				COALESCE(i.interest_level, '') AS interest_level,
 				MAX(rep.role = ?) AS is_player,
 				MAX(rep.role = ?) AS is_gm,
@@ -86,9 +84,6 @@ func getBillettholderInterestSectionsByBillettholderID(
 				ON e.id = rep.event_id
 			INNER JOIN puljer AS p
 				ON p.id = rep.pulje_id
-			LEFT JOIN relation_event_puljer AS ep
-				ON ep.event_id = rep.event_id
-				AND ep.pulje_id = rep.pulje_id
 			LEFT JOIN interests AS i
 				ON i.billettholder_id = rep.billettholder_id
 				AND i.event_id = rep.event_id
@@ -101,7 +96,6 @@ func getBillettholderInterestSectionsByBillettholderID(
 				e.id,
 				e.title,
 				e.status,
-				ep.is_published,
 				i.interest_level
 
 			UNION ALL
@@ -114,7 +108,6 @@ func getBillettholderInterestSectionsByBillettholderID(
 				e.id AS event_id,
 				e.title AS event_title,
 				e.status AS event_status,
-				COALESCE(ep.is_published, 0) AS is_published,
 				i.interest_level AS interest_level,
 				0 AS is_player,
 				0 AS is_gm,
@@ -126,9 +119,6 @@ func getBillettholderInterestSectionsByBillettholderID(
 				ON e.id = i.event_id
 			INNER JOIN puljer AS p
 				ON p.id = i.pulje_id
-			LEFT JOIN relation_event_puljer AS ep
-				ON ep.event_id = i.event_id
-				AND ep.pulje_id = i.pulje_id
 			LEFT JOIN relation_events_players AS rep
 				ON rep.billettholder_id = i.billettholder_id
 				AND rep.event_id = i.event_id
@@ -142,7 +132,6 @@ func getBillettholderInterestSectionsByBillettholderID(
 			event_id,
 			event_title,
 			event_status,
-			is_published,
 			interest_level,
 			is_player,
 			is_gm,
@@ -188,7 +177,6 @@ func getBillettholderInterestSectionsByBillettholderID(
 			eventID         string
 			eventTitle      string
 			eventStatus     string
-			isPublished     int
 			interestLevel   string
 			isPlayer        int
 			isGM            int
@@ -201,7 +189,6 @@ func getBillettholderInterestSectionsByBillettholderID(
 			&eventID,
 			&eventTitle,
 			&eventStatus,
-			&isPublished,
 			&interestLevel,
 			&isPlayer,
 			&isGM,
@@ -228,7 +215,6 @@ func getBillettholderInterestSectionsByBillettholderID(
 			EventID:       eventID,
 			EventTitle:    eventTitle,
 			EventStatus:   models.EventStatus(eventStatus),
-			IsPublished:   isPublished == 1,
 			InterestLevel: models.InterestLevel(interestLevel),
 			IsPlayer:      isPlayer == 1,
 			IsGM:          isGM == 1,

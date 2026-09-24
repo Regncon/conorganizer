@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly data_root="/mnt/HC_Volume_103911252/environments"
+readonly backup_directory="/mnt/HC_Volume_103911252/backups/sqlite"
+readonly main_image_directory="${data_root}/main/event-images"
+readonly restored_environment_directory="${data_root}/restored"
+readonly restored_database_directory="${restored_environment_directory}/database"
+readonly restored_database_path="${restored_database_directory}/events.db"
+readonly restored_image_directory="${restored_environment_directory}/event-images"
+readonly service_name="conorganizer-restored.service"
+readonly service_user="deploy"
+readonly service_group="www-data"
+
+backup_name="${1:-}"
+
+log() {
+    printf 'conorganizer-sqlite-restore: %s\n' "$*" >&2
+}
+
+die() {
+    log "ERROR: $*"
+    exit 1
+}
+
+if [[ "$#" -ne 1 || ! "$backup_name" =~ ^events-[0-9]{8}T[0-9]{6}Z\.db\.zst$ ]]; then
+    die "usage: conorganizer-sqlite-restore events-YYYYMMDDTHHMMSSZ.db.zst"
+fi
+
+backup_path="${backup_directory}/${backup_name}"
+
+command -v sqlite3 >/dev/null 2>&1 || die "sqlite3 is required"
+command -v zstd >/dev/null 2>&1 || die "zstd is required"
+
+if [[ ! -f "$backup_path" ]]; then
+    die "backup does not exist: ${backup_path}"
+fi
+
+if [[ ! -d "$main_image_directory" ]]; then
+    die "main image directory does not exist: ${main_image_directory}"
+fi
+
+mkdir -p "$restored_database_directory" "$restored_environment_directory"
+
+temporary_database_directory="$(mktemp -d "${restored_database_directory}/.restore.XXXXXX")"
+temporary_image_directory="$(mktemp -d "${restored_environment_directory}/.event-images.XXXXXX")"
+
+cleanup() {
+    rm -rf "$temporary_database_directory" "$temporary_image_directory"
+}
+trap cleanup EXIT
+
+temporary_database_path="${temporary_database_directory}/events.db"
+
+log "decompressing ${backup_name}"
+zstd --decompress --quiet --stdout "$backup_path" > "$temporary_database_path"
+
+integrity_result="$(sqlite3 "$temporary_database_path" "PRAGMA integrity_check;")"
+if [[ "$integrity_result" != "ok" ]]; then
+    log "$integrity_result"
+    die "restored database failed integrity check"
+fi
+
+expected_table_count="$(
+    sqlite3 "$temporary_database_path" "
+        SELECT COUNT(*)
+        FROM sqlite_master
+        WHERE type = 'table'
+          AND name IN ('users', 'events');
+    "
+)"
+if [[ "$expected_table_count" != "2" ]]; then
+    die "restored database is missing core tables"
+fi
+
+sqlite3 "$temporary_database_path" "
+    SELECT COUNT(*) FROM users;
+    SELECT COUNT(*) FROM events;
+" > /dev/null
+
+log "copying current main event images"
+cp -a "${main_image_directory}/." "$temporary_image_directory"
+
+log "stopping ${service_name}"
+systemctl stop "$service_name"
+
+log "installing restored database and event images"
+rm -f "$restored_database_path" "${restored_database_path}-wal" "${restored_database_path}-shm"
+mv "$temporary_database_path" "$restored_database_path"
+rm -rf "$restored_image_directory"
+mv "$temporary_image_directory" "$restored_image_directory"
+chown -R "${service_user}:${service_group}" "$restored_environment_directory"
+
+log "starting ${service_name}"
+systemctl enable --now "$service_name"
+systemctl is-active --quiet "$service_name" || die "${service_name} did not become active"
+
+log "restored ${backup_name} successfully"

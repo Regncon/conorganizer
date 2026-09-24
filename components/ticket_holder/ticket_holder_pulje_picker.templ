@@ -49,12 +49,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
             }
 
             .pulje-interest-state--warning {
-                color: var(--color-warning, var(--color-error));
-                border-color: currentColor;
-            }
-
-            .pulje-interest-state--urgent-warning {
-                color: var(--color-error);
+				color: var(--color-error);
                 border-color: currentColor;
             }
 
@@ -97,7 +92,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 						data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : '0'", pulje.ID) }
 						class={ "card-clickable", "card-clickable-item", puljeState.ClassName() }
 						data-class:selected={ fmt.Sprintf("$puljeId == '%s'", pulje.ID) }
-						data-on:click={ fmt.Sprintf("$puljeId = '%s'; %s @put('/event/api/%s/interest/selected-interest')", pulje.ID, puljeState.SignalPatch(), eventId) }
+						data-on:click={ fmt.Sprintf("$puljeId = '%s'; %s", pulje.ID, puljeState.SignalPatch()) }
 					>
 						<p>{ pulje.Name }</p>
 						if puljeState.Availability != PuljeInterestOpen {
@@ -111,8 +106,6 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 								}
 								if puljeState.Availability == PuljeInterestWarning {
 									<span>Låses snart</span>
-								} else if puljeState.Availability == PuljeInterestUrgentWarning {
-									<span>Låses straks</span>
 								} else if puljeState.IsLocked() {
 									<span>Låst</span>
 								} else if puljeState.IsCompleted() {

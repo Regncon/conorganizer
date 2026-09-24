@@ -25,7 +25,7 @@ func TestTildeling_AdditionalPlayerPinsSurviveRepeatedDistribution(t *testing.T)
 	expectedEvents := []string{"evA", "evB", "evC"}
 	db, router := tildelingsFixture(t)
 	testutil.MustExec(t, db, `UPDATE events SET max_players=1`)
-	testutil.MustExec(t, db, `INSERT INTO events(id,title,intro,description,host_name,email,phone_number,max_players) VALUES ('evD','Arrangement W','','','','','',1)`)
+	testutil.MustExec(t, db, `INSERT INTO events(id,title,intro,description,host_name,email,phone_number,max_players,is_in_puljefordeling) VALUES ('evD','Arrangement W','','','','','',1,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer(event_id,pulje_id,is_in_pulje) VALUES ('evD','FredagKveld',1)`)
 	seedTildelingAdult(t, db, 2)
 	testutil.MustExec(t, db, `INSERT INTO relation_events_players(event_id,pulje_id,billettholder_id,role,source) VALUES ('evA','FredagKveld',1,'Player','manual')`)
@@ -174,7 +174,7 @@ func TestTildeling_FifthManualPlayerWaitsForCapacityConfirmation(t *testing.T) {
 	db, router := tildelingCapacityFixture(t)
 
 	// When
-	response := postApprovalSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true`)
+	response := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true`)
 
 	// Then
 	assertTildelingManualPins(t, db, "evA", expectedPins)
@@ -198,11 +198,11 @@ func TestTildeling_ConfirmedFifthPlayerSurvivesRepeatedDistribution(t *testing.T
 	expectedPins := []int{1, 2, 3, 4, 5}
 	db, router := tildelingCapacityFixture(t)
 	testutil.MustExec(t, db, `INSERT INTO interests(billettholder_id,event_id,pulje_id,interest_level) VALUES (6,'evA','FredagKveld',?)`, models.InterestLevelHigh)
-	warning := postApprovalSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true`)
+	warning := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true`)
 	confirmation := confirmationFromResponse(t, warning)
 
 	// When
-	response := postApprovalSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true,"assignmentConfirmation":"`+confirmation+`"`)
+	response := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true,"assignmentConfirmation":"`+confirmation+`"`)
 	if response.Code != http.StatusNoContent {
 		t.Fatalf("confirm fifth pin: %d %s", response.Code, response.Body.String())
 	}
@@ -236,8 +236,8 @@ func TestTildeling_AgeConfirmationCannotBypassCapacityWarning(t *testing.T) {
 	testutil.MustExec(t, db, `UPDATE billettholdere SET is_over_18=0 WHERE id=5`)
 
 	// When
-	warning := postApprovalSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true`)
-	ageOnly := postApprovalSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true,"assignmentAgeConfirmed":true`)
+	warning := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true`)
+	ageOnly := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true,"assignmentAgeConfirmed":true`)
 
 	// Then
 	assertTildelingManualPins(t, db, "evA", expectedPinsBeforeConfirmation)
@@ -250,7 +250,7 @@ func TestTildeling_AgeConfirmationCannotBypassCapacityWarning(t *testing.T) {
 		t.Fatal("age and capacity must use one confirmation dialog")
 	}
 	confirmation := confirmationFromResponse(t, ageOnly)
-	response := postApprovalSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true,"assignmentConfirmation":"`+confirmation+`"`)
+	response := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign", 5, "evA", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true,"assignmentConfirmation":"`+confirmation+`"`)
 	if response.Code != http.StatusNoContent {
 		t.Fatalf("confirm combined warning: %d %s", response.Code, response.Body.String())
 	}

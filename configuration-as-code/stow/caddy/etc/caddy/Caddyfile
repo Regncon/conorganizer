@@ -104,6 +104,10 @@ demo.lekeplassen.regncon.no {
 	reverse_proxy 127.0.0.1:19081
 }
 
+restored.lekeplassen.regncon.no {
+	reverse_proxy 127.0.0.1:19082
+}
+
 # Load all per-site configs from this directory:
 import /etc/caddy/sites-enabled/*.caddy
 

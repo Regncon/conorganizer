@@ -11,6 +11,7 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/eventService"
+	"github.com/Regncon/conorganizer/service/program"
 	"github.com/Regncon/conorganizer/service/userctx"
 )
 
@@ -67,18 +68,37 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 			selectedPuljeId = string(puljerForEvent[0].ID)
 		}
 	}}
-	{{ programPublished, programPublishedErr := getProgramPublished(db) }}
+	{{ programPublished, programPublishedErr := program.IsPublished(db) }}
 	if programPublishedErr != nil {
 		{{ logger.Error(programPublishedErr.Error(), "event_id", eventId) }}
 		<p>Error fetching program publishing state: { programPublishedErr.Error() }</p>
 		{{ return nil }}
 	}
-	{{ showInterestControls := canShowInterestControls(programPublished, puljerForEvent) }}
+	{{ showInterestControls := canShowInterestControls(programPublished, event.IsInPuljefordeling, puljerForEvent) }}
 	{{ associatedTicketHolders, ticketHoldersErr := ticketholder.GetTicketHolders(userInfo, db) }}
 	if ticketHoldersErr != nil {
 		{{ logger.Error(ticketHoldersErr.Error(), "event_id", eventId, "user_id", userInfo.Id) }}
 	}
 	{{ hasTickets := len(associatedTicketHolders) > 0 }}
+	{{
+		programInterestNotice := ProgramInterestNotice{}
+		if !event.IsInPuljefordeling && hasTickets {
+			var programInterestNoticeErr error
+			programInterestNotice, programInterestNoticeErr = getProgramInterestNotice(db, associatedTicketHolders, selectedPuljeId)
+			if programInterestNoticeErr != nil {
+				logger.Error(programInterestNoticeErr.Error(), "event_id", eventId, "pulje_id", selectedPuljeId, "user_id", userInfo.Id)
+			}
+		}
+
+		var interestPanel templ.Component
+		if len(puljerForEvent) > 0 {
+			if event.IsInPuljefordeling {
+				interestPanel = EventInterestPanel(hasTickets, puljerForEvent, puljeId, programPublished, showInterestControls)
+			} else {
+				interestPanel = ProgramEventInterestPanel(programInterestNotice)
+			}
+		}
+	}}
 	{{ previousNextData, previousNextErr := eventservice.GetPreviousNextForRootEventList(ctx, db, eventId, programPublished, r, eventImageDir) }}
 	if previousNextErr != nil {
 		{{ logger.Error(previousNextErr.Error(), "event_id", eventId) }}
@@ -105,21 +125,25 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		)
 	}
 	if isAdmin {
+		<style>
+			.admin-edit-event-link {
+				margin: var(--spacing-4x);
+			}
+		</style>
 		<a
 			href={ fmt.Sprintf("/admin/approval/edit/%s", event.ID) }
-			class="btn btn--primary"
-			style="margin:1rem;"
+			class="btn btn--primary admin-edit-event-link"
 		>Administrator - rediger arrangementer</a>
 	}
 	{{ roomAssignments, roomsErr := getEventRooms(db, eventId, programPublished) }}
 	if roomsErr != nil {
 		{{ logger.Error(roomsErr.Error(), "event_id", eventId) }}
 	}
-	@Event_mobile(event, previousNextData, puljerForEvent, puljeId, programPublished, hasTickets, showInterestControls, eventImageDir) {
+	@Event_mobile(event, previousNextData, interestPanel, eventImageDir) {
 		@eventRoomLocations(eventId, roomAssignments)
 	}
 	if showInterestControls {
-		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, db, r, logger)
+		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, event.Title, event.AgeGroup, eventImageDir, associatedTicketHolders, db, r, logger)
 	}
 }
 

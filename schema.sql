@@ -65,18 +65,6 @@ CREATE TABLE relation_event_puljer(
   FOREIGN KEY(pulje_id) REFERENCES puljer(id) ON UPDATE CASCADE,
   FOREIGN KEY(room_id) REFERENCES rooms(id) ON DELETE SET NULL
 ) STRICT;
-CREATE TABLE relation_events_players(
-  event_id TEXT NOT NULL,
-  pulje_id TEXT NOT NULL,
-  billettholder_id INTEGER NOT NULL,
-  role TEXT NOT NULL DEFAULT 'Player' CHECK(role IN('Player', 'GM')),
-  inserted_at TEXT DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  source TEXT NOT NULL DEFAULT 'manual' CHECK(source IN('manual','solver')),
-  PRIMARY KEY(billettholder_id, event_id, pulje_id, role),
-  FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
-  FOREIGN KEY(event_id) REFERENCES events(id),
-  FOREIGN KEY(pulje_id) REFERENCES puljer(id)
-) STRICT;
 CREATE TABLE "interests"(
   billettholder_id INTEGER NOT NULL,
   event_id TEXT NOT NULL,
@@ -128,6 +116,7 @@ CREATE TABLE "events"(
   status_changed_by_id INTEGER,
   status_changed_at TEXT,
   status_changed_action TEXT,
+  is_in_puljefordeling INTEGER NOT NULL DEFAULT 0 CHECK(is_in_puljefordeling IN(0, 1)),
   FOREIGN KEY(created_by_id) REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY(updated_by_id) REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY(status_changed_by_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -190,30 +179,6 @@ FROM
     billettholdere AS b
     LEFT JOIN relation_billettholder_emails AS e ON b.id = e.billettholder_id
 /* v_billettholder_emails(billettholder_id,first_name,last_name,ticket_type_id,ticket_type,is_over_18,order_id,ticket_id,billettholder_created_at,billettholder_updated_at,email_id,email,kind,email_created_at,email_updated_at) */;
-CREATE VIEW v_event_puljer_active AS
-SELECT
-    ep.event_id,
-    ep.pulje_id,
-    ep.room_id,
-    r.room_number,
-    r.name AS room_name,
-    r.floor AS room_floor,
-    r.max_concurrent_games AS room_max_concurrent_games,
-    r.notes AS room_notes,
-    r.is_disabled AS room_is_disabled,
-    p.name AS pulje_name,
-    p.start_at AS pulje_start_at,
-    p.end_at AS pulje_end_at,
-    ep.is_in_pulje,
-    ep.is_published
-FROM
-    relation_event_puljer ep
-    JOIN puljer p ON p.id = ep.pulje_id
-    LEFT JOIN rooms r ON r.id = ep.room_id
-WHERE
-    ep.is_in_pulje = 1
-    AND ep.is_published = 1
-/* v_event_puljer_active(event_id,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at,is_in_pulje,is_published) */;
 CREATE TABLE program_publishing_state(
   id INTEGER NOT NULL PRIMARY KEY CHECK(id = 1),
   is_published INTEGER NOT NULL DEFAULT 0 CHECK(is_published IN(0, 1))
@@ -224,7 +189,20 @@ CREATE TABLE "puljer"(
   status TEXT NOT NULL DEFAULT 'Open' CHECK(status IN('Open', 'Locked', 'Completed')),
   start_at TEXT NOT NULL,
   end_at TEXT NOT NULL,
+  closing_warning_active INTEGER NOT NULL DEFAULT 0 CHECK(closing_warning_active IN(0, 1)),
   FOREIGN KEY(status) REFERENCES pulje_statuses(status) ON UPDATE CASCADE
+) STRICT;
+CREATE TABLE "relation_events_players"(
+  event_id TEXT NOT NULL,
+  pulje_id TEXT NOT NULL,
+  billettholder_id INTEGER NOT NULL,
+  role TEXT NOT NULL DEFAULT 'Player' CHECK(role IN('Player', 'GM')),
+  inserted_at TEXT DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  source TEXT NOT NULL DEFAULT 'manual' CHECK(source IN('manual', 'solver')),
+  PRIMARY KEY(billettholder_id, event_id, pulje_id, role),
+  FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
+  FOREIGN KEY(event_id) REFERENCES events(id),
+  FOREIGN KEY(pulje_id) REFERENCES puljer(id)
 ) STRICT;
 CREATE VIEW v_events_by_pulje_active AS
 SELECT
@@ -246,6 +224,7 @@ SELECT
     e.notes,
     e.status,
     e.created_at,
+    e.is_in_puljefordeling AS is_in_puljefordeling,
     ep.is_published AS is_published,
     ep.pulje_id,
     ep.room_id,
@@ -265,4 +244,25 @@ LEFT JOIN rooms r ON r.id = ep.room_id
 WHERE
     e.status = 'Annonsert'
     AND ep.is_in_pulje = 1
-/* v_events_by_pulje_active(id,title,intro,description,system,event_type,age_group,event_runtime,host_name,user_id,email,phone_number,max_players,beginner_friendly,can_be_run_in_english,notes,status,created_at,is_published,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at) */;
+/* v_events_by_pulje_active(id,title,intro,description,system,event_type,age_group,event_runtime,host_name,user_id,email,phone_number,max_players,beginner_friendly,can_be_run_in_english,notes,status,created_at,is_in_puljefordeling,is_published,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at) */;
+CREATE VIEW v_event_puljer_active AS
+SELECT
+    ep.event_id,
+    ep.pulje_id,
+    ep.room_id,
+    r.room_number,
+    r.name AS room_name,
+    r.floor AS room_floor,
+    r.max_concurrent_games AS room_max_concurrent_games,
+    r.notes AS room_notes,
+    r.is_disabled AS room_is_disabled,
+    p.name AS pulje_name,
+    p.start_at AS pulje_start_at,
+    p.end_at AS pulje_end_at,
+    ep.is_in_pulje,
+    ep.is_published
+FROM relation_event_puljer ep
+JOIN puljer p ON p.id = ep.pulje_id
+LEFT JOIN rooms r ON r.id = ep.room_id
+WHERE ep.is_in_pulje = 1
+/* v_event_puljer_active(event_id,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at,is_in_pulje,is_published) */;

@@ -1,6 +1,7 @@
 package checkIn
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -17,16 +18,23 @@ type CheckInTicket struct {
 	IsOver18  bool
 }
 
-const TicketTypeMiddag = 251934
-
-func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {
-
-	return ticketCache.Get(logger, searchTerm)
+// TicketFetchResult makes stale-cache use explicit to callers. Tickets may be
+// usable even when err reports that the latest refresh failed.
+type TicketFetchResult struct {
+	Tickets        []CheckInTicket
+	UsedStaleCache bool
 }
 
-func ConvertTicketToBillettholder(ticketId int, db *sql.DB, logger *slog.Logger) error {
-	tickets, err := GetTicketsFromCheckIn(logger, "")
-	if err != nil {
+const TicketTypeMiddag = 251934
+
+func GetTicketsFromCheckIn(ctx context.Context, logger *slog.Logger, searchTerm string) (TicketFetchResult, error) {
+	return ticketCache.Get(ctx, logger, searchTerm)
+}
+
+func ConvertTicketToBillettholder(ctx context.Context, ticketId int, db *sql.DB, logger *slog.Logger) error {
+	result, err := GetTicketsFromCheckIn(ctx, logger, "")
+	tickets := result.Tickets
+	if err != nil && !result.UsedStaleCache {
 		return fmt.Errorf("failed to fetch tickets from check-in: %w", err)
 	}
 

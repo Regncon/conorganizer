@@ -17,63 +17,36 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
-	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
-		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+func UpdateIsInPuljefordeling(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+			return
+		}
 
-			puljeId := chi.URLParam(r, "puljeId")
-			if puljeId == "" {
-				logger.Warn("Pulje ID is missing in the request")
-				http.Error(w, "Pulje-ID manglar", http.StatusBadRequest)
-				return
-			}
-			eventID := chi.URLParam(r, "id")
-			if eventID == "" {
-				logger.Warn("Event ID is missing in the request")
-				http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
-				return
-			}
+		var store struct {
+			IsInPuljefordeling bool `json:"isInPuljefordeling"`
+		}
+		if err := datastar.ReadSignals(r, &store); err != nil {
+			logger.Error(fmt.Errorf("failed to read puljefordeling signal: %w", err).Error())
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
+			return
+		}
 
-			type Store struct {
-				IsPublishedFredagKveld  bool `json:"isPublishedFredagKveld"`
-				IsPublishedLordagMorgen bool `json:"isPublishedLordagMorgen"`
-				IsPublishedLordagKveld  bool `json:"isPublishedLordagKveld"`
-				IsPublishedSondagMorgen bool `json:"isPublishedSondagMorgen"`
-			}
-			store := &Store{}
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "is_in_puljefordeling = ?", store.IsInPuljefordeling); err != nil {
+			logger.Error(fmt.Errorf("failed to update puljefordeling flag for event %s: %w", eventID, err).Error())
+			http.Error(w, "Klarte ikkje å oppdatere puljefordeling", http.StatusInternalServerError)
+			return
+		}
 
-			if err := datastar.ReadSignals(r, store); err != nil {
-				logger.Error(fmt.Errorf("failed to read signals from request: %w", err).Error())
-				http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
-				return
-			}
-			var isPublished bool
-			if puljeId == string(models.PuljeFredagKveld) {
-				isPublished = store.IsPublishedFredagKveld
-			} else if puljeId == string(models.PuljeLordagMorgen) {
-				isPublished = store.IsPublishedLordagMorgen
-			} else if puljeId == string(models.PuljeLordagKveld) {
-				isPublished = store.IsPublishedLordagKveld
-			} else if puljeId == string(models.PuljeSondagMorgen) {
-				isPublished = store.IsPublishedSondagMorgen
-			} else {
-				logger.Warn("Invalid pulje ID", "puljeId", puljeId)
-				http.Error(w, "Ugyldig pulje-ID", http.StatusBadRequest)
-				return
-			}
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast puljefordeling update for event %s: %w", eventID, err).Error())
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
+			return
+		}
 
-			if err := updateEventPuljePublishedWithAudit(r.Context(), db, logger, eventID, puljeId, isPublished); err != nil {
-				logger.Error(fmt.Errorf("failed to update publish status in the database for event %s and pulje %s: %w", eventID, puljeId, err).Error())
-				http.Error(w, "Klarte ikkje å oppdatere publiseringsstatusen i databasen", http.StatusInternalServerError)
-				return
-			}
-
-			if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-				logger.Error(fmt.Errorf("failed to broadcast publish update for event %s and pulje %s: %w", eventID, puljeId, err).Error())
-				http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
-				return
-			}
-		})
+		w.WriteHeader(http.StatusNoContent)
 	})
 }
 
@@ -192,7 +165,6 @@ func getEventPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.Event
                 event_id,
                 pulje_id,
                 is_in_pulje,
-                is_published,
                 room_id
             FROM relation_event_puljer
             WHERE event_id = ? AND pulje_id = ?
@@ -209,7 +181,6 @@ func getEventPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.Event
 			&event.EventID,
 			&event.PuljeID,
 			&event.IsInPulje,
-			&event.IsPublished,
 			&event.RoomID,
 		); err != nil {
 			return models.EventPulje{}, err
@@ -258,7 +229,6 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 	{{
 		eventPulje, err := getEventPulje(eventId, pulje.ID, db)
 		membershipErrorKey := fmt.Sprintf("puljeMembership%s", pulje.ID)
-		publishedErrorKey := fmt.Sprintf("puljePublished%s", pulje.ID)
 		roomErrorKey := fmt.Sprintf("puljeRoom%s", pulje.ID)
 	}}
 	if err != nil {
@@ -290,27 +260,6 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 						/>
 					</label>
 					@errorfeedback.RenderMessage(membershipErrorKey)
-				</div>
-				<div class="feedback-control-group">
-					<label class="checkbox-background form-group-checkbox">
-						<span>Publisert</span>
-						<input
-							if eventPulje.IsPublished {
-								checked
-							}
-							if eventPulje.IsInPulje == false {
-								disabled
-							}
-							data-bind={ fmt.Sprintf("isPublished%s", pulje.ID) }
-							data-indicator={ fmt.Sprintf("toastPuljePublished%s", pulje.ID) }
-							{ errorfeedback.Attrs(publishedErrorKey)... }
-							data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/is-published/%s')", eventId, pulje.ID) }
-							type="checkbox"
-							name="pulje"
-							class="checkbox input"
-						/>
-					</label>
-					@errorfeedback.RenderMessage(publishedErrorKey)
 				</div>
 				{{
 					var assignedRoomNonNullable string = "0"
@@ -356,9 +305,21 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 	</div>
 }
 
-templ puljefordeling(eventId string, db *sql.DB) {
+templ puljefordeling(eventId string, isInPuljefordeling bool, db *sql.DB) {
 	<article class="form-card">
 		<h4 class="form-card-title">Puljefordeling</h4>
+		<label class="checkbox-background form-group-checkbox">
+			<span>Med i puljefordeling</span>
+			<input
+				if isInPuljefordeling {
+					checked
+				}
+				data-bind="isInPuljefordeling"
+				data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/is-in-puljefordeling')", eventId) }
+				type="checkbox"
+				class="checkbox input"
+			/>
+		</label>
 		<section class="puljefordeling-section">
 			{{ puljer, err := puljerService.GetAllPuljer(db) }}
 			if err != nil {

@@ -49,6 +49,13 @@
     --bg-item-border: #494D62;
     --item-flat-active: hsl(230deg 40% 86% / 20%);
 
+    --level-1-background: #1B1E2C;
+
+    --level-2-background: #232638;
+
+    --level-3-background: #2B3045;
+    --level-3-border: #495174;
+
     --bg-backdrop: #11111B;
     --bg-indent: #15161E;
 
@@ -82,7 +89,6 @@
     /* border */
     --border-radius-1x: 4px;
     --border-radius-2x: 8px;
-    --border-radius-3x: 12px;
 
     /* shadow */
     --shadow-dialog: 0 19px 38px hsl(0deg 0% 0% / 30%), 0 15px 12px hsl(0deg 0% 0% / 22%);
@@ -107,7 +113,6 @@
 
     /* responsively size some gap variables so this doesn't have to be redefined */
     --responsive-top-of-page-spacing: var(--spacing-4x);
-    --responsive-scroll-margin-top-event: calc(var(--nav-event-height) + var(--nav-breadcrumb-height));
     --responsive-pane-column-spacing: var(--spacing-4x);
     --responsive-page-section-spacing: var(--spacing-8x);
     --responsive-pane-padding: var(--spacing-4x);
@@ -121,7 +126,6 @@
         --responsive-page-section-spacing: var(--spacing-8x);
         --responsive-pane-padding: var(--spacing-5x);
         --responsive-h2-margin: var(--spacing-5x);
-        --responsive-scroll-margin-top-event: calc(var(--nav-height) + var(--nav-event-height));
     }
 }
 @media screen and (width > 1200px) {
@@ -404,6 +408,7 @@ input {
     width: 1rem;
     accent-color: var(--color-primary);
     color: var(--color-text-strong);
+    cursor: pointer;
 }
 
 *,
@@ -580,12 +585,10 @@ input {
 .event-status {
     display: flex;
     gap: var(--spacing-1x);
-    padding-top: var(--spacing-1x);
-    padding-bottom: var(--spacing-1x);
-    padding-left: var(--spacing-2x);
-    padding-right: var(--spacing-2x);
+    padding-inline: var(--spacing-2x);
+    padding-block: var(--spacing-1x);
     border: 1px solid;
-    border-radius: var(--border-radius-3x);
+    border-radius: 100vw;
 }
 
 .kladd {

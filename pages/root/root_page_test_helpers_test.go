@@ -73,7 +73,7 @@ func insertRootPagePuljeWithDetails(t *testing.T, db *sql.DB, puljeID models.Pul
 	`, puljeID, name, models.PuljeStatusOpen, startAt, endAt)
 }
 
-func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus) {
+func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus, isInPuljefordeling bool) {
 	t.Helper()
 
 	mustExec(t, db, `
@@ -86,10 +86,11 @@ func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, stat
 			email,
 			phone_number,
 			max_players,
-			status
+			status,
+			is_in_puljefordeling
 		)
-		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, id, title, "Intro", "Description", "Host", "host@example.com", "12345678", 4, status)
+		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, id, title, "Intro", "Description", "Host", "host@example.com", "12345678", 4, status, isInPuljefordeling)
 }
 
 func insertRootPageEventPulje(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, isPublished bool) {

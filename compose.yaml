@@ -9,11 +9,51 @@ services:
     tty: true
     environment:
       HOT_RELOAD_BINARY_DIR: /tmp/conorganizer
-    ports:
-      - 8080:8080
+      # Overrides PORT from .env; Task and godotenv never replace set variables.
+      PORT: 7332
+    expose:
+      - "7332"
     volumes:
       - type: bind
         source: ./
         target: /home/devuser/app
         read_only: false
+      # Keep Go caches across container recreation so the first build after
+      # `docker compose up` does not recompile every dependency.
+      - go_build_cache:/home/devuser/.cache/go-build
+      - go_mod_cache:/home/devuser/go/pkg/mod
     command: go tool task start
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:7332/healthz"]
+      # The first start generates templates and compiles the server.
+      start_period: 10m
+      start_interval: 2s
+      # Caddy only waits for the first healthy result; a long interval keeps
+      # repeated /healthz requests out of the log.
+      interval: 1h
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    attach: false
+    depends_on:
+      webserver:
+        condition: service_healthy
+    environment:
+      DEV_LAN_IP: ${DEV_LAN_IP:-127.0.0.1}
+    ports:
+      - "${HTTPS_PORT:-7331}:7331"
+    volumes:
+      - type: bind
+        source: ./Caddyfile.docker
+        target: /etc/caddy/Caddyfile
+        read_only: true
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
+  go_build_cache:
+  go_mod_cache:

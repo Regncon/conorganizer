@@ -130,9 +130,9 @@ func TestBuildPuljeInterestState_WhenPuljeIsLocked_ReturnsLockedStateAndDisables
 	}
 }
 
-func TestBuildPuljeInterestState_WhenOpenPuljeIsBeforeWarningWindow_ReturnsOpenStateWithoutWarning(t *testing.T) {
+func TestBuildPuljeInterestState_WhenOpenPuljeHasNoWarning_ReturnsOpenStateWithoutWarning(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at en åpen pulje ikke nærmer seg låsing.",
+		Given: "Gitt at en åpen pulje ikke har et aktivt varsel.",
 		When:  "Når interessetilstanden bygges.",
 		Then:  "Så skal billettholderen ikke se noen låseadvarsel.",
 	})
@@ -166,16 +166,16 @@ func TestBuildPuljeInterestState_WhenOpenPuljeIsBeforeWarningWindow_ReturnsOpenS
 	}
 }
 
-func TestBuildPuljeInterestState_WhenOpenPuljeIsInWarningWindow_ReturnsWarningWithLockTime(t *testing.T) {
+func TestBuildPuljeInterestState_WhenOpenPuljeHasActiveWarning_ReturnsWarning(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at en åpen pulje nærmer seg låsing.",
+		Given: "Gitt at en åpen pulje har et aktivt stengevarsel.",
 		When:  "Når interessetilstanden bygges.",
-		Then:  "Så skal billettholderen se en advarsel med tidspunktet puljen låses.",
+		Then:  "Så skal billettholderen se stengeadvarselen.",
 	})
 
 	// Given
 	expectedAvailability := PuljeInterestWarning
-	expectedMessage := "Puljen låses snart, kl 18:00."
+	expectedMessage := "Viktig: Puljefordelingen stenger snart. Gjør endringer nå hvis du vil endre interessene dine."
 
 	pulje := buildPuljeInterestStateTestPulje(
 		t,
@@ -184,6 +184,7 @@ func TestBuildPuljeInterestState_WhenOpenPuljeIsInWarningWindow_ReturnsWarningWi
 		models.PuljeStatusOpen,
 		"2026-10-09T18:30:00+02:00",
 	)
+	pulje.ClosingWarningActive = true
 	now := parsePuljeInterestStateTestTime(t, "2026-10-09T16:15:00+02:00")
 
 	// When
@@ -198,49 +199,17 @@ func TestBuildPuljeInterestState_WhenOpenPuljeIsInWarningWindow_ReturnsWarningWi
 	}
 }
 
-func TestBuildPuljeInterestState_WhenOpenPuljeIsInUrgentWarningWindow_ReturnsUrgentWarningWithLockTime(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at en åpen pulje er svært nær låsing.",
-		When:  "Når interessetilstanden bygges.",
-		Then:  "Så skal billettholderen se en tydelig hasteadvarsel.",
-	})
-
-	// Given
-	expectedAvailability := PuljeInterestUrgentWarning
-	expectedMessage := "Puljen låses straks, kl 18:00. Gjør endringer nå hvis du vil endre interessen din."
-
-	pulje := buildPuljeInterestStateTestPulje(
-		t,
-		models.PuljeFredagKveld,
-		"Fredag kveld",
-		models.PuljeStatusOpen,
-		"2026-10-09T18:30:00+02:00",
-	)
-	now := parsePuljeInterestStateTestTime(t, "2026-10-09T17:45:00+02:00")
-
-	// When
-	actualState := BuildPuljeInterestState(pulje, now)
-
-	// Then
-	if actualState.Availability != expectedAvailability {
-		t.Fatalf("pulje availability mismatch\nexpected: %s\nactual:   %s", expectedAvailability, actualState.Availability)
-	}
-	if actualState.Message != expectedMessage {
-		t.Fatalf("urgent warning message mismatch\nexpected: %q\nactual:   %q", expectedMessage, actualState.Message)
-	}
-}
-
 func TestBuildMostUrgentPuljeInterestState_WhenWarningAndLockedPuljerExist_ReturnsWarningState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at noen puljer er låst og en åpen pulje snart låses.",
+		Given: "Gitt at noen puljer er låst og en åpen pulje har et aktivt varsel.",
 		When:  "Når den viktigste meldingen velges.",
-		Then:  "Så skal tidsadvarselen vises i stedet for låst status.",
+		Then:  "Så skal stengeadvarselen vises i stedet for låst status.",
 	})
 
 	// Given
 	expectedHasState := true
 	expectedPuljeID := models.PuljeLordagMorgen
-	expectedAvailability := PuljeInterestUrgentWarning
+	expectedAvailability := PuljeInterestWarning
 
 	now := parsePuljeInterestStateTestTime(t, "2026-10-10T09:15:00+02:00")
 	puljer := []models.PuljeRow{
@@ -259,6 +228,7 @@ func TestBuildMostUrgentPuljeInterestState_WhenWarningAndLockedPuljerExist_Retur
 			"2026-10-10T10:00:00+02:00",
 		),
 	}
+	puljer[1].ClosingWarningActive = true
 
 	// When
 	actualState, actualHasState := BuildMostUrgentPuljeInterestState(puljer, now)
@@ -300,4 +270,72 @@ func parsePuljeInterestStateTestTime(t *testing.T, value string) time.Time {
 		t.Fatalf("failed to parse test time %q: %v", value, err)
 	}
 	return parsed
+}
+
+func TestResolveSelectedBillettholderID_WhenSelectionIsAssociated_KeepsIt(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at utvalgsinformasjonskapselen peker på en billettholder brukeren er tilknyttet.",
+		When:  "Når utvalget valideres.",
+		Then:  "Så skal det valgte ID-et beholdes uendret.",
+	})
+
+	// Given
+	expectedID := 1
+	userInfo := requestctx.UserRequestInfo{Email: "user@example.com"}
+	associated := []BillettHolder{
+		{Id: expectedID, Email: "other@example.com"},
+		{Id: 2, Email: userInfo.Email},
+	}
+
+	// When
+	actualID := ResolveSelectedBillettholderID(userInfo, associated, expectedID)
+
+	// Then
+	if actualID != expectedID {
+		t.Fatalf("selected billettholder ID mismatch\nexpected: %d\nactual:   %d", expectedID, actualID)
+	}
+}
+
+func TestResolveSelectedBillettholderID_WhenSelectionIsNotAssociated_FallsBackToDefault(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at utvalgsinformasjonskapselen peker på en billettholder brukeren ikke er tilknyttet.",
+		When:  "Når utvalget valideres.",
+		Then:  "Så skal brukerens egen billettholder brukes i stedet.",
+	})
+
+	// Given
+	expectedID := 2
+	userInfo := requestctx.UserRequestInfo{Email: "user@example.com"}
+	associated := []BillettHolder{
+		{Id: 1, Email: "other@example.com"},
+		{Id: expectedID, Email: userInfo.Email},
+	}
+
+	// When
+	actualID := ResolveSelectedBillettholderID(userInfo, associated, 903)
+
+	// Then
+	if actualID != expectedID {
+		t.Fatalf("selected billettholder ID mismatch\nexpected: %d\nactual:   %d", expectedID, actualID)
+	}
+}
+
+func TestResolveSelectedBillettholderID_WhenNoBillettholdereExist_ReturnsNoSelection(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren ikke har noen tilknyttede billettholdere.",
+		When:  "Når en utvalgsinformasjonskapsel valideres.",
+		Then:  "Så skal ingen billettholder velges.",
+	})
+
+	// Given
+	expectedID := 0
+	userInfo := requestctx.UserRequestInfo{Email: "user@example.com"}
+
+	// When
+	actualID := ResolveSelectedBillettholderID(userInfo, nil, 903)
+
+	// Then
+	if actualID != expectedID {
+		t.Fatalf("selected billettholder ID mismatch\nexpected: %d\nactual:   %d", expectedID, actualID)
+	}
 }

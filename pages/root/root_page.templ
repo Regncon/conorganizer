@@ -2,42 +2,24 @@ package root
 
 import (
 	"database/sql"
-	"errors"
-	"fmt"
+	"time"
 
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/service/requestctx"
-	"log/slog"
+	"github.com/Regncon/conorganizer/service/program"
 )
 
-func getProgramPublished(db *sql.DB) (bool, error) {
-	const query = `
-		SELECT is_published
-		FROM program_publishing_state
-		WHERE id = 1
-	`
-
-	var isPublished int
-	if err := db.QueryRow(query).Scan(&isPublished); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
-		}
-		return false, fmt.Errorf("query program publishing state: %w", err)
-	}
-
-	return isPublished == 1, nil
-}
-
-templ rootPage(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin bool, eventImageDir *string, logger *slog.Logger) {
+templ rootPage(db *sql.DB, eventImageDir *string, requestedDate string) {
 	<div id="root-page-wrapper">
-		@rootPageContent(db, isAdmin, eventImageDir)
+		@rootPageContentForDate(db, eventImageDir, requestedDate)
 	</div>
 }
 
-templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
-	{{
-		programPublished, err := getProgramPublished(db)
-	}}
+templ rootPageContent(db *sql.DB, eventImageDir *string) {
+	@rootPageContentForDate(db, eventImageDir, "")
+}
+
+templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string) {
+	{{ programPublished, err := program.IsPublished(db) }}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
 	})
@@ -47,9 +29,25 @@ templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 		</div>
 	} else {
 		if programPublished {
-			@components.ProgramScrollnav(db)
+			{{ programDays, programDaysErr := program.GetDays(db) }}
+			if programDaysErr != nil {
+				@components.CallToAction()
+				<div class="page-content-container">
+					<p class="root-page-error">{ rootEventsLoadErrorMessage }</p>
+				</div>
+			} else if len(programDays) > 0 {
+				{{ selectedDayIndex := program.SelectDayIndex(programDays, requestedDate, time.Now()) }}
+				@programDaySelector(programDays, selectedDayIndex)
+				@components.CallToAction()
+				{{ selectedDay := programDays[selectedDayIndex] }}
+				@eventList(db, eventImageDir, true, &selectedDay)
+			} else {
+				@components.CallToAction()
+				@eventList(db, eventImageDir, true, nil)
+			}
+		} else {
+			@components.CallToAction()
+			@eventList(db, eventImageDir, false, nil)
 		}
-		@components.CallToAction()
-		@eventList(db, isAdmin, eventImageDir, programPublished)
 	}
 }

@@ -126,8 +126,11 @@ func TestRoomAssignment_CreatesAndPublishesRelationForApprovedEvent(t *testing.T
 	if got := testutil.QueryInt(t, db, `SELECT room_id FROM relation_event_puljer WHERE event_id=? AND pulje_id=?`, "event-without-pulje", pulje); got != 42 {
 		t.Fatalf("room assignment = %d, want 42", got)
 	}
-	if got := testutil.QueryInt(t, db, `SELECT is_in_pulje + is_published FROM relation_event_puljer WHERE event_id=? AND pulje_id=?`, "event-without-pulje", pulje); got != 2 {
-		t.Fatal("new relation should be active and published")
+		if got := testutil.QueryInt(t, db, `SELECT is_in_pulje FROM relation_event_puljer WHERE event_id=? AND pulje_id=?`, "event-without-pulje", pulje); got != 1 {
+			t.Fatal("new relation should be active")
+		}
+		if got := testutil.QueryInt(t, db, `SELECT is_published FROM relation_event_puljer WHERE event_id=? AND pulje_id=?`, "event-without-pulje", pulje); got != 0 {
+			t.Fatal("new relation should retain the database default for the legacy publication flag")
 	}
 	if !strings.Contains(recorder.Body.String(), "room-saved") {
 		t.Fatal("successful assignment should notify the page")

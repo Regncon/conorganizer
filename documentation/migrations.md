@@ -1,99 +1,78 @@
-# Migrations with Goose
+# Database migrations
 
-> [!NOTE]
-> Goose reads variables from `.env`. Make sure this file is updated with the most recent version from Discord before running any commands.
+Conorganizer database migrations use [Goose](https://pressly.github.io/goose/). They are applied manually; do not add automatic migrations to application startup, health checks, readiness checks, or systemd startup.
 
-We're using [Goose](https://pressly.github.io/goose/) in our migration process for its simplicity and reliability. While Goose is available as a Go dependency for programmatic database migrations, we're mostly using its CLI tool for manual updates.
+## Create a migration
 
-## Running Goose manually
-
-> [!WARNING]
-> Before running Goose, run `go tool task download` to fetch the newest version of the database.
-> Install the Goose CLI tool from the [official installation guide](https://pressly.github.io/goose/installation/). Afterward, `goose` should be globally available in your terminal.
-> Migrations are manual only. Do not add automatic migrations to application startup, health checks, readiness checks, or systemd startup.
-
-To create a new migration file, run this command. See the [Goose annotations guide](https://pressly.github.io/goose/documentation/annotations/) for more annotation examples.
+Install the [Goose CLI](https://pressly.github.io/goose/installation/) and, from the repository root, create a SQL migration:
 
 ```console
-goose create <briefly describe changes> sql
+goose create <brief-description> sql
 ```
 
-After adding migration files, use `up` or `down` to run migrations.
+See the [Goose annotations guide](https://pressly.github.io/goose/documentation/annotations/) for the migration-file format.
 
-```console
-goose up
-```
+## Apply migrations on the server
 
-## Pushing migrations to production
+This is a manual maintenance-window procedure. Replace every placeholder with the correct value for the server and environment. Do not introduce shell variables or run the procedure as a copied script.
 
-> [!CAUTION]
-> Make sure that you can do all of the following steps before you start. These actions require Goose and server access.
+1. Enable the maintenance page in `/etc/caddy/Caddyfile`, then restart Caddy. Confirm that the public URL shows the maintenance page.
 
-1. Run Goose on the local database (preferably a copy).
-2. Make a backup on the server.
-3. Upload the database to the server.
+    ```console
+    sudoedit /etc/caddy/Caddyfile
+    sudo systemctl restart caddy
+    ```
 
-## Step-by-step database update
+2. Stop both application services.
 
-```bash
-systemctl list-units --type=service | grep -i conorganizer
-systemctl list-unit-files | grep -i conorganizer
-```
+    ```console
+    sudo systemctl stop <main-service>
+    sudo systemctl stop <demo-service>
+    ```
 
-Check the service command and find the mounted database path:
+3. Back up both databases. `conorganizer-sqlite-backup` backs up the main database; make a separate SQLite backup of the demo database.
 
-```bash
-systemctl show INSERT_SERVICE_NAME -p ExecStart --value | fold -s -w 120
-```
+    ```console
+    sudo conorganizer-sqlite-backup
+    sudo sqlite3 <demo-database-path> ".backup '<demo-backup-path>/pre-migration-<migration-id>-events.db'"
+    ```
 
-Look for the host path that contains `events.db` or maps the database folder into the app.
+4. Update the checkout that contains the migrations.
 
-```bash
-ls -lh /mnt/HC_Volume_103911252/environments
-```
+    ```console
+    cd <checkout-containing-migrations>
+    git pull
+    ```
 
-Example: `/mnt/HC_Volume_103911252/environments/1337-merge/database/events.db`
+5. Migrate the demo database. Move it into the checkout, where the Goose command expects `database/events.db`, then restore its service ownership before starting the service.
 
-Stop the service:
+    ```console
+    sudo mv <demo-database-path> database/events.db
+    sudo chown <operator>:<operator> database/events.db
+    goose -env /dev/null -dir migrations sqlite3 database/events.db up
+    sqlite3 database/events.db "PRAGMA integrity_check;"
+    sudo mv database/events.db <demo-database-path>
+    sudo chown deploy:www-data <demo-database-path>
+    sudo systemctl start <demo-service>
+    sudo systemctl status <demo-service>
+    ```
 
-```bash
-sudo systemctl stop INSERT_SERVICE_NAME
-```
+6. Migrate the main database in the same way.
 
-Back up the current database if needed:
+    ```console
+    sudo mv <main-database-path> database/events.db
+    sudo chown <operator>:<operator> database/events.db
+    goose -env /dev/null -dir migrations sqlite3 database/events.db up
+    sqlite3 database/events.db "PRAGMA integrity_check;"
+    sudo mv database/events.db <main-database-path>
+    sudo chown deploy:www-data <main-database-path>
+    sudo systemctl start <main-service>
+    sudo systemctl status <main-service>
+    ```
 
-```bash
-sqlite3 PATH_TO_DB ".backup 'PATH_TO_BACKUP/events.db.bak'"
-```
+7. Disable the maintenance page and restart Caddy. Verify the real public URL before considering the migration complete.
 
-Move the uploaded database into place:
-
-```bash
-mv /path/to/uploaded/events.db /mnt/HC_Volume_103911252/environments/1337-merge/database/events.db
-cd /mnt/HC_Volume_103911252/environments/1337-merge/database
-sudo chown deploy:deploy events.db
-sudo chmod 644 events.db
-```
-
-Start the service again:
-
-```bash
-sudo systemctl start INSERT_SERVICE_NAME
-sudo systemctl status INSERT_SERVICE_NAME
-```
-
-Check logs:
-
-```bash
-journalctl -u INSERT_SERVICE_NAME -n 100 --no-pager
-```
-
-## Restore compose commands
-
-> [!CAUTION]
-> Do not run this unless you know all caveats; this can affect production negatively.
-
-```bash
-docker compose -f compose-restore.yaml down && docker image rm regncon-migration
-docker compose -f compose-restore.yaml up
-```
+    ```console
+    sudoedit /etc/caddy/Caddyfile
+    sudo systemctl restart caddy
+    ```

@@ -127,8 +127,8 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 					newApiIdRouter.Route("/event-in-pulje", func(putEventInPuljeRouter chi.Router) {
 						formsubmission.UpdateEventInPulje(putEventInPuljeRouter, db, liveManager, logger)
 					})
-					newApiIdRouter.Route("/is-published", func(putIsPublishedRouter chi.Router) {
-						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, liveManager, logger)
+					newApiIdRouter.Route("/is-in-puljefordeling", func(putIsInPuljefordelingRouter chi.Router) {
+						formsubmission.UpdateIsInPuljefordeling(putIsInPuljefordelingRouter, db, liveManager, logger)
 					})
 					newApiIdRouter.Route("/assign-room", func(putAssignedRoomRouter chi.Router) {
 						formsubmission.UpdateRoomInPulje(putAssignedRoomRouter, db, liveManager, logger)
@@ -229,7 +229,7 @@ func GetEventsByExternalID(externalID string, db *sql.DB, logger *slog.Logger) [
 	}
 
 	// Query for events created by user
-	eventsQuery := "SELECT id, title, intro, status, system, host_name, beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE user_id = ?"
+	eventsQuery := "SELECT id, title, intro, status, system, host_name, beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english, is_in_puljefordeling FROM events WHERE user_id = ?"
 	rows, eventsQueryErr := db.Query(eventsQuery, userID)
 	if eventsQueryErr != nil {
 		logger.Error(fmt.Errorf("failed to query events for external_id %q: %w", externalID, eventsQueryErr).Error())
@@ -240,7 +240,7 @@ func GetEventsByExternalID(externalID string, db *sql.DB, logger *slog.Logger) [
 	// Validate database query return
 	for rows.Next() {
 		var event models.EventCardModel
-		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
+		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish, &event.IsInPuljefordeling); scanErr != nil {
 			logger.Error(fmt.Errorf("failed to scan event row for external_id %q: %w", externalID, scanErr).Error())
 			return events
 		}

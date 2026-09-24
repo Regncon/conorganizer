@@ -269,7 +269,7 @@ func jsonString(value any) string {
 // Normal input value signals are separate from error feedback. Initialize them
 // with the page/component's normal data-signals helper, not this package:
 //
-//	data-signals={ dataSignals(map[string]string{"name": ""}) }
+//	data-signals={ components.DataSignals(map[string]string{"name": ""}) }
 templ RenderMessage(key string) {
 	<span
 		class="feedback-error"

@@ -55,13 +55,19 @@ func TestPuljeAssignmentPicker_MissingGMShortcutSetsContextAndGenericAddRestores
 	generic := templtest.Render(t, puljeEventBox(models.PuljeLordagKveld, puljefordeling.EmulatedEvent{EventID: "evB", Title: "Arrangement B"}, false, nil))
 	page := templtest.Render(t, puljefordelingIndex(db, testutil.NewTestLogger(), models.PuljeFredagKveld, nil))
 	picker := page.Find("#puljefordeling-assign-dialog")
+	if picker.Find("admin-billettholder-search").AttrOr("data-attr:data-clear-input", "") != "$clearInput" {
+		t.Fatal("search reset must bind to the component observed data-clear-input attribute")
+	}
 	payload, err := json.Marshal(map[string]string{
-		"gmOpen":       missingGM.Find("button:contains('Mangler spilleder · Legg til spilleder')").AttrOr("data-on:click", ""),
-		"genericOpen":  generic.Find(".pulje-add").AttrOr("data-on:click", ""),
-		"title":        picker.Find("h3").AttrOr("data-text", "''"),
-		"playerShown":  picker.Find("button:contains('Legg til som spiller')").AttrOr("data-show", "true"),
-		"gmPrimary":    picker.Find("button:contains('Legg til som spilleder')").AttrOr("data-class:btn--primary", "false"),
-		"gmSubmission": picker.Find("button:contains('Legg til som spilleder')").AttrOr("data-on:click", ""),
+		"gmOpen":               missingGM.Find("button:contains('Mangler spilleder · Legg til spilleder')").AttrOr("data-on:click", ""),
+		"genericOpen":          generic.Find(".pulje-add").AttrOr("data-on:click", ""),
+		"dialogEffect":         picker.AttrOr("data-effect", ""),
+		"interestsShown":       picker.Find(".pulje-assignment-interests").AttrOr("data-show", "true"),
+		"interestActionsShown": picker.Find(".pulje-assignment-interesse-actions").AttrOr("data-show", "true"),
+		"title":                picker.Find("h3").AttrOr("data-text", "''"),
+		"playerShown":          picker.Find("button:contains('Tildel som spiller')").AttrOr("data-show", "true"),
+		"gmPrimary":            picker.Find("button:contains('Tildel som spilleder')").AttrOr("data-class:btn--primary", "false"),
+		"gmSubmission":         picker.Find("button:contains('Tildel som spilleder')").AttrOr("data-on:click", ""),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -79,20 +85,24 @@ func TestPuljeAssignmentPicker_MissingGMShortcutSetsContextAndGenericAddRestores
 		t.Fatalf("execute picker actions: %v\n%s", err, output)
 	}
 	var actual struct {
-		GMTitle        string
-		GenericTitle   string
-		GMPlayerShown  bool
-		GMPrimary      bool
-		GenericPrimary bool
-		PlayerShown    bool
-		Focused        bool
-		Cleared        bool
-		EventID        string
-		PuljeID        string
-		Role           string
-		HolderID       int
-		GenericEvent   string
-		GenericPulje   string
+		GMTitle                     string
+		GenericTitle                string
+		GMPlayerShown               bool
+		GMInterestsShown            bool
+		GMInterestActionsShown      bool
+		GenericInterestsShown       bool
+		GenericInterestActionsShown bool
+		GMPrimary                   bool
+		GenericPrimary              bool
+		PlayerShown                 bool
+		Focused                     bool
+		Cleared                     bool
+		EventID                     string
+		PuljeID                     string
+		Role                        string
+		HolderID                    int
+		GenericEvent                string
+		GenericPulje                string
 	}
 	if err := json.Unmarshal(output, &actual); err != nil {
 		t.Fatalf("decode picker action result: %v\n%s", err, output)
@@ -102,7 +112,7 @@ func TestPuljeAssignmentPicker_MissingGMShortcutSetsContextAndGenericAddRestores
 	if actual.GMTitle != expectedGMTitle || actual.GenericTitle != expectedGenericTitle {
 		t.Errorf("picker titles = %q / %q, want %q / %q", actual.GMTitle, actual.GenericTitle, expectedGMTitle, expectedGenericTitle)
 	}
-	if actual.GMPlayerShown || !actual.PlayerShown || !actual.GMPrimary || actual.GenericPrimary || !actual.Focused || !actual.Cleared {
+	if actual.GMInterestsShown || actual.GMInterestActionsShown || !actual.GenericInterestsShown || !actual.GenericInterestActionsShown || actual.GMPlayerShown || !actual.PlayerShown || !actual.GMPrimary || actual.GenericPrimary || !actual.Focused || !actual.Cleared {
 		t.Errorf("picker mode, focus or stale selection incorrect: %+v", actual)
 	}
 	if actual.EventID != "evA" || actual.PuljeID != "FredagKveld" || actual.Role != "GM" || actual.HolderID != 42 {
@@ -119,15 +129,20 @@ const actions = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
 let focused = false;
 const input = { value: 'Previously selected person', focus() { focused = true; } };
 const search = { clearSearch() { input.value = ''; }, shadowRoot: { querySelector() { return input; } } };
-const dialog = { open: false, showModal() { this.open = true; }, querySelector() { return search; } };
+const dialog = { open: false, showModal() { this.open = true; }, close() { this.open = false; }, querySelector() { return search; } };
 const context = vm.createContext({
+  el: dialog,
   document: { getElementById() { return dialog; } },
   evt: { currentTarget: { closest() { return { querySelector() { return search; } }; } } },
   $assignmentBillettholderId: 99, $clearInput: 0,
 });
 const runAction = (action) => vm.runInContext('(function() {' + action + '})()', context);
 runAction(actions.gmOpen);
+if (context.$clearInput > 0) search.clearSearch();
+runAction(actions.dialogEffect);
 const result = {
+  GMInterestsShown: vm.runInContext(actions.interestsShown, context),
+  GMInterestActionsShown: vm.runInContext(actions.interestActionsShown, context),
   GMTitle: vm.runInContext(actions.title, context),
   GMPlayerShown: vm.runInContext(actions.playerShown, context),
   GMPrimary: vm.runInContext(actions.gmPrimary, context),
@@ -142,6 +157,8 @@ context.post = () => Object.assign(result, {
 runAction(actions.gmSubmission.replaceAll('@post(', 'post('));
 runAction(actions.genericOpen);
 Object.assign(result, {
+  GenericInterestsShown: vm.runInContext(actions.interestsShown, context),
+  GenericInterestActionsShown: vm.runInContext(actions.interestActionsShown, context),
   GenericTitle: vm.runInContext(actions.title, context),
   PlayerShown: vm.runInContext(actions.playerShown, context),
   GenericPrimary: vm.runInContext(actions.gmPrimary, context),
