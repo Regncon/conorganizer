@@ -1,7 +1,6 @@
 package components
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -51,23 +50,6 @@ func interestTooltipText(interests []BillettholderInterest) string {
 		lines = append(lines, interest.Description())
 	}
 	return strings.Join(lines, "\n")
-}
-
-func interestTooltipExpression(interests []BillettholderInterest) string {
-	type line struct {
-		ID   int    `json:"id"`
-		Text string `json:"text"`
-		Own  bool   `json:"own"`
-	}
-	lines := make([]line, 0, len(interests))
-	for _, interest := range interests {
-		lines = append(lines, line{ID: interest.BillettholderID, Text: interest.Description(), Own: interest.IsOwn})
-	}
-	encoded, _ := json.Marshal(lines)
-	return fmt.Sprintf(
-		"((lines) => [...lines.filter((l) => l.own), ...lines.filter((l) => !l.own && l.id === $_menuBillettholder?.Id), ...lines.filter((l) => !l.own && l.id !== $_menuBillettholder?.Id)].map((l) => l.text).join('\\n'))(%s)",
-		encoded,
-	)
 }
 
 templ InterestIndicator(interests []BillettholderInterest) {
@@ -137,7 +119,6 @@ templ InterestIndicator(interests []BillettholderInterest) {
 		class="interest-indicator"
 		tabindex="0"
 		data-tippy-content={ interestTooltipText(interests) }
-		data-attr:data-tippy-content={ interestTooltipExpression(interests) }
 		data-tippy-allowHTML="false"
 		data-tippy-theme="interest-indicator"
 		data-on:click="matchMedia('(hover: none)').matches && evt.preventDefault()"

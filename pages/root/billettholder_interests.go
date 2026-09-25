@@ -104,12 +104,6 @@ func compareBillettholderInterests(a, b components.BillettholderInterest) int {
 		}
 		return 1
 	}
-	if a.IsSelected != b.IsSelected {
-		if a.IsSelected {
-			return -1
-		}
-		return 1
-	}
 	return cmp.Or(
 		cmp.Compare(b.InterestLevel.Score(), a.InterestLevel.Score()),
 		cmp.Compare(a.BillettholderName, b.BillettholderName),
