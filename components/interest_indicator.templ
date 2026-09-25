@@ -1,0 +1,145 @@
+package components
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
+)
+
+type BillettholderInterest struct {
+	BillettholderID   int
+	BillettholderName string
+	InterestLevel     models.InterestLevel
+	IsSelected        bool
+	IsOwn             bool
+}
+
+func (interest BillettholderInterest) Description() string {
+	name := interest.BillettholderName
+	if nameParts := strings.Fields(name); len(nameParts) > 0 {
+		name = nameParts[0]
+	}
+	if interest.IsOwn {
+		name = "Du"
+	}
+	return fmt.Sprintf("%s er %s", name, strings.ToLower(interest.InterestLevel.Label()))
+}
+
+func (interest BillettholderInterest) HeartIcon() icons.IconType {
+	switch interest.InterestLevel {
+	case models.InterestLevelHigh:
+		return icons.HeartFilled
+	case models.InterestLevelMedium:
+		return icons.HeartFilledMedium
+	case models.InterestLevelLow:
+		return icons.HeartFilledLow
+	default:
+		return icons.HeartUnfilled
+	}
+}
+
+func (interest BillettholderInterest) SelectedExpression() string {
+	return fmt.Sprintf("$_menuBillettholder?.Id == %d", interest.BillettholderID)
+}
+
+func interestTooltipText(interests []BillettholderInterest) string {
+	lines := make([]string, 0, len(interests))
+	for _, interest := range interests {
+		lines = append(lines, interest.Description())
+	}
+	return strings.Join(lines, "\n")
+}
+
+templ InterestIndicator(interests []BillettholderInterest) {
+	<style>
+		.interest-indicator {
+			flex-shrink: 0;
+
+			&:focus-visible {
+				outline: 3px solid var(--color-secondary-focus-visible);
+				outline-offset: 2px;
+				border-radius: var(--border-radius-1x);
+			}
+
+			.interest-indicator-hearts {
+				display: flex;
+			}
+
+			.interest-indicator-heart {
+				--heart-color: var(--color-accent-blue);
+
+				display: grid;
+				color: var(--heart-color);
+
+				> span {
+					display: none;
+					grid-area: 1 / 1;
+				}
+
+				&.selected {
+					--heart-color: var(--color-primary);
+
+					order: 1;
+
+					.interest-indicator-heart-fill {
+						display: grid;
+					}
+				}
+
+				&:not(.selected) .interest-indicator-heart-outline {
+					display: grid;
+				}
+
+				&:not(.selected) ~ &:not(.selected) {
+					display: none;
+				}
+			}
+
+			&:has(.interest-indicator-heart.selected) .interest-indicator-heart:not(.selected) {
+				/* The back heart icon is cut for exactly this overlap. */
+				margin-inline-end: -1rem;
+
+				.interest-indicator-heart-outline {
+					display: none;
+				}
+
+				.interest-indicator-heart-behind {
+					display: grid;
+				}
+			}
+		}
+
+		.tippy-tooltip.interest-indicator-theme .tippy-content {
+			white-space: pre-line;
+		}
+	</style>
+	<span
+		class="interest-indicator"
+		tabindex="0"
+		data-tippy-content={ interestTooltipText(interests) }
+		data-tippy-allowHTML="false"
+		data-tippy-theme="interest-indicator"
+		data-on:click="matchMedia('(hover: none)').matches && evt.preventDefault()"
+	>
+		<span class="interest-indicator-hearts" aria-hidden="true">
+			for _, interest := range interests {
+				<span
+					class={ "interest-indicator-heart", templ.KV("selected", interest.IsSelected) }
+					data-class:selected={ interest.SelectedExpression() }
+				>
+					<span class="interest-indicator-heart-fill">
+						@icons.Icon(interest.HeartIcon(), icons.Size24)
+					</span>
+					<span class="interest-indicator-heart-outline">
+						@icons.Icon(icons.HeartUnfilled, icons.Size24)
+					</span>
+					<span class="interest-indicator-heart-behind">
+						@icons.Icon(icons.HeartBehind, icons.Size24)
+					</span>
+				</span>
+			}
+		</span>
+	</span>
+}

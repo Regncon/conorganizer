@@ -1,6 +1,6 @@
 ---
 name: conorganizer-logging
-description: Create, migrate, and review structured logging in the conorganizer Go codebase using log/slog. Use when adding new logs, updating old logs after refactors, or checking PRs for logging quality in .go and .templ handlers, middleware, services, and route setup.
+description: Conorganizer's rules for logging and error handling with log/slog in .go and .templ files. Use whenever you write or change Go or templ code that logs, returns, wraps or handles errors (fmt.Errorf, if err != nil in handlers, services, middleware, route setup, live/SSE streams or background loops), adds a handler, route or service function, or touches a logger (logger.Info/Warn/Error/Debug, slog.Default, logger parameters, component names, request_id/user_id fields). Also use when the user mentions logs, logging, logger, slog, log levels or error messages, or asks to review a PR or diff. Use it even when logging is not the main task, since most Go changes in this repo touch error paths.
 ---
 
 # Conorganizer Logging
