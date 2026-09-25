@@ -1,0 +1,88 @@
+package admin
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
+)
+
+// puljeLagringsDialogInnhold asks the admin to confirm saving the distribution,
+// saying what it changes: every change when there are few, only the count when
+// there are many, and a plain note for the first save.
+templ puljeLagringsDialogInnhold(pulje models.Pulje, status puljefordeling.Lagringsendringer) {
+	{{ antall := len(status.Endringer) }}
+	<div id="tildeling-dialog-innhold">
+		@puljeTildelingsHeader()
+		if !status.HarEndringer() {
+			<p class="tildeling-handling">
+				<strong>Ingen endringer å lagre</strong>
+				<span>{ status.PuljeNavn }</span>
+			</p>
+			<p class="tildeling-note">Den lagrede fordelingen er lik den som vises nå.</p>
+			<div class="tildeling-actions">
+				<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Lukk</button>
+			</div>
+		} else {
+			<p class="tildeling-handling">
+				if status.ForsteLagring {
+					<strong>Første lagring av fordelingen</strong>
+				} else {
+					<strong>Lagre fordelingen</strong>
+				}
+				<span>{ status.PuljeNavn }</span>
+			</p>
+			<section class="tildeling-section">
+				if status.ForsteLagring {
+					<h3>{ antallTekst(antall, "deltaker", "deltakere") + " får lagret plass" }</h3>
+					<p class="tildeling-note">Fordelingen er ikke lagret for denne puljen før. Alle plassene lagres nå, og blir tilgjengelige i andre visninger.</p>
+				} else {
+					<h3>{ antallTekst(antall, "deltaker", "deltakere") + " får en annen plass enn i forrige lagring" }</h3>
+					if antall > puljeLagringsgrense {
+						<p class="tildeling-note">{ "Det er mer enn " + strconv.Itoa(puljeLagringsgrense) + " endringer, så de vises ikke enkeltvis." }</p>
+					} else {
+						<ul class="tildeling-list">
+							for _, endring := range status.Endringer {
+								@puljeKonsekvensRad(endring)
+							}
+						</ul>
+					}
+				}
+			</section>
+			<div class="tildeling-actions">
+				<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Avbryt</button>
+				<button
+					type="button"
+					class="btn btn--primary"
+					data-confirmation={ status.Bekreftelse }
+					data-on:click={ fmt.Sprintf("$tildelingOpen = false; $lagreBekreftelse = %q; @post(%q); $lagreBekreftelse = ''", status.Bekreftelse, puljeLagringsURL(pulje)) }
+				>Lagre fordeling</button>
+			</div>
+		}
+	</div>
+}
+
+// puljeLagringsknapp is "Lagre fordeling": active only when saving would change
+// something, and it opens the dialog that says what.
+templ puljeLagringsknapp(pulje models.Pulje, published bool, status puljefordeling.Lagringsendringer) {
+	<div class="pulje-commit-bar">
+		switch {
+			case published:
+				<p>Fordelingen er publisert og kan ikke endres.</p>
+			case status.ForsteLagring && status.HarEndringer():
+				<p>Fordelingen er ikke lagret ennå.</p>
+			case status.HarEndringer():
+				<p>{ antallTekst(len(status.Endringer), "ulagret endring", "ulagrede endringer") + " siden forrige lagring." }</p>
+			default:
+				<p>Fordelingen er lagret. Ingen endringer siden forrige lagring.</p>
+		}
+		<button
+			type="button"
+			class="btn btn--primary pulje-commit"
+			disabled?={ published || !status.HarEndringer() }
+			aria-haspopup="dialog"
+			data-on:click={ fmt.Sprintf("@post('/admin/api/puljefordeling/%s/commit/preview')", string(pulje)) }
+		>Lagre fordeling</button>
+	</div>
+}

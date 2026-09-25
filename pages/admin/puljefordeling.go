@@ -9,6 +9,7 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -128,6 +129,15 @@ func updatePuljeStatus(db *sql.DB, puljeID models.Pulje, status models.PuljeStat
 	if !puljeStatusStepAllowed(current, status) {
 		return errPuljeStepOrder
 	}
+	if status == models.PuljeStatusCompleted && current.Status != models.PuljeStatusCompleted {
+		lagring, err := puljefordeling.Lagringsstatus(db, puljeID)
+		if err != nil {
+			return fmt.Errorf("check unsaved distribution for %s: %w", puljeID, err)
+		}
+		if lagring.HarEndringer() {
+			return errPuljeUlagret
+		}
+	}
 
 	const query = `
 		UPDATE puljer
@@ -204,6 +214,10 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.
 			}
 			if errors.Is(err, errPuljeStepOrder) {
 				http.Error(w, "Forrige steg må være fullført først", http.StatusConflict)
+				return
+			}
+			if errors.Is(err, errPuljeUlagret) {
+				http.Error(w, "Lagre fordelingen før den publiseres", http.StatusConflict)
 				return
 			}
 			logger.Error(err.Error(), "pulje_id", puljeID, "pulje_status", store.PuljeStatus)

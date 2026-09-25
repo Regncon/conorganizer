@@ -355,9 +355,8 @@ func TestPuljefordelingCommitRoute_PersistsSolverPicks(t *testing.T) {
 	testutil.MustExec(t, db, `INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level) VALUES (1,'evA',?,?)`,
 		string(fredag), string(models.InterestLevelHigh))
 
-	req := httptest.NewRequest(http.MethodPost, "/api/puljefordeling/FredagKveld/commit", nil)
-	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, req)
+	preview := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit/preview", 0, "", "", "")
+	rec := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit", 0, "", "", `,"lagreBekreftelse":"`+confirmationFromResponse(t, preview)+`"`)
 
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("want 204, got %d (%s)", rec.Code, rec.Body.String())

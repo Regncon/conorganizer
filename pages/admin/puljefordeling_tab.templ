@@ -3,7 +3,6 @@ package admin
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -78,26 +77,8 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 
 	// Commit (+publish-independent). Persists the current distribution so it shows
 	// in other views; solver picks become source='solver', manual pins stay manual.
-	router.Post("/api/puljefordeling/{pulje}/commit", func(w http.ResponseWriter, r *http.Request) {
-		puljeID, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
-		if !ok {
-			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
-			return
-		}
-		if err := puljefordeling.CommitDistribution(db, puljeID); err != nil {
-			if errors.Is(err, puljefordeling.ErrPuljeCompleted) {
-				http.Error(w, "Pulje is published; changes are not allowed", http.StatusConflict)
-				return
-			}
-			logger.Error(err.Error(), "pulje_id", puljeID)
-			http.Error(w, "Failed to commit distribution", http.StatusInternalServerError)
-			return
-		}
-		if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketRooms); err != nil {
-			logger.Error(fmt.Errorf("failed to broadcast commit: %w", err).Error(), "pulje_id", puljeID)
-		}
-		w.WriteHeader(http.StatusNoContent)
-	})
+	router.Post("/api/puljefordeling/{pulje}/commit", puljeLagringsHandler(db, liveManager, logger))
+	router.Post("/api/puljefordeling/{pulje}/commit/preview", puljeLagringsforhandsvisningHandler(db, logger))
 
 	// Add a manual pin (+). Force-pins the chosen billettholder into the event
 	// without touching their interests; removing the pin reverts them to emulation.
@@ -308,6 +289,13 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		row, hasRow := findPuljeRow(puljer, pulje)
 
 		result, hasResult := findEmulatedPulje(em, pulje)
+		var lagring puljefordeling.Lagringsendringer
+		if emErr == nil && hasResult {
+			var lagringErr error
+			if lagring, lagringErr = puljefordeling.LagringsstatusFor(db, em, pulje); lagringErr != nil {
+				logger.Error(lagringErr.Error(), "pulje_id", pulje)
+			}
+		}
 		var fordelingsvarsler []puljefordeling.Fordelingsvarsel
 		var kapasitetsvarsler []puljefordeling.Kapasitetsvarsel
 		var varslerErr error
@@ -349,6 +337,11 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             border: 1px solid var(--level-3-border);
             border-radius: var(--border-radius-2x);
             background-color: var(--level-3-background);
+        }
+        .pulje-status-hint {
+            display: block;
+            color: var(--color-text-soft);
+            font-size: var(--text-body-small);
         }
         .pulje-status-controls {
             display: flex;
@@ -884,7 +877,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 				</div>
 			</div>
 			if hasRow {
-				@puljeStatusToggles(row)
+				@puljeStatusToggles(row, lagring.HarEndringer())
 			}
 		</div>
 		<div class="pulje-events-header">
@@ -893,19 +886,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			} else {
 				<h2>Arrangementer</h2>
 			}
-			<div class="pulje-commit-bar">
-				if puljeIsCompleted(row.Status) {
-					<p>Fordelingen er publisert og kan ikke endres.</p>
-				} else {
-					<p>Fordelingen er midlertidig frem til du lagrer.</p>
-				}
-				<button
-					type="button"
-					class="btn btn--primary pulje-commit"
-					disabled?={ puljeIsCompleted(row.Status) }
-					data-on:click={ fmt.Sprintf("if (confirm('Lagre denne fordelingen? Den blir tilgjengelig i andre visninger.')) { @post('/admin/api/puljefordeling/%s/commit') }", string(pulje)) }
-				>Lagre fordeling</button>
-			</div>
+			@puljeLagringsknapp(pulje, puljeIsCompleted(row.Status), lagring)
 		</div>
 		if emErr != nil {
 			<p class="pulje-error">Kunne ikke beregne fordeling: { emErr.Error() }</p>
@@ -994,7 +975,9 @@ templ puljeAgeWarningDialog() {
 // puljeStatusToggles renders the three puljefordeling steps. Each step is
 // disabled until the previous one is done, and locked once the next one is done;
 // puljeStatusStepAllowed enforces the same order on the server.
-templ puljeStatusToggles(pulje models.PuljeRow) {
+// ulagret blocks publishing while the distribution has unsaved changes.
+templ puljeStatusToggles(pulje models.PuljeRow, ulagret bool) {
+	{{ publiseringBlokkert := ulagret && !puljeIsCompleted(pulje.Status) }}
 	<ol class="pulje-status-controls" aria-label="Steg for puljefordeling">
 		<li>
 			<label class="pulje-status-control">
@@ -1042,7 +1025,7 @@ templ puljeStatusToggles(pulje models.PuljeRow) {
 					if puljeIsCompleted(pulje.Status) {
 						checked
 					}
-					if !puljeStatusStepAllowed(pulje, models.PuljeStatusCompleted) {
+					if !puljeStatusStepAllowed(pulje, models.PuljeStatusCompleted) || publiseringBlokkert {
 						disabled
 					}
 					data-on:click={ puljeStatusUpdateAction(
@@ -1054,7 +1037,12 @@ templ puljeStatusToggles(pulje models.PuljeRow) {
 					type="checkbox"
 					class="checkbox input"
 				/>
-				<span>Puljefordeling publisert</span>
+				<span>
+					Puljefordeling publisert
+					if publiseringBlokkert {
+						<small class="pulje-status-hint">Lagre fordelingen før den publiseres.</small>
+					}
+				</span>
 			</label>
 		</li>
 	</ol>
