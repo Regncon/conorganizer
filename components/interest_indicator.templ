@@ -1,6 +1,7 @@
 package components
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -40,13 +41,36 @@ func (interest BillettholderInterest) SelectedExpression() string {
 	return fmt.Sprintf("$_menuBillettholder?.Id == %d", interest.BillettholderID)
 }
 
+func interestTooltipText(interests []BillettholderInterest) string {
+	lines := make([]string, 0, len(interests))
+	for _, interest := range interests {
+		lines = append(lines, interest.Description())
+	}
+	return strings.Join(lines, "\n")
+}
+
+func interestTooltipExpression(interests []BillettholderInterest) string {
+	type line struct {
+		ID   int    `json:"id"`
+		Text string `json:"text"`
+	}
+	lines := make([]line, 0, len(interests))
+	for _, interest := range interests {
+		lines = append(lines, line{ID: interest.BillettholderID, Text: interest.Description()})
+	}
+	encoded, _ := json.Marshal(lines)
+	return fmt.Sprintf(
+		"((lines) => [...lines.filter((l) => l.id === $_menuBillettholder?.Id), ...lines.filter((l) => l.id !== $_menuBillettholder?.Id)].map((l) => l.text).join('\\n'))(%s)",
+		encoded,
+	)
+}
+
 templ InterestIndicator(interests []BillettholderInterest) {
 	<style>
 		.interest-indicator {
 			--heart-size: 1.5rem;
 			--heart-overlap: 1rem;
 
-			position: relative;
 			flex-shrink: 0;
 
 			&:focus-visible {
@@ -110,67 +134,20 @@ templ InterestIndicator(interests []BillettholderInterest) {
 				mask-repeat: no-repeat;
 				mask-size: 100% 100%;
 			}
+		}
 
-			.interest-indicator-tooltip {
-				position: absolute;
-				inset-block-end: calc(100% + var(--spacing-3x));
-				inset-inline-end: 0;
-				z-index: 1;
-				display: flex;
-				flex-direction: column;
-				gap: var(--spacing-1x);
-				inline-size: max-content;
-				max-inline-size: 16rem;
-				margin: 0;
-				padding: var(--spacing-2x) var(--spacing-3x);
-				list-style: none;
-				border-radius: var(--border-radius-1x);
-				background-color: var(--bg-tooltip);
-				color: var(--color-primary-text);
-				font-size: var(--text-body-small);
-				line-height: 1.4;
-				overflow-wrap: anywhere;
-				opacity: 0;
-				transform: scale(0.8);
-				transform-origin: calc(100% - var(--heart-size) / 2) 100%;
-				pointer-events: none;
-				transition: opacity 250ms, transform 250ms;
-
-				&::after {
-					content: "";
-					position: absolute;
-					inset-block-start: 100%;
-					inset-inline-end: calc(var(--heart-size) / 2 - var(--spacing-2x));
-					border: var(--spacing-2x) solid transparent;
-					border-block-start-color: var(--bg-tooltip);
-					border-block-end-width: 0;
-				}
-
-				.selected {
-					order: -1;
-				}
-			}
-
-			@media (hover: none) {
-				&[data-open] .interest-indicator-tooltip {
-					opacity: 1;
-					transform: none;
-				}
-			}
-
-			@media (hover: hover) {
-				&:is(:hover, :focus-visible) .interest-indicator-tooltip {
-					opacity: 1;
-					transform: none;
-				}
-			}
+		.tippy-tooltip.interest-indicator-theme .tippy-content {
+			white-space: pre-line;
 		}
 	</style>
 	<span
 		class="interest-indicator"
 		tabindex="0"
-		data-on:click="matchMedia('(hover: none)').matches && (evt.preventDefault(), el.toggleAttribute('data-open'))"
-		data-on:click__outside="el.removeAttribute('data-open')"
+		data-tippy-content={ interestTooltipText(interests) }
+		data-attr:data-tippy-content={ interestTooltipExpression(interests) }
+		data-tippy-allowHTML="false"
+		data-tippy-theme="interest-indicator"
+		data-on:click="matchMedia('(hover: none)').matches && evt.preventDefault()"
 	>
 		<span class="interest-indicator-hearts" aria-hidden="true">
 			for _, interest := range interests {
@@ -188,15 +165,5 @@ templ InterestIndicator(interests []BillettholderInterest) {
 				</span>
 			}
 		</span>
-		<ul class="interest-indicator-tooltip">
-			for _, interest := range interests {
-				<li
-					class={ templ.KV("selected", interest.IsSelected) }
-					data-class:selected={ interest.SelectedExpression() }
-				>
-					{ interest.Description() }
-				</li>
-			}
-		</ul>
 	</span>
 }

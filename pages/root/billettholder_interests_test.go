@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
@@ -42,7 +43,7 @@ func TestRootPageContent_WhenBillettholdereOnTheAccountHaveInterest_ListsTheSele
 	doc := renderRootPageAs(t, db, interestTestUserEmail)
 
 	// Then
-	assertTexts(t, "interest descriptions", expectedDescriptions, templtest.CollectTexts(doc, ".interest-indicator-tooltip li"))
+	assertTexts(t, "interest descriptions", expectedDescriptions, strings.Split(doc.Find(".interest-indicator").AttrOr("data-tippy-content", ""), "\n"))
 	if actual := doc.Find(".interest-indicator-heart").Length(); actual != expectedHeartCount {
 		t.Fatalf("interest heart count = %d, want %d", actual, expectedHeartCount)
 	}
