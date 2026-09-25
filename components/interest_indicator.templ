@@ -28,17 +28,17 @@ func (interest BillettholderInterest) Description() string {
 	return fmt.Sprintf("%s er %s", firstName, strings.ToLower(interest.InterestLevel.Label()))
 }
 
-func (interest BillettholderInterest) HeartStyle() templ.SafeCSS {
-	fill := "0%"
+func (interest BillettholderInterest) HeartIcon() icons.IconType {
 	switch interest.InterestLevel {
 	case models.InterestLevelHigh:
-		fill = "100%"
+		return icons.HeartFilled
 	case models.InterestLevelMedium:
-		fill = "65%"
+		return icons.HeartFilledMedium
 	case models.InterestLevelLow:
-		fill = "45%"
+		return icons.HeartFilledLow
+	default:
+		return icons.HeartUnfilled
 	}
-	return templ.SafeCSS(fmt.Sprintf("--interest-fill: %s;", fill))
 }
 
 func (interest BillettholderInterest) SelectedExpression() string {
@@ -101,18 +101,6 @@ templ InterestIndicator(interests []BillettholderInterest) {
 					grid-area: 1 / 1;
 				}
 
-				/*
-					The heart does not fill its 24px icon box: it starts 11% down
-					and is 76.5% of the box tall. This math makes --interest-fill: 45%
-					fill 45% of the heart, not 45% of the box.
-				*/
-				.interest-indicator-heart-fill {
-					--heart-top: 11%;
-					--heart-height: 0.765;
-
-					clip-path: inset(calc(var(--heart-top) + (100% - var(--interest-fill)) * var(--heart-height)) 0 0 0);
-				}
-
 				&.selected {
 					--heart-color: var(--color-primary);
 
@@ -159,10 +147,9 @@ templ InterestIndicator(interests []BillettholderInterest) {
 				<span
 					class={ "interest-indicator-heart", templ.KV("selected", interest.IsSelected) }
 					data-class:selected={ interest.SelectedExpression() }
-					style={ interest.HeartStyle() }
 				>
 					<span class="interest-indicator-heart-fill">
-						@icons.Icon(icons.HeartFilled, icons.Size24)
+						@icons.Icon(interest.HeartIcon(), icons.Size24)
 					</span>
 					<span class="interest-indicator-heart-outline">
 						@icons.Icon(icons.HeartUnfilled, icons.Size24)

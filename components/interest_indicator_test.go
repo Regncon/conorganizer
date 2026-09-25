@@ -4,38 +4,32 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/PuerkitoBio/goquery"
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestInterestIndicator_FillsEachHeartByInterestLevel(t *testing.T) {
+func TestBillettholderInterest_PicksTheHeartIconForEachInterestLevel(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at tre billettholdere har meldt veldig, middels og litt interesse på arrangementet.",
-		When:  "Når interesseindikatoren vises.",
-		Then:  "Så skal hjertene fylles helt, 65 prosent og 45 prosent.",
+		Given: "Gitt interessenivåene veldig, middels, litt og ingen interesse.",
+		When:  "Når hjertet for hvert nivå velges.",
+		Then:  "Så skal hjertet være fullt, fylt til middels, fylt til litt og tomt.",
 	})
 
 	// Given
-	expectedHeartStyles := []string{"--interest-fill: 100%;", "--interest-fill: 65%;", "--interest-fill: 45%;"}
-
-	interests := []BillettholderInterest{
-		{BillettholderID: 1, BillettholderName: "Anna Aas", InterestLevel: models.InterestLevelHigh, IsSelected: true},
-		{BillettholderID: 2, BillettholderName: "Bjørn Berg", InterestLevel: models.InterestLevelMedium},
-		{BillettholderID: 3, BillettholderName: "Cecilie Carlsen", InterestLevel: models.InterestLevelLow},
-	}
+	expectedIcons := []icons.IconType{icons.HeartFilled, icons.HeartFilledMedium, icons.HeartFilledLow, icons.HeartUnfilled}
+	levels := []models.InterestLevel{models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow, models.InterestLevelNone}
 
 	// When
-	doc := templtest.Render(t, InterestIndicator(interests))
+	actualIcons := make([]icons.IconType, 0, len(levels))
+	for _, level := range levels {
+		actualIcons = append(actualIcons, BillettholderInterest{InterestLevel: level}.HeartIcon())
+	}
 
 	// Then
-	actualHeartStyles := make([]string, 0)
-	doc.Find(".interest-indicator-heart").Each(func(_ int, heart *goquery.Selection) {
-		actualHeartStyles = append(actualHeartStyles, heart.AttrOr("style", ""))
-	})
-	if !slices.Equal(expectedHeartStyles, actualHeartStyles) {
-		t.Fatalf("interest heart styles mismatch\nexpected: %v\nactual:   %v", expectedHeartStyles, actualHeartStyles)
+	if !slices.Equal(expectedIcons, actualIcons) {
+		t.Fatalf("heart icons mismatch\nexpected: %v\nactual:   %v", expectedIcons, actualIcons)
 	}
 }
 
