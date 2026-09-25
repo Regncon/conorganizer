@@ -29,7 +29,8 @@ type Konsekvens struct {
 // before they are published.
 type Konsekvenser struct {
 	PuljeNavn string
-	Endringer []Konsekvens // sorted by name
+	Egen      Konsekvens   // the changed billettholder's own seat before and after
+	Endringer []Konsekvens // everyone else whose seat changes, sorted by name
 }
 
 // Fjerningsvarsel describes a manual seat or GM removal and its consequences,
@@ -101,7 +102,10 @@ func sammenlignPlasser(before, after Emulation, pulje models.Pulje, billettholde
 		navn[id] = n
 	}
 
-	out := Konsekvenser{PuljeNavn: puljeNavn}
+	out := Konsekvenser{
+		PuljeNavn: puljeNavn,
+		Egen:      Konsekvens{BillettholderID: billettholderID, Name: navn[billettholderID], Fra: fra[billettholderID], Til: til[billettholderID]},
+	}
 	for id := range navn {
 		if id == billettholderID || fra[id] == til[id] {
 			continue

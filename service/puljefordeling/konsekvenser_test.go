@@ -36,7 +36,7 @@ func TestForhandsvisTildeling_ListsCascadeWithoutSaving(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at Y har Bravo og Z har Charlie, og en admin vil plassere X på Bravo.",
 		When:  "Når tildelingen forhåndsvises.",
-		Then:  "Så skal forhåndsvisningen vise at Y flyttes til Charlie uten førstevalg og at Z mister plassen, uten at noe lagres.",
+		Then:  "Så skal forhåndsvisningen vise at X får Bravo, at Y flyttes til Charlie uten førstevalg og at Z mister plassen, uten at noe lagres.",
 	})
 
 	// Given
@@ -47,6 +47,8 @@ func TestForhandsvisTildeling_ListsCascadeWithoutSaving(t *testing.T) {
 		{BillettholderID: konsekvensZ, Name: "Zara Zahl",
 			Fra: Plass{EventID: "evC", EventTitle: "Charlie", Level: models.InterestLevelLow}},
 	}
+	expectedEgen := Konsekvens{BillettholderID: konsekvensX, Name: "Xander Xu",
+		Til: Plass{EventID: "evB", EventTitle: "Bravo", Level: models.InterestLevelNone}}
 	db, _ := testutil.CreateTestDBAndLogger(t, "konsekvenser_cascade")
 	seedKonsekvensKjede(t, db)
 	valg := Tildelingsvalg{PuljeID: models.PuljeFredagKveld, EventID: "evB", BillettholderID: konsekvensX, Role: models.EventPlayerRolePlayer, FraLeggTil: true}
@@ -63,6 +65,9 @@ func TestForhandsvisTildeling_ListsCascadeWithoutSaving(t *testing.T) {
 	}
 	if !slices.Equal(varsel.Konsekvenser.Endringer, expected) {
 		t.Fatalf("expected consequences\n%+v\ngot\n%+v", expected, varsel.Konsekvenser.Endringer)
+	}
+	if varsel.Konsekvenser.Egen != expectedEgen {
+		t.Fatalf("expected Xander's own change %+v, got %+v", expectedEgen, varsel.Konsekvenser.Egen)
 	}
 	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_events_players`); got != 0 {
 		t.Fatalf("preview must not save anything, found %d assignments", got)

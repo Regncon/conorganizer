@@ -43,7 +43,7 @@ func TestPuljefordelingAssignPreview_AsksWithConsequencesBeforeSaving(t *testing
 	})
 
 	// Given
-	expectedParts := []string{"Er du sikker?", "Yngve Yri", "Bravo", "Charlie", "Får ikke førstevalg i denne puljen", "Zara Zahl", "Uten plass"}
+	expectedParts := []string{"Er du sikker?", "For Xander Xu", "Yngve Yri", "Bravo", "Charlie", "Får ikke førstevalg i denne puljen", "Zara Zahl", "Uten plass"}
 	db, router := seedKonsekvensRoute(t)
 
 	// When
@@ -133,5 +133,31 @@ func TestPuljeKonsekvenser_DescribesSeatChangesNeutrally(t *testing.T) {
 	}
 	if empty := templtest.Render(t, puljeKonsekvenser(puljefordeling.Konsekvenser{PuljeNavn: "Fredag Kveld"})); !strings.Contains(empty.Text(), "Ingen andre deltakere får endret plass.") {
 		t.Error("expected a note when nobody else changes seats")
+	}
+}
+
+func TestPuljeEgenKonsekvens_ShowsTheMovedPlayersOwnChange(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at Xander flyttes fra Charlie til Bravo, der han får førstevalget sitt.",
+		When:  "Når hans egen konsekvens rendres.",
+		Then:  "Så skal flyttingen hans vises fra og til, med førstevalg nevnt.",
+	})
+
+	// Given
+	expectedParts := []string{"For Xander Xu", "😁 Charlie", "🤩 Bravo", "Får førstevalg i denne puljen"}
+	konsekvenser := puljefordeling.Konsekvenser{PuljeNavn: "Fredag Kveld", Egen: puljefordeling.Konsekvens{
+		Fra: puljefordeling.Plass{EventID: "evC", EventTitle: "Charlie", Level: models.InterestLevelMedium},
+		Til: puljefordeling.Plass{EventID: "evB", EventTitle: "Bravo", Level: models.InterestLevelHigh, Forstevalg: true},
+	}}
+
+	// When
+	doc := templtest.Render(t, puljeEgenKonsekvens(konsekvenser, "Xander Xu"))
+
+	// Then
+	text := doc.Text()
+	for _, part := range expectedParts {
+		if !strings.Contains(text, part) {
+			t.Errorf("expected %q in %q", part, text)
+		}
 	}
 }

@@ -226,6 +226,7 @@ templ puljeTildelingsDialogInnhold(varsel puljefordeling.Tildelingsvarsel, valg 
 			<p class="tildeling-capacity-warning">{ varsel.Kapasitetsvarsel }</p>
 		}
 		if varsel.Konsekvenser != nil {
+			@puljeEgenKonsekvens(*varsel.Konsekvenser, varsel.BillettholderNavn)
 			@puljeKonsekvenser(*varsel.Konsekvenser)
 		}
 		<div class="tildeling-actions">
@@ -252,6 +253,7 @@ templ puljeFjerningsDialogInnhold(varsel puljefordeling.Fjerningsvarsel, fjernin
 		if varsel.Role == models.EventPlayerRolePlayer {
 			<p class="tildeling-note">Interessene til { varsel.BillettholderNavn } beholdes, så fordelingen kan fortsatt gi hen en plass.</p>
 		}
+		@puljeEgenKonsekvens(varsel.Konsekvenser, varsel.BillettholderNavn)
 		@puljeKonsekvenser(varsel.Konsekvenser)
 		<div class="tildeling-actions">
 			<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Avbryt</button>
@@ -286,21 +288,48 @@ templ puljeKonsekvenser(konsekvenser puljefordeling.Konsekvenser) {
 		} else {
 			<ul class="tildeling-list">
 				for _, endring := range konsekvenser.Endringer {
-					<li class="tildeling-konsekvens">
-						<span class="tildeling-konsekvens-navn">{ endring.Name }</span>
-						<span class="tildeling-konsekvens-flytt">
-							@puljeKonsekvensPlass(endring.Fra)
-							<span aria-label="til">→</span>
-							@puljeKonsekvensPlass(endring.Til)
-						</span>
-						if notat := forstevalgsnotat(endring); notat != "" {
-							<span class="tildeling-konsekvens-notat">{ notat }</span>
-						}
-					</li>
+					@puljeKonsekvensRad(endring)
 				}
 			</ul>
 		}
 	</section>
+}
+
+// puljeEgenKonsekvens shows what the change does to the billettholder being
+// placed, moved or removed, in the same format as everyone else.
+templ puljeEgenKonsekvens(konsekvenser puljefordeling.Konsekvenser, navn string) {
+	<section class="tildeling-section tildeling-egen-konsekvens">
+		<h3>{ "For " + navn }</h3>
+		<ul class="tildeling-list">
+			if konsekvenser.Egen.Fra == konsekvenser.Egen.Til {
+				<li class="tildeling-konsekvens">
+					<span class="tildeling-konsekvens-navn">{ navn }</span>
+					<span class="tildeling-konsekvens-flytt">
+						<span>Beholder plassen:</span>
+						@puljeKonsekvensPlass(konsekvenser.Egen.Til)
+					</span>
+				</li>
+			} else {
+				{{ egen := konsekvenser.Egen }}
+				{{ egen.Name = navn }}
+				@puljeKonsekvensRad(egen)
+			}
+		</ul>
+	</section>
+}
+
+templ puljeKonsekvensRad(endring puljefordeling.Konsekvens) {
+	<li class="tildeling-konsekvens">
+		<span class="tildeling-konsekvens-navn">{ endring.Name }</span>
+		<span class="tildeling-konsekvens-flytt">
+			@puljeKonsekvensPlass(endring.Fra)
+			<span aria-label="til">→</span>
+			@puljeKonsekvensPlass(endring.Til)
+		</span>
+		if notat := forstevalgsnotat(endring); notat != "" {
+			<span class="tildeling-konsekvens-notat">{ notat }</span>
+		}
+	</li>
 }
 
 templ puljeKonsekvensPlass(plass puljefordeling.Plass) {
