@@ -1,8 +1,10 @@
 package solver // solver is defined in flow.go
 
 import (
-	"math/rand/v2"
+	"crypto/sha256"
+	"encoding/binary"
 	"sort"
+	"strconv"
 
 	"github.com/Regncon/conorganizer/service/puljefordeling/solver/model"
 )
@@ -240,11 +242,7 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 	var moved map[string]struct{}
 	var scores map[string]model.ScoreBreakdown
 	if len(interested) > 0 {
-		rng := rand.New(rand.NewPCG(uint64(seed), 0)) //nolint:gosec
-		rng.Shuffle(len(interested), func(i, j int) {
-			interested[i], interested[j] = interested[j], interested[i]
-		})
-		assignments, moved, scores = s.runMCMF(slot.ID, events, interested)
+		assignments, moved, scores = s.runMCMF(slot.ID, seed, events, interested)
 	}
 
 	// Merge pinned placements into the assignment. A pin is valued by the
@@ -383,6 +381,7 @@ func adultsOnlyEvents(events []model.Event) map[string]struct{} {
 // and the score breakdown of each seated player's final edge.
 func (s *State) runMCMF(
 	slotID string,
+	seed int64,
 	events []model.Event,
 	players []model.Player,
 ) (map[string][]string, map[string]struct{}, map[string]model.ScoreBreakdown) {
@@ -413,6 +412,10 @@ func (s *State) runMCMF(
 	// Iterate events (slice, deterministic) for each player rather than the
 	// player's preference map so the edge addition order is identical
 	// run-to-run.
+	// Every edge weight is scaled so that a per-seat tie-break fits underneath
+	// it: the tie-breaks of a whole assignment sum to less than one weight
+	// point, so they only choose between seatings that are equally good.
+	scale := (len(players) + 1) * tieBreakRange
 	for i, p := range players {
 		for j, ev := range events {
 			score, ok := p.Prefs[slotID][ev.ID]
@@ -429,7 +432,7 @@ func (s *State) runMCMF(
 			// Cost is negated (we minimise cost = maximise weight). The
 			// participation bonus is folded into every assignment edge so the
 			// flow stops once a new seat would cost more than it is worth.
-			g.addEdge(i+1, P+1+j, 1, -(w + participationBonus))
+			g.addEdge(i+1, P+1+j, 1, -((w+participationBonus)*scale + tieBreak(seed, p.ID, ev.ID)))
 		}
 	}
 
@@ -482,6 +485,19 @@ func (s *State) runMCMF(
 	}
 
 	return assignments, moved, scores
+}
+
+// tieBreakRange bounds tieBreak; see the edge scaling in runMCMF.
+const tieBreakRange = 1 << 20
+
+// tieBreak orders seats that are otherwise equally good. It depends only on the
+// slot seed, the player and the event, not on who else is in the pool, so
+// pinning or removing one player never reshuffles how everyone else's ties are
+// broken. It needs a well-mixed hash: with a weak one (FNV), IDs that differ
+// only in the last character give values whose sums tie across swap cycles.
+func tieBreak(seed int64, playerID, eventID string) int {
+	sum := sha256.Sum256([]byte(strconv.FormatInt(seed, 10) + "|" + playerID + "|" + eventID))
+	return int(binary.BigEndian.Uint64(sum[:8]) % tieBreakRange)
 }
 
 // playerScore values a seat with the given interest for playerID, using the
