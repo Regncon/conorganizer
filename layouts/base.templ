@@ -31,12 +31,16 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 			<script defer src="https://unpkg.com/popper.js@1"></script>
 			<script defer src="https://unpkg.com/tippy.js@5"></script>
 			<script>
+				// This replaces the MutationObserver tooltip setup from PR #593. delegate also covers
+				// content Datastar patches in, appendTo keeps tooltips visible inside modal dialogs,
+				// and onShow picks up changed tooltip text. On a merge conflict here, keep this version.
 				window.addEventListener(
 					"load",
 					function () {
 						tippy.delegate(document.body, {
 							target: "[data-tippy-content]",
 							animation: "scale-subtle",
+							appendTo: (ref) => ref.closest("dialog") ?? document.body,
 							onShow(instance) {
 								instance.setContent(instance.reference.getAttribute("data-tippy-content"));
 							},
