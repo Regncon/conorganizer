@@ -3,12 +3,16 @@ package admin
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
+	"github.com/a-h/templ"
+	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -27,29 +31,107 @@ type puljeTildelingssignaler struct {
 	LukkDialog      bool                   `json:"assignmentCloseDialog"`
 }
 
-func puljeTildelingsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Logger) http.HandlerFunc {
+// lesTildelingssignaler reads the assignment signals shared by the preview and
+// the assign endpoints.
+func lesTildelingssignaler(w http.ResponseWriter, r *http.Request) (puljeTildelingssignaler, puljefordeling.Tildelingsvalg, bool) {
+	var signaler puljeTildelingssignaler
+	if err := datastar.ReadSignals(r, &signaler); err != nil {
+		http.Error(w, "Ugyldige tildelingsdata", http.StatusBadRequest)
+		return signaler, puljefordeling.Tildelingsvalg{}, false
+	}
+	pulje, ok := models.ParsePulje(signaler.PuljeID)
+	if !ok {
+		http.Error(w, "Ugyldig pulje", http.StatusBadRequest)
+		return signaler, puljefordeling.Tildelingsvalg{}, false
+	}
+	role := signaler.Role
+	if role == "" {
+		role = models.EventPlayerRolePlayer
+	}
+	return signaler, puljefordeling.Tildelingsvalg{
+		PuljeID: pulje, EventID: signaler.EventID, BillettholderID: signaler.BillettholderID,
+		Role: role, FraLeggTil: signaler.FraLeggTil,
+		Bekreftelse: signaler.Bekreftelse, AlderBekreftet: signaler.AlderBekreftet,
+		FraEventID: signaler.FraEventID, FraManuellPlass: signaler.FraManuellPlass,
+	}, true
+}
+
+// puljeForhandsvisningsHandler opens the "Er du sikker?" dialog for a manual
+// assignment, listing who else in the pulje would change seats. Nothing is saved.
+func puljeForhandsvisningsHandler(db *sql.DB, logger *slog.Logger) http.HandlerFunc {
 	logger = logger.With("component", "admin_tildelinger")
 	return func(w http.ResponseWriter, r *http.Request) {
-		var signaler puljeTildelingssignaler
-		if err := datastar.ReadSignals(r, &signaler); err != nil {
-			http.Error(w, "Ugyldige tildelingsdata", http.StatusBadRequest)
+		_, valg, ok := lesTildelingssignaler(w, r)
+		if !ok {
 			return
 		}
-		pulje, ok := models.ParsePulje(signaler.PuljeID)
+		valg.Bekreftelse = ""
+		varsel, err := puljefordeling.ForhandsvisTildeling(db, valg)
+		if err != nil {
+			tildelingsfeil(w, logger, err)
+			return
+		}
+		if varsel == nil {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		sendTildelingsdialog(w, r, logger, puljeTildelingsDialogInnhold(*varsel, valg))
+	}
+}
+
+// puljeFjerningsforhandsvisningHandler opens the "Er du sikker?" dialog for
+// removing a manual Player seat or a GM, listing who else would change seats.
+func puljeFjerningsforhandsvisningHandler(db *sql.DB, logger *slog.Logger, role models.EventPlayerRole) http.HandlerFunc {
+	logger = logger.With("component", "admin_tildelinger")
+	return func(w http.ResponseWriter, r *http.Request) {
+		pulje, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
 		if !ok {
 			http.Error(w, "Ugyldig pulje", http.StatusBadRequest)
 			return
 		}
-		role := signaler.Role
-		if role == "" {
-			role = models.EventPlayerRolePlayer
+		billettholderID, err := strconv.Atoi(chi.URLParam(r, "billettholderId"))
+		if err != nil || billettholderID <= 0 {
+			http.Error(w, "Ugyldig billettholder", http.StatusBadRequest)
+			return
 		}
-		valg := puljefordeling.Tildelingsvalg{
-			PuljeID: pulje, EventID: signaler.EventID, BillettholderID: signaler.BillettholderID,
-			Role: role, FraLeggTil: signaler.FraLeggTil,
-			Bekreftelse: signaler.Bekreftelse, AlderBekreftet: signaler.AlderBekreftet,
-			FraEventID: signaler.FraEventID, FraManuellPlass: signaler.FraManuellPlass,
+		eventID := chi.URLParam(r, "event")
+		varsel, err := puljefordeling.ForhandsvisFjerning(db, pulje, eventID, billettholderID, role)
+		if err != nil {
+			tildelingsfeil(w, logger, err)
+			return
 		}
+		sendTildelingsdialog(w, r, logger, puljeFjerningsDialogInnhold(varsel, puljeFjerningsURL(pulje, eventID, billettholderID, role)))
+	}
+}
+
+// puljeFjerningsURL is the endpoint that removes the seat or GM once confirmed.
+func puljeFjerningsURL(pulje models.Pulje, eventID string, billettholderID int, role models.EventPlayerRole) string {
+	url := fmt.Sprintf("/admin/api/puljefordeling/%s/%s/%d", pulje, eventID, billettholderID)
+	if role == models.EventPlayerRoleGM {
+		url += "/gm"
+	}
+	return url
+}
+
+func sendTildelingsdialog(w http.ResponseWriter, r *http.Request, logger *slog.Logger, innhold templ.Component) {
+	sse := datastar.NewSSE(w, r)
+	if err := sse.PatchElementTempl(innhold); err != nil {
+		logger.Error(err.Error())
+		return
+	}
+	if err := sse.MarshalAndPatchSignals(map[string]any{"tildelingOpen": true}); err != nil {
+		logger.Error(err.Error())
+	}
+}
+
+func puljeTildelingsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Logger) http.HandlerFunc {
+	logger = logger.With("component", "admin_tildelinger")
+	return func(w http.ResponseWriter, r *http.Request) {
+		signaler, valg, ok := lesTildelingssignaler(w, r)
+		if !ok {
+			return
+		}
+		pulje := valg.PuljeID
 		varsel, err := puljefordeling.TildelBillettholder(db, valg)
 		if err != nil {
 			tildelingsfeil(w, logger, err)

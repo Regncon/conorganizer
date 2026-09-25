@@ -42,7 +42,7 @@ func TestPuljefordelingTabContent_IndividualGMRemoval(t *testing.T) {
 		if got := buttons.Eq(i).AttrOr("aria-label", ""); got != "Fjern spilleder "+name {
 			t.Errorf("accessible name: %q", got)
 		}
-		expected := fmt.Sprintf("@delete('/admin/api/puljefordeling/FredagKveld/evA/%d/gm')", expectedIDs[i])
+		expected := fmt.Sprintf("@post('/admin/api/puljefordeling/FredagKveld/evA/%d/gm/preview')", expectedIDs[i])
 		if got := buttons.Eq(i).AttrOr("data-on:click", ""); got != expected {
 			t.Errorf("action: got %q, want %q", got, expected)
 		}

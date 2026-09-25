@@ -50,9 +50,22 @@ type Tildelingsvarsel struct {
 	Bekreftelse       string
 	Handling          string
 	KanBekrefte       bool
+	Konsekvenser      *Konsekvenser // set by ForhandsvisTildeling
 }
 
 func TildelBillettholder(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, error) {
+	return tildel(db, valg, false)
+}
+
+// ForhandsvisTildeling runs the same checks as TildelBillettholder but never
+// saves. It always returns a confirmable warning (unless the change is a no-op)
+// with the consequences for others in the pulje; confirming it means calling
+// TildelBillettholder with its Bekreftelse.
+func ForhandsvisTildeling(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, error) {
+	return tildel(db, valg, true)
+}
+
+func tildel(db *sql.DB, valg Tildelingsvalg, forhandsvis bool) (*Tildelingsvarsel, error) {
 	if err := validerTildelingsvalg(valg); err != nil {
 		return nil, err
 	}
@@ -78,6 +91,17 @@ func TildelBillettholder(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, er
 				return nil, nil
 			}
 		}
+	}
+	if forhandsvis {
+		varsel := byggTildelingsvarsel(valg, grunnlag)
+		konsekvenser, err := forhandsvisKonsekvenser(tx, valg.PuljeID, valg.BillettholderID, func(tx *sql.Tx) error {
+			return lagreTildeling(tx, valg)
+		})
+		if err != nil {
+			return nil, err
+		}
+		varsel.Konsekvenser = &konsekvenser
+		return varsel, nil
 	}
 	if varsel := lagTildelingsvarsel(valg, grunnlag); varsel != nil {
 		if !varsel.KanBekrefte {
@@ -158,6 +182,16 @@ func FjernTildeling(db *sql.DB, pulje models.Pulje, eventID string, billettholde
 	if _, err := hentTildelingsgrunnlag(tx, valg); err != nil {
 		return err
 	}
+	if err := slettTildeling(tx, pulje, eventID, billettholderID, role); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("fullfør fjerning av tildeling: %w", err)
+	}
+	return nil
+}
+
+func slettTildeling(tx *sql.Tx, pulje models.Pulje, eventID string, billettholderID int, role models.EventPlayerRole) error {
 	result, err := tx.Exec(
 		`DELETE FROM relation_events_players WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ? AND role = ?`,
 		eventID, pulje, billettholderID, role,
@@ -171,9 +205,6 @@ func FjernTildeling(db *sql.DB, pulje models.Pulje, eventID string, billettholde
 	}
 	if rowsAffected == 0 {
 		return fmt.Errorf("finn %s-tildeling for billettholder %d på %s i %s: %w", role, billettholderID, eventID, pulje, sql.ErrNoRows)
-	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("fullfør fjerning av tildeling: %w", err)
 	}
 	return nil
 }
@@ -320,7 +351,19 @@ func validerTildelingsvalg(valg Tildelingsvalg) error {
 	return nil
 }
 
+// lagTildelingsvarsel returns the warning the admin must confirm, or nil when
+// the assignment can be saved as it is.
 func lagTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tildelingsvarsel {
+	varsel := byggTildelingsvarsel(valg, grunnlag)
+	if !tildelingerKreverBekreftelse(valg, grunnlag.tildelinger) && varsel.Aldersvarsel == "" && varsel.Kapasitetsvarsel == "" && (valg.Bekreftelse == "" || valg.Bekreftelse == varsel.Bekreftelse) {
+		return nil
+	}
+	return varsel
+}
+
+// byggTildelingsvarsel describes the assignment, its warnings and the token
+// that confirms exactly this assignment.
+func byggTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tildelingsvarsel {
 	bekreftelse := tildelingsbekreftelse(valg, grunnlag)
 	harGM := false
 	for _, tildeling := range grunnlag.tildelinger {
@@ -343,10 +386,6 @@ func lagTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tild
 	}
 	aldersvarsel := strings.Join(aldersvarsler, " ")
 	kapasitetsvarsel := strings.Join(kapasitetsvarsler, " ")
-	bekreftelseKreves := tildelingerKreverBekreftelse(valg, grunnlag.tildelinger)
-	if !bekreftelseKreves && aldersvarsel == "" && kapasitetsvarsel == "" && (valg.Bekreftelse == "" || valg.Bekreftelse == bekreftelse) {
-		return nil
-	}
 
 	varsel := &Tildelingsvarsel{
 		BillettholderID:   valg.BillettholderID,
