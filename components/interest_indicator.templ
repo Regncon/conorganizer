@@ -17,14 +17,14 @@ type BillettholderInterest struct {
 }
 
 func (interest BillettholderInterest) Description() string {
+	name := interest.BillettholderName
+	if nameParts := strings.Fields(name); len(nameParts) > 0 {
+		name = nameParts[0]
+	}
 	if interest.IsOwn {
-		return fmt.Sprintf("Du er %s", strings.ToLower(interest.InterestLevel.Label()))
+		name = "Du"
 	}
-	firstName := interest.BillettholderName
-	if nameParts := strings.Fields(interest.BillettholderName); len(nameParts) > 0 {
-		firstName = nameParts[0]
-	}
-	return fmt.Sprintf("%s er %s", firstName, strings.ToLower(interest.InterestLevel.Label()))
+	return fmt.Sprintf("%s er %s", name, strings.ToLower(interest.InterestLevel.Label()))
 }
 
 func (interest BillettholderInterest) HeartIcon() icons.IconType {
