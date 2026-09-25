@@ -706,6 +706,18 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             color: var(--color-text-soft);
             font-weight: 600;
         }
+        /* On narrow cards the status and the action don't fit on one line, so
+           only the + stays visible; the text is kept for screen readers. */
+        @container pulje-event (width < 400px) {
+            .pulje-row-status ~ .pulje-row-action .pulje-row-action-text {
+                position: absolute;
+                inline-size: 1px;
+                block-size: 1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+                white-space: nowrap;
+            }
+        }
         .pulje-emoji {
             flex: 0 0 auto;
             width: 1.4em;
@@ -1121,7 +1133,7 @@ templ puljeRowStatus(text string, warning bool) {
 
 templ puljeRowAction(text string) {
 	<span class="pulje-row-action">
-		{ text }
+		<span class="pulje-row-action-text">{ text }</span>
 		@icons.Icon(icons.Plus, icons.Size20)
 	</span>
 }
