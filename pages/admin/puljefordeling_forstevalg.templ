@@ -3,6 +3,7 @@ package admin
 import (
 	"strconv"
 
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
 )
@@ -70,7 +71,9 @@ templ puljeListDialog(list, title, description string) {
 	>
 		<header>
 			<h3 id={ "pulje-liste-" + list + "-title" }>{ title }</h3>
-			<button type="button" class="btn btn--outline" data-on:click="$_puljeListe = ''">Lukk</button>
+			<button type="button" class="btn btn--ghost btn-icon-only" aria-label={ "Lukk " + title } autofocus data-on:click="$_puljeListe = ''">
+				@icons.Icon(icons.Close, icons.Size24)
+			</button>
 		</header>
 		<p class="pulje-list-description">{ description }</p>
 		{ children... }
