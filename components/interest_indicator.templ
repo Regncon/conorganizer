@@ -14,9 +14,13 @@ type BillettholderInterest struct {
 	BillettholderName string
 	InterestLevel     models.InterestLevel
 	IsSelected        bool
+	IsOwn             bool
 }
 
 func (interest BillettholderInterest) Description() string {
+	if interest.IsOwn {
+		return fmt.Sprintf("Du er %s", strings.ToLower(interest.InterestLevel.Label()))
+	}
 	firstName := interest.BillettholderName
 	if nameParts := strings.Fields(interest.BillettholderName); len(nameParts) > 0 {
 		firstName = nameParts[0]
@@ -53,14 +57,15 @@ func interestTooltipExpression(interests []BillettholderInterest) string {
 	type line struct {
 		ID   int    `json:"id"`
 		Text string `json:"text"`
+		Own  bool   `json:"own"`
 	}
 	lines := make([]line, 0, len(interests))
 	for _, interest := range interests {
-		lines = append(lines, line{ID: interest.BillettholderID, Text: interest.Description()})
+		lines = append(lines, line{ID: interest.BillettholderID, Text: interest.Description(), Own: interest.IsOwn})
 	}
 	encoded, _ := json.Marshal(lines)
 	return fmt.Sprintf(
-		"((lines) => [...lines.filter((l) => l.id === $_menuBillettholder?.Id), ...lines.filter((l) => l.id !== $_menuBillettholder?.Id)].map((l) => l.text).join('\\n'))(%s)",
+		"((lines) => [...lines.filter((l) => l.own), ...lines.filter((l) => !l.own && l.id === $_menuBillettholder?.Id), ...lines.filter((l) => !l.own && l.id !== $_menuBillettholder?.Id)].map((l) => l.text).join('\\n'))(%s)",
 		encoded,
 	)
 }

@@ -17,15 +17,15 @@ import (
 
 const interestTestUserEmail = "forelder@example.com"
 
-func TestRootPageContent_WhenBillettholdereOnTheAccountHaveInterest_ListsTheSelectedFirstThenTheMostInterested(t *testing.T) {
+func TestRootPageContent_WhenBillettholdereOnTheAccountHaveInterest_ListsYouFirstThenTheMostInterested(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at tre billettholdere på kontoen har meldt interesse på et arrangement i en pulje, og Anders er kontoens egen billettholder.",
 		When:  "Når forsiden vises.",
-		Then:  "Så skal arrangementskortet vise ett hjerte per billettholder, og lista skal vise Anders først og deretter de mest interesserte.",
+		Then:  "Så skal arrangementskortet vise ett hjerte per billettholder, og lista skal vise Anders som «Du» først og deretter de mest interesserte.",
 	})
 
 	// Given
-	expectedDescriptions := []string{"Anders er litt interessert", "Amalie er veldig interessert", "Bjørn er interessert"}
+	expectedDescriptions := []string{"Du er litt interessert", "Amalie er veldig interessert", "Bjørn er interessert"}
 	expectedHeartCount := 3
 	expectedSelectedHeartCount := 1
 
@@ -50,6 +50,29 @@ func TestRootPageContent_WhenBillettholdereOnTheAccountHaveInterest_ListsTheSele
 	if actual := doc.Find(".interest-indicator-heart.selected").Length(); actual != expectedSelectedHeartCount {
 		t.Fatalf("selected interest heart count = %d, want %d", actual, expectedSelectedHeartCount)
 	}
+}
+
+func TestRootPageContent_WhenOnlyALinkedBillettholderHasInterest_ShowsTheirNameInsteadOfYou(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en billettholder bare er knyttet til kontoen, men har billetten på en annen e-post.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal interessen vises med billettholderens navn, ikke som «Du».",
+	})
+
+	// Given
+	expectedDescriptions := []string{"Amalie er veldig interessert"}
+
+	db := createInterestRootPageTestDB(t)
+	insertRootPageBillettholder(t, db, "Anders", "Andersen", 1, interestTestUserEmail)
+	amalieID := insertRootPageBillettholder(t, db, "Amalie", "Berg", 2, "amalie@example.com")
+	associateRootPageBillettholder(t, db, amalieID, interestTestUserEmail)
+	insertRootPageInterest(t, db, amalieID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelHigh)
+
+	// When
+	doc := renderRootPageAs(t, db, interestTestUserEmail)
+
+	// Then
+	assertTexts(t, "interest descriptions", expectedDescriptions, strings.Split(doc.Find(".interest-indicator").AttrOr("data-tippy-content", ""), "\n"))
 }
 
 func TestRootPageContent_WhenOnlyAnotherAccountHasInterest_ShowsNoInterestIndicator(t *testing.T) {

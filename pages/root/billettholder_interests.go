@@ -83,6 +83,7 @@ func loadBillettholderInterests(userInfo requestctx.UserRequestInfo, selectedBil
 			BillettholderName: billettholdere[billettholderID].Name,
 			InterestLevel:     level,
 			IsSelected:        billettholderID == selectedID,
+			IsOwn:             strings.EqualFold(billettholdere[billettholderID].Email, userInfo.Email),
 		})
 	}
 	if err := rows.Err(); err != nil {
@@ -97,6 +98,12 @@ func loadBillettholderInterests(userInfo requestctx.UserRequestInfo, selectedBil
 }
 
 func compareBillettholderInterests(a, b components.BillettholderInterest) int {
+	if a.IsOwn != b.IsOwn {
+		if a.IsOwn {
+			return -1
+		}
+		return 1
+	}
 	if a.IsSelected != b.IsSelected {
 		if a.IsSelected {
 			return -1
