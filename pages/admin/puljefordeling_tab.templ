@@ -1067,7 +1067,7 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 		dropAttrs := templ.Attributes{}
 		if !published {
 			dropAttrs["data-on:dragover__prevent"] = fmt.Sprintf("$dragOverEvent = '%s'", ev.EventID)
-			dropAttrs["data-on:drop__prevent"] = fmt.Sprintf("$dragOverEvent = ''; $draggedBillettholderId && (($assignmentBillettholderId = $draggedBillettholderId), ($assignmentEventId = %q), ($assignmentPuljeId = %q), ($assignmentFromEventId = $draggedEventId), ($assignmentFromManualSeat = $draggedManualSeat), ($assignmentRole = 'Player'), ($assignmentFromAddMenu = false), ($assignmentConfirmation = ''), ($assignmentAgeConfirmed = false), @post('/admin/api/puljefordeling/assign/preview'))", ev.EventID, string(pulje))
+			dropAttrs["data-on:drop__prevent"] = fmt.Sprintf("$dragOverEvent = ''; $draggedBillettholderId && $draggedEventId !== %[1]q && (($assignmentBillettholderId = $draggedBillettholderId), ($assignmentEventId = %[1]q), ($assignmentPuljeId = %[2]q), ($assignmentFromEventId = $draggedEventId), ($assignmentFromManualSeat = $draggedManualSeat), ($assignmentRole = 'Player'), ($assignmentFromAddMenu = false), ($assignmentConfirmation = ''), ($assignmentAgeConfirmed = false), @post('/admin/api/puljefordeling/assign/preview'))", ev.EventID, string(pulje))
 			dropAttrs["data-class:is-drag-over"] = fmt.Sprintf("$dragOverEvent === '%s'", ev.EventID)
 		}
 		imageBannerUrl := eventimage.GetEventImageUrl(ev.EventID, "banner", eventImageDir)

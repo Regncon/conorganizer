@@ -168,3 +168,31 @@ func TestForhandsvisFjerning_ListsWhoGetsTheFreedSeat(t *testing.T) {
 		t.Fatalf("preview must keep the manual seat, got %v", got)
 	}
 }
+
+func TestTildeling_DropOnOwnEventDoesNothing(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at fordelingen har gitt Yngve plass på Bravo.",
+		When:  "Når admin drar Yngve og slipper ham på Bravo igjen.",
+		Then:  "Så skal det verken spørres eller lagres noe.",
+	})
+
+	// Given
+	db, _ := testutil.CreateTestDBAndLogger(t, "konsekvenser_drop_same_event")
+	seedKonsekvensKjede(t, db)
+	valg := Tildelingsvalg{PuljeID: models.PuljeFredagKveld, EventID: "evB", BillettholderID: konsekvensY, Role: models.EventPlayerRolePlayer, FraEventID: "evB"}
+
+	// When
+	preview, previewErr := ForhandsvisTildeling(db, valg)
+	varsel, saveErr := TildelBillettholder(db, valg)
+
+	// Then
+	if previewErr != nil || preview != nil {
+		t.Fatalf("expected no preview for a drop on the same event, got %+v, %v", preview, previewErr)
+	}
+	if saveErr != nil || varsel != nil {
+		t.Fatalf("expected the drop to be a no-op, got %+v, %v", varsel, saveErr)
+	}
+	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_events_players`); got != 0 {
+		t.Fatalf("drop on the same event saved %d assignments", got)
+	}
+}

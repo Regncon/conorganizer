@@ -161,3 +161,24 @@ func TestPuljeEgenKonsekvens_ShowsTheMovedPlayersOwnChange(t *testing.T) {
 		}
 	}
 }
+
+func TestPuljeEventBox_DropOnOwnEventIsIgnored(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et arrangementskort i en åpen pulje.",
+		When:  "Når en spiller slippes på kortet hen allerede står på.",
+		Then:  "Så skal slippet ikke sende noen forespørsel.",
+	})
+
+	// Given
+	expectedGuard := `$draggedEventId !== "evB"`
+	ev := puljefordeling.EmulatedEvent{EventID: "evB", Title: "Bravo", Capacity: 4}
+
+	// When
+	doc := templtest.Render(t, puljeEventBox(models.PuljeFredagKveld, ev, false, nil))
+
+	// Then
+	drop := doc.Find(".pulje-event").AttrOr("data-on:drop__prevent", "")
+	if !strings.Contains(drop, expectedGuard) {
+		t.Fatalf("expected the drop to skip its own event with %q, got %q", expectedGuard, drop)
+	}
+}

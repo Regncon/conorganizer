@@ -81,6 +81,10 @@ func tildel(db *sql.DB, valg Tildelingsvalg, forhandsvis bool) (*Tildelingsvarse
 		return nil, err
 	}
 	if !valg.FraLeggTil {
+		// Dropping a player back on the event they came from changes nothing.
+		if valg.FraEventID != "" && valg.FraEventID == valg.EventID {
+			return nil, nil
+		}
 		fraEventID, err := finnFlyttetSpillerplass(valg.FraEventID, valg.FraManuellPlass, grunnlag.tildelinger)
 		if err != nil {
 			return nil, err
