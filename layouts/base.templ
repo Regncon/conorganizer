@@ -34,8 +34,12 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 				window.addEventListener(
 					"load",
 					function () {
-						tippy("[data-tippy-content]", {
+						tippy.delegate(document.body, {
+							target: "[data-tippy-content]",
 							animation: "scale-subtle",
+							onShow(instance) {
+								instance.setContent(instance.reference.getAttribute("data-tippy-content"));
+							},
 						});
 					},
 					false,
