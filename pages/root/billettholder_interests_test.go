@@ -75,6 +75,28 @@ func TestRootPageContent_WhenOnlyALinkedBillettholderHasInterest_ShowsTheirNameI
 	assertTexts(t, "interest descriptions", expectedDescriptions, strings.Split(doc.Find(".interest-indicator").AttrOr("data-tippy-content", ""), "\n"))
 }
 
+func TestRootPageContent_WhenTheTicketEmailDiffersFromTheLoginEmail_ShowsTheNameInsteadOfYou(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at kontoens eneste billettholder har billetten på en annen e-post enn den brukeren logger inn med.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal interessen vises med billettholderens navn, fordi vi ikke kan bekrefte at det er brukeren selv.",
+	})
+
+	// Given
+	expectedDescriptions := []string{"Anders er veldig interessert"}
+
+	db := createInterestRootPageTestDB(t)
+	andersID := insertRootPageBillettholder(t, db, "Anders", "Andersen", 1, "annen-epost@example.com")
+	associateRootPageBillettholder(t, db, andersID, interestTestUserEmail)
+	insertRootPageInterest(t, db, andersID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelHigh)
+
+	// When
+	doc := renderRootPageAs(t, db, interestTestUserEmail)
+
+	// Then
+	assertTexts(t, "interest descriptions", expectedDescriptions, strings.Split(doc.Find(".interest-indicator").AttrOr("data-tippy-content", ""), "\n"))
+}
+
 func TestRootPageContent_WhenOnlyAnotherAccountHasInterest_ShowsNoInterestIndicator(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at bare en billettholder på en annen konto har meldt interesse på arrangementet.",
