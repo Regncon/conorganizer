@@ -55,8 +55,6 @@ func interestTooltipText(interests []BillettholderInterest) string {
 templ InterestIndicator(interests []BillettholderInterest) {
 	<style>
 		.interest-indicator {
-			--heart-overlap: 1rem;
-
 			flex-shrink: 0;
 
 			&:focus-visible {
@@ -67,14 +65,12 @@ templ InterestIndicator(interests []BillettholderInterest) {
 
 			.interest-indicator-hearts {
 				display: flex;
-				padding-inline-start: var(--heart-overlap);
 			}
 
 			.interest-indicator-heart {
 				--heart-color: var(--color-accent-blue);
 
 				display: grid;
-				margin-inline-start: calc(var(--heart-overlap) * -1);
 				color: var(--heart-color);
 
 				> span {
@@ -102,6 +98,9 @@ templ InterestIndicator(interests []BillettholderInterest) {
 			}
 
 			&:has(.interest-indicator-heart.selected) .interest-indicator-heart:not(.selected) {
+				/* The back heart icon is cut for exactly this overlap. */
+				margin-inline-end: -1rem;
+
 				.interest-indicator-heart-outline {
 					display: none;
 				}
