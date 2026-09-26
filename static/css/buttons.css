@@ -7,6 +7,10 @@
     --btn-font-weight: 600;
     --btn-border-radius: var(--border-radius-1x);
 
+    /* button backgrounds */
+    --btn-flat-active: hsl(from #C6CDF1 h s l / 20%);
+    --btn-flat-hover: hsl(from #C5CCF0 h s l / 10%);
+
     /* animation */
     --btn-transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 
