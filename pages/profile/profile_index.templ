@@ -33,7 +33,6 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 	>
 		@ProfileMainColumn(user, events, selectedBillettholderID, db, logger, eventImageDir)
 		<div class="profile-content-column">
-			/* @profilecomponent.UserDetails(user) */
 			<div class="surface-pane">
 				<h2 class="surface-pane-title">Kontoadministrasjon</h2>
 				if user.Email != "" {
