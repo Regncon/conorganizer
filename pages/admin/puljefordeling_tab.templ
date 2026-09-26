@@ -77,8 +77,8 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 
 	// Commit (+publish-independent). Persists the current distribution so it shows
 	// in other views; solver picks become source='solver', manual pins stay manual.
-	router.Post("/api/puljefordeling/{pulje}/commit", puljeLagringsHandler(db, liveManager, logger))
-	router.Post("/api/puljefordeling/{pulje}/commit/preview", puljeLagringsforhandsvisningHandler(db, logger))
+	router.Post("/api/puljefordeling/{pulje}/commit", puljeSaveHandler(db, liveManager, logger))
+	router.Post("/api/puljefordeling/{pulje}/commit/preview", puljeSavePreviewHandler(db, logger))
 
 	// Add a manual pin (+). Force-pins the chosen billettholder into the event
 	// without touching their interests; removing the pin reverts them to emulation.
@@ -289,11 +289,11 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		row, hasRow := findPuljeRow(puljer, pulje)
 
 		result, hasResult := findEmulatedPulje(em, pulje)
-		var lagring puljefordeling.Lagringsendringer
+		var saveStatus puljefordeling.SaveStatus
 		if emErr == nil && hasResult {
-			var lagringErr error
-			if lagring, lagringErr = puljefordeling.LagringsstatusFor(db, em, pulje); lagringErr != nil {
-				logger.Error(lagringErr.Error(), "pulje_id", pulje)
+			var saveStatusErr error
+			if saveStatus, saveStatusErr = puljefordeling.SaveStatusFor(db, em, pulje); saveStatusErr != nil {
+				logger.Error(saveStatusErr.Error(), "pulje_id", pulje)
 			}
 		}
 		var fordelingsvarsler []puljefordeling.Fordelingsvarsel
@@ -396,7 +396,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             &:has(input:disabled) input {
                 cursor: not-allowed;
             }
-            &[data-tilstand="neste"] {
+            &[data-state="next"] {
                 .pulje-step-number {
                     border-color: var(--color-primary);
                     color: var(--color-primary);
@@ -405,7 +405,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
                     color: var(--color-primary);
                 }
             }
-            &[data-tilstand="ferdig"] {
+            &[data-state="done"] {
                 border-color: color-mix(in srgb, var(--color-primary) 45%, var(--level-3-border));
                 background-color: color-mix(in srgb, var(--color-primary) 10%, var(--level-3-background));
 
@@ -415,7 +415,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
                     color: var(--level-1-background);
                 }
             }
-            &[data-tilstand="venter"] {
+            &[data-state="waiting"] {
                 border-style: dashed;
                 background-color: transparent;
                 color: var(--color-text-soft);
@@ -904,7 +904,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 				</div>
 			</div>
 			if hasRow {
-				@puljeStatusToggles(row, lagring.HarEndringer())
+				@puljeStatusToggles(row, saveStatus.HasChanges())
 			}
 		</div>
 		<div class="pulje-events-header">
@@ -913,7 +913,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			} else {
 				<h2>Arrangementer</h2>
 			}
-			@puljeLagringsknapp(pulje, puljeIsCompleted(row.Status), lagring)
+			@puljeSaveButton(pulje, puljeIsCompleted(row.Status), saveStatus)
 		</div>
 		if emErr != nil {
 			<p class="pulje-error">Kunne ikke beregne fordeling: { emErr.Error() }</p>
@@ -1002,44 +1002,44 @@ templ puljeAgeWarningDialog() {
 // puljeStatusToggles renders the three puljefordeling steps. Each step is
 // disabled until the previous one is done, and locked once the next one is done;
 // puljeStatusStepAllowed enforces the same order on the server.
-// ulagret blocks publishing while the distribution has unsaved changes.
-templ puljeStatusToggles(pulje models.PuljeRow, ulagret bool) {
+// unsaved blocks publishing while the distribution has unsaved changes.
+templ puljeStatusToggles(pulje models.PuljeRow, unsaved bool) {
 	{{
-		publiseringBlokkert := ulagret && !puljeIsCompleted(pulje.Status)
-		lukkingVentetekst := "Krever steg 1"
-		publiseringVentetekst := "Krever steg 2"
-		if publiseringBlokkert && puljeIsLocked(pulje.Status) {
-			publiseringVentetekst = "Lagre fordelingen først"
+		publishBlocked := unsaved && !puljeIsCompleted(pulje.Status)
+		lockWaitingText := "Krever steg 1"
+		publishWaitingText := "Krever steg 2"
+		if publishBlocked && puljeIsLocked(pulje.Status) {
+			publishWaitingText = "Lagre fordelingen først"
 		}
 	}}
 	<ol class="pulje-status-controls" aria-label="Steg for puljefordeling">
-		@puljeStatusSteg(puljeSteg{
-			Nummer:     1,
-			Tekst:      "Vis advarsel om at puljefordeling stenger snart",
-			Ferdig:     puljeClosingWarningStepDone(pulje),
-			Deaktivert: pulje.Status != models.PuljeStatusOpen,
-			Handling:   fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID),
+		@puljeStatusStep(puljeStep{
+			Number:     1,
+			Label:      "Vis advarsel om at puljefordeling stenger snart",
+			Done:     puljeClosingWarningStepDone(pulje),
+			Disabled: pulje.Status != models.PuljeStatusOpen,
+			Action:     fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID),
 		})
-		@puljeStatusSteg(puljeSteg{
-			Nummer:     2,
-			Tekst:      "Puljefordeling lukket",
-			Ferdig:     puljeIsLocked(pulje.Status),
-			Deaktivert: !puljeStatusStepAllowed(pulje, models.PuljeStatusLocked) || !puljeStatusStepAllowed(pulje, models.PuljeStatusOpen),
-			Ventetekst: lukkingVentetekst,
-			Handling: puljeStatusUpdateAction(
+		@puljeStatusStep(puljeStep{
+			Number:     2,
+			Label:      "Puljefordeling lukket",
+			Done:     puljeIsLocked(pulje.Status),
+			Disabled: !puljeStatusStepAllowed(pulje, models.PuljeStatusLocked) || !puljeStatusStepAllowed(pulje, models.PuljeStatusOpen),
+			WaitingText: lockWaitingText,
+			Action: puljeStatusUpdateAction(
 				pulje,
 				fmt.Sprintf("Vil du endre lukking for %s?", pulje.Name),
 				models.PuljeStatusLocked,
 				models.PuljeStatusOpen,
 			),
 		})
-		@puljeStatusSteg(puljeSteg{
-			Nummer:     3,
-			Tekst:      "Puljefordeling publisert",
-			Ferdig:     puljeIsCompleted(pulje.Status),
-			Deaktivert: !puljeStatusStepAllowed(pulje, models.PuljeStatusCompleted) || publiseringBlokkert,
-			Ventetekst: publiseringVentetekst,
-			Handling: puljeStatusUpdateAction(
+		@puljeStatusStep(puljeStep{
+			Number:     3,
+			Label:      "Puljefordeling publisert",
+			Done:     puljeIsCompleted(pulje.Status),
+			Disabled: !puljeStatusStepAllowed(pulje, models.PuljeStatusCompleted) || publishBlocked,
+			WaitingText: publishWaitingText,
+			Action: puljeStatusUpdateAction(
 				pulje,
 				fmt.Sprintf("Vil du endre publisering av puljefordeling for %s?", pulje.Name),
 				models.PuljeStatusCompleted,
@@ -1049,60 +1049,60 @@ templ puljeStatusToggles(pulje models.PuljeRow, ulagret bool) {
 	</ol>
 }
 
-// puljeSteg is one of the three puljefordeling steps.
-type puljeSteg struct {
-	Nummer     int
-	Tekst      string
-	Ferdig     bool
-	Deaktivert bool
-	Ventetekst string // why a step that is not done yet can't be ticked
-	Handling   string
+// puljeStep is one of the three puljefordeling steps.
+type puljeStep struct {
+	Number      int
+	Label       string
+	Done     bool
+	Disabled bool
+	WaitingText string // why a step that is not done yet can't be ticked
+	Action      string
 }
 
-// tilstand names the step's state for styling: done, the next step to take, or
+// state names the step's state for styling: done, the next step to take, or
 // waiting on an earlier step.
-func (steg puljeSteg) tilstand() string {
+func (step puljeStep) state() string {
 	switch {
-	case steg.Ferdig:
-		return "ferdig"
-	case steg.Deaktivert:
-		return "venter"
+	case step.Done:
+		return "done"
+	case step.Disabled:
+		return "waiting"
 	default:
-		return "neste"
+		return "next"
 	}
 }
 
-func (steg puljeSteg) undertekst() string {
-	switch steg.tilstand() {
-	case "ferdig":
+func (step puljeStep) caption() string {
+	switch step.state() {
+	case "done":
 		return "Fullført"
-	case "venter":
-		return steg.Ventetekst
+	case "waiting":
+		return step.WaitingText
 	default:
 		return "Neste steg"
 	}
 }
 
-templ puljeStatusSteg(steg puljeSteg) {
+templ puljeStatusStep(step puljeStep) {
 	<li>
-		<label class="pulje-status-control" data-tilstand={ steg.tilstand() }>
-			<span class="pulje-step-number" aria-hidden="true">{ strconv.Itoa(steg.Nummer) }</span>
+		<label class="pulje-status-control" data-state={ step.state() }>
+			<span class="pulje-step-number" aria-hidden="true">{ strconv.Itoa(step.Number) }</span>
 			<input
-				if steg.Ferdig {
+				if step.Done {
 					checked
 				}
-				if steg.Deaktivert {
+				if step.Disabled {
 					disabled
 				}
-				data-on:click={ steg.Handling }
+				data-on:click={ step.Action }
 				type="checkbox"
 				class="checkbox input"
 			/>
 			<span class="pulje-status-text">
-				{ steg.Tekst }
-				<small class="pulje-status-hint">{ steg.undertekst() }</small>
+				{ step.Label }
+				<small class="pulje-status-hint">{ step.caption() }</small>
 			</span>
-			if steg.Deaktivert {
+			if step.Disabled {
 				<span class="pulje-status-lock" title="Kan ikke endres nå" aria-hidden="true">
 					@icons.Icon(icons.Lock, icons.Size16)
 				</span>

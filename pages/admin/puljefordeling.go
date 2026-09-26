@@ -130,12 +130,12 @@ func updatePuljeStatus(db *sql.DB, puljeID models.Pulje, status models.PuljeStat
 		return errPuljeStepOrder
 	}
 	if status == models.PuljeStatusCompleted && current.Status != models.PuljeStatusCompleted {
-		lagring, err := puljefordeling.Lagringsstatus(db, puljeID)
+		saveStatus, err := puljefordeling.LoadSaveStatus(db, puljeID)
 		if err != nil {
 			return fmt.Errorf("check unsaved distribution for %s: %w", puljeID, err)
 		}
-		if lagring.HarEndringer() {
-			return errPuljeUlagret
+		if saveStatus.HasChanges() {
+			return errPuljeUnsaved
 		}
 	}
 
@@ -216,7 +216,7 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.
 				http.Error(w, "Forrige steg må være fullført først", http.StatusConflict)
 				return
 			}
-			if errors.Is(err, errPuljeUlagret) {
+			if errors.Is(err, errPuljeUnsaved) {
 				http.Error(w, "Lagre fordelingen før den publiseres", http.StatusConflict)
 				return
 			}

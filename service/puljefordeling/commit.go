@@ -29,7 +29,7 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 	if err != nil {
 		return fmt.Errorf("emulate before commit: %w", err)
 	}
-	if err := lagreFordeling(tx, em, pulje); err != nil {
+	if err := saveDistribution(tx, em, pulje); err != nil {
 		return err
 	}
 
@@ -39,8 +39,8 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 	return nil
 }
 
-// lagreFordeling writes the emulated distribution for pulje inside tx.
-func lagreFordeling(tx *sql.Tx, em Emulation, pulje models.Pulje) error {
+// saveDistribution writes the emulated distribution for pulje inside tx.
+func saveDistribution(tx *sql.Tx, em Emulation, pulje models.Pulje) error {
 	var target EmulatedPulje
 	found := false
 	for _, p := range em.Puljer {

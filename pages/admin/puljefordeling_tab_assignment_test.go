@@ -356,7 +356,7 @@ func TestPuljefordelingCommitRoute_PersistsSolverPicks(t *testing.T) {
 		string(fredag), string(models.InterestLevelHigh))
 
 	preview := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit/preview", 0, "", "", "")
-	rec := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit", 0, "", "", `,"lagreBekreftelse":"`+confirmationFromResponse(t, preview)+`"`)
+	rec := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit", 0, "", "", `,"saveConfirmation":"`+confirmationFromResponse(t, preview)+`"`)
 
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("want 204, got %d (%s)", rec.Code, rec.Body.String())

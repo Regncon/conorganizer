@@ -14,49 +14,49 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-// puljeLagringsgrense is how many changes the save dialog lists one by one;
+// puljeSaveListLimit is how many changes the save dialog lists one by one;
 // above it the dialog only gives the count.
-const puljeLagringsgrense = 20
+const puljeSaveListLimit = 20
 
-var errPuljeUlagret = errors.New("pulje has unsaved distribution changes")
+var errPuljeUnsaved = errors.New("pulje has unsaved distribution changes")
 
-// puljeLagringsforhandsvisningHandler opens the save dialog, listing what saving
+// puljeSavePreviewHandler opens the save dialog, listing what saving
 // the distribution would change.
-func puljeLagringsforhandsvisningHandler(db *sql.DB, logger *slog.Logger) http.HandlerFunc {
+func puljeSavePreviewHandler(db *sql.DB, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pulje, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
 		if !ok {
 			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
 			return
 		}
-		status, err := puljefordeling.Lagringsstatus(db, pulje)
+		status, err := puljefordeling.LoadSaveStatus(db, pulje)
 		if err != nil {
 			logger.Error(err.Error(), "pulje_id", pulje)
 			http.Error(w, "Failed to compare distribution", http.StatusInternalServerError)
 			return
 		}
-		sendTildelingsdialog(w, r, logger, puljeLagringsDialogInnhold(pulje, status))
+		sendAssignmentDialog(w, r, logger, puljeSaveDialogContent(pulje, status))
 	}
 }
 
-// puljeLagringsHandler saves the distribution once the admin has confirmed the
+// puljeSaveHandler saves the distribution once the admin has confirmed the
 // changes they were shown. If the changes differ by now, the dialog is shown
 // again with the current changes instead.
-func puljeLagringsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Logger) http.HandlerFunc {
+func puljeSaveHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pulje, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
 		if !ok {
 			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
 			return
 		}
-		var signaler struct {
-			Bekreftelse string `json:"lagreBekreftelse"`
+		var signals struct {
+			Confirmation string `json:"saveConfirmation"`
 		}
-		if err := datastar.ReadSignals(r, &signaler); err != nil {
+		if err := datastar.ReadSignals(r, &signals); err != nil {
 			http.Error(w, "Invalid signals", http.StatusBadRequest)
 			return
 		}
-		status, err := puljefordeling.LagreBekreftetFordeling(db, pulje, signaler.Bekreftelse)
+		status, err := puljefordeling.SaveConfirmedDistribution(db, pulje, signals.Confirmation)
 		if err != nil {
 			if errors.Is(err, puljefordeling.ErrPuljeCompleted) {
 				http.Error(w, "Pulje is published; changes are not allowed", http.StatusConflict)
@@ -67,7 +67,7 @@ func puljeLagringsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Lo
 			return
 		}
 		if status != nil {
-			sendTildelingsdialog(w, r, logger, puljeLagringsDialogInnhold(pulje, *status))
+			sendAssignmentDialog(w, r, logger, puljeSaveDialogContent(pulje, *status))
 			return
 		}
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketRooms); err != nil {
@@ -77,7 +77,7 @@ func puljeLagringsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Lo
 	}
 }
 
-// puljeLagringsURL is the endpoint that saves the confirmed distribution.
-func puljeLagringsURL(pulje models.Pulje) string {
+// puljeSaveURL is the endpoint that saves the confirmed distribution.
+func puljeSaveURL(pulje models.Pulje) string {
 	return fmt.Sprintf("/admin/api/puljefordeling/%s/commit", pulje)
 }

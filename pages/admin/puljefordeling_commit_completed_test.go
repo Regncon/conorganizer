@@ -27,7 +27,7 @@ func TestPuljefordelingCommitRoute_RejectsCompletedPulje(t *testing.T) {
 
 	// When
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/puljefordeling/FredagKveld/commit", strings.NewReader(`{"lagreBekreftelse":"x"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/puljefordeling/FredagKveld/commit", strings.NewReader(`{"saveConfirmation":"x"}`))
 	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(rec, req)
 
@@ -112,7 +112,7 @@ func TestPuljefordelingSavePreview_SaysItIsTheFirstSave(t *testing.T) {
 			t.Errorf("expected the dialog to contain %q: %s", part, preview.Body.String())
 		}
 	}
-	confirmed := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit", 0, "", "", `,"lagreBekreftelse":"`+confirmationFromResponse(t, preview)+`"`)
+	confirmed := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit", 0, "", "", `,"saveConfirmation":"`+confirmationFromResponse(t, preview)+`"`)
 	if confirmed.Code != http.StatusNoContent {
 		t.Fatalf("expected the confirmed save to succeed, got %d: %s", confirmed.Code, confirmed.Body.String())
 	}
@@ -136,7 +136,7 @@ func TestPuljefordelingSave_StaleConfirmationShowsCurrentChanges(t *testing.T) {
 	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
 
 	// When
-	rec := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit", 0, "", "", `,"lagreBekreftelse":"utdatert"`)
+	rec := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit", 0, "", "", `,"saveConfirmation":"utdatert"`)
 
 	// Then
 	if !strings.Contains(rec.Body.String(), "Første lagring av fordelingen") {
@@ -164,7 +164,7 @@ func TestPuljeStatusRoute_PublishingRequiresSavedDistribution(t *testing.T) {
 	err := updatePuljeStatus(db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
 
 	// Then
-	if !errors.Is(err, errPuljeUlagret) {
+	if !errors.Is(err, errPuljeUnsaved) {
 		t.Fatalf("expected publishing to require a saved distribution, got %v", err)
 	}
 	assertPuljeStatus(t, db, models.PuljeFredagKveld, expectedStatus)
