@@ -102,6 +102,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 	// Add a manual pin (+). Force-pins the chosen billettholder into the event
 	// without touching their interests; removing the pin reverts them to emulation.
 	router.Post("/api/puljefordeling/assign", puljeTildelingsHandler(db, liveManager, logger))
+	router.Post("/api/puljefordeling/assign/preview", puljeAssignPreviewHandler(db, logger))
+	router.Post("/api/puljefordeling/{pulje}/{event}/{billettholderId}/preview", puljeRemovalPreviewHandler(db, logger, models.EventPlayerRolePlayer))
+	router.Post("/api/puljefordeling/{pulje}/{event}/{billettholderId}/gm/preview", puljeRemovalPreviewHandler(db, logger, models.EventPlayerRoleGM))
 	router.Put("/api/puljefordeling/interest", puljeInteresseHandler(db, liveManager, logger))
 
 	router.Delete("/api/puljefordeling/{pulje}/{event}/{billettholderId}/gm", func(w http.ResponseWriter, r *http.Request) {
@@ -1064,7 +1067,7 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 		dropAttrs := templ.Attributes{}
 		if !published {
 			dropAttrs["data-on:dragover__prevent"] = fmt.Sprintf("$dragOverEvent = '%s'", ev.EventID)
-			dropAttrs["data-on:drop__prevent"] = fmt.Sprintf("$dragOverEvent = ''; $draggedBillettholderId && (($assignmentBillettholderId = $draggedBillettholderId), ($assignmentEventId = %q), ($assignmentPuljeId = %q), ($assignmentFromEventId = $draggedEventId), ($assignmentFromManualSeat = $draggedManualSeat), ($assignmentRole = 'Player'), ($assignmentFromAddMenu = false), ($assignmentConfirmation = ''), ($assignmentAgeConfirmed = false), @post('/admin/api/puljefordeling/assign'))", ev.EventID, string(pulje))
+			dropAttrs["data-on:drop__prevent"] = fmt.Sprintf("$dragOverEvent = ''; $draggedBillettholderId && $draggedEventId !== %[1]q && (($assignmentBillettholderId = $draggedBillettholderId), ($assignmentEventId = %[1]q), ($assignmentPuljeId = %[2]q), ($assignmentFromEventId = $draggedEventId), ($assignmentFromManualSeat = $draggedManualSeat), ($assignmentRole = 'Player'), ($assignmentFromAddMenu = false), ($assignmentConfirmation = ''), ($assignmentAgeConfirmed = false), @post('/admin/api/puljefordeling/assign/preview'))", ev.EventID, string(pulje))
 			dropAttrs["data-class:is-drag-over"] = fmt.Sprintf("$dragOverEvent === '%s'", ev.EventID)
 		}
 		imageBannerUrl := eventimage.GetEventImageUrl(ev.EventID, "banner", eventImageDir)
@@ -1090,7 +1093,7 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 							<span class="pulje-badge pulje-badge--error">Under 18</span>
 						}
 						if !published {
-							<button type="button" class="pulje-remove" aria-label={ "Fjern spilleder " + gm.Name } title={ "Fjern spilleder " + gm.Name } data-on:click={ fmt.Sprintf("@delete('/admin/api/puljefordeling/%s/%s/%d/gm')", string(pulje), ev.EventID, gm.BillettholderID) }>×</button>
+							<button type="button" class="pulje-remove" aria-label={ "Fjern spilleder " + gm.Name } title={ "Fjern spilleder " + gm.Name } data-on:click={ fmt.Sprintf("@post('/admin/api/puljefordeling/%s/%s/%d/gm/preview')", string(pulje), ev.EventID, gm.BillettholderID) }>×</button>
 						}
 					</p>
 				}
@@ -1158,7 +1161,7 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 									type="button"
 									class="pulje-remove"
 									title="Fjern manuell plassering"
-									data-on:click={ fmt.Sprintf("@delete('/admin/api/puljefordeling/%s/%s/%d')", string(pulje), ev.EventID, pl.BillettholderID) }
+									data-on:click={ fmt.Sprintf("@post('/admin/api/puljefordeling/%s/%s/%d/preview')", string(pulje), ev.EventID, pl.BillettholderID) }
 								>×</button>
 							}
 						</li>

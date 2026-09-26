@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
 )
@@ -57,41 +58,122 @@ templ puljeTildelingsDialog() {
 	</dialog>
 	<style>
 		.tildeling-dialog {
-			inline-size: min(36rem, 90%);
-			max-block-size: 85dvb;
-			overflow: auto;
 			container: tildeling / inline-size;
-			padding: var(--responsive-pane-padding, 1.5rem);
+			inline-size: min(36rem, calc(100dvw - 2rem));
+			max-inline-size: none;
+			max-block-size: calc(100dvh - 2rem);
+			padding: 0;
+			border: 1px solid var(--level-3-border);
+			border-radius: var(--border-radius-2x);
+			background-color: var(--level-1-background);
+			box-shadow: var(--shadow-dialog);
+			color: var(--color-text-strong);
 
-			.tildeling-list {
-				display: grid;
-				gap: 0.75rem;
-				padding-inline-start: 1.25rem;
-
-				span {
-					display: block;
-					font-size: 0.875rem;
-				}
+			&::backdrop {
+				background-color: rgb(0 0 0 / 60%);
 			}
-
-			.tildeling-actions {
-				display: grid;
-				gap: 0.75rem;
-				margin-block-start: 1.5rem;
+			p {
+				margin: 0;
 			}
-
-			.tildeling-age-warning,
-			.tildeling-capacity-warning {
-				padding: 0.75rem;
-				border-inline-start: 0.25rem solid var(--color-warning, #b76b00);
-				background: color-mix(in srgb, var(--color-warning, #b76b00) 12%, transparent);
+			h3 {
+				margin: 0;
+				font-size: var(--text-body);
 			}
 		}
+		#tildeling-dialog-innhold {
+			display: grid;
+			gap: var(--spacing-4x);
+			padding: var(--spacing-3x) var(--spacing-5x) var(--spacing-5x);
+		}
+		.tildeling-header {
+			display: flex;
+			place-content: center space-between;
+			place-items: center;
+			gap: var(--spacing-3x);
+			margin-inline-end: calc(-1 * var(--spacing-2x));
 
+			h2 {
+				margin: 0;
+				font-size: 1.25rem;
+			}
+		}
+		.tildeling-summary {
+			display: grid;
+			gap: var(--spacing-1x);
+
+			strong {
+				font-size: var(--text-body);
+			}
+			span {
+				color: var(--color-text-soft);
+				font-size: var(--text-body-small);
+			}
+		}
+		.tildeling-section {
+			display: grid;
+			gap: var(--spacing-2x);
+			padding: var(--spacing-3x) var(--spacing-4x);
+			border: 1px solid var(--level-3-border);
+			border-radius: var(--border-radius-2x);
+			background-color: var(--level-2-background);
+		}
+		.tildeling-note {
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+		}
+		.tildeling-list {
+			display: grid;
+			gap: var(--spacing-1x);
+			margin: 0;
+			padding: 0;
+			list-style: none;
+
+			li {
+				display: grid;
+				gap: var(--spacing-1x);
+				padding: var(--spacing-2x) var(--spacing-3x);
+				border: 1px solid var(--level-3-border);
+				border-radius: var(--border-radius-1x);
+				background-color: var(--level-3-background);
+			}
+			span {
+				color: var(--color-text-soft);
+				font-size: var(--text-body-small);
+			}
+		}
+		.tildeling-consequence {
+			grid-template-columns: minmax(0, 1fr) auto;
+			place-items: center start;
+
+			.tildeling-consequence-move {
+				display: inline-flex;
+				flex-wrap: wrap;
+				place-items: center;
+				gap: var(--spacing-1x) var(--spacing-2x);
+				color: var(--color-text-strong);
+			}
+			.tildeling-consequence-note {
+				grid-column: 1 / -1;
+			}
+		}
+		.tildeling-consequence-name {
+			color: var(--color-text-strong);
+			font-weight: 600;
+		}
+		.tildeling-age-warning,
+		.tildeling-capacity-warning {
+			padding: var(--spacing-3x);
+			border-inline-start: 4px solid var(--color-warning);
+			border-radius: var(--border-radius-1x);
+			background-color: color-mix(in srgb, var(--color-warning) 12%, transparent);
+		}
+		.tildeling-actions {
+			display: grid;
+			gap: var(--spacing-2x);
+		}
 		@container tildeling (width > 420px) {
 			.tildeling-actions {
 				grid-template-columns: auto 1fr;
-				place-items: stretch;
 			}
 		}
 	</style>
@@ -99,33 +181,42 @@ templ puljeTildelingsDialog() {
 
 templ puljeTildelingsDialogInnhold(varsel puljefordeling.Tildelingsvarsel, valg puljefordeling.Tildelingsvalg) {
 	<div id="tildeling-dialog-innhold">
-		<h2 id="tildeling-dialog-title">Tildelinger for { varsel.BillettholderNavn }</h2>
-		<p><strong>{ varsel.PuljeNavn }</strong> · { tildelingsoppsummering(varsel.Tildelinger) }</p>
-		<ul class="tildeling-list">
-			for _, tildeling := range varsel.Tildelinger {
-				<li data-role={ string(tildeling.Role) } data-event-id={ tildeling.EventID }>
-					<strong>{ tildelingsrolle(tildeling.Role) }:</strong> { tildeling.EventTitle }
-					if tildeling.Role == models.EventPlayerRolePlayer {
-						if tildeling.Source == puljefordeling.SourceManual {
-							<span>Manuelt festet spillerplass</span>
-						} else {
-							<span>Automatisk fordelt spillerplass</span>
-						}
+		@puljeConfirmHeader()
+		<p class="tildeling-summary">
+			<strong>{ varsel.Handling }</strong>
+			<span>{ varsel.BillettholderNavn } · { varsel.PuljeNavn }</span>
+		</p>
+		if len(varsel.Tildelinger) > 0 {
+			<section class="tildeling-section">
+				<h3>Tildelinger for { varsel.BillettholderNavn }</h3>
+				<p class="tildeling-note">{ tildelingsoppsummering(varsel.Tildelinger) }</p>
+				<ul class="tildeling-list">
+					for _, tildeling := range varsel.Tildelinger {
+						<li data-role={ string(tildeling.Role) } data-event-id={ tildeling.EventID }>
+							<p><strong>{ tildelingsrolle(tildeling.Role) }:</strong> { tildeling.EventTitle }</p>
+							if tildeling.Role == models.EventPlayerRolePlayer {
+								if tildeling.Source == puljefordeling.SourceManual {
+									<span>Manuelt festet spillerplass</span>
+								} else {
+									<span>Automatisk fordelt spillerplass</span>
+								}
+							}
+						</li>
 					}
-				</li>
-			}
-		</ul>
-		<p>{ varsel.Handling }</p>
-		if varsel.KanBekrefte {
-			if valg.Role == models.EventPlayerRoleGM || valg.FraLeggTil {
-				<p>Eksisterende tildelinger beholdes.</p>
-				if valg.FraLeggTil {
-					<p>Lagrede automatiske spillerplasser blir manuelle, slik at de beholdes ved ny fordeling.</p>
+				</ul>
+				if varsel.KanBekrefte {
+					if valg.Role == models.EventPlayerRoleGM || valg.FraLeggTil {
+						<p class="tildeling-note">Eksisterende tildelinger beholdes.</p>
+						if valg.FraLeggTil {
+							<p class="tildeling-note">Lagrede automatiske spillerplasser blir manuelle, slik at de beholdes ved ny fordeling.</p>
+						}
+					} else {
+						<p class="tildeling-note">Andre tildelinger beholdes.</p>
+					}
 				}
-			} else {
-				<p>Andre tildelinger beholdes.</p>
-			}
-		} else {
+			</section>
+		}
+		if !varsel.KanBekrefte {
 			<p>Bruk «Legg til» for å bekrefte denne tildelingen.</p>
 		}
 		if varsel.Aldersvarsel != "" {
@@ -134,13 +225,132 @@ templ puljeTildelingsDialogInnhold(varsel puljefordeling.Tildelingsvarsel, valg 
 		if varsel.Kapasitetsvarsel != "" {
 			<p class="tildeling-capacity-warning">{ varsel.Kapasitetsvarsel }</p>
 		}
+		if varsel.Consequences != nil {
+			@puljeOwnConsequence(*varsel.Consequences, varsel.BillettholderNavn)
+			@puljeConsequences(*varsel.Consequences)
+		}
 		<div class="tildeling-actions">
 			<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Avbryt</button>
 			if varsel.KanBekrefte {
-				<button type="button" class="btn" data-confirmation={ varsel.Bekreftelse } data-on:click={ tildelingsbekreftelse(varsel, valg) }>
+				<button type="button" class="btn btn--primary" data-confirmation={ varsel.Bekreftelse } data-on:click={ tildelingsbekreftelse(varsel, valg) }>
 					{ varsel.Handling }
 				</button>
 			}
 		</div>
 	</div>
+}
+
+// puljeRemovalDialogContent asks the admin to confirm removing a manual
+// Player seat or a GM, with the consequences for others in the pulje.
+templ puljeRemovalDialogContent(preview puljefordeling.RemovalPreview, removalURL string) {
+	{{ action := removalAction(preview) }}
+	<div id="tildeling-dialog-innhold">
+		@puljeConfirmHeader()
+		<p class="tildeling-summary">
+			<strong>{ action }</strong>
+			<span>{ preview.BillettholderName } · { preview.Consequences.PuljeName }</span>
+		</p>
+		if preview.Role == models.EventPlayerRolePlayer {
+			<p class="tildeling-note">Interessene til { preview.BillettholderName } beholdes, så fordelingen kan fortsatt gi hen en plass.</p>
+		}
+		@puljeOwnConsequence(preview.Consequences, preview.BillettholderName)
+		@puljeConsequences(preview.Consequences)
+		<div class="tildeling-actions">
+			<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Avbryt</button>
+			<button type="button" class="btn btn--primary" data-on:click={ fmt.Sprintf("$tildelingOpen = false; @delete(%q)", removalURL) }>{ action }</button>
+		</div>
+	</div>
+}
+
+func removalAction(preview puljefordeling.RemovalPreview) string {
+	if preview.Role == models.EventPlayerRoleGM {
+		return fmt.Sprintf("Fjern som spilleder på «%s»", preview.EventTitle)
+	}
+	return fmt.Sprintf("Fjern den manuelle plassen på «%s»", preview.EventTitle)
+}
+
+templ puljeConfirmHeader() {
+	<header class="tildeling-header">
+		<h2 id="tildeling-dialog-title">Er du sikker?</h2>
+		<button type="button" class="btn btn--ghost btn-icon-only" aria-label="Lukk" data-on:click="$tildelingOpen = false">
+			@icons.Icon(icons.Close, icons.Size24)
+		</button>
+	</header>
+}
+
+// puljeConsequences lists, neutrally, who else in the pulje would get a
+// different seat.
+templ puljeConsequences(consequences puljefordeling.Consequences) {
+	<section class="tildeling-section tildeling-consequences">
+		<h3>Endringer for andre i { consequences.PuljeName }</h3>
+		if len(consequences.Changes) == 0 {
+			<p class="tildeling-note">Ingen andre deltakere får endret plass.</p>
+		} else {
+			<ul class="tildeling-list">
+				for _, change := range consequences.Changes {
+					@puljeConsequenceRow(change)
+				}
+			</ul>
+		}
+	</section>
+}
+
+// puljeOwnConsequence shows what the change does to the billettholder being
+// placed, moved or removed, in the same format as everyone else.
+templ puljeOwnConsequence(consequences puljefordeling.Consequences, name string) {
+	<section class="tildeling-section tildeling-own-consequence">
+		<h3>{ "For " + name }</h3>
+		<ul class="tildeling-list">
+			if consequences.Own.From == consequences.Own.To {
+				<li class="tildeling-consequence">
+					<span class="tildeling-consequence-name">{ name }</span>
+					<span class="tildeling-consequence-move">
+						<span>Beholder plassen:</span>
+						@puljeConsequenceSeat(consequences.Own.To)
+					</span>
+				</li>
+			} else {
+				{{ own := consequences.Own }}
+				{{ own.Name = name }}
+				@puljeConsequenceRow(own)
+			}
+		</ul>
+	</section>
+}
+
+templ puljeConsequenceRow(change puljefordeling.Consequence) {
+	<li class="tildeling-consequence">
+		<span class="tildeling-consequence-name">{ change.Name }</span>
+		<span class="tildeling-consequence-move">
+			@puljeConsequenceSeat(change.From)
+			<span aria-label="til">→</span>
+			@puljeConsequenceSeat(change.To)
+		</span>
+		if note := forstevalgNote(change); note != "" {
+			<span class="tildeling-consequence-note">{ note }</span>
+		}
+	</li>
+}
+
+templ puljeConsequenceSeat(seat puljefordeling.Seat) {
+	switch {
+		case seat.EventID == "":
+			<em>Uten plass</em>
+		case seat.IsGM:
+			<span>{ "Spilleder på " + seat.EventTitle }</span>
+		default:
+			<span title={ seat.Level.Label() }>{ seat.Level.Emoji() + " " + seat.EventTitle }</span>
+	}
+}
+
+// forstevalgNote states a change in førstevalg for this pulje, if any.
+func forstevalgNote(change puljefordeling.Consequence) string {
+	switch {
+	case change.From.Forstevalg && !change.To.Forstevalg:
+		return "Får ikke førstevalg i denne puljen"
+	case !change.From.Forstevalg && change.To.Forstevalg:
+		return "Får førstevalg i denne puljen"
+	default:
+		return ""
+	}
 }

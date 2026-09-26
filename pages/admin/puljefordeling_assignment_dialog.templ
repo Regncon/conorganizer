@@ -51,7 +51,7 @@ func puljeAssignDialogAction(pulje models.Pulje, event puljefordeling.EmulatedEv
 }
 
 func puljeAssignmentAction(role models.EventPlayerRole) string {
-	return fmt.Sprintf("$assignmentRole = %q; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentRemove = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentCloseDialog = true; @post('/admin/api/puljefordeling/assign'); $assignmentCloseDialog = false; $assignmentFromAddMenu = false", string(role))
+	return fmt.Sprintf("$assignmentRole = %q; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentRemove = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentCloseDialog = true; @post('/admin/api/puljefordeling/assign/preview'); $assignmentCloseDialog = false; $assignmentFromAddMenu = false", string(role))
 }
 
 func puljeInterestAction(level models.InterestLevel) string {
@@ -218,7 +218,7 @@ func loadPuljeAssignmentEventInterests(db *sql.DB, pulje models.Pulje, em puljef
 }
 
 func puljeQuickAssignmentAction(billettholderID int) string {
-	return fmt.Sprintf("$assignmentBillettholderId = %d; $assignmentRole = 'Player'; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentRemove = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentCloseDialog = true; @post('/admin/api/puljefordeling/assign'); $assignmentCloseDialog = false; $assignmentFromAddMenu = false", billettholderID)
+	return fmt.Sprintf("$assignmentBillettholderId = %d; $assignmentRole = 'Player'; $assignmentFromEventId = ''; $assignmentFromManualSeat = false; $assignmentRemove = false; $assignmentFromAddMenu = true; $assignmentConfirmation = ''; $assignmentAgeConfirmed = false; $assignmentCloseDialog = true; @post('/admin/api/puljefordeling/assign/preview'); $assignmentCloseDialog = false; $assignmentFromAddMenu = false", billettholderID)
 }
 
 templ puljeAssignmentInterestRow(candidate puljeAssignmentInterestCandidate) {
