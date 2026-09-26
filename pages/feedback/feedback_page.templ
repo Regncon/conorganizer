@@ -11,14 +11,6 @@ import (
 	"github.com/Regncon/conorganizer/service/feedback"
 )
 
-func feedbackCategoryButtonClass(category, selected feedback.Category) string {
-	class := "btn btn--outline feedback-category-button"
-	if category == selected {
-		class += " selected"
-	}
-	return class
-}
-
 // feedbackCategoryClickExpr selects a category and clears any topics chosen
 // for the previously selected category, since topics only apply to one
 // category at a time.
@@ -37,10 +29,6 @@ func feedbackTopicToggleExpr(topic feedback.Topic) string {
 
 func feedbackTopicPressedExpr(topic feedback.Topic) string {
 	return fmt.Sprintf("$%s.includes('%s') ? 'true' : 'false'", feedbackTopicsSignal, topic)
-}
-
-func feedbackTopicSelectedExpr(topic feedback.Topic) string {
-	return fmt.Sprintf("$%s.includes('%s')", feedbackTopicsSignal, topic)
 }
 
 // feedbackHasTopicsExpr is true while the selected category has topics to
@@ -97,17 +85,6 @@ templ feedbackFormPage(preselected feedback.Category) {
 				gap: var(--responsive-pane-padding);
 			}
 
-			.label {
-				font-weight: 600;
-				font-size: var(--text-body-small);
-			}
-
-			.form-group {
-				display: flex;
-				flex-direction: column;
-				gap: var(--spacing-1x);
-			}
-
 			.feedback-privacy-hint {
 				display: flex;
 				place-items: center;
@@ -135,66 +112,6 @@ templ feedbackFormPage(preselected feedback.Category) {
 			.feedback-char-counter {
 				color: var(--color-text-soft);
 				font-weight: 400;
-			}
-
-			.feedback-categories {
-				display: grid;
-				grid-template-columns: 1fr;
-				gap: var(--spacing-2x);
-				white-space: nowrap;
-			}
-
-			.feedback-topics {
-				display: flex;
-				flex-wrap: wrap;
-				gap: var(--spacing-2x);
-			}
-
-			.feedback-topic-chip {
-				padding-block: var(--spacing-2x);
-				padding-inline: var(--btn-padding-x);
-				border: 1px solid var(--bg-item-border);
-				border-radius: 999px;
-				background: var(--bg-item);
-				color: var(--color-text-soft);
-				font: inherit;
-				font-size: var(--btn-font-size);
-				cursor: pointer;
-				transition: var(--btn-transition);
-
-				&:hover {
-					border-color: var(--bg-item-border-hover);
-					color: var(--color-text-strong);
-				}
-			}
-
-			/* Category buttons and topic chips share one focus and selected look,
-			   so a selected choice keeps its colour and gets a matching focus ring. */
-			.feedback-category-button,
-			.feedback-topic-chip {
-				&:focus-visible {
-					outline: none;
-					box-shadow: 0 0 0 3px var(--color-secondary-focus-visible);
-				}
-			}
-
-			.feedback-category-button.selected,
-			.feedback-topic-chip.selected {
-				border-color: var(--color-primary);
-				background: color-mix(in srgb, var(--color-primary) 14%, var(--bg-item));
-				color: var(--color-text-strong);
-
-				&:focus,
-				&:focus-visible {
-					background: color-mix(in srgb, var(--color-primary) 14%, var(--bg-item));
-					color: var(--color-text-strong);
-				}
-				&:focus {
-					box-shadow: none;
-				}
-				&:focus-visible {
-					box-shadow: 0 0 0 3px var(--color-primary-focus-visible);
-				}
 			}
 
 			.form-group:has(.feedback-error.is-visible) .input {
@@ -233,12 +150,6 @@ templ feedbackFormPage(preselected feedback.Category) {
 				.btn {
 					grid-column: 2;
 				}
-			}
-		}
-
-		@container feedback-page (width > 25rem) {
-			.feedback-page .feedback-categories {
-				grid-template-columns: repeat(3, 1fr);
 			}
 		}
 	</style>
@@ -312,13 +223,12 @@ templ feedbackFormWrapper(preselected feedback.Category) {
 		>
 			<fieldset class="form-group feedback-categories-field">
 				<legend class="label color-strong">Hva gjelder tilbakemeldingen?</legend>
-				<div class="feedback-categories">
+				<div class="choice-toggle-group">
 					for _, category := range feedback.Categories {
 						<button
 							type="button"
-							class={ feedbackCategoryButtonClass(category, preselected) }
+							class="btn btn--outline choice-toggle"
 							aria-pressed={ fmt.Sprintf("%t", category == preselected) }
-							data-class:selected={ fmt.Sprintf("$%s === '%s'", feedbackCategorySignal, category) }
 							data-attr:aria-pressed={ fmt.Sprintf("$%s === '%s' ? 'true' : 'false'", feedbackCategorySignal, category) }
 							data-on:click={ feedbackCategoryClickExpr(category) }
 						>
@@ -339,7 +249,7 @@ templ feedbackFormWrapper(preselected feedback.Category) {
 				for _, category := range feedback.Categories {
 					if topics := feedback.TopicsFor(category); len(topics) > 0 {
 						<div
-							class="feedback-topics"
+							class="choice-chip-group"
 							if category != preselected {
 								style="display: none"
 							}
@@ -348,9 +258,8 @@ templ feedbackFormWrapper(preselected feedback.Category) {
 							for _, topic := range topics {
 								<button
 									type="button"
-									class="feedback-topic-chip"
+									class="choice-chip"
 									aria-pressed="false"
-									data-class:selected={ feedbackTopicSelectedExpr(topic) }
 									data-attr:aria-pressed={ feedbackTopicPressedExpr(topic) }
 									data-on:click={ feedbackTopicToggleExpr(topic) }
 								>

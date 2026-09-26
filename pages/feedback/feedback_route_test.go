@@ -379,7 +379,7 @@ func assertPressedCategories(t *testing.T, html string, expected []string) {
 		t.Fatalf("failed to parse HTML: %v", err)
 	}
 	pressed := []string{}
-	doc.Find(`.feedback-category-button[aria-pressed="true"]`).Each(func(_ int, button *goquery.Selection) {
+	doc.Find(categoryButtonsSelector + `[aria-pressed="true"]`).Each(func(_ int, button *goquery.Selection) {
 		pressed = append(pressed, strings.TrimSpace(button.Text()))
 	})
 	if !slices.Equal(pressed, expected) {

@@ -11,6 +11,10 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
+// categoryButtonsSelector finds the category choices by their place in the
+// form rather than by styling classes.
+const categoryButtonsSelector = ".feedback-categories-field button"
+
 func TestFeedbackFormPage_DefaultsToWebsiteCategoryWithoutOmParam(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at en innlogget bruker åpner tilbakemeldingssiden uten ?om=.",
@@ -24,7 +28,7 @@ func TestFeedbackFormPage_DefaultsToWebsiteCategoryWithoutOmParam(t *testing.T) 
 
 	// When
 	doc := templtest.Render(t, feedbackFormPage(feedback.CategoryWebsite))
-	buttons := doc.Find(".feedback-category-button")
+	buttons := doc.Find(categoryButtonsSelector)
 
 	// Then
 	if buttons.Length() != len(expectedLabels) {
@@ -94,19 +98,20 @@ func TestFeedbackFormPage_PreselectsCategoryFromOmParamAndShowsOnlyItsTopics(t *
 
 	// Then
 	pressedTexts := []string{}
-	doc.Find(`.feedback-category-button[aria-pressed="true"]`).Each(func(_ int, button *goquery.Selection) {
+	doc.Find(categoryButtonsSelector + `[aria-pressed="true"]`).Each(func(_ int, button *goquery.Selection) {
 		pressedTexts = append(pressedTexts, strings.TrimSpace(button.Text()))
 	})
 	if len(pressedTexts) != 1 || pressedTexts[0] != "Festivalen" {
 		t.Fatalf("expected only 'Festivalen' to be pressed, got %v", pressedTexts)
 	}
-	selectedClassCount := doc.Find(".feedback-category-button.selected").Length()
-	if selectedClassCount != 1 {
-		t.Fatalf("expected exactly one selected category button, got %d", selectedClassCount)
-	}
+	doc.Find(categoryButtonsSelector).Each(func(_ int, button *goquery.Selection) {
+		if _, bound := button.Attr("data-attr:aria-pressed"); !bound {
+			t.Fatalf("expected category button %q to keep aria-pressed in sync with the selected category", strings.TrimSpace(button.Text()))
+		}
+	})
 
-	visibleGroupSelector := `.feedback-topics[data-show="$feedbackCategory === 'convention'"]`
-	convChips := templtest.CollectTexts(doc, visibleGroupSelector+" .feedback-topic-chip")
+	visibleGroupSelector := `.feedback-topics-field [data-show="$feedbackCategory === 'convention'"]`
+	convChips := templtest.CollectTexts(doc, visibleGroupSelector+" button")
 	if len(convChips) != len(feedback.TopicsFor(feedback.CategoryConvention)) {
 		t.Fatalf("expected %d convention topic chips, got %v", len(feedback.TopicsFor(feedback.CategoryConvention)), convChips)
 	}
@@ -115,7 +120,15 @@ func TestFeedbackFormPage_PreselectsCategoryFromOmParamAndShowsOnlyItsTopics(t *
 			t.Fatalf("expected convention topic chip %q, got %v", topic.Label(), convChips)
 		}
 	}
-	websiteChipsSelector := `.feedback-topics[data-show="$feedbackCategory === 'website'"] .feedback-topic-chip`
+	doc.Find(visibleGroupSelector + " button").Each(func(_ int, chip *goquery.Selection) {
+		if chip.AttrOr("aria-pressed", "") != "false" {
+			t.Fatalf("expected topic chip %q to start unpressed", strings.TrimSpace(chip.Text()))
+		}
+		if _, bound := chip.Attr("data-attr:aria-pressed"); !bound {
+			t.Fatalf("expected topic chip %q to keep aria-pressed in sync with the selected topics", strings.TrimSpace(chip.Text()))
+		}
+	})
+	websiteChipsSelector := `.feedback-topics-field [data-show="$feedbackCategory === 'website'"] button`
 	if doc.Find(websiteChipsSelector).Length() != len(feedback.TopicsFor(feedback.CategoryWebsite)) {
 		t.Fatalf("expected website topic group to still render its own chips (shown/hidden client-side)")
 	}
