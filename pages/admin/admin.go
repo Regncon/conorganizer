@@ -137,7 +137,8 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 								store.Name = room.Name
 								store.RoomNumber = room.RoomNumber
 								store.Floor = room.Floor
-								store.Notes = room.Notes
+								store.PublicNotes = room.PublicNotes
+								store.AdminNotes = room.AdminNotes
 							}
 						}
 
@@ -176,11 +177,12 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 						room := models.Room{
-							ID:         int(roomID),
-							Name:       store.Name,
-							RoomNumber: store.RoomNumber,
-							Floor:      store.Floor,
-							Notes:      store.Notes,
+							ID:          int(roomID),
+							Name:        store.Name,
+							RoomNumber:  store.RoomNumber,
+							Floor:       store.Floor,
+							PublicNotes: store.PublicNotes,
+							AdminNotes:  store.AdminNotes,
 						}
 
 						// Decide between create and update based on room ID

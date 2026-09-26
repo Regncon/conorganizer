@@ -21,7 +21,7 @@ func getEventRooms(db *sql.DB, eventID string, programPublished bool) ([]eventRo
 
 	const query = `
 		SELECT p.id, p.name, p.start_at, p.end_at,
-			COALESCE(r.id, 0), COALESCE(r.name, ''), COALESCE(r.room_number, ''), COALESCE(r.floor, 0)
+			COALESCE(r.id, 0), COALESCE(r.name, ''), COALESCE(r.room_number, ''), COALESCE(r.floor, 0), COALESCE(r.public_notes, '')
 		FROM relation_event_puljer ep
 		JOIN puljer p ON p.id = ep.pulje_id
 		LEFT JOIN rooms r ON r.id = ep.room_id
@@ -39,7 +39,7 @@ func getEventRooms(db *sql.DB, eventID string, programPublished bool) ([]eventRo
 	for rows.Next() {
 		var assignment eventRoom
 		if err := rows.Scan(&assignment.Pulje.ID, &assignment.Pulje.Name, &assignment.Pulje.StartAt, &assignment.Pulje.EndAt,
-			&assignment.Room.ID, &assignment.Room.Name, &assignment.Room.RoomNumber, &assignment.Room.Floor); err != nil {
+			&assignment.Room.ID, &assignment.Room.Name, &assignment.Room.RoomNumber, &assignment.Room.Floor, &assignment.Room.PublicNotes); err != nil {
 			return nil, fmt.Errorf("scan room for event %s: %w", eventID, err)
 		}
 		assignment.MapPath, _ = rooms.MapPathForRoom(assignment.Room.RoomNumber)
