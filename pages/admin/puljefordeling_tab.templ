@@ -17,6 +17,7 @@ import (
 	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
+	smodel "github.com/Regncon/conorganizer/service/puljefordeling/solver/model"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 )
@@ -718,6 +719,122 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
                 white-space: nowrap;
             }
         }
+        .pulje-score {
+            position: relative;
+            flex: 0 0 auto;
+            cursor: help;
+
+            &:hover .pulje-score-details,
+            &:focus-visible .pulje-score-details {
+                display: grid;
+            }
+        }
+        .pulje-score-value {
+            display: inline-block;
+            min-inline-size: 2.5rem;
+            padding: 0 var(--spacing-2x);
+            border-radius: 999px;
+            background-color: var(--level-2-background);
+            color: var(--color-text-soft);
+            font-size: var(--text-body-small);
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            text-align: center;
+        }
+        .pulje-score-details {
+            display: none;
+            position: absolute;
+            inset-block-end: calc(100% + var(--spacing-2x));
+            inset-inline-end: 0;
+            z-index: 10;
+            gap: var(--spacing-2x);
+            inline-size: max-content;
+            max-inline-size: 20rem;
+            padding: var(--spacing-3x);
+            border: 1px solid var(--level-3-border);
+            border-radius: var(--border-radius-1x);
+            background-color: var(--level-1-background);
+            box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+            color: var(--color-text-soft);
+            font-size: var(--text-body-small);
+            font-weight: 400;
+
+            dl {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: var(--spacing-1x) var(--spacing-4x);
+                margin: 0;
+            }
+            dd {
+                margin: 0;
+                color: var(--color-text-strong);
+                font-variant-numeric: tabular-nums;
+                text-align: end;
+            }
+            .pulje-score-sum {
+                padding-block-start: var(--spacing-1x);
+                border-block-start: 1px solid var(--level-3-border);
+                color: var(--color-text-strong);
+                font-weight: 700;
+            }
+        }
+        .pulje-score-note {
+            font-style: italic;
+        }
+        .pulje-score-title {
+            color: var(--color-text-strong);
+            font-weight: 700;
+        }
+        .pulje-interest-trigger {
+            padding: 0;
+            border: none;
+            border-radius: var(--border-radius-1x);
+            background: transparent;
+            font: inherit;
+            cursor: pointer;
+
+            &:hover,
+            &:focus-visible {
+                background-color: var(--level-2-background);
+            }
+        }
+        .pulje-interest-menu {
+            position-area: block-end span-inline-start;
+            position-try-fallbacks: flip-block;
+            margin: var(--spacing-1x) 0;
+            padding: var(--spacing-1x);
+            border: 1px solid var(--level-3-border);
+            border-radius: var(--border-radius-1x);
+            background-color: var(--level-1-background);
+            box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+            color: var(--color-text-strong);
+
+            &:popover-open {
+                display: grid;
+            }
+            button {
+                display: flex;
+                place-items: center;
+                gap: var(--spacing-2x);
+                padding: var(--spacing-1x) var(--spacing-3x);
+                border: none;
+                border-radius: var(--border-radius-1x);
+                background: transparent;
+                color: inherit;
+                font: inherit;
+                font-size: var(--text-body-small);
+                text-align: start;
+                cursor: pointer;
+
+                &:hover,
+                &:focus-visible {
+                    background-color: var(--level-3-background);
+                }
+            }
+            .is-current {
+                font-weight: 700;
+            }
+        }
         .pulje-emoji {
             flex: 0 0 auto;
             width: 1.4em;
@@ -791,6 +908,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 							@icons.Icon(icons.Pin, icons.Size16)
 						</span> Manuelt plassert
 					</p>
+					<p><span class="pulje-score-value">810</span> = Algoritmepoeng (hold over tallet for utregning)</p>
 				</div>
 			</div>
 			if hasRow {
@@ -1062,7 +1180,10 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 									@icons.Icon(icons.Pin, icons.Size20)
 								</span>
 							}
-							<span class="pulje-emoji" title={ pl.Level.Label() }>{ pl.Level.Emoji() }</span>
+							if pl.Score != nil {
+								@puljeScore(*pl.Score, pl.Manual, puljeDOMID("pulje-score", ev.EventID, strconv.Itoa(pl.BillettholderID)))
+							}
+							@puljeInterest(pulje, ev.EventID, pl, published)
 							if pl.Manual && !published {
 								<button
 									type="button"
@@ -1105,6 +1226,61 @@ func puljeCapacityPercent(ev puljefordeling.EmulatedEvent) int {
 		return 0
 	}
 	return min(100, len(ev.AssignedPlayers)*100/ev.Capacity)
+}
+
+// puljeInterest shows the participant's interest in this event. Outside a
+// published pulje the face opens a menu that sets that interest, so an admin
+// who moves or pins someone can record how interested they are and have the
+// fordeling (førstevalg and algoritmepoeng) use it.
+templ puljeInterest(pulje models.Pulje, eventID string, pl puljefordeling.AssignedPlayer, published bool) {
+	if published {
+		<span class="pulje-emoji" title={ pl.Level.Label() }>{ pl.Level.Emoji() }</span>
+	} else {
+		{{ menuID := puljeDOMID("pulje-interest", eventID, strconv.Itoa(pl.BillettholderID)) }}
+		<button
+			type="button"
+			class="pulje-emoji pulje-interest-trigger"
+			popovertarget={ menuID }
+			title={ "Interesse: " + pl.Level.Label() + ". Klikk for å endre." }
+			aria-label={ "Endre interesse for " + pl.Name + ", nå " + pl.Level.Label() }
+			style={ templ.SafeCSS("anchor-name: --" + menuID + ";") }
+		>{ pl.Level.Emoji() }</button>
+		<div id={ menuID } class="pulje-interest-menu" popover style={ templ.SafeCSS("position-anchor: --" + menuID + ";") }>
+			for _, level := range []models.InterestLevel{models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow, models.InterestLevelNone} {
+				<button
+					type="button"
+					class={ templ.KV("is-current", level == pl.Level) }
+					aria-pressed={ strconv.FormatBool(level == pl.Level) }
+					data-on:click={ puljeRowInterestAction(pulje, eventID, pl.BillettholderID, level) }
+				>
+					<span aria-hidden="true">{ level.Emoji() }</span>
+					{ puljeInterestLabel(level) }
+				</button>
+			}
+		</div>
+	}
+}
+
+// puljeScore shows the solver's score for a seat, with the calculation in a
+// tooltip that opens on hover or keyboard focus.
+templ puljeScore(score smodel.ScoreBreakdown, manual bool, id string) {
+	<span class="pulje-score" tabindex="0" aria-describedby={ id }>
+		<span class="pulje-score-value">{ strconv.Itoa(score.Total) }</span>
+		<span class="pulje-score-details" id={ id } role="tooltip">
+			<span class="pulje-score-title">Algoritmepoeng</span>
+			if manual {
+				<span class="pulje-score-note">Manuelt plassert. Poengene følger interessen for arrangementet.</span>
+			}
+			<dl>
+				for _, line := range puljeScoreLines(score) {
+					<dt>{ line.Label }</dt>
+					<dd>{ fmt.Sprintf("+%d", line.Points) }</dd>
+				}
+				<dt class="pulje-score-sum">Sum</dt>
+				<dd class="pulje-score-sum">{ strconv.Itoa(score.Total) }</dd>
+			</dl>
+		</span>
+	</span>
 }
 
 // puljePlayerRowStatus describes the open player seats shown in the dashed row

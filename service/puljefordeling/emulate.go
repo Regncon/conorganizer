@@ -22,11 +22,12 @@ import (
 type AssignedPlayer struct {
 	BillettholderID int // participant id, for manual-seat removal from the UI
 	Name            string
-	IsDM            bool                 // runs at least one game in the weekend (DM bump)
-	Level           models.InterestLevel // their interest in the game they got
-	Moved           bool                 // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
-	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
-	IsOver18        bool                 // participant is over 18; a seated minor in an AdultsOnly game is always an admin pin
+	IsDM            bool                   // runs at least one game in the weekend (DM bump)
+	Level           models.InterestLevel   // their interest in the game they got
+	Moved           bool                   // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
+	Manual          bool                   // manually pinned into this event by an admin (source='manual'), not placed by the solver
+	IsOver18        bool                   // participant is over 18; a seated minor in an AdultsOnly game is always an admin pin
+	Score           *smodel.ScoreBreakdown // how the solver valued this seat; nil for a pin without interest and for replayed (published) puljer
 }
 
 type AssignedGM struct {
@@ -53,7 +54,7 @@ type EmulatedEvent struct {
 	AssignedGMs       []AssignedGM
 	GMName            string           // sorted GM names, empty if the event has no GM assigned
 	GMIsOver18        bool             // true when all GMs are adults; any minor keeps the 18+ warning visible
-	AssignedPlayers   []AssignedPlayer // sorted by name
+	AssignedPlayers   []AssignedPlayer // sorted by solver score (highest first, unscored last), then name
 	Undersubscribed   bool             // fewer than the solver's viable-player threshold
 	EventType         models.EventType
 	AgeGroup          models.AgeGroup
@@ -239,7 +240,7 @@ func shapePulje(
 			EventID:         ev.ID,
 			Title:           ev.Name,
 			Capacity:        ev.Capacity,
-			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, over18, prefs, dmSet, moved, manual),
+			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, over18, prefs, dmSet, moved, manual, res.Scores),
 			Undersubscribed: under[ev.ID],
 		}
 		if m, ok := meta[ev.ID]; ok {
@@ -286,6 +287,7 @@ func assignedPlayers(
 	dmSet map[int]bool,
 	moved map[string]bool,
 	manual map[string][]string,
+	scores map[string]smodel.ScoreBreakdown,
 ) []AssignedPlayer {
 	if len(ids) == 0 {
 		return nil
@@ -305,14 +307,30 @@ func assignedPlayers(
 			Manual:          slices.Contains(manual[id], eventID),
 			IsOver18:        over18[bh],
 		}
+		if score, ok := scores[id]; ok {
+			ap.Score = &score
+		}
 		if byPulje, ok := prefs[bh]; ok {
 			got := byPulje[puljeID][eventID]
 			ap.Level = models.InterestLevelFromScore(int(got))
 		}
 		out = append(out, ap)
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	sort.SliceStable(out, func(i, j int) bool {
+		if si, sj := scoreTotal(out[i].Score), scoreTotal(out[j].Score); si != sj {
+			return si > sj
+		}
+		return out[i].Name < out[j].Name
+	})
 	return out
+}
+
+// scoreTotal orders participants by solver score; a seat without a score sorts last.
+func scoreTotal(score *smodel.ScoreBreakdown) int {
+	if score == nil {
+		return -1
+	}
+	return score.Total
 }
 
 // --- data loading -----------------------------------------------------------
