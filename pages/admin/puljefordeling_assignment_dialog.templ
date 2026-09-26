@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strconv"
 
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
@@ -71,8 +72,9 @@ templ puljeAssignmentPicker(db *sql.DB, logger *slog.Logger) {
 		<p class="pulje-error">Kunne ikke hente billettholdere.</p>
 	} else {
 		{{ candidatesJSON, _ := json.Marshal(candidates) }}
-		<section class="pulje-assignment-picker">
-			<h4>Søk etter billettholder</h4>
+		<section class="pulje-assignment-section pulje-assignment-picker">
+			<h4>Finn billettholder</h4>
+			<p class="pulje-assignment-help">Søk opp en billettholder og velg rollen hen skal ha på arrangementet.</p>
 			<admin-billettholder-search
 				data-billettholdere={ string(candidatesJSON) }
 				data-attr:data-clear-input="$clearInput"
@@ -84,7 +86,8 @@ templ puljeAssignmentPicker(db *sql.DB, logger *slog.Logger) {
 				<button type="button" class="btn btn--secondary" data-show="!$assignmentPickerGmOnly" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeAssignmentAction(models.EventPlayerRolePlayer) }>Tildel som spiller</button>
 			</div>
 			<div class="pulje-assignment-interesse-actions" data-show="!$assignmentPickerGmOnly">
-				<h4>Sett interesse</h4>
+				<h5>Sett interesse</h5>
+				<p class="pulje-assignment-help">Lagrer interessen til valgt billettholder for dette arrangementet, uten å tildele plass.</p>
 				<div>
 					for _, level := range []models.InterestLevel{models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow, models.InterestLevelNone} {
 						<button type="button" class="btn btn--outline" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeInterestAction(level) }>{ puljeInterestLabel(level) }</button>
@@ -221,29 +224,40 @@ func puljeQuickAssignmentAction(billettholderID int) string {
 templ puljeAssignmentInterestRow(candidate puljeAssignmentInterestCandidate) {
 	<li>
 		<button type="button" class={ "pulje-assignment-interest", templ.KV("is-assigned", candidate.IsAssignedInPulje) } data-on:click={ puljeQuickAssignmentAction(candidate.BillettholderID) }>
-			<span class="pulje-assignment-interest-primary">
-				<span>{ candidate.FirstName } { candidate.LastName }</span>
-				<span class="pulje-assignment-interest-icons">
-					if candidate.IsAssignedInPulje {
-						<span class="pulje-assignment-interest-icon is-assigned" data-tippy-content="Allerede tildelt et arrangement i denne puljen" aria-label="Allerede tildelt et arrangement i denne puljen">@icons.Icon(icons.Shield, icons.Size16)</span>
-					}
-					if !candidate.IsOver18 {
-						<span class="pulje-assignment-interest-icon is-under-18" data-tippy-content="Under 18 år" aria-label="Under 18 år">@icons.Icon(icons.EventChildFriendly, icons.Size16)</span>
-					}
-					if candidate.HasPreviousFirstChoice {
-						<span class="pulje-assignment-interest-icon has-first-choice" data-tippy-content="Har fått førstevalget sitt i en tidligere pulje" aria-label="Har fått førstevalget sitt i en tidligere pulje">@icons.Icon(icons.ProgressComplete, icons.Size16)</span>
-					}
-				</span>
-			</span>
+			<span class="pulje-assignment-interest-name">{ candidate.FirstName } { candidate.LastName }</span>
 			<span class="pulje-assignment-interest-ticket">{ candidate.TicketType }</span>
+			<span class="pulje-assignment-chips">
+				if candidate.IsAssignedInPulje {
+					@puljeAssignmentChip("is-assigned", icons.Shield, "Har plass i puljen", "Allerede tildelt et arrangement i denne puljen")
+				}
+				if !candidate.IsOver18 {
+					@puljeAssignmentChip("is-under-18", icons.EventChildFriendly, "Under 18", "Under 18 år")
+				}
+				if candidate.HasPreviousFirstChoice {
+					@puljeAssignmentChip("has-first-choice", icons.ProgressComplete, "Har hatt førstevalg", "Har fått førstevalget sitt i en tidligere pulje")
+				}
+			</span>
 		</button>
 	</li>
+}
+
+// puljeAssignmentChip labels a candidate's status with an icon and a short
+// text, so the icons explain themselves; the tooltip carries the full sentence.
+templ puljeAssignmentChip(class string, icon icons.IconType, label, description string) {
+	<span class={ "pulje-assignment-chip", class } data-tippy-content={ description } aria-label={ description }>
+		@icons.Icon(icon, icons.Size16)
+		<span aria-hidden="true">{ label }</span>
+	</span>
 }
 
 templ puljeAssignmentInterestGroup(level models.InterestLevel, candidates []puljeAssignmentInterestCandidate) {
 	if len(candidates) > 0 {
 		<section class="pulje-assignment-interest-group">
-			<h5>{ level.Emoji() } { level.Label() }</h5>
+			<h5>
+				<span aria-hidden="true">{ level.Emoji() }</span>
+				{ level.Label() }
+				<span class="pulje-assignment-count">{ strconv.Itoa(len(candidates)) }</span>
+			</h5>
 			<ul>
 				for _, candidate := range candidates {
 					@puljeAssignmentInterestRow(candidate)
@@ -255,7 +269,7 @@ templ puljeAssignmentInterestGroup(level models.InterestLevel, candidates []pulj
 
 templ puljeAssignmentInterests(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em puljefordeling.Emulation, emErr error) {
 	{{ interests, err := loadPuljeAssignmentEventInterests(db, pulje, em) }}
-	<section id="puljefordeling-assignment-interests" class="pulje-assignment-interests" data-show="!$assignmentPickerGmOnly">
+	<section id="puljefordeling-assignment-interests" class="pulje-assignment-section pulje-assignment-interests" data-show="!$assignmentPickerGmOnly">
 		<h4>Hurtigtildel fra interesser</h4>
 		if err != nil {
 			{{ logger.Error(err.Error(), "pulje_id", pulje) }}
@@ -266,7 +280,7 @@ templ puljeAssignmentInterests(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			}
 			for _, eventInterests := range interests {
 				<div class="pulje-assignment-event-interests" data-show={ fmt.Sprintf("$assignmentEventId === %q", eventInterests.EventID) }>
-					<p class="pulje-assignment-interest-help">Klikk på en person for å tildele dem som spiller i { eventInterests.EventTitle }.</p>
+					<p class="pulje-assignment-help">Klikk på en person for å tildele hen som spiller i { eventInterests.EventTitle }.</p>
 					@puljeAssignmentInterestGroup(models.InterestLevelHigh, eventInterests.High)
 					@puljeAssignmentInterestGroup(models.InterestLevelMedium, eventInterests.Medium)
 					@puljeAssignmentInterestGroup(models.InterestLevelLow, eventInterests.Low)
@@ -297,85 +311,175 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em 
 					@icons.Icon(icons.Close, icons.Size24)
 				</button>
 			</header>
-			@puljeAssignmentPicker(db, logger)
-			@puljeAssignmentInterests(db, logger, pulje, em, emErr)
+			<div class="pulje-assignment-body">
+				@puljeAssignmentPicker(db, logger)
+				@puljeAssignmentInterests(db, logger, pulje, em, emErr)
+			</div>
 		</dialog>
 	}
 	<style>
 		.puljefordeling-assign-dialog {
-			inline-size: min(42rem, calc(100dvw - 2rem));
-			max-block-size: calc(100dvh - 2rem);
-			overflow: auto;
 			container: pulje-assignment-dialog / inline-size;
+			inline-size: min(42rem, calc(100dvw - 2rem));
+			max-inline-size: none;
+			max-block-size: calc(100dvh - 2rem);
+			padding: 0;
+			border: 1px solid var(--level-3-border);
+			border-radius: var(--border-radius-2x);
+			background-color: var(--level-1-background);
+			box-shadow: var(--shadow-dialog);
+			color: var(--color-text-strong);
 
-			.pulje-assignment-header {
+			&[open] {
 				display: flex;
-				place-content: space-between;
+				flex-direction: column;
+			}
+			&::backdrop {
+				background-color: rgb(0 0 0 / 60%);
+			}
+			h4 {
+				margin: 0;
+				font-size: var(--text-body);
+				font-weight: 700;
+			}
+			h5 {
+				display: flex;
 				place-items: center;
-				gap: var(--spacing-3x);
-				margin-block-end: var(--spacing-3x);
-			}
-
-			.pulje-assignment-picker,
-			.pulje-assignment-interesse-actions,
-			.pulje-assignment-interests,
-			.pulje-assignment-event-interests,
-			.pulje-assignment-interest-group {
-				display: grid;
 				gap: var(--spacing-2x);
+				margin: 0;
+				font-size: var(--text-body-small);
+				font-weight: 600;
 			}
+		}
+		.pulje-assignment-header {
+			display: flex;
+			place-content: center space-between;
+			place-items: center;
+			gap: var(--spacing-3x);
+			padding: var(--spacing-3x) var(--spacing-3x) var(--spacing-3x) var(--spacing-5x);
+			border-block-end: 1px solid var(--level-3-border);
 
-			.pulje-assignment-picker,
-			.pulje-assignment-interests {
-				margin-block-end: var(--spacing-5x);
+			h3 {
+				margin: 0;
+				font-size: 1.25rem;
 			}
+		}
+		.pulje-assignment-body {
+			display: grid;
+			gap: var(--spacing-4x);
+			padding: var(--spacing-4x) var(--spacing-5x) var(--spacing-5x);
+			overflow: auto;
+		}
+		.pulje-assignment-section {
+			display: grid;
+			gap: var(--spacing-3x);
+			padding: var(--spacing-4x);
+			border: 1px solid var(--level-3-border);
+			border-radius: var(--border-radius-2x);
+			background-color: var(--level-2-background);
+		}
+		.pulje-assignment-help {
+			margin: 0;
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+		}
+		.pulje-assignment-actions,
+		.pulje-assignment-interesse-actions > div {
+			display: grid;
+			gap: var(--spacing-2x);
+		}
+		.pulje-assignment-interesse-actions {
+			display: grid;
+			gap: var(--spacing-2x);
+			padding-block-start: var(--spacing-3x);
+			border-block-start: 1px solid var(--level-3-border);
+		}
+		.pulje-assignment-event-interests,
+		.pulje-assignment-interest-group {
+			display: grid;
+			gap: var(--spacing-2x);
+		}
+		.pulje-assignment-event-interests {
+			gap: var(--spacing-4x);
+		}
+		.pulje-assignment-count {
+			padding: 0 var(--spacing-2x);
+			border-radius: 999px;
+			background-color: var(--level-3-background);
+			color: var(--color-text-soft);
+			font-variant-numeric: tabular-nums;
+		}
+		.pulje-assignment-interest-group ul {
+			display: grid;
+			gap: var(--spacing-1x);
+			margin: 0;
+			padding: 0;
+			list-style: none;
+		}
+		.pulje-assignment-interest {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			place-items: center start;
+			gap: var(--spacing-1x) var(--spacing-3x);
+			inline-size: 100%;
+			padding: var(--spacing-2x) var(--spacing-3x);
+			border: 1px solid var(--level-3-border);
+			border-radius: var(--border-radius-1x);
+			background-color: var(--level-3-background);
+			color: var(--color-text-strong);
+			font: inherit;
+			text-align: start;
+			cursor: pointer;
+			transition: border-color 200ms ease;
 
-			.pulje-assignment-interesse-actions,
-			.pulje-assignment-interests {
-				padding-block-start: var(--spacing-4x);
-				border-block-start: 1px solid var(--bg-item-border);
+			&:hover,
+			&:focus-visible {
+				border-color: var(--color-primary);
 			}
+			&.is-assigned .pulje-assignment-interest-name {
+				color: var(--color-text-soft);
+			}
+		}
+		.pulje-assignment-interest-name {
+			font-weight: 600;
+		}
+		.pulje-assignment-interest-ticket {
+			grid-row: 2;
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+		}
+		.pulje-assignment-chips {
+			grid-row: 1 / span 2;
+			grid-column: 2;
+			display: flex;
+			flex-wrap: wrap;
+			place-content: center end;
+			gap: var(--spacing-1x);
+		}
+		.pulje-assignment-chip {
+			--tone: var(--color-text-soft);
 
+			display: inline-flex;
+			place-items: center;
+			gap: var(--spacing-1x);
+			padding: 0 var(--spacing-2x);
+			border-radius: 999px;
+			background-color: color-mix(in srgb, var(--tone) 15%, transparent);
+			color: var(--tone);
+			font-size: var(--text-body-small);
+			white-space: nowrap;
+
+			&.is-under-18 {
+				--tone: var(--color-warning);
+			}
+			&.has-first-choice {
+				--tone: var(--color-success);
+			}
+		}
+		@container pulje-assignment-dialog (width > 500px) {
 			.pulje-assignment-actions,
 			.pulje-assignment-interesse-actions > div {
-				display: grid;
-				gap: var(--spacing-2x);
-			}
-
-			.pulje-assignment-interest-group ul {
-				display: grid;
-				gap: var(--spacing-1x);
-				margin: 0;
-				padding: 0;
-				list-style: none;
-			}
-
-			.pulje-assignment-interest {
-				display: grid;
-				gap: var(--spacing-1x);
-				inline-size: 100%;
-				padding: var(--spacing-2x) var(--spacing-3x);
-				border: 1px solid var(--bg-item-border);
-				border-radius: var(--border-radius-1x);
-				background: var(--bg-item);
-				color: var(--color-text-strong);
-				text-align: start;
-				cursor: pointer;
-			}
-
-			.pulje-assignment-interest:hover { border-color: var(--color-primary); }
-			.pulje-assignment-interest.is-assigned { opacity: 0.7; }
-			.pulje-assignment-interest-primary { display: flex; gap: var(--spacing-2x); place-content: space-between; font-weight: 700; }
-			.pulje-assignment-interest-icons { display: inline-flex; gap: var(--spacing-1x); }
-			.pulje-assignment-interest-icon.is-under-18 { color: var(--color-warning); }
-			.pulje-assignment-interest-icon.has-first-choice { color: var(--color-success); }
-			.pulje-assignment-interest-ticket, .pulje-assignment-interest-help { color: var(--color-text-soft); font-size: var(--text-body-small); }
-		}
-
-		@container pulje-assignment-dialog (width > 500px) {
-			.puljefordeling-assign-dialog {
-				.pulje-assignment-actions { grid-template-columns: repeat(2, 1fr); }
-				.pulje-assignment-interesse-actions > div { grid-template-columns: repeat(2, 1fr); }
+				grid-template-columns: repeat(2, 1fr);
 			}
 		}
 	</style>
