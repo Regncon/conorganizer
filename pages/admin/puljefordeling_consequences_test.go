@@ -13,9 +13,9 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-// seedKonsekvensRoute: placing Xander on Bravo pushes Yngve from Bravo (his
+// seedConsequenceRoute: placing Xander on Bravo pushes Yngve from Bravo (his
 // førstevalg) to Charlie, and Zara from Charlie to no seat.
-func seedKonsekvensRoute(t *testing.T) (*sql.DB, http.Handler) {
+func seedConsequenceRoute(t *testing.T) (*sql.DB, http.Handler) {
 	t.Helper()
 	db, _ := testutil.CreateTestDBAndLogger(t, t.Name())
 	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
@@ -44,7 +44,7 @@ func TestPuljefordelingAssignPreview_AsksWithConsequencesBeforeSaving(t *testing
 
 	// Given
 	expectedParts := []string{"Er du sikker?", "For Xander Xu", "Yngve Yri", "Bravo", "Charlie", "Får ikke førstevalg i denne puljen", "Zara Zahl", "Uten plass"}
-	db, router := seedKonsekvensRoute(t)
+	db, router := seedConsequenceRoute(t)
 
 	// When
 	preview := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/assign/preview", 1, "evB", "FredagKveld", `,"assignmentRole":"Player","assignmentFromAddMenu":true`)
@@ -80,7 +80,7 @@ func TestPuljefordelingRemovePreview_AsksWithConsequencesBeforeRemoving(t *testi
 
 	// Given
 	expectedParts := []string{"Er du sikker?", "Fjern den manuelle plassen på «Bravo»", "Yngve Yri", "Zara Zahl", "@delete(&#34;/admin/api/puljefordeling/FredagKveld/evB/1&#34;)"}
-	db, router := seedKonsekvensRoute(t)
+	db, router := seedConsequenceRoute(t)
 	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source) VALUES ('evB', 'FredagKveld', 1, 'Player', 'manual')`)
 
 	// When
@@ -100,7 +100,7 @@ func TestPuljefordelingRemovePreview_AsksWithConsequencesBeforeRemoving(t *testi
 	}
 }
 
-func TestPuljeKonsekvenser_DescribesSeatChangesNeutrally(t *testing.T) {
+func TestPuljeConsequences_DescribesSeatChangesNeutrally(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en endring som flytter én deltaker og tar plassen fra en annen.",
 		When:  "Når konsekvensene rendres.",
@@ -108,18 +108,18 @@ func TestPuljeKonsekvenser_DescribesSeatChangesNeutrally(t *testing.T) {
 	})
 
 	// Given
-	konsekvenser := puljefordeling.Konsekvenser{PuljeNavn: "Fredag Kveld", Endringer: []puljefordeling.Konsekvens{
+	consequences := puljefordeling.Consequences{PuljeName: "Fredag Kveld", Changes: []puljefordeling.Consequence{
 		{Name: "Yngve Yri",
-			Fra: puljefordeling.Plass{EventID: "evB", EventTitle: "Bravo", Level: models.InterestLevelHigh, Forstevalg: true},
-			Til: puljefordeling.Plass{EventID: "evC", EventTitle: "Charlie", Level: models.InterestLevelMedium}},
-		{Name: "Zara Zahl", Fra: puljefordeling.Plass{EventID: "evC", EventTitle: "Charlie", Level: models.InterestLevelLow}},
+			From: puljefordeling.Seat{EventID: "evB", EventTitle: "Bravo", Level: models.InterestLevelHigh, Forstevalg: true},
+			To:   puljefordeling.Seat{EventID: "evC", EventTitle: "Charlie", Level: models.InterestLevelMedium}},
+		{Name: "Zara Zahl", From: puljefordeling.Seat{EventID: "evC", EventTitle: "Charlie", Level: models.InterestLevelLow}},
 	}}
 
 	// When
-	doc := templtest.Render(t, puljeKonsekvenser(konsekvenser))
+	doc := templtest.Render(t, puljeConsequences(consequences))
 
 	// Then
-	rows := templtest.CollectTexts(doc, ".tildeling-konsekvens")
+	rows := templtest.CollectTexts(doc, ".tildeling-consequence")
 	if len(rows) != 2 {
 		t.Fatalf("expected two changes, got %v", rows)
 	}
@@ -131,12 +131,12 @@ func TestPuljeKonsekvenser_DescribesSeatChangesNeutrally(t *testing.T) {
 	if !strings.Contains(rows[1], "Uten plass") {
 		t.Errorf("expected Zara to end up without a seat, got %q", rows[1])
 	}
-	if empty := templtest.Render(t, puljeKonsekvenser(puljefordeling.Konsekvenser{PuljeNavn: "Fredag Kveld"})); !strings.Contains(empty.Text(), "Ingen andre deltakere får endret plass.") {
+	if empty := templtest.Render(t, puljeConsequences(puljefordeling.Consequences{PuljeName: "Fredag Kveld"})); !strings.Contains(empty.Text(), "Ingen andre deltakere får endret plass.") {
 		t.Error("expected a note when nobody else changes seats")
 	}
 }
 
-func TestPuljeEgenKonsekvens_ShowsTheMovedPlayersOwnChange(t *testing.T) {
+func TestPuljeOwnConsequence_ShowsTheMovedPlayersOwnChange(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at Xander flyttes fra Charlie til Bravo, der han får førstevalget sitt.",
 		When:  "Når hans egen konsekvens rendres.",
@@ -145,13 +145,13 @@ func TestPuljeEgenKonsekvens_ShowsTheMovedPlayersOwnChange(t *testing.T) {
 
 	// Given
 	expectedParts := []string{"For Xander Xu", "😁 Charlie", "🤩 Bravo", "Får førstevalg i denne puljen"}
-	konsekvenser := puljefordeling.Konsekvenser{PuljeNavn: "Fredag Kveld", Egen: puljefordeling.Konsekvens{
-		Fra: puljefordeling.Plass{EventID: "evC", EventTitle: "Charlie", Level: models.InterestLevelMedium},
-		Til: puljefordeling.Plass{EventID: "evB", EventTitle: "Bravo", Level: models.InterestLevelHigh, Forstevalg: true},
+	consequences := puljefordeling.Consequences{PuljeName: "Fredag Kveld", Own: puljefordeling.Consequence{
+		From: puljefordeling.Seat{EventID: "evC", EventTitle: "Charlie", Level: models.InterestLevelMedium},
+		To:   puljefordeling.Seat{EventID: "evB", EventTitle: "Bravo", Level: models.InterestLevelHigh, Forstevalg: true},
 	}}
 
 	// When
-	doc := templtest.Render(t, puljeEgenKonsekvens(konsekvenser, "Xander Xu"))
+	doc := templtest.Render(t, puljeOwnConsequence(consequences, "Xander Xu"))
 
 	// Then
 	text := doc.Text()

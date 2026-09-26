@@ -50,22 +50,22 @@ type Tildelingsvarsel struct {
 	Bekreftelse       string
 	Handling          string
 	KanBekrefte       bool
-	Konsekvenser      *Konsekvenser // set by ForhandsvisTildeling
+	Consequences      *Consequences // set by PreviewAssignment
 }
 
 func TildelBillettholder(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, error) {
-	return tildel(db, valg, false)
+	return assign(db, valg, false)
 }
 
-// ForhandsvisTildeling runs the same checks as TildelBillettholder but never
+// PreviewAssignment runs the same checks as TildelBillettholder but never
 // saves. It always returns a confirmable warning (unless the change is a no-op)
 // with the consequences for others in the pulje; confirming it means calling
 // TildelBillettholder with its Bekreftelse.
-func ForhandsvisTildeling(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, error) {
-	return tildel(db, valg, true)
+func PreviewAssignment(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, error) {
+	return assign(db, valg, true)
 }
 
-func tildel(db *sql.DB, valg Tildelingsvalg, forhandsvis bool) (*Tildelingsvarsel, error) {
+func assign(db *sql.DB, valg Tildelingsvalg, preview bool) (*Tildelingsvarsel, error) {
 	if err := validerTildelingsvalg(valg); err != nil {
 		return nil, err
 	}
@@ -96,15 +96,15 @@ func tildel(db *sql.DB, valg Tildelingsvalg, forhandsvis bool) (*Tildelingsvarse
 			}
 		}
 	}
-	if forhandsvis {
-		varsel := byggTildelingsvarsel(valg, grunnlag)
-		konsekvenser, err := forhandsvisKonsekvenser(tx, valg.PuljeID, valg.BillettholderID, func(tx *sql.Tx) error {
+	if preview {
+		varsel := buildTildelingsvarsel(valg, grunnlag)
+		consequences, err := previewConsequences(tx, valg.PuljeID, valg.BillettholderID, func(tx *sql.Tx) error {
 			return lagreTildeling(tx, valg)
 		})
 		if err != nil {
 			return nil, err
 		}
-		varsel.Konsekvenser = &konsekvenser
+		varsel.Consequences = &consequences
 		return varsel, nil
 	}
 	if varsel := lagTildelingsvarsel(valg, grunnlag); varsel != nil {
@@ -186,7 +186,7 @@ func FjernTildeling(db *sql.DB, pulje models.Pulje, eventID string, billettholde
 	if _, err := hentTildelingsgrunnlag(tx, valg); err != nil {
 		return err
 	}
-	if err := slettTildeling(tx, pulje, eventID, billettholderID, role); err != nil {
+	if err := deleteAssignment(tx, pulje, eventID, billettholderID, role); err != nil {
 		return err
 	}
 	if err := tx.Commit(); err != nil {
@@ -195,7 +195,7 @@ func FjernTildeling(db *sql.DB, pulje models.Pulje, eventID string, billettholde
 	return nil
 }
 
-func slettTildeling(tx *sql.Tx, pulje models.Pulje, eventID string, billettholderID int, role models.EventPlayerRole) error {
+func deleteAssignment(tx *sql.Tx, pulje models.Pulje, eventID string, billettholderID int, role models.EventPlayerRole) error {
 	result, err := tx.Exec(
 		`DELETE FROM relation_events_players WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ? AND role = ?`,
 		eventID, pulje, billettholderID, role,
@@ -358,16 +358,16 @@ func validerTildelingsvalg(valg Tildelingsvalg) error {
 // lagTildelingsvarsel returns the warning the admin must confirm, or nil when
 // the assignment can be saved as it is.
 func lagTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tildelingsvarsel {
-	varsel := byggTildelingsvarsel(valg, grunnlag)
+	varsel := buildTildelingsvarsel(valg, grunnlag)
 	if !tildelingerKreverBekreftelse(valg, grunnlag.tildelinger) && varsel.Aldersvarsel == "" && varsel.Kapasitetsvarsel == "" && (valg.Bekreftelse == "" || valg.Bekreftelse == varsel.Bekreftelse) {
 		return nil
 	}
 	return varsel
 }
 
-// byggTildelingsvarsel describes the assignment, its warnings and the token
+// buildTildelingsvarsel describes the assignment, its warnings and the token
 // that confirms exactly this assignment.
-func byggTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tildelingsvarsel {
+func buildTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tildelingsvarsel {
 	bekreftelse := tildelingsbekreftelse(valg, grunnlag)
 	harGM := false
 	for _, tildeling := range grunnlag.tildelinger {

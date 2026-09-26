@@ -102,9 +102,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 	// Add a manual pin (+). Force-pins the chosen billettholder into the event
 	// without touching their interests; removing the pin reverts them to emulation.
 	router.Post("/api/puljefordeling/assign", puljeTildelingsHandler(db, liveManager, logger))
-	router.Post("/api/puljefordeling/assign/preview", puljeForhandsvisningsHandler(db, logger))
-	router.Post("/api/puljefordeling/{pulje}/{event}/{billettholderId}/preview", puljeFjerningsforhandsvisningHandler(db, logger, models.EventPlayerRolePlayer))
-	router.Post("/api/puljefordeling/{pulje}/{event}/{billettholderId}/gm/preview", puljeFjerningsforhandsvisningHandler(db, logger, models.EventPlayerRoleGM))
+	router.Post("/api/puljefordeling/assign/preview", puljeAssignPreviewHandler(db, logger))
+	router.Post("/api/puljefordeling/{pulje}/{event}/{billettholderId}/preview", puljeRemovalPreviewHandler(db, logger, models.EventPlayerRolePlayer))
+	router.Post("/api/puljefordeling/{pulje}/{event}/{billettholderId}/gm/preview", puljeRemovalPreviewHandler(db, logger, models.EventPlayerRoleGM))
 	router.Put("/api/puljefordeling/interest", puljeInteresseHandler(db, liveManager, logger))
 
 	router.Delete("/api/puljefordeling/{pulje}/{event}/{billettholderId}/gm", func(w http.ResponseWriter, r *http.Request) {

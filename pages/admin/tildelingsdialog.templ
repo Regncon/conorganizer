@@ -97,7 +97,7 @@ templ puljeTildelingsDialog() {
 				font-size: 1.25rem;
 			}
 		}
-		.tildeling-handling {
+		.tildeling-summary {
 			display: grid;
 			gap: var(--spacing-1x);
 
@@ -141,22 +141,22 @@ templ puljeTildelingsDialog() {
 				font-size: var(--text-body-small);
 			}
 		}
-		.tildeling-konsekvens {
+		.tildeling-consequence {
 			grid-template-columns: minmax(0, 1fr) auto;
 			place-items: center start;
 
-			.tildeling-konsekvens-flytt {
+			.tildeling-consequence-move {
 				display: inline-flex;
 				flex-wrap: wrap;
 				place-items: center;
 				gap: var(--spacing-1x) var(--spacing-2x);
 				color: var(--color-text-strong);
 			}
-			.tildeling-konsekvens-notat {
+			.tildeling-consequence-note {
 				grid-column: 1 / -1;
 			}
 		}
-		.tildeling-konsekvens-navn {
+		.tildeling-consequence-name {
 			color: var(--color-text-strong);
 			font-weight: 600;
 		}
@@ -181,8 +181,8 @@ templ puljeTildelingsDialog() {
 
 templ puljeTildelingsDialogInnhold(varsel puljefordeling.Tildelingsvarsel, valg puljefordeling.Tildelingsvalg) {
 	<div id="tildeling-dialog-innhold">
-		@puljeTildelingsHeader()
-		<p class="tildeling-handling">
+		@puljeConfirmHeader()
+		<p class="tildeling-summary">
 			<strong>{ varsel.Handling }</strong>
 			<span>{ varsel.BillettholderNavn } · { varsel.PuljeNavn }</span>
 		</p>
@@ -225,9 +225,9 @@ templ puljeTildelingsDialogInnhold(varsel puljefordeling.Tildelingsvarsel, valg 
 		if varsel.Kapasitetsvarsel != "" {
 			<p class="tildeling-capacity-warning">{ varsel.Kapasitetsvarsel }</p>
 		}
-		if varsel.Konsekvenser != nil {
-			@puljeEgenKonsekvens(*varsel.Konsekvenser, varsel.BillettholderNavn)
-			@puljeKonsekvenser(*varsel.Konsekvenser)
+		if varsel.Consequences != nil {
+			@puljeOwnConsequence(*varsel.Consequences, varsel.BillettholderNavn)
+			@puljeConsequences(*varsel.Consequences)
 		}
 		<div class="tildeling-actions">
 			<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Avbryt</button>
@@ -240,36 +240,36 @@ templ puljeTildelingsDialogInnhold(varsel puljefordeling.Tildelingsvarsel, valg 
 	</div>
 }
 
-// puljeFjerningsDialogInnhold asks the admin to confirm removing a manual
+// puljeRemovalDialogContent asks the admin to confirm removing a manual
 // Player seat or a GM, with the consequences for others in the pulje.
-templ puljeFjerningsDialogInnhold(varsel puljefordeling.Fjerningsvarsel, fjerningsURL string) {
-	{{ handling := fjerningshandling(varsel) }}
+templ puljeRemovalDialogContent(preview puljefordeling.RemovalPreview, removalURL string) {
+	{{ action := removalAction(preview) }}
 	<div id="tildeling-dialog-innhold">
-		@puljeTildelingsHeader()
-		<p class="tildeling-handling">
-			<strong>{ handling }</strong>
-			<span>{ varsel.BillettholderNavn } · { varsel.Konsekvenser.PuljeNavn }</span>
+		@puljeConfirmHeader()
+		<p class="tildeling-summary">
+			<strong>{ action }</strong>
+			<span>{ preview.BillettholderName } · { preview.Consequences.PuljeName }</span>
 		</p>
-		if varsel.Role == models.EventPlayerRolePlayer {
-			<p class="tildeling-note">Interessene til { varsel.BillettholderNavn } beholdes, så fordelingen kan fortsatt gi hen en plass.</p>
+		if preview.Role == models.EventPlayerRolePlayer {
+			<p class="tildeling-note">Interessene til { preview.BillettholderName } beholdes, så fordelingen kan fortsatt gi hen en plass.</p>
 		}
-		@puljeEgenKonsekvens(varsel.Konsekvenser, varsel.BillettholderNavn)
-		@puljeKonsekvenser(varsel.Konsekvenser)
+		@puljeOwnConsequence(preview.Consequences, preview.BillettholderName)
+		@puljeConsequences(preview.Consequences)
 		<div class="tildeling-actions">
 			<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Avbryt</button>
-			<button type="button" class="btn btn--primary" data-on:click={ fmt.Sprintf("$tildelingOpen = false; @delete(%q)", fjerningsURL) }>{ handling }</button>
+			<button type="button" class="btn btn--primary" data-on:click={ fmt.Sprintf("$tildelingOpen = false; @delete(%q)", removalURL) }>{ action }</button>
 		</div>
 	</div>
 }
 
-func fjerningshandling(varsel puljefordeling.Fjerningsvarsel) string {
-	if varsel.Role == models.EventPlayerRoleGM {
-		return fmt.Sprintf("Fjern som spilleder på «%s»", varsel.EventTitle)
+func removalAction(preview puljefordeling.RemovalPreview) string {
+	if preview.Role == models.EventPlayerRoleGM {
+		return fmt.Sprintf("Fjern som spilleder på «%s»", preview.EventTitle)
 	}
-	return fmt.Sprintf("Fjern den manuelle plassen på «%s»", varsel.EventTitle)
+	return fmt.Sprintf("Fjern den manuelle plassen på «%s»", preview.EventTitle)
 }
 
-templ puljeTildelingsHeader() {
+templ puljeConfirmHeader() {
 	<header class="tildeling-header">
 		<h2 id="tildeling-dialog-title">Er du sikker?</h2>
 		<button type="button" class="btn btn--ghost btn-icon-only" aria-label="Lukk" data-on:click="$tildelingOpen = false">
@@ -278,77 +278,77 @@ templ puljeTildelingsHeader() {
 	</header>
 }
 
-// puljeKonsekvenser lists, neutrally, who else in the pulje would get a
+// puljeConsequences lists, neutrally, who else in the pulje would get a
 // different seat.
-templ puljeKonsekvenser(konsekvenser puljefordeling.Konsekvenser) {
-	<section class="tildeling-section tildeling-konsekvenser">
-		<h3>Endringer for andre i { konsekvenser.PuljeNavn }</h3>
-		if len(konsekvenser.Endringer) == 0 {
+templ puljeConsequences(consequences puljefordeling.Consequences) {
+	<section class="tildeling-section tildeling-consequences">
+		<h3>Endringer for andre i { consequences.PuljeName }</h3>
+		if len(consequences.Changes) == 0 {
 			<p class="tildeling-note">Ingen andre deltakere får endret plass.</p>
 		} else {
 			<ul class="tildeling-list">
-				for _, endring := range konsekvenser.Endringer {
-					@puljeKonsekvensRad(endring)
+				for _, change := range consequences.Changes {
+					@puljeConsequenceRow(change)
 				}
 			</ul>
 		}
 	</section>
 }
 
-// puljeEgenKonsekvens shows what the change does to the billettholder being
+// puljeOwnConsequence shows what the change does to the billettholder being
 // placed, moved or removed, in the same format as everyone else.
-templ puljeEgenKonsekvens(konsekvenser puljefordeling.Konsekvenser, navn string) {
-	<section class="tildeling-section tildeling-egen-konsekvens">
-		<h3>{ "For " + navn }</h3>
+templ puljeOwnConsequence(consequences puljefordeling.Consequences, name string) {
+	<section class="tildeling-section tildeling-own-consequence">
+		<h3>{ "For " + name }</h3>
 		<ul class="tildeling-list">
-			if konsekvenser.Egen.Fra == konsekvenser.Egen.Til {
-				<li class="tildeling-konsekvens">
-					<span class="tildeling-konsekvens-navn">{ navn }</span>
-					<span class="tildeling-konsekvens-flytt">
+			if consequences.Own.From == consequences.Own.To {
+				<li class="tildeling-consequence">
+					<span class="tildeling-consequence-name">{ name }</span>
+					<span class="tildeling-consequence-move">
 						<span>Beholder plassen:</span>
-						@puljeKonsekvensPlass(konsekvenser.Egen.Til)
+						@puljeConsequenceSeat(consequences.Own.To)
 					</span>
 				</li>
 			} else {
-				{{ egen := konsekvenser.Egen }}
-				{{ egen.Name = navn }}
-				@puljeKonsekvensRad(egen)
+				{{ own := consequences.Own }}
+				{{ own.Name = name }}
+				@puljeConsequenceRow(own)
 			}
 		</ul>
 	</section>
 }
 
-templ puljeKonsekvensRad(endring puljefordeling.Konsekvens) {
-	<li class="tildeling-konsekvens">
-		<span class="tildeling-konsekvens-navn">{ endring.Name }</span>
-		<span class="tildeling-konsekvens-flytt">
-			@puljeKonsekvensPlass(endring.Fra)
+templ puljeConsequenceRow(change puljefordeling.Consequence) {
+	<li class="tildeling-consequence">
+		<span class="tildeling-consequence-name">{ change.Name }</span>
+		<span class="tildeling-consequence-move">
+			@puljeConsequenceSeat(change.From)
 			<span aria-label="til">→</span>
-			@puljeKonsekvensPlass(endring.Til)
+			@puljeConsequenceSeat(change.To)
 		</span>
-		if notat := forstevalgsnotat(endring); notat != "" {
-			<span class="tildeling-konsekvens-notat">{ notat }</span>
+		if note := forstevalgNote(change); note != "" {
+			<span class="tildeling-consequence-note">{ note }</span>
 		}
 	</li>
 }
 
-templ puljeKonsekvensPlass(plass puljefordeling.Plass) {
+templ puljeConsequenceSeat(seat puljefordeling.Seat) {
 	switch {
-		case plass.EventID == "":
+		case seat.EventID == "":
 			<em>Uten plass</em>
-		case plass.IsGM:
-			<span>{ "Spilleder på " + plass.EventTitle }</span>
+		case seat.IsGM:
+			<span>{ "Spilleder på " + seat.EventTitle }</span>
 		default:
-			<span title={ plass.Level.Label() }>{ plass.Level.Emoji() + " " + plass.EventTitle }</span>
+			<span title={ seat.Level.Label() }>{ seat.Level.Emoji() + " " + seat.EventTitle }</span>
 	}
 }
 
-// forstevalgsnotat states a change in førstevalg for this pulje, if any.
-func forstevalgsnotat(endring puljefordeling.Konsekvens) string {
+// forstevalgNote states a change in førstevalg for this pulje, if any.
+func forstevalgNote(change puljefordeling.Consequence) string {
 	switch {
-	case endring.Fra.Forstevalg && !endring.Til.Forstevalg:
+	case change.From.Forstevalg && !change.To.Forstevalg:
 		return "Får ikke førstevalg i denne puljen"
-	case !endring.Fra.Forstevalg && endring.Til.Forstevalg:
+	case !change.From.Forstevalg && change.To.Forstevalg:
 		return "Får førstevalg i denne puljen"
 	default:
 		return ""

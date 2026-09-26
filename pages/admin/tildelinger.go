@@ -31,57 +31,57 @@ type puljeTildelingssignaler struct {
 	LukkDialog      bool                   `json:"assignmentCloseDialog"`
 }
 
-// lesTildelingssignaler reads the assignment signals shared by the preview and
+// readAssignmentSignals reads the assignment signals shared by the preview and
 // the assign endpoints.
-func lesTildelingssignaler(w http.ResponseWriter, r *http.Request) (puljeTildelingssignaler, puljefordeling.Tildelingsvalg, bool) {
-	var signaler puljeTildelingssignaler
-	if err := datastar.ReadSignals(r, &signaler); err != nil {
+func readAssignmentSignals(w http.ResponseWriter, r *http.Request) (puljeTildelingssignaler, puljefordeling.Tildelingsvalg, bool) {
+	var signals puljeTildelingssignaler
+	if err := datastar.ReadSignals(r, &signals); err != nil {
 		http.Error(w, "Ugyldige tildelingsdata", http.StatusBadRequest)
-		return signaler, puljefordeling.Tildelingsvalg{}, false
+		return signals, puljefordeling.Tildelingsvalg{}, false
 	}
-	pulje, ok := models.ParsePulje(signaler.PuljeID)
+	pulje, ok := models.ParsePulje(signals.PuljeID)
 	if !ok {
 		http.Error(w, "Ugyldig pulje", http.StatusBadRequest)
-		return signaler, puljefordeling.Tildelingsvalg{}, false
+		return signals, puljefordeling.Tildelingsvalg{}, false
 	}
-	role := signaler.Role
+	role := signals.Role
 	if role == "" {
 		role = models.EventPlayerRolePlayer
 	}
-	return signaler, puljefordeling.Tildelingsvalg{
-		PuljeID: pulje, EventID: signaler.EventID, BillettholderID: signaler.BillettholderID,
-		Role: role, FraLeggTil: signaler.FraLeggTil,
-		Bekreftelse: signaler.Bekreftelse, AlderBekreftet: signaler.AlderBekreftet,
-		FraEventID: signaler.FraEventID, FraManuellPlass: signaler.FraManuellPlass,
+	return signals, puljefordeling.Tildelingsvalg{
+		PuljeID: pulje, EventID: signals.EventID, BillettholderID: signals.BillettholderID,
+		Role: role, FraLeggTil: signals.FraLeggTil,
+		Bekreftelse: signals.Bekreftelse, AlderBekreftet: signals.AlderBekreftet,
+		FraEventID: signals.FraEventID, FraManuellPlass: signals.FraManuellPlass,
 	}, true
 }
 
-// puljeForhandsvisningsHandler opens the "Er du sikker?" dialog for a manual
+// puljeAssignPreviewHandler opens the "Er du sikker?" dialog for a manual
 // assignment, listing who else in the pulje would change seats. Nothing is saved.
-func puljeForhandsvisningsHandler(db *sql.DB, logger *slog.Logger) http.HandlerFunc {
+func puljeAssignPreviewHandler(db *sql.DB, logger *slog.Logger) http.HandlerFunc {
 	logger = logger.With("component", "admin_tildelinger")
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, valg, ok := lesTildelingssignaler(w, r)
+		_, assignment, ok := readAssignmentSignals(w, r)
 		if !ok {
 			return
 		}
-		valg.Bekreftelse = ""
-		varsel, err := puljefordeling.ForhandsvisTildeling(db, valg)
+		assignment.Bekreftelse = ""
+		warning, err := puljefordeling.PreviewAssignment(db, assignment)
 		if err != nil {
 			tildelingsfeil(w, logger, err)
 			return
 		}
-		if varsel == nil {
+		if warning == nil {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-		sendTildelingsdialog(w, r, logger, puljeTildelingsDialogInnhold(*varsel, valg))
+		sendAssignmentDialog(w, r, logger, puljeTildelingsDialogInnhold(*warning, assignment))
 	}
 }
 
-// puljeFjerningsforhandsvisningHandler opens the "Er du sikker?" dialog for
+// puljeRemovalPreviewHandler opens the "Er du sikker?" dialog for
 // removing a manual Player seat or a GM, listing who else would change seats.
-func puljeFjerningsforhandsvisningHandler(db *sql.DB, logger *slog.Logger, role models.EventPlayerRole) http.HandlerFunc {
+func puljeRemovalPreviewHandler(db *sql.DB, logger *slog.Logger, role models.EventPlayerRole) http.HandlerFunc {
 	logger = logger.With("component", "admin_tildelinger")
 	return func(w http.ResponseWriter, r *http.Request) {
 		pulje, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
@@ -95,17 +95,17 @@ func puljeFjerningsforhandsvisningHandler(db *sql.DB, logger *slog.Logger, role 
 			return
 		}
 		eventID := chi.URLParam(r, "event")
-		varsel, err := puljefordeling.ForhandsvisFjerning(db, pulje, eventID, billettholderID, role)
+		preview, err := puljefordeling.PreviewRemoval(db, pulje, eventID, billettholderID, role)
 		if err != nil {
 			tildelingsfeil(w, logger, err)
 			return
 		}
-		sendTildelingsdialog(w, r, logger, puljeFjerningsDialogInnhold(varsel, puljeFjerningsURL(pulje, eventID, billettholderID, role)))
+		sendAssignmentDialog(w, r, logger, puljeRemovalDialogContent(preview, puljeRemovalURL(pulje, eventID, billettholderID, role)))
 	}
 }
 
-// puljeFjerningsURL is the endpoint that removes the seat or GM once confirmed.
-func puljeFjerningsURL(pulje models.Pulje, eventID string, billettholderID int, role models.EventPlayerRole) string {
+// puljeRemovalURL is the endpoint that removes the seat or GM once confirmed.
+func puljeRemovalURL(pulje models.Pulje, eventID string, billettholderID int, role models.EventPlayerRole) string {
 	url := fmt.Sprintf("/admin/api/puljefordeling/%s/%s/%d", pulje, eventID, billettholderID)
 	if role == models.EventPlayerRoleGM {
 		url += "/gm"
@@ -113,9 +113,9 @@ func puljeFjerningsURL(pulje models.Pulje, eventID string, billettholderID int, 
 	return url
 }
 
-func sendTildelingsdialog(w http.ResponseWriter, r *http.Request, logger *slog.Logger, innhold templ.Component) {
+func sendAssignmentDialog(w http.ResponseWriter, r *http.Request, logger *slog.Logger, content templ.Component) {
 	sse := datastar.NewSSE(w, r)
-	if err := sse.PatchElementTempl(innhold); err != nil {
+	if err := sse.PatchElementTempl(content); err != nil {
 		logger.Error(err.Error())
 		return
 	}
@@ -127,7 +127,7 @@ func sendTildelingsdialog(w http.ResponseWriter, r *http.Request, logger *slog.L
 func puljeTildelingsHandler(db *sql.DB, liveManager *live.Manager, logger *slog.Logger) http.HandlerFunc {
 	logger = logger.With("component", "admin_tildelinger")
 	return func(w http.ResponseWriter, r *http.Request) {
-		signaler, valg, ok := lesTildelingssignaler(w, r)
+		signaler, valg, ok := readAssignmentSignals(w, r)
 		if !ok {
 			return
 		}
