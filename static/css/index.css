@@ -10,10 +10,9 @@
     /* primary colors */
     --color-primary-text: var(--color-text-soft);
     --color-primary: #e7a965;
-    --color-primary-hover: #e7a96566;
-    --color-primary-focus-visible: #feb56780;
-    --color-primary-active: #feb56799;
-    --color-primary-strong: #e7a965;
+    --color-primary-hover: hsl(from var(--color-primary) h s l / 40%);
+    --color-primary-active: hsl(from var(--color-primary) h s l / 60%);
+    --color-primary-focus-visible: hsl(from var(--color-primary) h s l / 50%);
     
     /* Deprecated variable, use color-primary instead */
 
