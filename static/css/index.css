@@ -22,7 +22,6 @@
         var(--level-2-state-base);
 
     /* Deprecated variable, use color-primary instead */
-    --color-secondary-hover: #ccd1e91a;
     --color-secondary-focus-visible: #ccd1e980;
     --color-secondary-active: #ccd1e933;
     --color-accent-blue: #8eadee;
