@@ -8,7 +8,9 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
+	"unicode"
 
 	"github.com/Regncon/conorganizer/components/redirect"
 	"github.com/Regncon/conorganizer/layouts"
@@ -23,6 +25,44 @@ import (
 type sessionRequest struct {
 	SessionJWT string `json:"sessionJwt"`
 	RefreshJWT string `json:"refreshJwt"`
+}
+
+// nesteQueryParam is the query parameter carrying where login should return
+// the user to. "Neste" is Norwegian for "next".
+const nesteQueryParam = "neste"
+
+// safeReturnPath validates a "neste" return target from a query parameter.
+// Only a safe, same-site relative path is accepted; anything else (an empty
+// value, a scheme-relative "//host" path, a backslash-escaped path, a path
+// containing control characters or whitespace, or an absolute URL) falls
+// back to "/" so login can never be used to redirect a user off-site.
+func safeReturnPath(raw string) string {
+	// Browsers strip tab, CR and LF from URLs and treat "\" as "/", so
+	// "/\t/evil.com" or "/\\evil.com" would become "//evil.com". Reject any
+	// control character or whitespace outright, then check the path with
+	// backslashes normalised to slashes.
+	if strings.ContainsFunc(raw, func(r rune) bool { return unicode.IsControl(r) || unicode.IsSpace(r) }) {
+		return "/"
+	}
+	normalised := strings.ReplaceAll(raw, `\`, "/")
+	if !strings.HasPrefix(normalised, "/") || strings.HasPrefix(normalised, "//") {
+		return "/"
+	}
+	parsed, err := url.Parse(normalised)
+	if err != nil || parsed.Scheme != "" || parsed.Host != "" {
+		return "/"
+	}
+	return raw
+}
+
+// authPathWithNeste builds the "/auth" path to retry login while keeping the
+// return target, so a failed post-login sync does not lose where the user
+// was headed.
+func authPathWithNeste(neste string) string {
+	if neste == "" || neste == "/" {
+		return "/auth"
+	}
+	return "/auth?" + nesteQueryParam + "=" + url.QueryEscape(neste)
 }
 
 func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, logger *slog.Logger, sessionValidator authctx.SessionValidator) error {
@@ -103,6 +143,7 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
 			userToken, _ := authctx.GetUserTokenFromContext(r.Context())
+			neste := safeReturnPath(r.URL.Query().Get(nesteQueryParam))
 
 			if userToken != nil {
 				if err := layouts.Base(
@@ -110,7 +151,7 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 					userctx.GetUserRequestInfo(ctx),
 					db,
 					logger,
-					alreadyLogedIn(),
+					alreadyLogedIn(neste),
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render already loged in page: %w", err).Error())
 				}
@@ -120,7 +161,7 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 					userctx.GetUserRequestInfo(ctx),
 					db,
 					logger,
-					loginForm(),
+					loginForm(neste),
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render login page: %w", err).Error())
 				}
@@ -161,9 +202,10 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 			protectedRoute.Get("/post-login", func(w http.ResponseWriter, r *http.Request) {
 				isAdmin := authctx.GetAdminFromUserToken(r.Context())
 				userToken, userTokenErr := authctx.GetUserTokenFromContext(r.Context())
+				neste := safeReturnPath(r.URL.Query().Get(nesteQueryParam))
 				if userTokenErr != nil {
 					logger.Error(fmt.Errorf("failed to get user token from context: %w", userTokenErr).Error())
-					http.Redirect(w, r, "/auth", http.StatusSeeOther)
+					http.Redirect(w, r, authPathWithNeste(neste), http.StatusSeeOther)
 					return
 				}
 
@@ -173,11 +215,11 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 				if emailOk && email != "" && userID != "" {
 					if err := syncPostLoginUser(db, userID, email, isAdmin, logger); err != nil {
 						logger.Error(fmt.Errorf("failed to sync post-login user %q: %w", userID, err).Error())
-						http.Redirect(w, r, "/auth", http.StatusSeeOther)
+						http.Redirect(w, r, authPathWithNeste(neste), http.StatusSeeOther)
 						return
 					}
 				}
-				http.Redirect(w, r, "/", http.StatusSeeOther)
+				http.Redirect(w, r, neste, http.StatusSeeOther)
 			})
 
 		})

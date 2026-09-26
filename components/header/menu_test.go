@@ -41,6 +41,7 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	expectedHrefs := []string{
 		"/",
 		"/profile",
+		"/tilbakemelding",
 		"/auth/logout",
 		"https://www.regncon.no/vanlege-sporsmal/",
 	}
@@ -61,6 +62,58 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	}
 }
 
+func TestMenu_LoggedInUserSeesFeedbackLinkOnlyInBurgerMenus(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren er innlogget.",
+		When:  "Når hovednavigasjonen vises.",
+		Then:  "Så skal lenken til å gi tilbakemelding finnes i burgermenyen på skrivebord og mobil, men ikke i toppmenyen.",
+	})
+
+	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "test_room_services")
+	userInfo := requestctx.UserRequestInfo{
+		IsLoggedIn: true,
+	}
+
+	// When
+	doc := templtest.Render(t, Menu(userInfo, db, logger))
+	feedbackLinkInDesktopDropdown := doc.Find(`#main-menu-user-details .dropdown-panel a[href="/tilbakemelding"]`).Length() > 0
+	feedbackLinkInMobileDialog := doc.Find(`#modal-hamburger-phone a[href="/tilbakemelding"]`).Length() > 0
+	feedbackLinkInMainMenuButtons := doc.Find(`.main-menu-buttons a[href="/tilbakemelding"]`).Length() > 0
+
+	// Then
+	if !feedbackLinkInDesktopDropdown {
+		t.Fatalf("expected feedback link in desktop dropdown menu")
+	}
+	if !feedbackLinkInMobileDialog {
+		t.Fatalf("expected feedback link in mobile menu dialog")
+	}
+	if feedbackLinkInMainMenuButtons {
+		t.Fatalf("expected no feedback link in the top menu bar")
+	}
+}
+
+func TestMenu_AnonymousUserDoesNotSeeFeedbackLink(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren ikke er innlogget.",
+		When:  "Når hovednavigasjonen vises.",
+		Then:  "Så skal lenken til å gi tilbakemelding ikke vises.",
+	})
+
+	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "test_room_services")
+	userInfo := requestctx.UserRequestInfo{}
+
+	// When
+	doc := templtest.Render(t, Menu(userInfo, db, logger))
+	feedbackLinkVisible := doc.Find(`a[href="/tilbakemelding"]`).Length() > 0
+
+	// Then
+	if feedbackLinkVisible {
+		t.Fatalf("expected anonymous menu to not contain the feedback link")
+	}
+}
+
 func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren er admin.",
@@ -73,6 +126,7 @@ func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	expectedHrefs := []string{
 		"/",
 		"/profile",
+		"/tilbakemelding",
 		"/auth/logout",
 		"/admin",
 		"/admin/billettholder/",

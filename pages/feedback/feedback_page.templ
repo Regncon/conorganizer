@@ -1,0 +1,323 @@
+package feedback
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/errorfeedback"
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/service/feedback"
+)
+
+// feedbackCategoryClickExpr selects a category and clears any topics chosen
+// for the previously selected category, since topics only apply to one
+// category at a time.
+func feedbackCategoryClickExpr(category feedback.Category) string {
+	return fmt.Sprintf("$%s = '%s'; $%s = []", feedbackCategorySignal, category, feedbackTopicsSignal)
+}
+
+// feedbackTopicToggleExpr adds or removes one topic from the selected topics
+// array, without relying on checkbox array binding.
+func feedbackTopicToggleExpr(topic feedback.Topic) string {
+	return fmt.Sprintf(
+		"$%s = $%s.includes('%s') ? $%s.filter((t) => t !== '%s') : [...$%s, '%s']",
+		feedbackTopicsSignal, feedbackTopicsSignal, topic, feedbackTopicsSignal, topic, feedbackTopicsSignal, topic,
+	)
+}
+
+func feedbackTopicPressedExpr(topic feedback.Topic) string {
+	return fmt.Sprintf("$%s.includes('%s') ? 'true' : 'false'", feedbackTopicsSignal, topic)
+}
+
+// feedbackHasTopicsExpr is true while the selected category has topics to
+// pick from, so the optional topics question is hidden for "Noe annet".
+func feedbackHasTopicsExpr() string {
+	withTopics := []string{}
+	for _, category := range feedback.Categories {
+		if len(feedback.TopicsFor(category)) > 0 {
+			withTopics = append(withTopics, "'"+string(category)+"'")
+		}
+	}
+	return fmt.Sprintf("[%s].includes($%s)", strings.Join(withTopics, ", "), feedbackCategorySignal)
+}
+
+// feedbackTextDescribedBy lists the ids describing the message field: its
+// error message, its character counter and, while shown, its personal info
+// hint. The hint is only referenced while visible, since aria-describedby
+// reads directly referenced elements even when they are hidden.
+func feedbackTextDescribedBy(fieldKey string, withPersonalInfoHint bool) string {
+	ids := fmt.Sprintf("feedback-%s-error feedback-%s-counter", fieldKey, fieldKey)
+	if withPersonalInfoHint {
+		ids += fmt.Sprintf(" feedback-%s-personal-info", fieldKey)
+	}
+	return ids
+}
+
+func feedbackTextDescribedByExpr(fieldKey, personalInfoSignal string) string {
+	return fmt.Sprintf("%s ? '%s' : '%s'", personalInfoSignal, feedbackTextDescribedBy(fieldKey, true), feedbackTextDescribedBy(fieldKey, false))
+}
+
+// feedbackSubmitDescribedByExpr points the submit button at the personal
+// info hint that explains why it is disabled.
+func feedbackSubmitDescribedByExpr() string {
+	return "$_messagePersonalInfo ? 'feedback-message-personal-info' : ''"
+}
+
+// feedbackResetExpr keeps the category the user came in with (for example
+// from a QR code) preselected on the fresh form.
+func feedbackResetExpr(category feedback.Category) string {
+	return fmt.Sprintf("@get('/tilbakemelding/reset?om=%s')", category.Slug())
+}
+
+templ feedbackFormPage(preselected feedback.Category) {
+	<style>
+		.feedback-page {
+			container: feedback-page / inline-size;
+			max-inline-size: 52rem;
+
+			.feedback-content,
+			.feedback-form,
+			.feedback-thank-you {
+				display: flex;
+				flex-direction: column;
+				gap: var(--responsive-pane-padding);
+			}
+
+			.feedback-privacy-hint {
+				display: flex;
+				place-items: center;
+				gap: var(--spacing-2x);
+				padding-block-end: var(--responsive-pane-padding);
+				border-block-end: 1px solid var(--level-3-border);
+				color: var(--color-text-soft);
+				font-size: var(--text-body-small);
+			}
+
+			fieldset {
+				min-inline-size: 0;
+				margin: 0;
+				padding: 0;
+				border: none;
+
+				legend {
+					padding: 0;
+					margin-block-end: var(--spacing-1x);
+				}
+			}
+
+			.feedback-optional,
+			.feedback-field-helptext,
+			.feedback-char-counter {
+				color: var(--color-text-soft);
+				font-weight: 400;
+			}
+
+			.form-group:has(.feedback-error.is-visible) .input {
+				border-color: #DC3545;
+				box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 25%);
+			}
+
+			.feedback-message-footer {
+				display: flex;
+				place-content: space-between;
+				gap: var(--spacing-2x);
+			}
+
+			.feedback-char-counter {
+				margin-inline-start: auto;
+			}
+
+			.feedback-personal-info-hint {
+				color: var(--color-error);
+			}
+
+			.feedback-submit-section {
+				display: grid;
+				grid-template-columns: 1fr;
+			}
+
+			.feedback-thank-you {
+				place-items: start;
+			}
+		}
+
+		@container feedback-page (width > 600px) {
+			.feedback-page .feedback-submit-section {
+				grid-template-columns: 1fr 200px;
+
+				.btn {
+					grid-column: 2;
+				}
+			}
+		}
+	</style>
+	<section class="page-content-container feedback-page">
+		<h1 class="page-heading has-helptext">Gi tilbakemelding</h1>
+		<p class="page-heading-helptext">Tilbakemeldingen din hjelper oss å gjøre Regncon bedre.</p>
+		<div class="surface-pane">
+			@feedbackFormWrapper(preselected)
+		</div>
+	</section>
+	@feedbackPersonalInfoScript()
+}
+
+// feedbackPersonalInfoScript defines a global helper the form's computed
+// signals call to detect personal info as the user types. It is rendered
+// once on the full page, outside the swapped #feedback-form subtree, so it
+// stays defined across resets and does not need to be re-sent on every patch.
+templ feedbackPersonalInfoScript() {
+	<script>
+		window.feedbackContainsPersonalInfo = function (text, form) {
+			if (!text || !form) {
+				return false;
+			}
+			var emailMarker = form.dataset.personalInfoEmailMarker;
+			if (emailMarker && text.includes(emailMarker)) {
+				return true;
+			}
+			var dateOrTimeRange = new RegExp(form.dataset.personalInfoDatePattern, "g");
+			var withoutDates = text.replace(dateOrTimeRange, form.dataset.personalInfoDateReplacement);
+			var digitRun = new RegExp(form.dataset.personalInfoDigitPattern, "g");
+			var phoneDigits = Number(form.dataset.personalInfoPhoneDigits);
+			var minLongDigits = Number(form.dataset.personalInfoMinLongDigits);
+			var matches = withoutDates.match(digitRun) || [];
+			for (var i = 0; i < matches.length; i++) {
+				var digitCount = (matches[i].match(/\d/g) || []).length;
+				if (digitCount === phoneDigits || digitCount >= minLongDigits) {
+					return true;
+				}
+			}
+			return false;
+		};
+	</script>
+}
+
+templ feedbackFormWrapper(preselected feedback.Category) {
+	<div
+		id={ feedbackFormElementID }
+		class="feedback-content"
+		data-signals={ components.DataSignals(map[string]any{
+			feedbackCategorySignal: string(preselected),
+			feedbackMessageSignal:  "",
+			feedbackTopicsSignal:   []string{},
+		}) }
+	>
+		<p class="feedback-privacy-hint">
+			@icons.Icon(icons.Shield, icons.Size16)
+			<span>Tilbakemeldingen er anonym. Ikke skriv navn, e-post eller telefonnummer.</span>
+		</p>
+		<form
+			id="feedback-form-element"
+			class="feedback-form"
+			data-on:submit="evt.preventDefault(); @post('/tilbakemelding')"
+			data-personal-info-email-marker={ feedback.EmailMarker }
+			data-personal-info-digit-pattern={ feedback.DigitRunPattern }
+			data-personal-info-phone-digits={ strconv.Itoa(feedback.PhoneNumberDigits) }
+			data-personal-info-min-long-digits={ strconv.Itoa(feedback.MinLongNumberDigits) }
+			data-personal-info-date-pattern={ feedback.DateOrTimeRangePattern }
+			data-personal-info-date-replacement={ feedback.DateOrTimeRangeReplacement }
+			data-computed:_message-personal-info={ fmt.Sprintf("window.feedbackContainsPersonalInfo($%s, el)", feedbackMessageSignal) }
+			{ errorfeedback.DefaultMessage("Klarte ikke å sende inn. Prøv igjen.")... }
+		>
+			<fieldset class="form-group feedback-categories-field">
+				<legend class="label color-strong">Hva gjelder tilbakemeldingen?</legend>
+				<div class="choice-toggle-group">
+					for _, category := range feedback.Categories {
+						<button
+							type="button"
+							class="btn btn--outline choice-toggle"
+							aria-pressed={ fmt.Sprintf("%t", category == preselected) }
+							data-attr:aria-pressed={ fmt.Sprintf("$%s === '%s' ? 'true' : 'false'", feedbackCategorySignal, category) }
+							data-on:click={ feedbackCategoryClickExpr(category) }
+						>
+							{ category.Label() }
+						</button>
+					}
+				</div>
+				@errorfeedback.RenderMessage(feedbackCategorySignal)
+			</fieldset>
+			<fieldset
+				class="form-group feedback-topics-field"
+				if len(feedback.TopicsFor(preselected)) == 0 {
+					style="display: none"
+				}
+				data-show={ feedbackHasTopicsExpr() }
+			>
+				<legend class="label color-strong">Hva handler det om? <span class="feedback-optional">(valgfritt)</span></legend>
+				for _, category := range feedback.Categories {
+					if topics := feedback.TopicsFor(category); len(topics) > 0 {
+						<div
+							class="choice-chip-group"
+							if category != preselected {
+								style="display: none"
+							}
+							data-show={ fmt.Sprintf("$%s === '%s'", feedbackCategorySignal, category) }
+						>
+							for _, topic := range topics {
+								<button
+									type="button"
+									class="choice-chip"
+									aria-pressed="false"
+									data-attr:aria-pressed={ feedbackTopicPressedExpr(topic) }
+									data-on:click={ feedbackTopicToggleExpr(topic) }
+								>
+									{ topic.Label() }
+								</button>
+							}
+						</div>
+					}
+				}
+			</fieldset>
+			<label class="label color-strong form-group" for="feedback-message">
+				Tilbakemelding
+				<span class="feedback-field-helptext">Fortell gjerne hva som fungerte bra, og hva som kan bli bedre.</span>
+				<textarea
+					id="feedback-message"
+					name="feedbackMessage"
+					class="input"
+					placeholder="F.eks. «Påmeldingen var enkel, men programmet var vanskelig å finne på mobil.»"
+					data-bind={ feedbackMessageSignal }
+					rows="5"
+					maxlength={ strconv.Itoa(feedback.MaxTextLength) }
+					aria-describedby={ feedbackTextDescribedBy("message", false) }
+					data-attr:aria-describedby={ feedbackTextDescribedByExpr("message", "$_messagePersonalInfo") }
+				></textarea>
+				<div class="feedback-message-footer">
+					<span id="feedback-message-error">
+						@errorfeedback.RenderMessage(feedbackMessageSignal)
+					</span>
+					<span
+						id="feedback-message-counter"
+						class="feedback-char-counter"
+						data-text={ fmt.Sprintf("$%s.length + ' / %d tegn'", feedbackMessageSignal, feedback.MaxTextLength) }
+					>{ fmt.Sprintf("0 / %d tegn", feedback.MaxTextLength) }</span>
+				</div>
+				<p id="feedback-message-personal-info" class="feedback-personal-info-hint" style="display: none" data-show="$_messagePersonalInfo">
+					Det ser ut som du har skrevet en e-postadresse eller et telefonnummer. Fjern det før du sender.
+				</p>
+			</label>
+			<div class="feedback-submit-section">
+				<button
+					type="submit"
+					class="btn btn--cta"
+					data-attr:disabled={ "$_messagePersonalInfo" }
+					data-attr:aria-describedby={ feedbackSubmitDescribedByExpr() }
+				>
+					Send tilbakemelding
+				</button>
+			</div>
+		</form>
+	</div>
+}
+
+templ feedbackThankYou(category feedback.Category) {
+	<div id={ feedbackFormElementID } class="feedback-thank-you">
+		<h2>Takk for tilbakemeldingen!</h2>
+		<p>Vi setter pris på at du tar deg tid til å hjelpe oss å gjøre Regncon bedre.</p>
+		<button type="button" class="btn btn--outline" data-on:click={ feedbackResetExpr(category) }>
+			Send en tilbakemelding til
+		</button>
+	</div>
+}
