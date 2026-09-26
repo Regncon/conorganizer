@@ -12,18 +12,18 @@ import (
 
 func TestPuljeForstevalgStats_TilesOpenListsOfParticipants(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en pulje der én fikk førstevalg, to mangler det og én er uten plass.",
+		Given: "Gitt en pulje der én fikk førstevalg, to mangler det og én er without plass.",
 		When:  "Når førstevalgsoversikten rendres.",
-		Then:  "Så skal hver flis vise antallet og åpne en liste med deltakerne, uten interessepoeng.",
+		Then:  "Så skal hver flis vise antallet og åpne en liste med deltakerne, without interessepoeng.",
 	})
 
 	// Given
-	expectedTiles := map[string]string{"fikk-forstevalg": "1", "uten-forstevalg": "2", "uten-plass": "1"}
+	expectedTiles := map[string]string{"got-forstevalg": "1", "without-forstevalg": "2", "unassigned": "1"}
 	result := puljefordeling.EmulatedPulje{
-		TotalScore:     90,
-		Unassigned:     []string{"Bjørn Berg"},
-		FikkForstevalg: []puljefordeling.PuljeDeltaker{{Name: "Anne Aas", EventTitle: "Drager", Level: models.InterestLevelHigh}},
-		UtenForstevalg: []puljefordeling.PuljeDeltaker{
+		TotalScore:    90,
+		Unassigned:    []string{"Bjørn Berg"},
+		GotForstevalg: []puljefordeling.PuljeParticipant{{Name: "Anne Aas", EventTitle: "Drager", Level: models.InterestLevelHigh}},
+		WithoutForstevalg: []puljefordeling.PuljeParticipant{
 			{Name: "Bjørn Berg", WantedForstevalg: true},
 			{Name: "Cato Carlsen", EventTitle: "Brett", Level: models.InterestLevelLow},
 		},
@@ -34,21 +34,21 @@ func TestPuljeForstevalgStats_TilesOpenListsOfParticipants(t *testing.T) {
 
 	// Then
 	for list, expected := range expectedTiles {
-		tile := doc.Find(`.pulje-stat[aria-controls="pulje-liste-` + list + `"]`)
+		tile := doc.Find(`.pulje-stat[aria-controls="pulje-list-` + list + `"]`)
 		if got := strings.TrimSpace(tile.Find(".pulje-stat-value").Text()); got != expected {
 			t.Errorf("tile %s: expected %s, got %q", list, expected, got)
 		}
-		if action := tile.AttrOr("data-on:click", ""); action != "$_puljeListe = '"+list+"'" {
+		if action := tile.AttrOr("data-on:click", ""); action != "$_puljeList = '"+list+"'" {
 			t.Errorf("tile %s: expected it to open its list, got %q", list, action)
 		}
-		if doc.Find("dialog#pulje-liste-"+list).Length() != 1 {
+		if doc.Find("dialog#pulje-list-"+list).Length() != 1 {
 			t.Errorf("expected a dialog for %s", list)
 		}
 	}
-	uten := strings.Join(templtest.CollectTexts(doc, "#pulje-liste-uten-forstevalg li"), " | ")
+	without := strings.Join(templtest.CollectTexts(doc, "#pulje-list-without-forstevalg li"), " | ")
 	for _, part := range []string{"Bjørn Berg", "Ville ha førstevalg her", "Uten plass", "Cato Carlsen", "Brett"} {
-		if !strings.Contains(uten, part) {
-			t.Errorf("expected uten førstevalg list to contain %q, got %q", part, uten)
+		if !strings.Contains(without, part) {
+			t.Errorf("expected without førstevalg list to contain %q, got %q", part, without)
 		}
 	}
 	if strings.Contains(doc.Text(), "interessepoeng") {

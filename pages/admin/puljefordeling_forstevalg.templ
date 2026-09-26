@@ -12,17 +12,17 @@ import (
 // opens a modal with the participants behind the number.
 templ puljeForstevalgStats(result puljefordeling.EmulatedPulje) {
 	<div class="pulje-stats">
-		@puljeStatTile("fikk-forstevalg", len(result.FikkForstevalg), "Fikk førstevalg", "i denne puljen", "success")
-		@puljeStatTile("uten-forstevalg", len(result.UtenForstevalg), "Uten førstevalg så langt", "etter denne puljen", puljeStatTone(len(result.UtenForstevalg), "warning"))
-		@puljeStatTile("uten-plass", len(result.Unassigned), "Uten plass", "i denne puljen", puljeStatTone(len(result.Unassigned), "error"))
+		@puljeStatTile("got-forstevalg", len(result.GotForstevalg), "Fikk førstevalg", "i denne puljen", "success")
+		@puljeStatTile("without-forstevalg", len(result.WithoutForstevalg), "Uten førstevalg så langt", "etter denne puljen", puljeStatTone(len(result.WithoutForstevalg), "warning"))
+		@puljeStatTile("unassigned", len(result.Unassigned), "Uten plass", "i denne puljen", puljeStatTone(len(result.Unassigned), "error"))
 	</div>
-	@puljeListDialog("fikk-forstevalg", "Fikk førstevalg", "Deltakere som fikk et arrangement de ga Veldig interessert, for første gang i denne puljen.") {
-		@puljeDeltakerList(result.FikkForstevalg)
+	@puljeListDialog("got-forstevalg", "Fikk førstevalg", "Deltakere som fikk et arrangement de ga Veldig interessert, for første gang i denne puljen.") {
+		@puljeParticipantList(result.GotForstevalg)
 	}
-	@puljeListDialog("uten-forstevalg", "Uten førstevalg så langt", "Deltakere som ennå ikke har fått et arrangement de ga Veldig interessert. De som ville ha førstevalg i denne puljen står øverst.") {
-		@puljeDeltakerList(result.UtenForstevalg)
+	@puljeListDialog("without-forstevalg", "Uten førstevalg så langt", "Deltakere som ennå ikke har fått et arrangement de ga Veldig interessert. De som ville ha førstevalg i denne puljen står øverst.") {
+		@puljeParticipantList(result.WithoutForstevalg)
 	}
-	@puljeListDialog("uten-plass", "Uten plass", "Interesserte deltakere som ikke fikk plass på noe arrangement i denne puljen.") {
+	@puljeListDialog("unassigned", "Uten plass", "Interesserte deltakere som ikke fikk plass på noe arrangement i denne puljen.") {
 		if len(result.Unassigned) == 0 {
 			<p class="pulje-list-empty">Ingen.</p>
 		} else {
@@ -49,8 +49,8 @@ templ puljeStatTile(list string, count int, label, hint, tone string) {
 		class="pulje-stat"
 		data-tone={ tone }
 		aria-haspopup="dialog"
-		aria-controls={ "pulje-liste-" + list }
-		data-on:click={ "$_puljeListe = '" + list + "'" }
+		aria-controls={ "pulje-list-" + list }
+		data-on:click={ "$_puljeList = '" + list + "'" }
 	>
 		<span class="pulje-stat-value">{ strconv.Itoa(count) }</span>
 		<span class="pulje-stat-label">{ label }</span>
@@ -60,18 +60,18 @@ templ puljeStatTile(list string, count int, label, hint, tone string) {
 
 templ puljeListDialog(list, title, description string) {
 	<dialog
-		id={ "pulje-liste-" + list }
+		id={ "pulje-list-" + list }
 		class="pulje-list-dialog"
 		closedby="any"
-		aria-labelledby={ "pulje-liste-" + list + "-title" }
+		aria-labelledby={ "pulje-list-" + list + "-title" }
 		data-preserve-attr="open"
-		data-effect={ "$_puljeListe === '" + list + "' ? (!el.open && el.showModal()) : (el.open && el.close())" }
-		data-on:close={ "$_puljeListe === '" + list + "' && ($_puljeListe = '')" }
-		data-on:click__stop="if (evt.target === el) $_puljeListe = ''"
+		data-effect={ "$_puljeList === '" + list + "' ? (!el.open && el.showModal()) : (el.open && el.close())" }
+		data-on:close={ "$_puljeList === '" + list + "' && ($_puljeList = '')" }
+		data-on:click__stop="if (evt.target === el) $_puljeList = ''"
 	>
 		<header>
-			<h3 id={ "pulje-liste-" + list + "-title" }>{ title }</h3>
-			<button type="button" class="btn btn--ghost btn-icon-only" aria-label={ "Lukk " + title } autofocus data-on:click="$_puljeListe = ''">
+			<h3 id={ "pulje-list-" + list + "-title" }>{ title }</h3>
+			<button type="button" class="btn btn--ghost btn-icon-only" aria-label={ "Lukk " + title } autofocus data-on:click="$_puljeList = ''">
 				@icons.Icon(icons.Close, icons.Size24)
 			</button>
 		</header>
@@ -80,12 +80,12 @@ templ puljeListDialog(list, title, description string) {
 	</dialog>
 }
 
-templ puljeDeltakerList(deltakere []puljefordeling.PuljeDeltaker) {
-	if len(deltakere) == 0 {
+templ puljeParticipantList(participants []puljefordeling.PuljeParticipant) {
+	if len(participants) == 0 {
 		<p class="pulje-list-empty">Ingen.</p>
 	} else {
 		<ul class="pulje-list">
-			for _, d := range deltakere {
+			for _, d := range participants {
 				<li>
 					<span class="pulje-list-name">{ d.Name }</span>
 					if d.WantedForstevalg && d.Level != models.InterestLevelHigh {

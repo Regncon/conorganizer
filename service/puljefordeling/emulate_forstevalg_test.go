@@ -37,28 +37,28 @@ func TestEmulateSeatings_ListsWhoGotAndLacksForstevalg(t *testing.T) {
 		t.Fatalf("EmulateSeatings: %v", err)
 	}
 	pulje := em.Puljer[0]
-	if len(pulje.FikkForstevalg) != 1 || pulje.FikkForstevalg[0].EventTitle != "Drager" || pulje.FikkForstevalg[0].Level != models.InterestLevelHigh {
-		t.Fatalf("expected one participant with førstevalg in Drager, got %+v", pulje.FikkForstevalg)
+	if len(pulje.GotForstevalg) != 1 || pulje.GotForstevalg[0].EventTitle != "Drager" || pulje.GotForstevalg[0].Level != models.InterestLevelHigh {
+		t.Fatalf("expected one participant with førstevalg in Drager, got %+v", pulje.GotForstevalg)
 	}
-	winner := pulje.FikkForstevalg[0].Name
+	winner := pulje.GotForstevalg[0].Name
 	loser := "Bjørn Berg"
 	if winner == loser {
 		loser = "Anne Aas"
 	}
-	if got := deltakerNavn(pulje.UtenForstevalg); !slices.Equal(got, []string{loser, "Cato Carlsen"}) {
+	if got := participantNames(pulje.WithoutForstevalg); !slices.Equal(got, []string{loser, "Cato Carlsen"}) {
 		t.Fatalf("expected %s (wanted førstevalg here) first, then Cato, got %v", loser, got)
 	}
-	missed := pulje.UtenForstevalg[0]
+	missed := pulje.WithoutForstevalg[0]
 	if !missed.WantedForstevalg || missed.EventTitle != "" {
 		t.Fatalf("expected %s to have wanted førstevalg and have no seat, got %+v", loser, missed)
 	}
-	cato := pulje.UtenForstevalg[1]
+	cato := pulje.WithoutForstevalg[1]
 	if cato.WantedForstevalg || cato.EventTitle != "Brett" || cato.Level != models.InterestLevelLow {
 		t.Fatalf("expected Cato seated in Brett with low interest, got %+v", cato)
 	}
 }
 
-func TestEmulateSeatings_UtenForstevalgIsCumulativeAcrossPuljer(t *testing.T) {
+func TestEmulateSeatings_WithoutForstevalgIsCumulativeAcrossPuljer(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en billettholder som får førstevalg i første pulje.",
 		When:  "Når puljefordelingen emuleres over to puljer.",
@@ -82,12 +82,12 @@ func TestEmulateSeatings_UtenForstevalgIsCumulativeAcrossPuljer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("EmulateSeatings: %v", err)
 	}
-	if len(em.Puljer) != 2 || len(em.Puljer[1].UtenForstevalg) != 0 || len(em.Puljer[1].FikkForstevalg) != 0 {
+	if len(em.Puljer) != 2 || len(em.Puljer[1].WithoutForstevalg) != 0 || len(em.Puljer[1].GotForstevalg) != 0 {
 		t.Fatalf("expected no one without førstevalg in the second pulje, got %+v", em.Puljer[1])
 	}
 }
 
-func deltakerNavn(deltakere []PuljeDeltaker) []string {
+func participantNames(deltakere []PuljeParticipant) []string {
 	out := make([]string, 0, len(deltakere))
 	for _, d := range deltakere {
 		out = append(out, d.Name)

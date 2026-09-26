@@ -109,13 +109,13 @@ func TestPuljefordelingTabContent_ShowsRunningUnsatisfiedCount(t *testing.T) {
 
 	// When / Then: earlier pulje — participant not yet satisfied.
 	fredag := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
-	if got := utenForstevalgTile(fredag); got != "1" {
+	if got := withoutForstevalgTile(fredag); got != "1" {
 		t.Fatalf("expected Fredag tab to report 1 still without first choice, got %q", got)
 	}
 
 	// When / Then: later pulje — participant gets their first choice.
 	lordag := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeLordagKveld, nil))
-	if got := utenForstevalgTile(lordag); got != "0" {
+	if got := withoutForstevalgTile(lordag); got != "0" {
 		t.Fatalf("expected Lørdag tab to report 0 still without first choice, got %q", got)
 	}
 }
@@ -394,6 +394,6 @@ func TestPuljefordelingTabContent_AdultGMInAdultsOnlyHasNoBadge(t *testing.T) {
 	}
 }
 
-func utenForstevalgTile(doc *goquery.Document) string {
-	return strings.TrimSpace(doc.Find(`.pulje-stat[aria-controls="pulje-liste-uten-forstevalg"] .pulje-stat-value`).Text())
+func withoutForstevalgTile(doc *goquery.Document) string {
+	return strings.TrimSpace(doc.Find(`.pulje-stat[aria-controls="pulje-list-without-forstevalg"] .pulje-stat-value`).Text())
 }
