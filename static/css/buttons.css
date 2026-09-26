@@ -31,15 +31,18 @@
     --btn-secondary-focus-shadow: var(--color-text-soft-50);
 
     /* ghost */
-    --btn-ghost-hover-bg: var(--color-text-soft-hover);
-    --btn-ghost-active-bg: var(--color-text-soft-active);
-    --btn-ghost-active-text: var(--color-text-strong);
+    --btn-ghost-hover-bg: var(--btn-flat-hover);
+    --btn-ghost-active-bg: var(--btn-flat-active);
     --btn-ghost-focus-shadow: var(--color-text-soft-50);
+    --btn-ghost-shadow: var(--btn-shadow-size) var(--btn-ghost-focus-shadow);
 
     /* disabled */
     --btn-disabled-bg: transparent;
     --btn-disabled-border: var(--color-disabled);
     --btn-disabled-text: var(--color-disabled);
+
+    /* shadow */
+    --btn-shadow-size: 0 0 0 3px;
 }
 
 /* Base */
@@ -132,20 +135,19 @@
 
 .btn--ghost:hover {
     background-color: var(--btn-ghost-hover-bg);
-    color: var(--btn-ghost-active-text);
 }
 
 .btn--ghost:focus-visible,
 .btn--ghost:focus {
     outline: none;
     background-color: var(--btn-ghost-hover-bg);
-    color: var(--btn-ghost-active-text);
-    box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
+    color: var(--color-text-soft);
+    box-shadow: var(--btn-ghost-shadow);
 }
 
 .btn--ghost:active {
     background-color: var(--btn-ghost-active-bg);
-    color: var(--btn-ghost-active-text);
+    color: var(--color-text-soft);
 }
 
 .btn--ghost:disabled {

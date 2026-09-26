@@ -42,7 +42,7 @@ templ menuStyles() {
 			.logo-link:focus-visible {
 				outline: none;
 				background-color: var(--btn-ghost-hover-bg);
-				box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
+				box-shadow: var(--btn-ghost-shadow);
 			}
 
 			.main-menu-button {
@@ -493,7 +493,7 @@ templ desktopBillettholderMenuStyles() {
 
 					&:has(> summary:focus-visible) {
 						border-radius: var(--border-radius-1x);
-						box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
+						box-shadow: var(--btn-ghost-shadow);
 					}
 
 					summary {
@@ -557,7 +557,7 @@ templ desktopBillettholderMenuStyles() {
 
 						a:focus-visible {
 							outline: none;
-							box-shadow: inset 0 0 0 2px var(--btn-ghost-focus-shadow);
+							box-shadow: var(--btn-ghost-shadow);
 						}
 					}
 				}
@@ -848,7 +848,7 @@ templ phoneMenuDialogStyles() {
 
 					a:focus-visible {
 						outline: none;
-						box-shadow: inset 0 0 0 2px var(--btn-ghost-focus-shadow);
+						box-shadow: var(--btn-ghost-shadow);
 					}
 				}
 			}

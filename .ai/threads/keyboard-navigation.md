@@ -46,7 +46,7 @@ I’d make this a small CSS-only change in [components/header/menu.templ](/home/
 .logo-link:focus-visible {
     outline: none;
     background-color: var(--btn-ghost-hover-bg);
-    box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
+    box-shadow: var(--btn-ghost-shadow);
 }
 ```
 
