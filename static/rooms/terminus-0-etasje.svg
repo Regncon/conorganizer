@@ -1,11 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="t0-overview-title t0-overview-desc" lang="nb">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="610" viewBox="0 70 1200 610" role="img" aria-labelledby="t0-overview-title t0-overview-desc" lang="nb">
 <title id="t0-overview-title">Grand Hotel Terminus – Romkart · 0. etasje</title>
 <desc id="t0-overview-desc">Kart over tre rom langs en felles gang. Foreløpige romnumre: 001 Inger Haldorsen, 002 Dorothe Engelbretsdatter, 003 Søstrene Hagelin. Trapp og antatte heiser på oversiden av gangen.</desc>
 <metadata>Basert på brukerens skisse. Romnumrene er midlertidige, ikke hotellets bekreftede romnumre. To umerkede bokser er tolket som heiser. Dørslag er skjematiske og ikke verifisert. Åpningen øverst til høyre i rom 002 er bevart fra skissen; tilstøtende areal er ikke tegnet.</metadata>
 <rect width="1200" height="680" fill="white"/>
 <g font-family="Arial, Helvetica, sans-serif">
-<text x="40" y="43" font-size="28">Grand Hotel Terminus</text>
-<text x="40" y="77" font-size="22">Romkart · 0. etasje</text>
 <g fill="#eee" stroke="black" stroke-width="3"><path d="M 80,240 V 145 H 300 V 240 Z M 190,145 V 240"/><path d="M 560,240 V 110 H 640 V 240"/></g>
 <g fill="none" stroke="black" stroke-width="3"><path d="M 25,240 H 640 M 950,240 V 440 M 25,440 H 80"/></g>
 <g fill="none" stroke="#444" stroke-width="2">

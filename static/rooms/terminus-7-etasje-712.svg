@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="950" height="580" viewBox="0 0 950 580" role="img" aria-labelledby="room-712-map-title room-712-map-description" lang="nb">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="950" height="470" viewBox="0 110 950 470" role="img" aria-labelledby="room-712-map-title room-712-map-description" lang="nb">
   <title id="room-712-map-title">Amalie Skram – rom 712, Grand Hotel Terminus, 7. etasje</title>
   <desc id="room-712-map-description">Veien fra fellesområdet ved hovedtrappen og heisene til Amalie Skram, rom 712. Startpunktet er markert med en sirkel og «Start her». Følg den stiplede linjen gjennom korridoren til pilen ved døren. Rommet har lys blå bakgrunn og en tydelig blå ramme. Kartets retning følger hovedkartet.</desc>
   <metadata>
@@ -13,7 +13,7 @@
   </metadata>
   <defs>
     <g id="room-712-stair-symbol" fill="none" stroke="black" stroke-width="3">
-      <path d="M 0,32 H 12 V 24 H 24 V 16 H 36 V 8 H 48 V 0 H 60" />
+      <path d="M 0,0 H 12 V 8 H 24 V 16 H 36 V 24 H 48 V 32 H 60" />
     </g>
     <g id="room-712-lift-symbol" fill="none" stroke="black" stroke-width="2">
       <rect width="38" height="38" />
@@ -26,12 +26,7 @@
       <path d="M 0,0 L 13,6.5 L 0,13 Z" fill="#1759a6" />
     </marker>
   </defs>
-  <rect width="100%" height="100%" fill="white" />
-  <g font-family="Arial, Helvetica, sans-serif" fill="black">
-    <text x="20" y="34" font-size="27" font-weight="bold">Amalie Skram</text>
-    <text x="20" y="61" font-size="17">7. etasje · Rom 712 · Grand Hotel Terminus</text>
-    <text x="20" y="87" font-size="17">Følg den stiplede linjen til døren.</text>
-  </g>
+  <rect x="0" y="110" width="950" height="470" fill="white" />
   <g clip-path="url(#room-712-map-crop)">
     <g font-family="Arial, Helvetica, sans-serif" fill="black" transform="translate(-220 -410)">
       <g id="room-712-service-room-fills" fill="#dddddd">
@@ -236,7 +231,7 @@
         <use xlink:href="#room-712-lift-symbol" x="386" y="543" />
         <text x="461" y="571" font-size="17">Heis</text>
         <use xlink:href="#room-712-stair-symbol" x="422" y="645" />
-        <text x="452" y="711">Trapp</text>
+        <text x="452" y="711">Trapp ned</text>
         <g id="room-712-right-emergency-exit" opacity="0.55">
           <use xlink:href="#room-712-stair-symbol" x="1045" y="625" />
           <text x="1075" y="698" font-size="17">Nødutgang</text>
