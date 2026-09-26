@@ -18,13 +18,13 @@
      id="defs29" />
   <sodipodi:namedview
      id="namedview29"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
+     pagecolor="#252735"
+     bordercolor="#ccd1e9"
      borderopacity="0.25"
      inkscape:showpageshadow="2"
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
+     inkscape:deskcolor="#1a1b26"
      inkscape:zoom="1.0476965"
      inkscape:cx="430.46816"
      inkscape:cy="165.60139"
@@ -43,13 +43,13 @@
   <rect
      width="1200"
      height="680"
-     fill="white"
+     fill="#252735"
      id="rect1" />
   <g id="t0-overview-room-004" data-room-number="004" data-room-name="Info Desk" font-family="Arial, Helvetica, sans-serif">
     <title>Info Desk</title>
-    <circle cx="525" cy="341" r="15" fill="#1759a6"/>
-    <text x="525" y="348" fill="white" text-anchor="middle" font-size="21" font-weight="bold">i</text>
-    <text x="550" y="348" fill="#1759a6" font-size="22" font-weight="bold">Info Desk</text>
+    <circle cx="525" cy="341" r="15" fill="#e7a965"/>
+    <text x="525" y="348" fill="#1a1b26" text-anchor="middle" font-size="21" font-weight="bold">i</text>
+    <text x="550" y="348" fill="#e7a965" font-size="22" font-weight="bold">Info Desk</text>
   </g>
   <g
      fill="none"
@@ -57,12 +57,12 @@
      transform="matrix(0,-1.2453906,-0.99695113,0,559.20457,1378.4448)">
     <path
        d="M 785,240 V 190"
-       stroke="#444444"
+       stroke="#ccd1e9"
        stroke-width="2"
        id="path25-6" />
     <path
        d="M 835,240 A 50,50 0 0 0 785,190"
-       stroke="#999999"
+       stroke="#7f8198"
        stroke-width="1"
        id="path26-2" />
   </g>
@@ -72,22 +72,22 @@
      transform="matrix(0,1.2453906,-0.99695113,0,559.49437,-702.69225)">
     <path
        d="M 785,240 V 190"
-       stroke="#444444"
+       stroke="#ccd1e9"
        stroke-width="2"
        id="path25-6-2" />
     <path
        d="M 835,240 A 50,50 0 0 0 785,190"
-       stroke="#999999"
+       stroke="#7f8198"
        stroke-width="1"
        id="path26-2-7" />
   </g>
   <g
      font-family="Arial, Helvetica, sans-serif"
-     id="g27"
+     id="g27" fill="#ccd1e9"
      transform="matrix(0.84753946,0,0,1.0003227,3.8737235,-0.11939174)">
     <g
-       fill="#eeeeee"
-       stroke="#000000"
+       fill="#35394a"
+       stroke="#ccd1e9"
        stroke-width="3"
        id="g2">
       <path
@@ -98,14 +98,14 @@
          id="path2"
          style="stroke-width:4.08362" />
       <rect
-         style="fill:#ffffff;stroke-width:3.07899"
+         style="fill:#252735;stroke-width:3.07899"
          id="rect30"
          width="2.217104"
          height="34.626389"
          x="370.78284"
          y="240.34959" />
       <rect
-         style="fill:#ffffff;stroke-width:3.12428"
+         style="fill:#252735;stroke-width:3.12428"
          id="rect30-9"
          width="2.1599021"
          height="36.596828"
@@ -114,7 +114,7 @@
     </g>
     <g
        fill="none"
-       stroke="#000000"
+       stroke="#ccd1e9"
        stroke-width="3"
        id="g3"
        transform="matrix(1.1825633,0,0,0.99908171,-4.6654863,0.31221949)">
@@ -124,7 +124,7 @@
     </g>
     <g
        fill="none"
-       stroke="#444444"
+       stroke="#ccd1e9"
        stroke-width="2"
        id="g6"
        transform="matrix(0.94356733,0,0,1.0008439,6.4134462,-0.1389957)">
@@ -163,12 +163,12 @@
       <path
          d="M 80,440 V 630 H 370 V 440 m -290,0 h 30 m 50,0 h 130 m 50,0 h 30"
          fill="none"
-         stroke="#000000"
+         stroke="#ccd1e9"
          stroke-width="3"
          id="path8" />
       <g
          text-anchor="middle"
-         fill="#000000"
+         fill="#ccd1e9"
          id="g11">
         <text
            x="225"
@@ -191,12 +191,12 @@
       <path
          d="m 370,440 v 190 h 750 V 440 h -45 m -35,0 H 470 m -50,0 h -50"
          fill="none"
-         stroke="#000000"
+         stroke="#ccd1e9"
          stroke-width="3"
          id="path11" />
       <g
          text-anchor="middle"
-         fill="#000000"
+         fill="#ccd1e9"
          id="g14">
         <text
            x="745"
@@ -220,12 +220,12 @@
       <path
          d="M 640,240 V 110 H 950 V 240 H 835 m -50,0 H 640"
          fill="none"
-         stroke="#000000"
+         stroke="#ccd1e9"
          stroke-width="3"
          id="path14" />
       <g
          text-anchor="middle"
-         fill="#000000"
+         fill="#ccd1e9"
          id="g17"
          transform="matrix(0.8645483,0,0,1,92.694997,0)">
         <text
@@ -251,12 +251,12 @@
        id="g18">
       <path
          d="m 110,440 v 50"
-         stroke="#444444"
+         stroke="#ccd1e9"
          stroke-width="2"
          id="path17" />
       <path
          d="m 160,440 a 50,50 0 0 1 -50,50"
-         stroke="#999999"
+         stroke="#7f8198"
          stroke-width="1"
          id="path18" />
     </g>
@@ -265,12 +265,12 @@
        id="g20">
       <path
          d="m 290,440 v 50"
-         stroke="#444444"
+         stroke="#ccd1e9"
          stroke-width="2"
          id="path19" />
       <path
          d="m 340,440 a 50,50 0 0 1 -50,50"
-         stroke="#999999"
+         stroke="#7f8198"
          stroke-width="1"
          id="path20" />
     </g>
@@ -279,12 +279,12 @@
        id="g22">
       <path
          d="m 420,440 v 50"
-         stroke="#444444"
+         stroke="#ccd1e9"
          stroke-width="2"
          id="path21" />
       <path
          d="m 470,440 a 50,50 0 0 1 -50,50"
-         stroke="#999999"
+         stroke="#7f8198"
          stroke-width="1"
          id="path22" />
     </g>
@@ -293,12 +293,12 @@
        id="g24">
       <path
          d="m 1040,440 v 35"
-         stroke="#444444"
+         stroke="#ccd1e9"
          stroke-width="2"
          id="path23" />
       <path
          d="m 1075,440 a 35,35 0 0 1 -35,35"
-         stroke="#999999"
+         stroke="#7f8198"
          stroke-width="1"
          id="path24" />
     </g>
@@ -308,12 +308,12 @@
        transform="matrix(1.469419,0,0,0.99662952,-288.18827,-0.46889857)">
       <path
          d="M 785,240 V 190"
-         stroke="#444444"
+         stroke="#ccd1e9"
          stroke-width="2"
          id="path25" />
       <path
          d="M 835,240 A 50,50 0 0 0 785,190"
-         stroke="#999999"
+         stroke="#7f8198"
          stroke-width="1"
          id="path26" />
     </g>

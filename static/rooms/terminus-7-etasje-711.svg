@@ -12,10 +12,10 @@
     Dørblad og åpningsbuer er skjematiske; slagretning er ikke verifisert.
   </metadata>
   <defs>
-    <g id="room-711-stair-symbol" fill="none" stroke="black" stroke-width="3">
+    <g id="room-711-stair-symbol" fill="none" stroke="#ccd1e9" stroke-width="3">
       <path d="M 0,0 H 12 V 8 H 24 V 16 H 36 V 24 H 48 V 32 H 60" />
     </g>
-    <g id="room-711-lift-symbol" fill="none" stroke="black" stroke-width="2">
+    <g id="room-711-lift-symbol" fill="none" stroke="#ccd1e9" stroke-width="2">
       <rect width="38" height="38" />
       <path d="M 12,28 V 10 M 6,16 L 12,10 L 18,16                M 26,10 V 28 M 20,22 L 26,28 L 32,22" />
     </g>
@@ -23,23 +23,23 @@
       <rect x="0" y="110" width="675" height="540" />
     </clipPath>
     <marker id="room-711-route-arrow" markerUnits="userSpaceOnUse" markerWidth="13" markerHeight="13" viewBox="0 0 13 13" refX="12" refY="6.5" orient="auto">
-      <path d="M 0,0 L 13,6.5 L 0,13 Z" fill="#1759a6" />
+      <path d="M 0,0 L 13,6.5 L 0,13 Z" fill="#e7a965" />
     </marker>
   </defs>
-  <rect x="0" y="110" width="675" height="540" fill="white" />
+  <rect x="0" y="110" width="675" height="540" fill="#252735" />
   <g clip-path="url(#room-711-map-crop)">
-    <g font-family="Arial, Helvetica, sans-serif" fill="black" transform="translate(-30 -340)">
-      <g id="room-711-service-room-fills" fill="#dddddd">
+    <g font-family="Arial, Helvetica, sans-serif" fill="#ccd1e9" transform="translate(-30 -340)">
+      <g id="room-711-service-room-fills" fill="#2B3045">
         <rect x="585" y="590" width="160" height="170" />
         <rect x="320" y="475" width="175" height="60" />
       </g>
-      <g id="room-711-emergency-stairwell-fills" fill="#eeeeee">
+      <g id="room-711-emergency-stairwell-fills" fill="#35394a">
         <rect x="320" y="110" width="175" height="80" />
         <rect x="1000" y="590" width="150" height="170" />
       </g>
-      <rect id="room-711-destination-fill" x="430" y="820" width="260" height="150" fill="#dbeafe" />
-      <path id="room-711-outer-walls" d="M 50,110 H 495 V 590 H 1150 V 970 H 50 Z" fill="none" stroke="black" stroke-width="4" />
-      <g fill="none" stroke="black" stroke-width="3">
+      <rect id="room-711-destination-fill" x="430" y="820" width="260" height="150" fill="#35394a" />
+      <path id="room-711-outer-walls" d="M 50,110 H 495 V 590 H 1150 V 970 H 50 Z" fill="none" stroke="#ccd1e9" stroke-width="4" />
+      <g fill="none" stroke="#ccd1e9" stroke-width="3">
         <g id="room-711-room-707" data-room-number="707">
           <title>Torborg Nedraas – rom 707</title>
           <path d="M 240,110 V 268 M 240,310 V 460 H 50" />
@@ -103,72 +103,72 @@
       </g>
       <g id="room-711-doors" fill="none">
         <g id="room-711-door-707" transform="translate(240 268) rotate(90)">
-          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
-          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-706" transform="translate(320 310) rotate(-90)">
-          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
-          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-705" transform="translate(320 430) rotate(-90)">
-          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
-          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-709-upper" transform="translate(240 662) rotate(90)">
-          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
-          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-wc" transform="translate(240 511) rotate(90)">
-          <path d="M 0,0 V 38" stroke="#444444" stroke-width="2" />
-          <path d="M 0,38 A 38,38 0 0 0 38,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 38" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,38 A 38,38 0 0 0 38,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-710" transform="translate(262 820) rotate(0)">
-          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
-          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-711" transform="translate(459 820) rotate(0)">
-          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
-          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-712" transform="translate(810 820) rotate(0)">
-          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
-          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-713" transform="translate(978 820) rotate(0)">
-          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
-          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-714-left" transform="translate(835 760) rotate(180)">
-          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
-          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-716" transform="translate(626 760) rotate(180)">
-          <path d="M 0,0 V 30" stroke="#444444" stroke-width="2" />
-          <path d="M 0,30 A 30,30 0 0 0 30,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 30" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,30 A 30,30 0 0 0 30,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-service-by-714" transform="translate(724 760) rotate(180)">
-          <path d="M 0,0 V 36" stroke="#444444" stroke-width="2" />
-          <path d="M 0,36 A 36,36 0 0 0 36,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 36" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,36 A 36,36 0 0 0 36,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-service-by-705" transform="translate(320 529) rotate(-90)">
-          <path d="M 0,0 V 30" stroke="#444444" stroke-width="2" />
-          <path d="M 0,30 A 30,30 0 0 0 30,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 30" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,30 A 30,30 0 0 0 30,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-upper-emergency" transform="translate(320 179) rotate(-90)">
-          <path d="M 0,0 V 34" stroke="#444444" stroke-width="2" />
-          <path d="M 0,34 A 34,34 0 0 0 34,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 34" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,34 A 34,34 0 0 0 34,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-door-right-emergency" transform="translate(1121 760) rotate(180)">
-          <path d="M 0,0 V 42" stroke="#444444" stroke-width="2" />
-          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1" />
+          <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1" />
         </g>
         <g id="room-711-main-stairwell-double-door">
-          <path d="M 320,622 H 368.5 M 320,719 H 368.5" stroke="#444444" stroke-width="2" />
-          <path d="M 368.5,622 A 48.5,48.5 0 0 1 320,670.5 M 368.5,719 A 48.5,48.5 0 0 0 320,670.5" stroke="#999999" stroke-width="1" />
+          <path d="M 320,622 H 368.5 M 320,719 H 368.5" stroke="#ccd1e9" stroke-width="2" />
+          <path d="M 368.5,622 A 48.5,48.5 0 0 1 320,670.5 M 368.5,719 A 48.5,48.5 0 0 0 320,670.5" stroke="#7f8198" stroke-width="1" />
         </g>
       </g>
-      <path id="room-711-destination-outline" d="M 459,820 H 430 V 970 H 690 V 820 H 501" fill="none" stroke="#1759a6" stroke-width="5" stroke-linejoin="round" />
-      <g id="room-711-room-labels" font-size="21" text-anchor="middle" fill="#777777">
+      <path id="room-711-destination-outline" d="M 459,820 H 430 V 970 H 690 V 820 H 501" fill="none" stroke="#e7a965" stroke-width="5" stroke-linejoin="round" />
+      <g id="room-711-room-labels" font-size="21" text-anchor="middle" fill="#ccd1e9">
         <g id="room-711-label-707">
           <text x="145" y="266" font-weight="bold">
             <tspan x="145" dy="0">Torborg</tspan>
@@ -202,7 +202,7 @@
           </text>
           <text x="335" y="921" font-size="17">710</text>
         </g>
-        <g id="room-711-label-711" fill="#1759a6" font-size="25">
+        <g id="room-711-label-711" fill="#e7a965" font-size="25">
           <text x="560" y="890" font-weight="bold">
             <tspan x="560" dy="0">Fanny Schnelle</tspan>
           </text>
@@ -226,7 +226,7 @@
           </text>
           <text x="873" y="702" font-size="17">714</text>
         </g>
-        <text id="room-711-label-716" x="624" y="631" font-size="17" fill="#777777">716</text>
+        <text id="room-711-label-716" x="624" y="631" font-size="17" fill="#ccd1e9">716</text>
         <text id="room-711-label-wc" x="145" y="521" font-size="25" font-weight="bold">WC</text>
       </g>
       <g id="room-711-stairs-and-lifts" font-size="20" text-anchor="middle">
@@ -245,9 +245,9 @@
         </g>
       </g>
       <g id="room-711-route" fill="none" stroke-linejoin="round" stroke-linecap="round">
-        <path d="M 350,683 H 280 V 790 H 480 V 813" stroke="white" stroke-width="8" />
-        <path d="M 350,683 H 280 V 790 H 480 V 813" stroke="#1759a6" stroke-width="4" stroke-dasharray="9 6" marker-end="url(#room-711-route-arrow)" />
-        <circle cx="350" cy="683" r="7" fill="#1759a6" stroke="white" stroke-width="2" />
+        <path d="M 350,683 H 280 V 790 H 480 V 813" stroke="#252735" stroke-width="8" />
+        <path d="M 350,683 H 280 V 790 H 480 V 813" stroke="#e7a965" stroke-width="4" stroke-dasharray="9 6" marker-end="url(#room-711-route-arrow)" />
+        <circle cx="350" cy="683" r="7" fill="#e7a965" stroke="#252735" stroke-width="2" />
       </g>
     </g>
   </g>
