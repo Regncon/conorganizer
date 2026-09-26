@@ -3,7 +3,7 @@
     --color-text-soft: #ccd1e9;
     --color-text-soft-50: hsl(from var(--color-text-soft) h s l / 50%);
     --color-text-soft-20: hsl(from var(--color-text-soft) h s l / 20%);
-    
+
     /* call to action banner */
     --banner-glow: #4966E2;
 
@@ -13,7 +13,14 @@
     --color-primary-hover: hsl(from var(--color-primary) h s l / 40%);
     --color-primary-active: hsl(from var(--color-primary) h s l / 60%);
     --color-primary-focus-visible: hsl(from var(--color-primary) h s l / 50%);
-    
+     --color-primary-background-gradient:
+        linear-gradient(
+            to right,
+            hsl(from var(--color-primary) h s l / 25%),
+            hsl(from var(--color-primary) h s l / 20%)
+        ),
+        var(--level-2-state-base);
+
     /* Deprecated variable, use color-primary instead */
 
     --color-secondary-text: var(--color-text-soft);
