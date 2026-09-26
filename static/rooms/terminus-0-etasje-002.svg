@@ -1,39 +1,92 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="t0-002-title t0-002-desc" lang="nb">
-<title id="t0-002-title">Grand Hotel Terminus – Dorothe Engelbretsdatter · 0. etasje</title>
-<desc id="t0-002-desc">Kart over tre rom langs en felles gang. Foreløpige romnumre: 001 Inger Haldorsen, 002 Dorothe Engelbretsdatter, 003 Søstrene Hagelin. Trapp og antatte heiser på oversiden av gangen. Markert rom: Dorothe Engelbretsdatter.</desc>
-<metadata>Basert på brukerens skisse. Romnumrene er midlertidige, ikke hotellets bekreftede romnumre. To umerkede bokser er tolket som heiser. Dørslag er skjematiske og ikke verifisert. Åpningen øverst til høyre i rom 002 er bevart fra skissen; tilstøtende areal er ikke tegnet.</metadata>
-<rect width="1200" height="680" fill="white"/>
-<g font-family="Arial, Helvetica, sans-serif">
-<text x="40" y="43" font-size="28">Grand Hotel Terminus</text>
-<text x="40" y="77" font-size="22">Dorothe Engelbretsdatter · 0. etasje</text>
-<rect x="373" y="443" width="744" height="184" fill="#dbeafe"/>
-<g fill="#eee" stroke="black" stroke-width="3"><path d="M 80,240 V 145 H 300 V 240 Z M 190,145 V 240"/><path d="M 560,240 V 110 H 640 V 240"/></g>
-<g fill="none" stroke="black" stroke-width="3"><path d="M 25,240 H 640 M 950,240 V 440 M 25,440 H 80"/></g>
-<g fill="none" stroke="#444" stroke-width="2">
-<path d="M 120,184 V 160 M 114,166 L 120,160 L 126,166 M 145,160 V 184 M 139,178 L 145,184 L 151,178"/>
-<path d="M 230,184 V 160 M 224,166 L 230,160 L 236,166 M 255,160 V 184 M 249,178 L 255,184 L 261,178"/>
-<path d="M 574,175 H 586 V 165 H 598 V 155 H 610 V 145 H 622"/>
-</g>
-<g text-anchor="middle" font-size="18"><text x="135" y="216">Heis</text><text x="245" y="216">Heis</text><text x="600" y="213">Trapp</text></g>
-
-<g id="t0-002-room-001" data-room-number="001" data-room-name="Inger Haldorsen"><path d="M 80,440 V 630 H 370 V 440 M 80,440 H 110 M 160,440 H 290 M 340,440 H 370" fill="none" stroke="black" stroke-width="3"/>
-<g text-anchor="middle" fill="#777">
-<text x="225" y="529" font-size="24" font-weight="bold">Inger</text>
-<text x="225" y="558" font-size="24" font-weight="bold">Haldorsen</text>
-<text x="225" y="585" font-size="17">001</text></g></g>
-<g id="t0-002-room-002" data-room-number="002" data-room-name="Dorothe Engelbretsdatter"><path d="M 370,440 V 630 H 1120 V 440 H 1075 M 1040,440 H 470 M 420,440 H 370" fill="none" stroke="#1759a6" stroke-width="5"/>
-<g text-anchor="middle" fill="#1759a6">
-<text x="745" y="514" font-size="24" font-weight="bold">Dorothe</text>
-<text x="745" y="543" font-size="24" font-weight="bold">Engelbretsdatter</text>
-<text x="745" y="570" font-size="17">002</text></g></g>
-<g id="t0-002-room-003" data-room-number="003" data-room-name="Søstrene Hagelin"><path d="M 640,240 V 110 H 950 V 240 H 835 M 785,240 H 640" fill="none" stroke="black" stroke-width="3"/>
-<g text-anchor="middle" fill="#777">
-<text x="735" y="153" font-size="24" font-weight="bold">Søstrene</text>
-<text x="735" y="182" font-size="24" font-weight="bold">Hagelin</text>
-<text x="735" y="209" font-size="17">003</text></g></g>
-<g fill="none"><path d="M 110,440 v 50" stroke="#444" stroke-width="2"/><path d="M 160,440 A 50,50 0 0 1 110,490" stroke="#999" stroke-width="1"/></g>
-<g fill="none"><path d="M 290,440 v 50" stroke="#444" stroke-width="2"/><path d="M 340,440 A 50,50 0 0 1 290,490" stroke="#999" stroke-width="1"/></g>
-<g fill="none"><path d="M 420,440 v 50" stroke="#444" stroke-width="2"/><path d="M 470,440 A 50,50 0 0 1 420,490" stroke="#999" stroke-width="1"/></g>
-<g fill="none"><path d="M 1040,440 v 35" stroke="#444" stroke-width="2"/><path d="M 1075,440 A 35,35 0 0 1 1040,475" stroke="#999" stroke-width="1"/></g>
-<g fill="none"><path d="M 785,240 v -50" stroke="#444" stroke-width="2"/><path d="M 835,240 A 50,50 0 0 0 785,190" stroke="#999" stroke-width="1"/></g>
-</g></svg>
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="1200" height="610" viewBox="0 70 1200 610" role="img" aria-labelledby="t0-002-title t0-002-desc" lang="nb" version="1.1" id="t0-002-map" sodipodi:docname="terminus-0-etasje-002.svg" inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)">
+  <defs id="defs29"><marker id="t0-002-route-arrow" markerUnits="userSpaceOnUse" markerWidth="13" markerHeight="13" viewBox="0 0 13 13" refX="12" refY="6.5" orient="auto"><path d="M 0,0 L 13,6.5 L 0,13 Z" fill="#e7a965"/></marker></defs>
+  <sodipodi:namedview id="namedview29" pagecolor="#252735" bordercolor="#ccd1e9" borderopacity="0.25" inkscape:showpageshadow="2" inkscape:pageopacity="0.0" inkscape:pagecheckerboard="0" inkscape:deskcolor="#1a1b26" inkscape:zoom="1.0476965" inkscape:cx="430.46816" inkscape:cy="165.60139" inkscape:window-width="1896" inkscape:window-height="1176" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="1" inkscape:current-layer="room-targets"/>
+  <title id="t0-002-title">Grand Hotel Terminus – Dorothe Engelbretsdatter, 0. etasje</title>
+  <desc id="t0-002-desc">Kart til Dorothe Engelbretsdatter. To stiplede ruter viser veien fra heisene og trappen til rommet. Startpunktene er markert med blå sirkler, og målet er markert i blått.</desc>
+  <metadata id="metadata1">Basert på brukerens skisse. Romnumrene er midlertidige, ikke hotellets bekreftede romnumre. To umerkede bokser er tolket som heiser. Dørslag er skjematiske og ikke verifisert. Åpningen øverst til høyre i rom 002 er bevart fra skissen; tilstøtende areal er ikke tegnet.</metadata>
+  <rect width="1200" height="680" fill="#252735" id="rect1"/>
+  <rect id="t0-002-destination-fill" x="320" y="441" width="631" height="188" fill="#35394a"/><g id="t0-overview-room-004" data-room-number="004" data-room-name="Info Desk" font-family="Arial, Helvetica, sans-serif">
+    <title>Info Desk</title>
+    <circle cx="525" cy="341" r="15" fill="#e7a965"/>
+    <text x="525" y="348" fill="#1a1b26" text-anchor="middle" font-size="21" font-weight="bold">i</text>
+    <text x="550" y="348" fill="#e7a965" font-size="22" font-weight="bold">Info Desk</text>
+  </g>
+  <g fill="none" id="g26-5" transform="matrix(0,-1.2453906,-0.99695113,0,559.20457,1378.4448)">
+    <path d="M 785,240 V 190" stroke="#ccd1e9" stroke-width="2" id="path25-6"/>
+    <path d="M 835,240 A 50,50 0 0 0 785,190" stroke="#7f8198" stroke-width="1" id="path26-2"/>
+  </g>
+  <g fill="none" id="g26-5-1" transform="matrix(0,1.2453906,-0.99695113,0,559.49437,-702.69225)">
+    <path d="M 785,240 V 190" stroke="#ccd1e9" stroke-width="2" id="path25-6-2"/>
+    <path d="M 835,240 A 50,50 0 0 0 785,190" stroke="#7f8198" stroke-width="1" id="path26-2-7"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" id="g27" fill="#ccd1e9" transform="matrix(0.84753946,0,0,1.0003227,3.8737235,-0.11939174)">
+    <g fill="#35394a" stroke="#ccd1e9" stroke-width="3" id="g2">
+      <path d="m 80,240 v -95 h 220 v 95 z m 110,-95 v 95" id="path1"/>
+      <path d="M 490.24166,239.64204 V 110.3498 h 149.04205 v 129.29224" id="path2" style="stroke-width:4.08362"/>
+      <rect style="fill:#252735;stroke-width:3.07899" id="rect30" width="2.217104" height="34.626389" x="370.78284" y="240.34959"/>
+      <rect style="fill:#252735;stroke-width:3.12428" id="rect30-9" width="2.1599021" height="36.596828" x="369.05142" y="401.26575"/>
+    </g>
+    <g fill="none" stroke="#ccd1e9" stroke-width="3" id="g3" transform="matrix(1.1825633,0,0,0.99908171,-4.6654863,0.31221949)">
+      <path d="m 25,240 h 615 m 310,0 v 200 m -925,0 h 55" id="path3"/>
+    </g>
+    <g fill="none" stroke="#ccd1e9" stroke-width="2" id="g6" transform="matrix(0.94356733,0,0,1.0008439,6.4134462,-0.1389957)">
+      <path d="m 120,184 v -24 m -6,6 6,-6 6,6 m 19,-6 v 24 m -6,-6 6,6 6,-6" id="path4"/>
+      <path d="m 230,184 v -24 m -6,6 6,-6 6,6 m 19,-6 v 24 m -6,-6 6,6 6,-6" id="path5"/>
+      <path d="m 574,175 h 12 v -10 h 12 v -10 h 12 v -10 h 12" id="path6"/>
+    </g>
+    <g text-anchor="middle" font-size="18px" id="g8" transform="matrix(0.93363295,0,0,1,7.862648,0)">
+      <text x="135" y="216" id="text6">Heis</text>
+      <text x="245" y="216" id="text7">Heis</text>
+      <text x="600" y="213" id="text8">Trapp</text>
+    </g>
+    <g id="t0-overview-room-001" data-room-number="001" data-room-name="Inger Haldorsen">
+      <path d="M 80,440 V 630 H 370 V 440 m -290,0 h 30 m 50,0 h 130 m 50,0 h 30" fill="none" stroke="#ccd1e9" stroke-width="3" id="path8"/>
+      <g text-anchor="middle" fill="#ccd1e9" id="g11">
+        <text x="225" y="529" font-size="24px" font-weight="bold" id="text9">Inger</text>
+        <text x="225" y="558" font-size="24px" font-weight="bold" id="text10">Haldorsen</text>
+      </g>
+    </g>
+    <g id="t0-overview-room-002" data-room-number="002" data-room-name="Dorothe Engelbretsdatter">
+      <path d="m 370,440 v 190 h 750 V 440 h -45 m -35,0 H 470 m -50,0 h -50" fill="none" stroke="#e7a965" stroke-width="5" id="path11"/>
+      <g text-anchor="middle" fill="#e7a965" id="g14">
+        <text x="745" y="514" font-size="24px" font-weight="bold" id="text12">Dorothe</text>
+        <text x="745" y="543" font-size="24px" font-weight="bold" id="text13">Engelbretsdatter</text>
+      </g>
+    </g>
+    <g id="t0-overview-room-003" data-room-number="003" data-room-name="Søstrene Hagelin" transform="matrix(1.539598,0,0,0.9945215,-344.98659,0.95873812)">
+      <path d="M 640,240 V 110 H 950 V 240 H 835 m -50,0 H 640" fill="none" stroke="#ccd1e9" stroke-width="3" id="path14"/>
+      <g text-anchor="middle" fill="#ccd1e9" id="g17" transform="matrix(0.8645483,0,0,1,92.694997,0)">
+        <text x="758.86255" y="147.463" font-size="23.1315px" font-weight="bold" id="text15" transform="scale(0.96381041,1.0375485)" style="stroke-width:0.96381">Søstrene</text>
+        <text x="758.86255" y="175.4135" font-size="23.1315px" font-weight="bold" id="text16" transform="scale(0.96381041,1.0375485)" style="stroke-width:0.96381">Hagelin</text>
+      </g>
+    </g>
+    <g fill="none" id="g18">
+      <path d="m 110,440 v 50" stroke="#ccd1e9" stroke-width="2" id="path17"/>
+      <path d="m 160,440 a 50,50 0 0 1 -50,50" stroke="#7f8198" stroke-width="1" id="path18"/>
+    </g>
+    <g fill="none" id="g20">
+      <path d="m 290,440 v 50" stroke="#ccd1e9" stroke-width="2" id="path19"/>
+      <path d="m 340,440 a 50,50 0 0 1 -50,50" stroke="#7f8198" stroke-width="1" id="path20"/>
+    </g>
+    <g fill="none" id="g22">
+      <path d="m 420,440 v 50" stroke="#ccd1e9" stroke-width="2" id="path21"/>
+      <path d="m 470,440 a 50,50 0 0 1 -50,50" stroke="#7f8198" stroke-width="1" id="path22"/>
+    </g>
+    <g fill="none" id="g24">
+      <path d="m 1040,440 v 35" stroke="#ccd1e9" stroke-width="2" id="path23"/>
+      <path d="m 1075,440 a 35,35 0 0 1 -35,35" stroke="#7f8198" stroke-width="1" id="path24"/>
+    </g>
+    <g fill="none" id="g26" transform="matrix(1.469419,0,0,0.99662952,-288.18827,-0.46889857)">
+      <path d="M 785,240 V 190" stroke="#ccd1e9" stroke-width="2" id="path25"/>
+      <path d="M 835,240 A 50,50 0 0 0 785,190" stroke="#7f8198" stroke-width="1" id="path26"/>
+    </g>
+  </g>
+  <!-- Interactive room interiors. Kept in map coordinates alongside the drawing. -->
+  <g id="t0-002-routes" pointer-events="none"><path d="M 165,265 V 337 H 373 V 433" fill="none" stroke="#252735" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/><path d="M 165,265 V 337 H 373 V 433" fill="none" stroke="#e7a965" stroke-width="4" stroke-dasharray="9 6" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#t0-002-route-arrow)"/><path d="M 480,265 V 337 H 390 V 433" fill="none" stroke="#252735" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/><path d="M 480,265 V 337 H 390 V 433" fill="none" stroke="#e7a965" stroke-width="4" stroke-dasharray="9 6" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#t0-002-route-arrow)"/><circle cx="165" cy="265" r="7" fill="#e7a965" stroke="#252735" stroke-width="2"/><circle cx="480" cy="265" r="7" fill="#e7a965" stroke="#252735" stroke-width="2"/></g><g id="room-targets" fill="transparent" stroke="none">
+    <rect data-room-target="001" x="69.285637" y="441.4032" width="251.82101" height="190" id="rect27" style="stroke-width:0.931852"/>
+    <rect data-room-target="002" x="319.61633" y="439.6861" width="633.55402" height="190" id="rect28" style="stroke-width:0.919096"/>
+    <rect data-room-target="003" x="546.46149" y="110.95447" width="405.44751" height="130" id="rect29" style="stroke-width:1.14363"/>
+    <rect data-room-target="004" x="500" y="300" width="250" height="110"/>
+  </g>
+</svg>
