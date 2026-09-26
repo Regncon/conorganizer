@@ -39,21 +39,21 @@ func interestErrorMessageFromError(err error) string {
 		return ""
 	}
 	if strings.Contains(err.Error(), "does not have access") {
-		return "Du har ikkje tilgang til å endre interessa til denne billettheldaren. Kontakt styret."
+		return "Du har ikke tilgang til å endre interessen til denne billettholderen. Kontakt styret."
 	}
 	if strings.Contains(err.Error(), "is not active for event") {
-		return "Denne pulja er ikkje tilgjengeleg for dette arrangementet."
+		return "Denne puljen er ikke tilgjengelig for dette arrangementet."
 	}
 	if strings.Contains(err.Error(), "is locked for event") {
-		return "Pulja er låst. Du kan ikkje melde eller endre interesse lenger medan vi fordeler spelarar."
+		return "Puljen er låst. Du kan ikke melde eller endre interesse lenger mens vi fordeler spillere."
 	}
 	if strings.Contains(err.Error(), "is completed for event") {
-		return "Puljefordelinga er klar. Gå til profilen din for å sjå kva du fekk."
+		return "Puljefordelingen er klar. Gå til profilen din for å se hva du fikk."
 	}
 	if strings.Contains(err.Error(), "program is not published") {
 		return "Interessevalget er ikke åpnet ennå."
 	}
-	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
+	return "Det oppstod en feil da interessen skulle lagres. Prøv igjen, eller kontakt styret dersom feilen fortsetter."
 }
 
 func SetupEventRoute(router chi.Router, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
@@ -246,14 +246,14 @@ func interestUpdateHandler(liveManager *live.Manager, db *sql.DB, logger *slog.L
 		}
 		if signals.BillettHolderId <= 0 {
 			logger.Error("Rejected interest update: missing billettholder id", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-			if err := patchInterestErrorSignal(sse, "Vel billetthelder f\u00f8r du melder interesse."); err != nil {
+			if err := patchInterestErrorSignal(sse, "Velg billettholder f\u00f8r du melder interesse."); err != nil {
 				logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 			}
 			return
 		}
 		if signals.PuljeId == "" {
 			logger.Error("Rejected interest update: missing pulje id", "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
-			if err := patchInterestErrorSignal(sse, "Vel pulje f\u00f8r du melder interesse."); err != nil {
+			if err := patchInterestErrorSignal(sse, "Velg pulje f\u00f8r du melder interesse."); err != nil {
 				logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
 			}
 			return

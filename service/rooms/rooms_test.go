@@ -21,7 +21,7 @@ func TestCreateRoom_CreatesRoomWithGeneratedID(t *testing.T) {
 		Name:       "Hakkebakken",
 		RoomNumber: "101",
 		Floor:      1,
-		Notes:      "Dette er eit gyldig rom",
+		Notes:      "Dette er et gyldig rom",
 	}
 	inputRoom := expectedRoom
 	inputRoom.ID = 0

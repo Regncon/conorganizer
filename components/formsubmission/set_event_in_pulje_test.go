@@ -19,7 +19,7 @@ func TestSetEventInPulje_AddsThenRemovesMembership(t *testing.T) {
 		string(models.PuljeFredagKveld))
 	testutil.MustExec(t, db,
 		`INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		 VALUES ('e1', 'Spel', '', '', 'Ola', 'ola@x.no', '', 4)`)
+		 VALUES ('e1', 'Spill', '', '', 'Ola', 'ola@x.no', '', 4)`)
 
 	ctx := authctx.WithUserToken(context.Background(), "ext-42", "admin@x.no")
 	if err := SetEventInPulje(ctx, db, logger, "e1", string(models.PuljeFredagKveld), true); err != nil {
@@ -63,7 +63,7 @@ func TestSetEventInPulje_DoesNotChangeLegacyPublished(t *testing.T) {
 		string(models.PuljeFredagKveld))
 	testutil.MustExec(t, db,
 		`INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		 VALUES ('e1', 'Spel', '', '', 'Ola', 'ola@x.no', '', 4)`)
+		 VALUES ('e1', 'Spill', '', '', 'Ola', 'ola@x.no', '', 4)`)
 	testutil.MustExec(t, db,
 		`INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published) VALUES ('e1', ?, 1, 1)`,
 		string(models.PuljeFredagKveld))
@@ -110,7 +110,7 @@ func TestSetEventInPulje_RealChangeLeavesLegacyPublishedUntouched(t *testing.T) 
 		string(models.PuljeFredagKveld))
 	testutil.MustExec(t, db,
 		`INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		 VALUES ('e1', 'Spel', '', '', 'Ola', 'ola@x.no', '', 4)`)
+		 VALUES ('e1', 'Spill', '', '', 'Ola', 'ola@x.no', '', 4)`)
 	testutil.MustExec(t, db,
 		`INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published) VALUES ('e1', ?, 1, 1)`,
 		string(models.PuljeFredagKveld))

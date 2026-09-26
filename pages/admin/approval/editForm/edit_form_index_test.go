@@ -12,9 +12,9 @@ import (
 
 func TestEditFormIndex_HasNoPlayerAssignmentDialogs(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt redigeringssida for eit arrangement.",
-		When:  "Når sida blir rendra.",
-		Then:  "Så inneheld ho ikkje lenger spelartildeling.",
+		Given: "Gitt redigeringssiden for et arrangement.",
+		When:  "Når siden blir rendret.",
+		Then:  "Så inneholder den ikke lenger spillertildeling.",
 	})
 
 	db := testutil.CreateTestDB(t, "edit-form-index-age-dialog")

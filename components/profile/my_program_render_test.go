@@ -122,7 +122,7 @@ func TestMyProgram_WhenProgramIsNotReady_HidesPlayerResult(t *testing.T) {
 	// Given
 	expectedVisibleText := "Completed Player Result"
 	hiddenVisibleText := "Completed Wish Hidden By Result"
-	expectedStatusText := "Programmet for Regncon er ikkje publisert enno"
+	expectedStatusText := "Programmet for Regncon er ikke publisert ennå"
 
 	db, logger := createProfileProgramTestDB(t)
 	userInfo, billettholderID := seedProfileProgramUser(t, db)

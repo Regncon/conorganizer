@@ -57,7 +57,7 @@ func TestPuljeEventBox_ParticipantInterestCanBeChanged(t *testing.T) {
 	})
 
 	// Given
-	expectedLevels := []string{"Veldig interessert", "Middels interessert", "Litt interessert", "Ikkje interessert"}
+	expectedLevels := []string{"Veldig interessert", "Middels interessert", "Litt interessert", "Ikke interessert"}
 	ev := puljefordeling.EmulatedEvent{EventID: "ev1", Title: "Drager", Capacity: 4, AssignedPlayers: []puljefordeling.AssignedPlayer{
 		{BillettholderID: 7, Name: "Kari Nordmann", Manual: true},
 	}}

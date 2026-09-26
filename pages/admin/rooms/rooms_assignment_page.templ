@@ -232,7 +232,7 @@ templ roomPuljeContainer(room models.RoomByPulje, pulje models.Pulje, eventImage
 		data-on:drop__prevent={ fmt.Sprintf("$dragOverRoom = 0; !$_roomSaving && $draggedEventId && @post('/admin/rooms/api/assignment/%s/' + $draggedEventId + '/%d')", string(pulje), room.ID) }
 		data-class:is-drag-over={ fmt.Sprintf("$dragOverRoom === %d", room.ID) }
 		data-indicator="_roomSaving"
-		{ errorfeedback.Attrs("room-assignment", "Klarte ikkje å tildele rommet. Prøv igjen.")... }
+		{ errorfeedback.Attrs("room-assignment", "Klarte ikke å tildele rommet. Prøv igjen.")... }
 	>
 		<header class="room-heading">
 			if !mapped {
@@ -522,7 +522,7 @@ templ roomsAssignmentLiveContent(db *sql.DB, logger *slog.Logger, pulje models.P
 				}
 			</div>
 		}
-		<h2>Romfordelig for { pulje.Label() }</h2>
+		<h2>Romfordeling for { pulje.Label() }</h2>
 		{{ floors := getRoomsPuljeByFloor(db, logger, pulje) }}
 		for _, floorGroup := range floors {
 			if mapPath, hasMap := roomService.MapPathForFloor(floorGroup.Floor); hasMap {
@@ -546,7 +546,7 @@ templ roomsAssignmentLiveContent(db *sql.DB, logger *slog.Logger, pulje models.P
 				}
 			</div>
 		} else {
-			<p style="text-align: center;">Ingen rom funnet, vær den førte til å <a href="/admin/rooms/">ligge inn</a> et rom nå!</p>
+			<p style="text-align: center;">Ingen rom funnet, vær den første til å <a href="/admin/rooms/">legge inn</a> et rom nå!</p>
 		}
 	</section>
 }

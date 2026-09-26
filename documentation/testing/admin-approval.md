@@ -64,10 +64,10 @@ Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, alts�
   **Når** siden oppdateres fortløpende.<br>
   **Så** skal innholdet forbli stabilt og ikke vise gamle eller blandede data mellom seksjonene.
 
-- [ ] **Godkjenningsflyten er arbeidsbar på ulike skjermer**<br>
+- [ ] **Godkjenningsflyten er brukbar på ulike skjermer**<br>
   **Gitt** at admin bruker godkjenningsflyten på større og mindre skjermer.<br>
   **Når** skjema, forhåndsvisning og interesseoversikt vises samtidig.<br>
-  **Så** skal siden fortsatt være lesbar og arbeidsbar.
+  **Så** skal siden fortsatt være lesbar og brukbar.
 
 - [ ] **Refresh viser korrekt data og tildelingsstatus**<br>
   **Gitt** at admin refresher siden midt i redigeringsarbeidet.<br>

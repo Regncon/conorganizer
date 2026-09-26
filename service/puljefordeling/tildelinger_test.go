@@ -56,7 +56,7 @@ func TestTildelBillettholder_AddPlayerConfirmsAndPreservesAllAssignments(t *test
 	bdd.Behavior(t, bdd.BDD{Given: "a billettholder has one GM assignment and one Player assignment in the pulje", When: "an admin confirms adding a Player to another event", Then: "the warning lists both assignments and confirmation preserves the existing Player and GM"})
 
 	// Given
-	expectedHandling := "Legg til som spelar på «Alpha»"
+	expectedHandling := "Legg til som spiller på «Alpha»"
 	expectedWarningEvents := []string{"evB", "evC"}
 	expectedGMEvents := []string{"evB"}
 	expectedPlayerEvents := []string{"evA", "evC"}
@@ -138,7 +138,7 @@ func TestTildelBillettholder_DragWithGMOverlapCannotBeConfirmed(t *testing.T) {
 		BillettholderID: 1,
 		Role:            models.EventPlayerRolePlayer,
 		FraLeggTil:      false,
-		Bekreftelse:     "kan-ikkje-overstyre",
+		Bekreftelse:     "kan-ikke-overstyre",
 		AlderBekreftet:  true,
 	}
 
@@ -482,7 +482,7 @@ func TestTildelBillettholder_ValidationFailurePreservesExistingAssignments(t *te
 	}{
 		{
 			name:     "invalid role",
-			valg:     Tildelingsvalg{PuljeID: models.PuljeFredagKveld, EventID: "evA", BillettholderID: 1, Role: models.EventPlayerRole("Tilskodar"), FraLeggTil: true},
+			valg:     Tildelingsvalg{PuljeID: models.PuljeFredagKveld, EventID: "evA", BillettholderID: 1, Role: models.EventPlayerRole("Tilskuer"), FraLeggTil: true},
 			expected: ErrUgyldigTildeling,
 		},
 		{
