@@ -50,10 +50,10 @@
     --bg-item-border-hover: #7f8198;
     --bg-item-border: #494D62;
     --item-flat-active: hsl(230deg 40% 86% / 20%);
-    
+
     /* level 1 */
     --level-1-background: #1B1E2C;
-    
+
     /* level 2 */
     --level-2-state-layer: #CBD2E0;
     --level-2-state-base: #232537;
@@ -62,28 +62,37 @@
     --level-2-background-active: color-mix(in srgb, var(--level-2-state-layer) 10%, var(--level-2-state-base));
     --level-2-border: #31374F;
     --level-2-border-hover: color-mix(in srgb, var(--level-2-state-layer) 40%, var(--level-2-border));
-    
+
     /* level 3 */
     --level-3-background: #2B3045;
-    --level-3-background-hover: #3D4461; 
+    --level-3-background-hover: #3D4461;
     --level-3-background-active: #495174;
     --level-3-border: #495174;
     --level-3-border-hover: color-mix(in srgb, var(--color-text-soft) 40%, var(--level-3-border));
-    
+
     /* backdrop */
     --bg-backdrop: #0009;
 
     /* text & font */
-    --text-body: 16px;
-    --text-body-small: 14px;
     --text-heading-1-xl: 52px;
+    --text-heading-1-xl-lh: 1.2;
     --text-heading-1: 40px;
-    --text-heading-1-mobile: 28px;
+    --text-heading-1-lh: 1.2;
     --text-heading-2: 32px;
-    --text-heading-2-mobile: 24px;
+    --text-heading-2-lh: 1.3;
     --text-heading-3: 16px;
     --text-heading-4: 12px;
     --text-article: 20px;
+    --text-article-lh: 1.5;
+    --text-body: 16px;
+    --text-body-small: 14px;
+    --text-label: 12px;
+    --text-heading-1-mobile: 28px;
+    --text-heading-1-mobile-lh: 1.2;
+    --text-heading-2-mobile: 24px;
+    --text-heading-2-mobile-lh: 1.3;
+    --text-article-mobile: 16px;
+    --text-article-mobile-lh: 1.5;
 
     --font-sans-serif: "Open Sans", Helvetica, sans-serif;
     --font-serif: "EB Garamond", Georgia, Times, serif;
