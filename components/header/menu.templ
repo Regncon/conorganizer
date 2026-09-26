@@ -775,7 +775,7 @@ templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions) {
 		data-on:click="$_phoneMenuOpen = !$_phoneMenuOpen"
 	>
 		if billettholderOptions.HasBillettholder() {
-			<div class="btn">
+			<div>
 				@billettholderMenuAvatar(billettholderOptions.Default)
 			</div>
 		} else {
