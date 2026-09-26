@@ -8,8 +8,8 @@
     --btn-border-radius: var(--border-radius-1x);
 
     /* button backgrounds */
-    --btn-flat-active: hsl(from #C6CDF1 h s l / 20%);
-    --btn-flat-hover: hsl(from #C5CCF0 h s l / 10%);
+    --btn-flat-active: hsl(from #c6cdf1 h s l / 20%);
+    --btn-flat-hover: hsl(from #c5ccf0 h s l / 10%);
 
     /* animation */
     --btn-transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
@@ -30,18 +30,11 @@
     --btn-secondary-active-text: var(--color-text-strong);
     --btn-secondary-focus-shadow: var(--color-text-soft-50);
 
-    /* --outline */
-    --btn-outline-border: var(--color-text-soft);
-    --btn-outline-hover-bg: var(--color-text-soft-hover);
-    --btn-outline-active-bg: var(--color-text-soft-active);
-    --btn-outline-active-text: var(--color-text-strong);
-    --btn-outline-focus-shadow: var(--color-text-soft-focus-visible);
-
     /* ghost */
     --btn-ghost-hover-bg: var(--color-text-soft-hover);
     --btn-ghost-active-bg: var(--color-text-soft-active);
     --btn-ghost-active-text: var(--color-text-strong);
-    --btn-ghost-focus-shadow: var(--color-text-soft-focus-visible);
+    --btn-ghost-focus-shadow: var(--color-text-soft-50);
 
     /* disabled */
     --btn-disabled-bg: transparent;
@@ -98,12 +91,6 @@
     cursor: not-allowed;
 }
 
-/* — Outline — */
-.btn--outline {
-    border-color: var(--btn-outline-border);
-    color: var(--color-text-soft);
-}
-
 /* — Secondary — */
 .btn--secondary {
     background-color: var(--btn-secondary-bg);
@@ -130,37 +117,6 @@
 }
 
 .btn--secondary:disabled {
-    background-color: var(--btn-disabled-bg);
-    border-color: var(--btn-disabled-border);
-    color: var(--btn-disabled-text);
-    cursor: not-allowed;
-}
-
-/* — Outline — */
-.btn--outline {
-    border-color: var(--btn-outline-border);
-    color: var(--color-text-soft);
-}
-
-.btn--outline:hover {
-    background-color: var(--btn-outline-hover-bg);
-    color: var(--btn-outline-active-text);
-}
-
-.btn--outline:focus-visible,
-.btn--outline:focus {
-    outline: none;
-    background-color: var(--btn-outline-hover-bg);
-    color: var(--btn-outline-active-text);
-    box-shadow: 0 0 0 3px var(--btn-outline-focus-shadow);
-}
-
-.btn--outline:active {
-    background-color: var(--btn-outline-active-bg);
-    color: var(--btn-outline-active-text);
-}
-
-.btn--outline:disabled {
     background-color: var(--btn-disabled-bg);
     border-color: var(--btn-disabled-border);
     color: var(--btn-disabled-text);

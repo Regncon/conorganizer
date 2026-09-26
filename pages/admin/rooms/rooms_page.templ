@@ -82,7 +82,7 @@ templ formModal() {
 			<span class="button-group">
 				<button
 					type="button"
-					class="btn btn--outline"
+					class="btn btn--secondary"
 					style="color: var(--color-error); border-color: var(--color-error);"
 					data-show="$mode === 'edit'"
 					data-on:click="document.getElementById('room-delete-dialog').showModal()"
@@ -92,12 +92,12 @@ templ formModal() {
 					<p>Er du sikker på at du vil slette dette rommet?</p>
 					<button
 						type="button"
-						class="btn btn--outline"
+						class="btn btn--secondary"
 						data-on:click="document.getElementById('room-delete-dialog').close()"
 					>Avbryt</button>
 					<button
 						type="button"
-						class="btn btn--outline"
+						class="btn btn--secondary"
 						style="color: var(--color-error); border-color: var(--color-error);"
 						data-on:click="@delete('/admin/rooms/api/'+$id)"
 					>Slett rom</button>
@@ -106,7 +106,7 @@ templ formModal() {
 					type="button"
 					data-text="$button_label"
 					data-on:click="@post('/admin/rooms/api/'+$id)"
-					class="btn btn--outline"
+					class="btn btn--secondary"
 				></button>
 			</span>
 			@errorfeedback.RenderMessage("error")
@@ -144,7 +144,7 @@ templ roomCard(room models.Room) {
 		}
 		<button
 			type="button"
-			class="btn btn--outline room-edit"
+			class="btn btn--secondary room-edit"
 			data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d'); document.getElementById('room-dialog').showModal()", room.ID) }
 		>Rediger rom</button>
 	</div>
@@ -291,7 +291,7 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
 		}
 		<button
 			type="button"
-			class="btn btn--outline"
+			class="btn btn--secondary"
 			data-on:click="@get('/admin/rooms/api/0'); document.getElementById('room-dialog').showModal()"
 		>
 			Legg til nytt rom

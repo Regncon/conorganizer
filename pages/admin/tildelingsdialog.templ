@@ -231,7 +231,7 @@ templ puljeTildelingsDialogInnhold(varsel puljefordeling.Tildelingsvarsel, valg 
 			@puljeConsequences(*varsel.Consequences)
 		}
 		<div class="tildeling-actions">
-			<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Avbryt</button>
+			<button type="button" class="btn btn--secondary" data-on:click="$tildelingOpen = false">Avbryt</button>
 			if varsel.KanBekrefte {
 				<button type="button" class="btn btn--primary" data-confirmation={ varsel.Bekreftelse } data-on:click={ tildelingsbekreftelse(varsel, valg) }>
 					{ varsel.Handling }
@@ -257,7 +257,7 @@ templ puljeRemovalDialogContent(preview puljefordeling.RemovalPreview, removalUR
 		@puljeOwnConsequence(preview.Consequences, preview.BillettholderName)
 		@puljeConsequences(preview.Consequences)
 		<div class="tildeling-actions">
-			<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Avbryt</button>
+			<button type="button" class="btn btn--secondary" data-on:click="$tildelingOpen = false">Avbryt</button>
 			<button type="button" class="btn btn--primary" data-on:click={ fmt.Sprintf("$tildelingOpen = false; @delete(%q)", removalURL) }>{ action }</button>
 		</div>
 	</div>
@@ -334,7 +334,7 @@ templ puljeConsequenceRow(change puljefordeling.Consequence) {
 }
 
 templ puljeConsequenceSeat(seat puljefordeling.Seat) {
-	switch {
+	switch  {
 		case seat.EventID == "":
 			<em>Uten plass</em>
 		case seat.IsGM:

@@ -452,7 +452,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		}
 		<a
 			href={ templ.SafeURL("/profile/new/" + eventId + "/") }
-			class="btn btn--outline back-button"
+			class="btn btn--secondary back-button"
 		>
 			Tilbake
 		</a>
@@ -605,7 +605,7 @@ templ imageCropper(eventID, kind, label, width, height, previewWidth, previewHei
 				</div>
 				<button
 					type="button"
-					class="btn btn--outline"
+					class="btn btn--secondary"
 					data-attr:disabled={ fmt.Sprintf("$_uploading || !%s.ready || %s.exporting || $%s", state, state, indicator) }
 					data-on:click="el.closest('banner-cropper').exportImage()"
 				>Lagre</button>

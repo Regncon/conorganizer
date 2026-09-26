@@ -90,7 +90,7 @@ templ puljeAssignmentPicker(db *sql.DB, logger *slog.Logger) {
 				<p class="pulje-assignment-help">Lagrer interessen til valgt billettholder for dette arrangementet, uten å tildele plass.</p>
 				<div>
 					for _, level := range []models.InterestLevel{models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow, models.InterestLevelNone} {
-						<button type="button" class="btn btn--outline" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeInterestAction(level) }>{ puljeInterestLabel(level) }</button>
+						<button type="button" class="btn btn--secondary" data-attr:disabled="$assignmentBillettholderId <= 0" data-on:click={ puljeInterestAction(level) }>{ puljeInterestLabel(level) }</button>
 					}
 				</div>
 			</div>

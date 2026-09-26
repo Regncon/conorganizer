@@ -87,22 +87,22 @@ if (!customElements.get("admin-billettholder-search")) {
             inline-size: auto;
             max-inline-size: 100%;
             text-align: left;
-            border-color: var(--btn-outline-border);
+            border-color: var(--btn-secondary-border);
             color: var(--color-text-soft);
             background-color: transparent;
             margin: 0 var(--spacing-2x) var(--spacing-2x) 0;
             vertical-align: top;
 
             &:hover {
-                background-color: var(--btn-outline-hover-bg);
-                color: var(--btn-outline-active-text);
+                background-color: var(--btn-secondary-hover-bg);
+                color: var(--btn-secondary-active-text);
             }
 
             &:focus-visible {
                 outline: none;
-                background-color: var(--btn-outline-hover-bg);
-                color: var(--btn-outline-active-text);
-                box-shadow: 0 0 0 3px var(--btn-outline-focus-shadow);
+                background-color: var(--btn-secondary-hover-bg);
+                color: var(--btn-secondary-active-text);
+                box-shadow: 0 0 0 3px var(--btn-secondary-focus-shadow);
             }
         }
 
@@ -492,7 +492,7 @@ if (!customElements.get("admin-billettholder-search")) {
         #createSearchResultButton(option, normalizedQuery) {
             const resultButtonElement = document.createElement("button")
             resultButtonElement.type = "button"
-            resultButtonElement.classList.add("btn", "btn--outline", "gm-search-item")
+            resultButtonElement.classList.add("btn", "btn--secondary", "gm-search-item")
             resultButtonElement.dataset.value = option.label
             resultButtonElement.dataset.id = String(option.id)
             resultButtonElement.append(renderHighlightedLabelFragment(option.label, normalizedQuery))

@@ -987,7 +987,7 @@ templ puljeAgeWarningDialog() {
 		<h3>Aldersgrense</h3>
 		<p data-text="$ageWarningText"></p>
 		<button
-			class="btn btn--outline"
+			class="btn btn--secondary"
 			type="button"
 			data-on:click="$ageWarningText = ''; document.getElementById('puljefordeling-age-dialog').close()"
 		>Avbryt</button>
@@ -1014,17 +1014,17 @@ templ puljeStatusToggles(pulje models.PuljeRow, unsaved bool) {
 	}}
 	<ol class="pulje-status-controls" aria-label="Steg for puljefordeling">
 		@puljeStatusStep(puljeStep{
-			Number:     1,
-			Label:      "Vis advarsel om at puljefordeling stenger snart",
+			Number:   1,
+			Label:    "Vis advarsel om at puljefordeling stenger snart",
 			Done:     puljeClosingWarningStepDone(pulje),
 			Disabled: pulje.Status != models.PuljeStatusOpen,
-			Action:     fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID),
+			Action:   fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID),
 		})
 		@puljeStatusStep(puljeStep{
-			Number:     2,
-			Label:      "Puljefordeling lukket",
-			Done:     puljeIsLocked(pulje.Status),
-			Disabled: !puljeStatusStepAllowed(pulje, models.PuljeStatusLocked) || !puljeStatusStepAllowed(pulje, models.PuljeStatusOpen),
+			Number:      2,
+			Label:       "Puljefordeling lukket",
+			Done:        puljeIsLocked(pulje.Status),
+			Disabled:    !puljeStatusStepAllowed(pulje, models.PuljeStatusLocked) || !puljeStatusStepAllowed(pulje, models.PuljeStatusOpen),
 			WaitingText: lockWaitingText,
 			Action: puljeStatusUpdateAction(
 				pulje,
@@ -1034,10 +1034,10 @@ templ puljeStatusToggles(pulje models.PuljeRow, unsaved bool) {
 			),
 		})
 		@puljeStatusStep(puljeStep{
-			Number:     3,
-			Label:      "Puljefordeling publisert",
-			Done:     puljeIsCompleted(pulje.Status),
-			Disabled: !puljeStatusStepAllowed(pulje, models.PuljeStatusCompleted) || publishBlocked,
+			Number:      3,
+			Label:       "Puljefordeling publisert",
+			Done:        puljeIsCompleted(pulje.Status),
+			Disabled:    !puljeStatusStepAllowed(pulje, models.PuljeStatusCompleted) || publishBlocked,
 			WaitingText: publishWaitingText,
 			Action: puljeStatusUpdateAction(
 				pulje,
@@ -1053,8 +1053,8 @@ templ puljeStatusToggles(pulje models.PuljeRow, unsaved bool) {
 type puljeStep struct {
 	Number      int
 	Label       string
-	Done     bool
-	Disabled bool
+	Done        bool
+	Disabled    bool
 	WaitingText string // why a step that is not done yet can't be ticked
 	Action      string
 }

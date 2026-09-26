@@ -22,7 +22,7 @@ templ puljeSaveDialogContent(pulje models.Pulje, status puljefordeling.SaveStatu
 			</p>
 			<p class="tildeling-note">Den lagrede fordelingen er lik den som vises nå.</p>
 			<div class="tildeling-actions">
-				<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Lukk</button>
+				<button type="button" class="btn btn--secondary" data-on:click="$tildelingOpen = false">Lukk</button>
 			</div>
 		} else {
 			<p class="tildeling-summary">
@@ -51,7 +51,7 @@ templ puljeSaveDialogContent(pulje models.Pulje, status puljefordeling.SaveStatu
 				}
 			</section>
 			<div class="tildeling-actions">
-				<button type="button" class="btn btn--outline" data-on:click="$tildelingOpen = false">Avbryt</button>
+				<button type="button" class="btn btn--secondary" data-on:click="$tildelingOpen = false">Avbryt</button>
 				<button
 					type="button"
 					class="btn btn--primary"
@@ -67,7 +67,7 @@ templ puljeSaveDialogContent(pulje models.Pulje, status puljefordeling.SaveStatu
 // something, and it opens the dialog that says what.
 templ puljeSaveButton(pulje models.Pulje, published bool, status puljefordeling.SaveStatus) {
 	<div class="pulje-commit-bar">
-		switch {
+		switch  {
 			case published:
 				<p>Fordelingen er publisert og kan ikke endres.</p>
 			case status.FirstSave && status.HasChanges():

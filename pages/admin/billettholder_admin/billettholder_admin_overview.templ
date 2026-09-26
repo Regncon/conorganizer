@@ -69,7 +69,7 @@ func getBillettholderAdminOverviewCounts(db *sql.DB) (billettholderAdminOverview
 }
 
 func billettholderAdminOverviewFilterClass(active bool) string {
-	class := "btn btn--outline billettholder-admin-overview-filter"
+	class := "btn btn--secondary billettholder-admin-overview-filter"
 	if active {
 		class += " selected"
 	}

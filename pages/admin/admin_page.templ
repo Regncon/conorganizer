@@ -51,7 +51,7 @@ templ adminPage(db *sql.DB) {
 						"/static/approve.webp",
 						"Events awaiting approval",
 					) {
-						<a role="button" href="/admin/approval/" class="btn btn--outline">Gå til arrangementer</a>
+						<a role="button" href="/admin/approval/" class="btn btn--secondary">Gå til arrangementer</a>
 					}
 					@adminCard(
 						"Billettholderoversikt",
@@ -59,7 +59,7 @@ templ adminPage(db *sql.DB) {
 						"/static/participants-small.webp",
 						"Participants",
 					) {
-						<a role="button" href="/admin/billettholder/" class="btn btn--outline">Gå til billettholdere</a>
+						<a role="button" href="/admin/billettholder/" class="btn btn--secondary">Gå til billettholdere</a>
 					}
 					@adminCard(
 						"Puljefordeling",
@@ -67,7 +67,7 @@ templ adminPage(db *sql.DB) {
 						"/static/puljefordeling.webp",
 						"Pulje distribution",
 					) {
-						<a role="button" href="/admin/puljefordeling/" class="btn btn--outline">Gå til puljefordeling</a>
+						<a role="button" href="/admin/puljefordeling/" class="btn btn--secondary">Gå til puljefordeling</a>
 					}
 					@adminCard(
 						"Puljeoppsett",
@@ -75,7 +75,7 @@ templ adminPage(db *sql.DB) {
 						"/static/puljeoppsett.webp",
 						"En trollmann planlegger på et blått kart under et skilt med teksten Puljeoppsett",
 					) {
-						<a role="button" href="/admin/puljeoppsett/" class="btn btn--outline">Gå til puljeoppsett</a>
+						<a role="button" href="/admin/puljeoppsett/" class="btn btn--secondary">Gå til puljeoppsett</a>
 					}
 					@adminCard(
 						"Administrer rom",
@@ -83,7 +83,7 @@ templ adminPage(db *sql.DB) {
 						"static/rooms-thumbnail.webp",
 						"Administrate rooms",
 					) {
-						<a role="button" href="/admin/rooms/" class="btn btn--outline">Gå til rom-oversikt</a>
+						<a role="button" href="/admin/rooms/" class="btn btn--secondary">Gå til rom-oversikt</a>
 					}
 					@adminCard(
 						"Utskriftsvennlig program",
@@ -91,7 +91,7 @@ templ adminPage(db *sql.DB) {
 						"/static/printer.webp",
 						"Skriver",
 					) {
-						<a role="button" href="/print" class="btn btn--outline">Gå til utskrift</a>
+						<a role="button" href="/print" class="btn btn--secondary">Gå til utskrift</a>
 					}
 				</div>
 			</div>

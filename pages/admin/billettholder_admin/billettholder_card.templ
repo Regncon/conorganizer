@@ -332,7 +332,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string, i
 			data-text={ fmt.Sprintf(`$successMessage-%d`, billettholder.ID) }
 		></strong>
 		<button
-			class="btn btn--outline"
+			class="btn btn--secondary"
 			data-on:click={ datastar.PostSSE("/admin/billettholder/api/new-email/%d/", billettholder.ID) }
 		>
 			Legg til epost

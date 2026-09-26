@@ -214,7 +214,7 @@ Tests passed. I’m checking the final diff so I can confirm the exact CSS varia
 Updated [static/css/card.css](/home/cinmay/Documents/conorganizer/static/css/card.css:98) to use the gray/secondary colors:
 
 - Hover/focus border: `var(--color-text-soft)`
-- Focus outline: `var(--color-text-soft-focus-visible)`
+- Focus outline: `var(--color-text-soft-50)`
 
 Verification passed:
 
