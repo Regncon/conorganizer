@@ -65,12 +65,24 @@ type EmulatedEvent struct {
 
 // EmulatedPulje is the proposed seating for one pulje (time slot).
 type EmulatedPulje struct {
-	PuljeID        models.Pulje
-	Name           string
-	Events         []EmulatedEvent
-	Unassigned     []string // names of interested participants who got no seat
-	NewlySatisfied int      // participants who got a top-choice seat this pulje
-	TotalScore     int      // sum of actual (unadjusted) interest scores
+	PuljeID           models.Pulje
+	Name              string
+	Events            []EmulatedEvent
+	Unassigned        []string           // names of interested participants who got no seat
+	NewlySatisfied    int                // participants who got a top-choice seat this pulje
+	TotalScore        int                // sum of actual (unadjusted) interest scores
+	GotForstevalg     []PuljeParticipant // participants who got their førstevalg this pulje, by name
+	WithoutForstevalg []PuljeParticipant // participants still without førstevalg after this pulje; those who wanted it here first
+}
+
+// PuljeParticipant is one participant in a pulje's førstevalg lists.
+type PuljeParticipant struct {
+	BillettholderID  int
+	Name             string
+	EventTitle       string               // their seat this pulje; empty when they have none
+	Level            models.InterestLevel // their interest in that seat
+	IsGM             bool                 // they run EventTitle this pulje
+	WantedForstevalg bool                 // gave Veldig interessert on an event they could be seated in this pulje
 }
 
 // Emulation is the full preview across all puljer.
@@ -197,7 +209,9 @@ func emulateSeatings(db emulationQuerier) (Emulation, error) {
 		} else {
 			res = state.SolveSlotFixed(slot, players, pins[pulje.ID])
 		}
-		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, over18, prefs, dmSet, pins[pulje.ID], events[pulje.ID]))
+		shaped := shapePulje(pulje, slot, res, gms, names, over18, prefs, dmSet, pins[pulje.ID], events[pulje.ID])
+		shaped.GotForstevalg, shaped.WithoutForstevalg = forstevalgLists(shaped, slot, res, players, state.IsSatisfied)
+		emulation.Puljer = append(emulation.Puljer, shaped)
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
 
@@ -272,6 +286,71 @@ func shapePulje(
 	}
 
 	return out
+}
+
+// forstevalgLists lists who got their førstevalg in this pulje, and who is
+// still without it once this pulje is done, each with their seat this pulje.
+// satisfied reports the fairness state after the pulje has been solved.
+func forstevalgLists(
+	pulje EmulatedPulje,
+	slot smodel.Slot,
+	res smodel.SlotResult,
+	players []smodel.Player,
+	satisfied func(playerID string) bool,
+) (got, without []PuljeParticipant) {
+	seats := make(map[int]PuljeParticipant)
+	for _, ev := range pulje.Events {
+		for _, pl := range ev.AssignedPlayers {
+			seats[pl.BillettholderID] = PuljeParticipant{EventTitle: ev.Title, Level: pl.Level}
+		}
+		for _, gm := range ev.AssignedGMs {
+			seats[gm.BillettholderID] = PuljeParticipant{EventTitle: ev.Title, IsGM: true}
+		}
+	}
+	participant := func(p smodel.Player) PuljeParticipant {
+		bh, _ := strconv.Atoi(p.ID)
+		d := seats[bh]
+		d.BillettholderID = bh
+		d.Name = p.Name
+		d.WantedForstevalg = wantedForstevalg(p, slot)
+		return d
+	}
+
+	newly := make(map[string]bool, len(res.NewlySatisfied))
+	for _, pid := range res.NewlySatisfied {
+		newly[pid] = true
+	}
+	for _, p := range players {
+		switch {
+		case newly[p.ID]:
+			got = append(got, participant(p))
+		case !satisfied(p.ID):
+			without = append(without, participant(p))
+		}
+	}
+	sort.SliceStable(got, func(i, j int) bool { return got[i].Name < got[j].Name })
+	sort.SliceStable(without, func(i, j int) bool {
+		if without[i].WantedForstevalg != without[j].WantedForstevalg {
+			return without[i].WantedForstevalg
+		}
+		return without[i].Name < without[j].Name
+	})
+	return got, without
+}
+
+// wantedForstevalg reports whether the player gave Veldig interessert on an
+// event in this slot that they could be seated in (an 18+ game does not count
+// for a minor).
+func wantedForstevalg(p smodel.Player, slot smodel.Slot) bool {
+	for _, ev := range slot.Events {
+		if ev.AdultsOnly && !p.IsOver18 {
+			continue
+		}
+		if p.Prefs[slot.ID][ev.ID] == smodel.MaxScore {
+			return true
+		}
+	}
+	return false
 }
 
 // assignedPlayers turns solver player IDs into display rows: name, DM flag, the

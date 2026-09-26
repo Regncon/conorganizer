@@ -192,22 +192,6 @@ func findPuljeRow(puljer []models.PuljeRow, pulje models.Pulje) (models.PuljeRow
 	return models.PuljeRow{}, false
 }
 
-// unsatisfiedAfter returns how many interested participants still have no
-// first-choice (top-choice) seat once the given pulje has been solved. The
-// emulation processes puljer chronologically, so this is PlayerCount minus the
-// running total of NewlySatisfied up to and including pulje. The bool is false
-// when pulje is not part of the emulation.
-func unsatisfiedAfter(em puljefordeling.Emulation, pulje models.Pulje) (int, bool) {
-	cumulative := 0
-	for _, p := range em.Puljer {
-		cumulative += p.NewlySatisfied
-		if p.PuljeID == pulje {
-			return em.PlayerCount - cumulative, true
-		}
-	}
-	return 0, false
-}
-
 templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje, eventImageDir *string) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
@@ -238,6 +222,7 @@ templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, 
 		data-signals__ifmissing:assignment-close-dialog="false"
 		data-signals__ifmissing:assignment-action-completed="false"
 		data-signals__ifmissing:clear-input="0"
+		data-signals__ifmissing:_pulje-list="''"
 		data-signals__ifmissing:dragged-billettholder-id="0"
 		data-signals__ifmissing:dragged-event-id="''"
 		data-signals__ifmissing:dragged-manual-seat="false"
@@ -320,7 +305,6 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		row, hasRow := findPuljeRow(puljer, pulje)
 
 		result, hasResult := findEmulatedPulje(em, pulje)
-		unsatisfied, hasUnsatisfied := unsatisfiedAfter(em, pulje)
 		var fordelingsvarsler []puljefordeling.Fordelingsvarsel
 		var kapasitetsvarsler []puljefordeling.Kapasitetsvarsel
 		var varslerErr error
@@ -362,15 +346,6 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             border: 1px solid var(--level-3-border);
             border-radius: var(--border-radius-2x);
             background-color: var(--level-3-background);
-        }
-        .pulje-tab-stats {
-            display: flex;
-            gap: var(--spacing-2x) var(--spacing-4x);
-            flex-wrap: wrap;
-            color: var(--color-text-strong);
-        }
-        .pulje-tab-warn {
-            color: var(--color-warning);
         }
         .pulje-status-controls {
             display: flex;
@@ -428,6 +403,8 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             display: flex;
             flex-direction: column;
             gap: var(--spacing-1x);
+            padding-block-start: var(--spacing-3x);
+            border-block-start: 1px solid var(--level-3-border);
             color: var(--color-text-soft);
             font-size: var(--text-body-small);
 
@@ -873,6 +850,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             }
         }
     </style>
+	@puljeForstevalgStyles()
 	<section
 		id="puljefordeling-tab"
 		class="pulje-section"
@@ -886,16 +864,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		<div class="pulje-meta-panel">
 			<div class="pulje-meta">
 				if hasResult {
-					<div class="pulje-tab-stats">
-						<span>{ fmt.Sprintf("%d fikk førstevalg", result.NewlySatisfied) }</span>
-						if hasUnsatisfied {
-							<span>{ fmt.Sprintf("%d uten førstevalg så langt", unsatisfied) }</span>
-						}
-						<span>{ fmt.Sprintf("%d interessepoeng", result.TotalScore) }</span>
-						if len(result.Unassigned) > 0 {
-							<span class="pulje-tab-warn">{ fmt.Sprintf("%d uten plass", len(result.Unassigned)) }</span>
-						}
-					</div>
+					@puljeForstevalgStats(result)
 				}
 				<div class="pulje-legend">
 					<p>🤩 Veldig interessert · 😁 Interessert · 🙂 Litt interessert · 🫥 Ikke interessert</p>
