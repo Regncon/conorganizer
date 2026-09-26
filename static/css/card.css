@@ -111,7 +111,7 @@
 }
 
 .event-card-container:focus-visible {
-    outline: 3px solid var(--color-text-soft-focus-visible);
+    outline: 3px solid var(--color-text-soft-50);
 }
 
 .event-card-thumbnail {
@@ -237,7 +237,7 @@
 
 .event-bar-container:focus-visible {
     border-color: var(--color-text-soft);
-    outline: 3px solid var(--color-text-soft-focus-visible);
+    outline: 3px solid var(--color-text-soft-50);
 }
 
 .event-bar-title {
@@ -296,6 +296,6 @@
 }
 
 .profile-event-bar:focus-visible {
-    outline: 3px solid var(--color-text-soft-focus-visible);
+    outline: 3px solid var(--color-text-soft-50);
     outline-offset: 2px;
 }
