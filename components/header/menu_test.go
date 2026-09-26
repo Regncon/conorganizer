@@ -62,11 +62,11 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	}
 }
 
-func TestMenu_LoggedInUserSeesFeedbackLinkInDesktopAndMobileMenus(t *testing.T) {
+func TestMenu_LoggedInUserSeesFeedbackLinkOnlyInBurgerMenus(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren er innlogget.",
 		When:  "Når hovednavigasjonen vises.",
-		Then:  "Så skal lenken til å gi tilbakemelding finnes både i skrivebordsmenyen og i mobilmenyen.",
+		Then:  "Så skal lenken til å gi tilbakemelding finnes i burgermenyen på skrivebord og mobil, men ikke i toppmenyen.",
 	})
 
 	// Given
@@ -88,8 +88,8 @@ func TestMenu_LoggedInUserSeesFeedbackLinkInDesktopAndMobileMenus(t *testing.T) 
 	if !feedbackLinkInMobileDialog {
 		t.Fatalf("expected feedback link in mobile menu dialog")
 	}
-	if !feedbackLinkInMainMenuButtons {
-		t.Fatalf("expected feedback link next to the profile button")
+	if feedbackLinkInMainMenuButtons {
+		t.Fatalf("expected no feedback link in the top menu bar")
 	}
 }
 

@@ -252,12 +252,6 @@ templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
 					Min Side
 				</span>
 			</a>
-			<a href="/tilbakemelding" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", strings.Contains(path, "/tilbakemelding")) }>
-				@icons.Icon(icons.Comment, icons.Size20)
-				<span class="menu-button-text">
-					Gi tilbakemelding
-				</span>
-			</a>
 		}
 		if userInfo.IsLoggedIn && userInfo.IsAdmin {
 			<a href="/admin" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", strings.Contains(path, "/admin")) }>

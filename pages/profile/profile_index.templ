@@ -34,6 +34,7 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 		@ProfileMainColumn(user, events, selectedBillettholderID, db, logger, eventImageDir)
 		<div class="profile-content-column">
 			/* @profilecomponent.UserDetails(user) */
+			@profilecomponent.FeedbackPrompt()
 			<div class="surface-pane">
 				<h2 class="surface-pane-title">Kontoadministrasjon</h2>
 				if user.Email != "" {
@@ -41,11 +42,6 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 				}
 				<a href="/profile/descope-profile" class="btn btn--outline" style="width: fit-content; margin-inline-end: var(--spacing-8x);">Reset passord</a>
 				<a href="/auth/logout" class="btn btn--outline" style="width: fit-content; margin-left: auto;">Logg ut</a>
-			</div>
-			<div class="surface-pane">
-				<h2 class="surface-pane-title">Tilbakemelding</h2>
-				<p>Har du innspill til nettsiden eller festivalen?</p>
-				<a href="/tilbakemelding" class="btn btn--outline" style="width: fit-content;">Gi tilbakemelding</a>
 			</div>
 			@profilecomponent.MyTickets(tickets)
 		</div>
