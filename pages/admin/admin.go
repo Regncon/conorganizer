@@ -30,6 +30,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 		puljefordelingRoute(adminRouter, db, liveManager, baseLogger, eventImageDir)
 		puljeoppsettRoute(adminRouter, db, liveManager, baseLogger, eventImageDir)
 		programPublishingRoute(adminRouter, db, liveManager, logger)
+		feedbackAdminRoute(adminRouter, db, baseLogger)
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			liveManager.Stream(w, r, live.Page{
 				Buckets: []live.Bucket{live.BucketEvents},

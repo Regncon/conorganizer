@@ -1,0 +1,210 @@
+package admin
+
+import (
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/feedback"
+	"github.com/Regncon/conorganizer/service/program"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
+)
+
+// feedbackAdminRoute registers the admin list of user-submitted feedback.
+func feedbackAdminRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+	logger = logger.With("component", "feedback_admin")
+
+	router.Get("/tilbakemeldinger/", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		userInfo := userctx.GetUserRequestInfo(ctx)
+
+		activeCategory := resolveFeedbackCategoryFilter(r.URL.Query().Get("om"))
+		entries, err := feedback.List(db, activeCategory)
+		if err != nil {
+			logger.Error(fmt.Errorf("failed to list feedback: %w", err).Error(), "user_id", userInfo.Id)
+			http.Error(w, "Klarte ikke å hente tilbakemeldinger.", http.StatusInternalServerError)
+			return
+		}
+
+		if err := layouts.Base(
+			"Tilbakemeldinger",
+			userInfo,
+			db,
+			logger,
+			feedbackAdminPage(entries, activeCategory),
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render feedback admin page: %w", err).Error(), "user_id", userInfo.Id)
+		}
+	})
+}
+
+// resolveFeedbackCategoryFilter maps the ?om= query slug to a category.
+// An empty or unrecognized slug means no filter (show every category).
+func resolveFeedbackCategoryFilter(slug string) feedback.Category {
+	if slug == "" {
+		return ""
+	}
+	category, ok := feedback.CategoryFromSlug(slug)
+	if !ok {
+		return ""
+	}
+	return category
+}
+
+// formatFeedbackTime shows when feedback was sent in the convention's time
+// zone. created_at is stored in UTC.
+func formatFeedbackTime(createdAt models.DBDateTime) string {
+	if !createdAt.Valid {
+		return ""
+	}
+	value := createdAt.Time
+	if location, err := program.Location(); err == nil {
+		value = value.In(location)
+	}
+	return value.Format("02.01.2006 15:04")
+}
+
+// feedbackCountLabel is the Norwegian entry count, singular or plural.
+func feedbackCountLabel(count int) string {
+	if count == 1 {
+		return "1 tilbakemelding"
+	}
+	return fmt.Sprintf("%d tilbakemeldinger", count)
+}
+
+// feedbackFilterHref is the ?om=<slug> link for one category filter.
+func feedbackFilterHref(category feedback.Category) string {
+	if category == "" {
+		return "/admin/tilbakemeldinger/"
+	}
+	return "/admin/tilbakemeldinger/?om=" + category.Slug()
+}
+
+templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Category) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Admin", Url: "/admin/"},
+		{Name: "Tilbakemeldinger", Url: ""},
+	})
+	<style>
+		.feedback-admin {
+			container-type: inline-size;
+			container-name: feedback-admin;
+			display: flex;
+			flex-direction: column;
+			gap: var(--responsive-page-section-spacing);
+		}
+
+		.feedback-filter-tabs {
+			display: flex;
+			flex-wrap: wrap;
+			gap: var(--spacing-2x);
+
+			a {
+				text-decoration: none;
+				padding-block: var(--spacing-2x);
+				padding-inline: var(--spacing-4x);
+				border: 1px solid var(--bg-item-border);
+				border-radius: var(--border-radius-2x);
+				background: var(--bg-item);
+				color: var(--color-text-soft);
+				transition: var(--btn-transition);
+
+				&:hover {
+					border-color: var(--bg-item-border-hover);
+					color: var(--color-text-strong);
+					background: color-mix(in srgb, var(--bg-item) 85%, var(--color-primary) 15%);
+				}
+
+				&[aria-current="page"] {
+					border-color: var(--color-primary);
+					color: var(--color-primary);
+				}
+			}
+		}
+
+		.feedback-count {
+			color: var(--color-text-soft);
+		}
+
+		.feedback-list {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+			list-style: none;
+			margin: 0;
+			padding-inline-start: 0;
+		}
+
+		.feedback-entry {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-2x);
+			background: var(--bg-surface);
+			padding: var(--responsive-pane-padding);
+
+			.feedback-entry-meta {
+				display: flex;
+				flex-wrap: wrap;
+				place-content: start space-between;
+				gap: var(--spacing-2x);
+				font-size: 0.875rem;
+				color: var(--color-text-soft);
+			}
+
+			.feedback-entry-category {
+				font-weight: 600;
+				color: var(--color-primary);
+			}
+
+			.feedback-entry-message {
+				margin: 0;
+				max-inline-size: min(70ch, 100cqi);
+				white-space: pre-wrap;
+				overflow-wrap: anywhere;
+			}
+		}
+
+		.feedback-empty {
+			color: var(--color-text-soft);
+		}
+
+		@container feedback-admin (width > 500px) {
+			.feedback-entry-meta {
+				place-content: center space-between;
+			}
+		}
+	</style>
+	<div class="page-content-container feedback-admin">
+		<h1 class="page-heading">Tilbakemeldinger</h1>
+		<nav class="feedback-filter-tabs" aria-label="Filtrer tilbakemeldinger">
+			<a href="/admin/tilbakemeldinger/" if activeCategory == "" { aria-current="page" }>Alle</a>
+			for _, category := range feedback.Categories {
+				<a href={ feedbackFilterHref(category) } if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
+			}
+		</nav>
+		<p class="feedback-count">{ feedbackCountLabel(len(entries)) }</p>
+		if len(entries) == 0 {
+			<p class="feedback-empty">Ingen tilbakemeldinger å vise ennå.</p>
+		} else {
+			<ul class="feedback-list">
+				for _, entry := range entries {
+					<li class="feedback-entry">
+						<div class="feedback-entry-meta">
+							<span class="feedback-entry-category">{ entry.Category.Label() }</span>
+							<time class="feedback-entry-time">{ formatFeedbackTime(entry.CreatedAt) }</time>
+						</div>
+						<p class="feedback-entry-message">{ entry.Message }</p>
+					</li>
+				}
+			</ul>
+		}
+	</div>
+}

@@ -266,3 +266,10 @@ JOIN puljer p ON p.id = ep.pulje_id
 LEFT JOIN rooms r ON r.id = ep.room_id
 WHERE ep.is_in_pulje = 1
 /* v_event_puljer_active(event_id,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at,is_in_pulje,is_published) */;
+CREATE TABLE feedback(
+  id INTEGER PRIMARY KEY,
+  category TEXT NOT NULL CHECK(category IN('website', 'convention', 'other')),
+  message TEXT NOT NULL CHECK(length(message) BETWEEN 1 AND 2000),
+  created_at TEXT NOT NULL DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+) STRICT;
+CREATE INDEX idx_feedback_created_at ON feedback(created_at);
