@@ -37,7 +37,7 @@
   <title
      id="t0-overview-title">Grand Hotel Terminus – Romkart · 0. etasje</title>
   <desc
-     id="t0-overview-desc">Kart over rom 001 Inger Haldorsen, 002 Dorothe Engelbretsdatter og 003 Søstrene Hagelin, samt Info Desk i lobbyen, rom 004. Trapp og to heiser ligger på oversiden av gangen.</desc>
+     id="t0-overview-desc">Kart over Inger Haldorsen, Dorothe Engelbretsdatter og Søstrene Hagelin, samt Info Desk i lobbyen. Trapp og to heiser ligger på oversiden av gangen.</desc>
   <metadata
      id="metadata1">Basert på brukerens skisse. Romnumrene er midlertidige, ikke hotellets bekreftede romnumre. To umerkede bokser er tolket som heiser. Dørslag er skjematiske og ikke verifisert. Åpningen øverst til høyre i rom 002 er bevart fra skissen; tilstøtende areal er ikke tegnet.</metadata>
   <rect
@@ -46,11 +46,10 @@
      fill="white"
      id="rect1" />
   <g id="t0-overview-room-004" data-room-number="004" data-room-name="Info Desk" font-family="Arial, Helvetica, sans-serif">
-    <title>Info Desk – rom 004</title>
+    <title>Info Desk</title>
     <circle cx="525" cy="341" r="15" fill="#1759a6"/>
     <text x="525" y="348" fill="white" text-anchor="middle" font-size="21" font-weight="bold">i</text>
     <text x="550" y="348" fill="#1759a6" font-size="22" font-weight="bold">Info Desk</text>
-    <text x="550" y="369" fill="#1759a6" font-size="15">004</text>
   </g>
   <g
      fill="none"
@@ -183,11 +182,6 @@
            font-size="24px"
            font-weight="bold"
            id="text10">Haldorsen</text>
-        <text
-           x="225"
-           y="585"
-           font-size="17px"
-           id="text11">001</text>
       </g>
     </g>
     <g
@@ -216,11 +210,6 @@
            font-size="24px"
            font-weight="bold"
            id="text13">Engelbretsdatter</text>
-        <text
-           x="745"
-           y="570"
-           font-size="17px"
-           id="text14">002</text>
       </g>
     </g>
     <g
@@ -255,13 +244,6 @@
            id="text16"
            transform="scale(0.96381041,1.0375485)"
            style="stroke-width:0.96381">Hagelin</text>
-        <text
-           x="758.86255"
-           y="201.43637"
-           font-size="16.3848px"
-           id="text17"
-           transform="scale(0.96381041,1.0375485)"
-           style="stroke-width:0.96381">003</text>
       </g>
     </g>
     <g

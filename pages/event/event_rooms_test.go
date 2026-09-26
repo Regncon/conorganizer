@@ -48,6 +48,9 @@ func TestEventRoomMap_InfoDeskShowsGroundFloorRoutes(t *testing.T) {
 	if got := mapImage.AttrOr("alt", ""); !strings.Contains(got, "heisene og trappen") {
 		t.Fatalf("map alt text does not describe both starting points: %q", got)
 	}
+	if got := mapImage.AttrOr("alt", ""); strings.Contains(got, "004") {
+		t.Fatalf("ground-floor map alt text should use the room name without a number: %q", got)
+	}
 }
 
 func TestEventRoomVisibility(t *testing.T) {

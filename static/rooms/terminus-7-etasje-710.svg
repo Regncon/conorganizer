@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="675" height="540" viewBox="0 110 675 540" role="img" aria-labelledby="room-710-map-title room-710-map-description" lang="nb">
   <title id="room-710-map-title">Lucie Wolf – rom 710, Grand Hotel Terminus, 7. etasje</title>
-  <desc id="room-710-map-description">Veien fra fellesområdet ved hovedtrappen og heisene til Lucie Wolf, rom 710. Startpunktet er markert med en sirkel og «Start her». Følg den stiplede linjen gjennom korridoren til pilen ved døren. Rommet har lys blå bakgrunn og en tydelig blå ramme. Kartets retning følger hovedkartet.</desc>
+  <desc id="room-710-map-description">Veien fra fellesområdet ved hovedtrappen og heisene til Lucie Wolf, rom 710. Startpunktet er markert med en blå sirkel. Følg den stiplede linjen gjennom korridoren til pilen ved døren. Rommet har lys blå bakgrunn og en tydelig blå ramme. Kartets retning følger hovedkartet.</desc>
   <metadata>
     Plassering og romnumre: brukerens foto, origin.webp.
     Romnavn og nummer for rom 709: mapping fra Regncons styre, oppgitt av brukeren.
@@ -248,7 +248,6 @@
         <path d="M 350,683 H 283 V 813" stroke="white" stroke-width="8" />
         <path d="M 350,683 H 283 V 813" stroke="#1759a6" stroke-width="4" stroke-dasharray="9 6" marker-end="url(#room-710-route-arrow)" />
         <circle cx="350" cy="683" r="7" fill="#1759a6" stroke="white" stroke-width="2" />
-        <text x="350" y="650" font-size="19" font-weight="bold" fill="#1759a6" stroke="white" stroke-width="3" paint-order="stroke fill">Start her</text>
       </g>
     </g>
   </g>
