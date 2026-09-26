@@ -1,8 +1,8 @@
 package formsubmission
 
 const (
-	userFeedbackMessage  = "Klarte ikkje å lagre endringa. Prøv igjen. Kontakt styret dersom problemet held fram."
-	adminFeedbackMessage = "Klarte ikkje å lagre endringa. Prøv igjen. Sjekk logger dersom problemet held fram."
+	userFeedbackMessage  = "Klarte ikke å lagre endringen. Prøv igjen. Kontakt styret dersom problemet vedvarer."
+	adminFeedbackMessage = "Klarte ikke å lagre endringen. Prøv igjen. Sjekk logger dersom problemet vedvarer."
 )
 
 func FeedbackMessage(isAdmin bool) string {

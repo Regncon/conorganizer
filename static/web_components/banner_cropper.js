@@ -32,7 +32,7 @@ import { canvasToWebp } from "../js/image-to-webp.js"
 // The page loads conorganizer.js before this component.
 const typedWindow = /** @type {BannerCropperWindow} */ (window)
 const STYLE_URLS = typedWindow.conorganizer.sharedStyles.getStyleUrls()
-const UPLOAD_ERROR_MESSAGE = 'Klarte ikkje å lagre endringa. Prøv igjen. Kontakt styret dersom problemet held fram.'
+const UPLOAD_ERROR_MESSAGE = 'Klarte ikke å lagre endringen. Prøv igjen. Kontakt styret dersom problemet vedvarer.'
 // ---- component --------------------------------------------------------------
 class BannerCropper extends HTMLElement {
     static get observedAttributes() {

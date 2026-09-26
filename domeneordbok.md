@@ -20,7 +20,7 @@ En billettholder er en CheckIn billett
 Den er ikke av typen "Middag"
 
 ## Pulje
-En pulje er tidspunkt der alle arrangementer som skal spiller innen for tidspunktet som styret har valg For eksempel Fredag kveld: 18 - 23
+En pulje er et tidspunkt styret har valgt, og alle arrangementer i puljen skal spilles innenfor dette tidspunktet. For eksempel Fredag kveld: 18 - 23
 
 ## Interesse
 Interesse er det en billettholder melder inn på et arrangement i en pulje. Den gjelder bare for det arrangementet i den valgte puljen. Samme arrangement kan gå i flere puljer, og da er interessen i hver pulje uavhengig av de andre.
@@ -42,8 +42,8 @@ I puljefordelingen går billettholdere som ikke har fått førstevalg ennå, for
 I koden heter dette `first_choice` og `Forstevalg`, og i fordelingen (`solver`) `satisfied` og `top choice`.
 
 ## Påmelding
-Påmelding er noe en spiller kan gjøre på arrangementer som er langvarige arrangementer, som alle så vil kan melde seg på.Som for eksempel "Blood on the clock tower" eller "Cosplay"
+Påmelding er noe en spiller kan gjøre på arrangementer som er langvarige arrangementer, som alle som vil, kan melde seg på. For eksempel "Blood on the clock tower" eller "Cosplay"
 
 ## Kode
 * _index betyr at filen skal sette opp NATS-integrasjon for domenet
-* _page betyr at dette er siden som skal bruke entry #id som blei satt opp i _index til og vise html
+* _page betyr at dette er siden som skal bruke entry #id som blei satt opp i _index til å vise html

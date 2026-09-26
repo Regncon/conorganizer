@@ -15,12 +15,12 @@ func TestScheduleBoardContent_RendersColumnsStatsAndPool(t *testing.T) {
 		string(models.PuljeFredagKveld), "Fredag Kveld", "Open", "2026-01-01 18:00", "2026-01-01 22:00")
 	insertBoardEvent(t, db, "g1", "Drager", "Godkjent", "AdultsOnly", 0, 0, "ola@x.no", "Ola")
 	placeBoardInPulje(t, db, "g1", models.PuljeFredagKveld)
-	insertBoardEvent(t, db, "g4", "Ledig spel", "Godkjent", "Default", 0, 0, "per@x.no", "Per")
+	insertBoardEvent(t, db, "g4", "Ledig spill", "Godkjent", "Default", 0, 0, "per@x.no", "Per")
 
 	doc := templtest.Render(t, ScheduleBoardContent(db, logger, nil))
 	text := strings.Join(templtest.CollectTexts(doc, "#puljeoppsett-board"), " ")
 
-	for _, want := range []string{"Fredag Kveld", "Drager", "Ledig spel", "ingen pulje", "1 spel", "18+"} {
+	for _, want := range []string{"Fredag Kveld", "Drager", "Ledig spill", "ingen pulje", "1 spill", "18+"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("board text missing %q\ngot: %s", want, text)
 		}
@@ -86,7 +86,7 @@ func TestScheduleBoardContent_ShowsDMCollisionWarning(t *testing.T) {
 	doc := templtest.Render(t, ScheduleBoardContent(db, logger, nil))
 	text := strings.Join(templtest.CollectTexts(doc, "#puljeoppsett-board"), " ")
 
-	for _, want := range []string{"Spelleiar-kollisjon", "Ola"} {
+	for _, want := range []string{"Spilleder-kollisjon", "Ola"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("collision warning missing %q\ngot: %s", want, text)
 		}

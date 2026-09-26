@@ -22,7 +22,7 @@ func TestPuljeoppsettRoute_AddAndRemoveMembership(t *testing.T) {
 	testutil.MustExec(t, db, `INSERT INTO users (id, external_id, email, is_admin) VALUES (42, 'ext-42', 'admin@x.no', 1)`)
 	testutil.MustExec(t, db, `INSERT INTO puljer (id, name, status, start_at, end_at) VALUES (?,?,?,?,?)`,
 		string(models.PuljeFredagKveld), "Fredag", "Open", "2026-01-01 18:00", "2026-01-01 22:00")
-	insertBoardEvent(t, db, "e1", "Spel", "Godkjent", "Default", 0, 0, "ola@x.no", "Ola")
+	insertBoardEvent(t, db, "e1", "Spill", "Godkjent", "Default", 0, 0, "ola@x.no", "Ola")
 
 	router := chi.NewRouter()
 	puljeoppsettRoute(router, db, &live.Manager{}, logger, nil)
@@ -60,7 +60,7 @@ func TestPuljeoppsettRoute_ReDropOntoSamePuljePreservesPublished(t *testing.T) {
 	testutil.MustExec(t, db, `INSERT INTO users (id, external_id, email, is_admin) VALUES (42, 'ext-42', 'admin@x.no', 1)`)
 	testutil.MustExec(t, db, `INSERT INTO puljer (id, name, status, start_at, end_at) VALUES (?,?,?,?,?)`,
 		string(models.PuljeFredagKveld), "Fredag", "Open", "2026-01-01 18:00", "2026-01-01 22:00")
-	insertBoardEvent(t, db, "e1", "Spel", "Godkjent", "Default", 0, 0, "ola@x.no", "Ola")
+	insertBoardEvent(t, db, "e1", "Spill", "Godkjent", "Default", 0, 0, "ola@x.no", "Ola")
 	testutil.MustExec(t, db,
 		`INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published) VALUES ('e1', ?, 1, 1)`,
 		string(models.PuljeFredagKveld))

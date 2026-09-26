@@ -94,7 +94,7 @@ Denne sjekklisten dekker felles navigasjon, rolleopplevelse og tilgang på tvers
 
 - [ ] **Passordtilbakestilling**<br>
   **Gitt** at en registrert bruker ønsker å tilbakestille passordet sitt.<br>
-  **Når** brukreren oppgir et nytt passord.<br>
+  **Når** brukeren oppgir et nytt passord.<br>
   **Så** skal tilbakemeldingen være forståelig og brukeren blir sendt til rett side.
 
 - [ ] **Gyldig innlogging lander på forsiden**<br>

@@ -3,7 +3,7 @@ import { mergePatch } from "../datastar.js"
 const feedbackSignalName = "feedbackErrors"
 const localFeedbackPatchStartEventName = "feedback-errors-local-patch-start"
 const localFeedbackPatchEndEventName = "feedback-errors-local-patch-end"
-const fallbackFeedbackMessage = "Klarte ikkje å lagre endringa. Prøv igjen."
+const fallbackFeedbackMessage = "Klarte ikke å lagre endringen. Prøv igjen."
 const feedbackRootSelector = "form, dialog"
 
 /**

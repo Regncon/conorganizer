@@ -37,7 +37,7 @@ func TestPuljeEventBox_MissingGMShortcutRequiresEditablePulje(t *testing.T) {
 			doc := templtest.Render(t, puljeEventBox(models.PuljeFredagKveld, event, tc.published, nil))
 
 			// Then
-			button := doc.Find("button:contains('Mangler spilleder · Legg til spilleder')")
+			button := doc.Find("button.pulje-missing-gm")
 			if button.Length() != expectedButtons {
 				t.Fatalf("missing-GM buttons = %d, want %d", button.Length(), expectedButtons)
 			}
@@ -62,7 +62,7 @@ func TestPuljeAssignmentPicker_MissingGMShortcutSetsContextAndGenericAddRestores
 		t.Fatal("search reset must bind to the component observed data-clear-input attribute")
 	}
 	payload, err := json.Marshal(map[string]string{
-		"gmOpen":               missingGM.Find("button:contains('Mangler spilleder · Legg til spilleder')").AttrOr("data-on:click", ""),
+		"gmOpen":               missingGM.Find("button.pulje-missing-gm").AttrOr("data-on:click", ""),
 		"genericOpen":          generic.Find(".pulje-add").AttrOr("data-on:click", ""),
 		"dialogEffect":         picker.AttrOr("data-effect", ""),
 		"interestsShown":       picker.Find(".pulje-assignment-interests").AttrOr("data-show", "true"),

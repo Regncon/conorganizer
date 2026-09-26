@@ -106,7 +106,7 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 
 			if userToken != nil {
 				if err := layouts.Base(
-					"Velkomen tilbake til Regncon 2026!",
+					"Velkommen tilbake til Regncon 2026!",
 					userctx.GetUserRequestInfo(ctx),
 					db,
 					logger,

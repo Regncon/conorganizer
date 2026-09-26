@@ -17,9 +17,9 @@ const (
 func (status EventStatus) Label() string {
 	switch status {
 	case EventStatusApproved:
-		return "Godkjend"
+		return "Godkjent"
 	case EventStatusArchived:
-		return "Forkasta"
+		return "Forkastet"
 	default:
 		return string(status)
 	}
@@ -37,13 +37,13 @@ const (
 func (eventType EventType) Label() string {
 	switch eventType {
 	case EventTypeRoleplay:
-		return "Rollespel"
+		return "Rollespill"
 	case EventTypeBoardGame:
-		return "Brettspel"
+		return "Brettspill"
 	case EventTypeCardGame:
-		return "Kortspel"
+		return "Kortspill"
 	case EventTypeOther:
-		return "Anna"
+		return "Annet"
 	default:
 		return string(eventType)
 	}
@@ -64,7 +64,7 @@ func (ageGroup AgeGroup) Label() string {
 	case AgeGroupChildFriendly:
 		return "Barn (<13)"
 	case AgeGroupAdultsOnly:
-		return "Vaksne (18+)"
+		return "Voksne (18+)"
 	default:
 		return string(ageGroup)
 	}
@@ -73,9 +73,9 @@ func (ageGroup AgeGroup) Label() string {
 func (ageGroup AgeGroup) BadgeLabel() string {
 	switch ageGroup {
 	case AgeGroupChildFriendly:
-		return "Barnevennleg"
+		return "Barnevennlig"
 	case AgeGroupAdultsOnly:
-		return "Eigna for vaksne"
+		return "Egnet for voksne"
 	default:
 		return ""
 	}
@@ -101,11 +101,11 @@ const (
 func (runtime Runtime) Label() string {
 	switch runtime {
 	case RunTimeNormal:
-		return "Vanleg pulje"
+		return "Vanlig pulje"
 	case RunTimeShortRunning:
-		return "Kortare (2-3 timar)"
+		return "Kortere (2-3 timer)"
 	case RunTimeLongRunning:
-		return "Lengre (6+ timar)"
+		return "Lengre (6+ timer)"
 	default:
 		return string(runtime)
 	}
@@ -114,9 +114,9 @@ func (runtime Runtime) Label() string {
 func (runtime Runtime) BadgeLabel() string {
 	switch runtime {
 	case RunTimeShortRunning:
-		return "Varer under 3 timar"
+		return "Varer under 3 timer"
 	case RunTimeLongRunning:
-		return "Varer over 6 timar"
+		return "Varer over 6 timer"
 	default:
 		return ""
 	}

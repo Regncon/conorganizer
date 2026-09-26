@@ -24,7 +24,7 @@ func PrintFriendlyRoute(router chi.Router, db *sql.DB, eventImageDir *string, lo
 		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(r.Context())
 		if err := layouts.Base(
-			"Regncon program uttriftsvennlig",
+			"Regncon program utskriftsvennlig",
 			userInfo,
 			db,
 			logger,

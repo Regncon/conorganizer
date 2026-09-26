@@ -519,9 +519,9 @@ func TestSelectedInterest_AssignmentOnlyBlocksItsOwnPulje(t *testing.T) {
 
 func TestSelectedInterest_WhenMinorIsAlreadyAssigned_ShowsOnlyTheAgeNotice(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at ein billettholder under 18 år er tildelt eit arrangement i puljen.",
-		When:  "Når eit 18-års arrangement i same pulje vert vist.",
-		Then:  "Så skal berre aldersvarselet vises, ikkje tildelingsvarselet.",
+		Given: "Gitt at en billettholder under 18 år er tildelt et arrangement i puljen.",
+		When:  "Når et 18-års arrangement i samme pulje blir vist.",
+		Then:  "Så skal bare aldersvarselet vises, ikke tildelingsvarselet.",
 	})
 
 	// Given
@@ -589,7 +589,7 @@ func TestInterestUpdateRoute_WhenSignalsArePosted_StoresChosenInterestLevel(t *t
 
 	// Then
 	// The zero live.Manager cannot broadcast, so the status is not part of this behavior.
-	for _, rejection := range []string{"Mangler arrangement.", "Vel billetthelder", "Vel pulje"} {
+	for _, rejection := range []string{"Mangler arrangement.", "Velg billettholder", "Velg pulje"} {
 		if strings.Contains(response.Body.String(), rejection) {
 			t.Fatalf("expected signals to be read, got rejection %q in: %s", rejection, response.Body.String())
 		}

@@ -50,7 +50,7 @@ func TestRoomsPageContent_RendersRoomDetailsAndCreateAction(t *testing.T) {
 	expectedTextParts := []string{
 		"201",
 		"Tangerud",
-		"Ligg til nytt rom",
+		"Legg til nytt rom",
 	}
 	db, logger := testutil.CreateTestDBAndLogger(t, "rooms_page_content")
 	createRoomsPageRoom(t, db, "Tangerud", "201", 2)
@@ -89,7 +89,7 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 	expectedTextParts := []string{
 		"1 Eventer i pulje uten tildelt rom",
 		"Missing Room Event",
-		"Romfordelig for Fredag kveld",
+		"Romfordeling for Fredag kveld",
 		"Assigned Room Event",
 		"201",
 	}

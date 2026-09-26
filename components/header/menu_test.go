@@ -33,7 +33,7 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren er innlogget uten adminrettigheter.",
 		When:  "Når hovednavigasjonen vises.",
-		Then:  "Så skal brukeren bare få navigasjonslenker til forsiden, egen profil, utlogging og vanlege spørsmål.",
+		Then:  "Så skal brukeren bare få navigasjonslenker til forsiden, egen profil, utlogging og vanlige spørsmål.",
 	})
 
 	// Given
@@ -65,7 +65,7 @@ func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren er admin.",
 		When:  "Når hovednavigasjonen vises.",
-		Then:  "Så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.",
+		Then:  "Så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlige spørsmål.",
 	})
 
 	// Given

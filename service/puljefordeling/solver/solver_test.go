@@ -35,7 +35,7 @@ func weekendOf(slots ...model.Slot) model.Weekend {
 	return model.Weekend{Slots: slots}
 }
 
-// --- adjustScore: bands -----------------------------------------------------
+// --- scoreBreakdown: bands -----------------------------------------------------
 
 func TestAdjustScore_Bands(t *testing.T) {
 	cases := []struct {
@@ -52,7 +52,7 @@ func TestAdjustScore_Bands(t *testing.T) {
 		{"Litt satisfied", 1, true, bandLitt}, // flattened: same band
 	}
 	for _, c := range cases {
-		got := adjustScore(c.score, c.satisfied, false, false, 0)
+		got := scoreBreakdown(c.score, c.satisfied, false, false, 0).Total
 		if got != c.want {
 			t.Errorf("%s: want %d, got %d", c.name, c.want, got)
 		}
@@ -61,19 +61,19 @@ func TestAdjustScore_Bands(t *testing.T) {
 
 func TestAdjustScore_MiddelsAndLittIgnoreSatisfaction(t *testing.T) {
 	// The unsatisfied advantage exists only on the top choice.
-	if adjustScore(3, false, false, false, 0) != adjustScore(3, true, false, false, 0) {
+	if scoreBreakdown(3, false, false, false, 0).Total != scoreBreakdown(3, true, false, false, 0).Total {
 		t.Error("Middels weight must not depend on satisfaction")
 	}
-	if adjustScore(1, false, false, false, 0) != adjustScore(1, true, false, false, 0) {
+	if scoreBreakdown(1, false, false, false, 0).Total != scoreBreakdown(1, true, false, false, 0).Total {
 		t.Error("Litt weight must not depend on satisfaction")
 	}
 }
 
 func TestAdjustScore_UnmetVeldigBeatsAnyDMLowerInterest(t *testing.T) {
-	regularUnmetVeldig := adjustScore(5, false, false, false, 0) // 800, no bumps
+	regularUnmetVeldig := scoreBreakdown(5, false, false, false, 0).Total // 800, no bumps
 	// The strongest a DM's non-top edge can ever be:
-	dmMiddelsMax := adjustScore(3, false, true, true, 0) // never-seated + DM
-	dmLittMax := adjustScore(1, false, true, true, 0)
+	dmMiddelsMax := scoreBreakdown(3, false, true, true, 0).Total // never-seated + DM
+	dmLittMax := scoreBreakdown(1, false, true, true, 0).Total
 	if regularUnmetVeldig <= dmMiddelsMax {
 		t.Errorf("unmet Veldig (%d) must beat any DM Middels (%d)", regularUnmetVeldig, dmMiddelsMax)
 	}
@@ -83,20 +83,20 @@ func TestAdjustScore_UnmetVeldigBeatsAnyDMLowerInterest(t *testing.T) {
 }
 
 func TestAdjustScore_DMBump(t *testing.T) {
-	if got := adjustScore(5, false, false, true, 0); got != bandUnsatVeldig+dmBump {
+	if got := scoreBreakdown(5, false, false, true, 0).Total; got != bandUnsatVeldig+dmBump {
 		t.Errorf("DM unsat Veldig: want %d, got %d", bandUnsatVeldig+dmBump, got)
 	}
-	if got := adjustScore(3, false, false, true, 0); got != bandMiddels+dmBump {
+	if got := scoreBreakdown(3, false, false, true, 0).Total; got != bandMiddels+dmBump {
 		t.Errorf("DM Middels: want %d, got %d", bandMiddels+dmBump, got)
 	}
 }
 
 func TestAdjustScore_NeverSeatedBump(t *testing.T) {
-	if got := adjustScore(3, false, true, false, 0); got != bandMiddels+neverSeatedBump {
+	if got := scoreBreakdown(3, false, true, false, 0).Total; got != bandMiddels+neverSeatedBump {
 		t.Errorf("never-seated Middels: want %d, got %d", bandMiddels+neverSeatedBump, got)
 	}
 	// Satisfied players never get the never-seated bump.
-	if got := adjustScore(5, true, true, false, 0); got != bandSatVeldig {
+	if got := scoreBreakdown(5, true, true, false, 0).Total; got != bandSatVeldig {
 		t.Errorf("satisfied gets no never-seated bump: want %d, got %d", bandSatVeldig, got)
 	}
 }
@@ -114,15 +114,15 @@ func TestAdjustScore_MissBonusGrowsAndCaps(t *testing.T) {
 		{10, bandUnsatVeldig + 60},
 	}
 	for _, c := range cases {
-		if got := adjustScore(5, false, false, false, c.misses); got != c.want {
+		if got := scoreBreakdown(5, false, false, false, c.misses).Total; got != c.want {
 			t.Errorf("unsat Veldig %d misses: want %d, got %d", c.misses, c.want, got)
 		}
 	}
 	// Miss bonus only applies to unsatisfied top-choice edges.
-	if got := adjustScore(3, false, false, false, 10); got != bandMiddels {
+	if got := scoreBreakdown(3, false, false, false, 10).Total; got != bandMiddels {
 		t.Errorf("misses must not boost Middels: want %d, got %d", bandMiddels, got)
 	}
-	if got := adjustScore(5, true, false, false, 10); got != bandSatVeldig {
+	if got := scoreBreakdown(5, true, false, false, 10).Total; got != bandSatVeldig {
 		t.Errorf("misses must not boost a satisfied player: want %d, got %d", bandSatVeldig, got)
 	}
 }
@@ -130,7 +130,7 @@ func TestAdjustScore_MissBonusGrowsAndCaps(t *testing.T) {
 func TestAdjustScore_MaxBumpStaysInBand(t *testing.T) {
 	// The largest a Middels edge can get must stay below satisfied-Veldig, which
 	// must stay below unmet-Veldig — bumps never cross a band.
-	maxMiddels := adjustScore(3, false, true, true, 0) // never-seated + DM
+	maxMiddels := scoreBreakdown(3, false, true, true, 0).Total // never-seated + DM
 	if !(maxMiddels < bandSatVeldig && bandSatVeldig < bandUnsatVeldig) {
 		t.Errorf("band separation broken: maxMiddels=%d satVeldig=%d unsatVeldig=%d",
 			maxMiddels, bandSatVeldig, bandUnsatVeldig)

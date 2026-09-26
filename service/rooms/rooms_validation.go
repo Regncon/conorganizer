@@ -13,24 +13,24 @@ func ValidateRooms(room models.Room) models.RoomFormErrors {
 	errors.ResetErrors()
 
 	if room.Name != "" && strings.TrimSpace(room.Name) == "" {
-		errors.AddError(models.RoomErrorName, "Rom namn kan ikkje berre innehalde mellomrom")
+		errors.AddError(models.RoomErrorName, "Romnavn kan ikke bare inneholde mellomrom")
 	}
 
 	if utf8.RuneCountInString(room.Name) > 50 {
 		errors.AddError(
 			models.RoomErrorName,
-			"Namn kan ikkje vere lengre enn 50 teikn",
+			"Navn kan ikke være lengre enn 50 tegn",
 		)
 	}
 
 	if strings.TrimSpace(room.RoomNumber) == "" {
-		errors.AddError(models.RoomErrorRoomNumber, "Romnummer er påkravd")
+		errors.AddError(models.RoomErrorRoomNumber, "Romnummer er påkrevd")
 	}
 
 	if utf8.RuneCountInString(room.RoomNumber) > 10 {
 		errors.AddError(
 			models.RoomErrorRoomNumber,
-			"Rom nummer kan ikkje vere lengre enn 10 teikn",
+			"Romnummer kan ikke være lengre enn 10 tegn",
 		)
 	}
 

@@ -59,7 +59,7 @@ Denne sjekklisten dekker forsiden på `/`. Forsiden er en sentral inngang til ap
 - [ ] **Snarveier scroller til riktig pulje**<br>
   **Gitt** at brukeren navigerer mellom puljene via snarveinavigasjonen på forsiden.<br>
   **Når** brukeren trykker på en pulje.<br>
-  **Så** skal siden scrolle til riktig seksjon uten å havne merkbart feil, skjule seksjonsoverskriften bak sticky navigasjon, eller gjømme viktig informasjon.
+  **Så** skal siden scrolle til riktig seksjon uten å havne merkbart feil, skjule seksjonsoverskriften bak sticky navigasjon, eller gjemme viktig informasjon.
 
 - [ ] **Tilbakeknapp bevarer brukbar forside**<br>
   **Gitt** at brukeren bruker tilbakeknappen etter å ha åpnet et arrangement fra forsiden.<br>

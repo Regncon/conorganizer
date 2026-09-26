@@ -29,7 +29,18 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 	if err != nil {
 		return fmt.Errorf("emulate before commit: %w", err)
 	}
+	if err := saveDistribution(tx, em, pulje); err != nil {
+		return err
+	}
 
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit distribution for %s: %w", pulje, err)
+	}
+	return nil
+}
+
+// saveDistribution writes the emulated distribution for pulje inside tx.
+func saveDistribution(tx *sql.Tx, em Emulation, pulje models.Pulje) error {
 	var target EmulatedPulje
 	found := false
 	for _, p := range em.Puljer {
@@ -75,10 +86,6 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 				return fmt.Errorf("commit solver seat (event=%s bh=%d): %w", ev.EventID, pl.BillettholderID, err)
 			}
 		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit distribution for %s: %w", pulje, err)
 	}
 	return nil
 }
