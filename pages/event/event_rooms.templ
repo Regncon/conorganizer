@@ -61,6 +61,9 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 								@eventRoomTimes(group.Puljer)
 							</div>
 						}
+						if group.Room.ID != 0 && !group.RoomsPublished {
+							<p class="event-room-unpublished">Romfordelingen er ikke publisert ennå – bare synlig for administratorer.</p>
+						}
 						@eventRoomNote(group.Room.PublicNotes)
 					</div>
 				}
@@ -149,6 +152,12 @@ templ eventRoomStyles() {
 			font-size: var(--text-body-small);
 			white-space: pre-wrap;
 			overflow-wrap: anywhere;
+		}
+		.event-room-unpublished {
+			margin: 0;
+			padding-inline: var(--spacing-3x);
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
 		}
 		.event-room-dialog .event-room-note {
 			margin-block-end: var(--spacing-4x);

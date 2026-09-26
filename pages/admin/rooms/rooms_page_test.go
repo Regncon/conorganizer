@@ -501,6 +501,67 @@ func TestRoomAssignmentPicker_IncludesApprovedEventsOutsidePulje(t *testing.T) {
 	}
 }
 
+func TestRoomsAssignmentLiveContent_RendersPublishSwitchAsCheckedWhenPublished(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en pulje med publisert romfordeling.",
+		When:  "Når romfordelingssiden rendres.",
+		Then:  "Så skal bryteren være avkrysset og vise at romfordelingen er synlig for alle.",
+	})
+
+	// Given
+	expectedChecked := true
+	db, logger := testutil.CreateTestDBAndLogger(t, "rooms_assignment_publish_switch_published")
+	seedRoomsPageLookups(t, db)
+	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
+	if err := roomService.SetRoomsPublished(db, models.PuljeFredagKveld, true); err != nil {
+		t.Fatalf("failed to publish rooms: %v", err)
+	}
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	toggle := doc.Find(`.rooms-publish-switch input[type="checkbox"]`)
+
+	// Then
+	if toggle.Length() != 1 {
+		t.Fatalf("expected exactly one publish switch, got %d", toggle.Length())
+	}
+	if _, actualChecked := toggle.Attr("checked"); actualChecked != expectedChecked {
+		t.Fatalf("checked mismatch\nexpected: %v\nactual:   %v", expectedChecked, actualChecked)
+	}
+	if !strings.Contains(doc.Find(".rooms-publish-control").Text(), "Synlig for alle") {
+		t.Fatal("expected the published state text to be rendered")
+	}
+}
+
+func TestRoomsAssignmentLiveContent_RendersPublishSwitchAsUncheckedWhenUnpublished(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en pulje uten publisert romfordeling.",
+		When:  "Når romfordelingssiden rendres.",
+		Then:  "Så skal bryteren være avkrysset av og vise at romfordelingen bare er synlig for administratorer.",
+	})
+
+	// Given
+	expectedChecked := false
+	db, logger := testutil.CreateTestDBAndLogger(t, "rooms_assignment_publish_switch_unpublished")
+	seedRoomsPageLookups(t, db)
+	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	toggle := doc.Find(`.rooms-publish-switch input[type="checkbox"]`)
+
+	// Then
+	if toggle.Length() != 1 {
+		t.Fatalf("expected exactly one publish switch, got %d", toggle.Length())
+	}
+	if _, actualChecked := toggle.Attr("checked"); actualChecked != expectedChecked {
+		t.Fatalf("checked mismatch\nexpected: %v\nactual:   %v", expectedChecked, actualChecked)
+	}
+	if !strings.Contains(doc.Find(".rooms-publish-control").Text(), "Bare synlig for administratorer") {
+		t.Fatal("expected the unpublished state text to be rendered")
+	}
+}
+
 func createRoomsPageRoom(t *testing.T, db *sql.DB, name string, roomNumber string, floor int) models.Room {
 	t.Helper()
 

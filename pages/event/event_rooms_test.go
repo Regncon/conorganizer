@@ -117,6 +117,90 @@ func TestEventRoomList_NoNoteElementWhenRoomHasNoPublicNotes(t *testing.T) {
 	}
 }
 
+func TestEventRoomVisibility_NonAdminSeesTimeOnlyWhenPuljeRoomsUnpublished(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A room assignment for a pulje whose rooms are not published.",
+		When:  "A non-admin views the event page.",
+		Then:  "The schedule shows the time but hides the room name and map.",
+	})
+
+	// Given
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE puljer SET rooms_published = 0 WHERE id = ?`, models.PuljeFredagKveld)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if doc.Find(".event-room-name").Length() != 0 {
+		t.Fatal("room name should be hidden from non-admins for an unpublished pulje")
+	}
+	if doc.Find(".event-room-button, .event-room-dialog img").Length() != 0 {
+		t.Fatal("map should be hidden from non-admins for an unpublished pulje")
+	}
+	if strings.Contains(doc.Text(), "Amalie Hansen") {
+		t.Fatal("hidden room name leaked into markup")
+	}
+	if got := doc.Find(".event-schedule-unassigned").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
+		t.Fatalf("expected the time to remain visible, got %q", got)
+	}
+}
+
+func TestEventRoomVisibility_NonAdminSeesRoomWhenPuljeRoomsPublished(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A room assignment for a pulje whose rooms are published.",
+		When:  "A non-admin views the event page.",
+		Then:  "The schedule shows the room name and map.",
+	})
+
+	// Given
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE puljer SET rooms_published = 1 WHERE id = ?`, models.PuljeFredagKveld)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if got := doc.Find(".event-room-name").Text(); got != "Amalie Hansen" {
+		t.Fatalf("expected the room name to be visible, got %q", got)
+	}
+	if doc.Find(".event-room-button").Length() != 1 {
+		t.Fatal("expected the map button to be visible")
+	}
+	if doc.Find(".event-room-unpublished").Length() != 0 {
+		t.Fatal("published room assignment should not show the unpublished hint")
+	}
+}
+
+func TestEventRoomVisibility_AdminSeesRoomAndUnpublishedHint(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A room assignment for a pulje whose rooms are not published.",
+		When:  "An admin views the event page.",
+		Then:  "The room and map remain visible, alongside an unpublished hint.",
+	})
+
+	// Given
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE puljer SET rooms_published = 0 WHERE id = ?`, models.PuljeFredagKveld)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", true, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if got := doc.Find(".event-room-name").Text(); got != "Amalie Hansen" {
+		t.Fatalf("expected the admin to still see the room name, got %q", got)
+	}
+	if doc.Find(".event-room-button").Length() != 1 {
+		t.Fatal("expected the admin to still see the map button")
+	}
+	if got := doc.Find(".event-room-unpublished").Text(); !strings.Contains(got, "ikke publisert") {
+		t.Fatalf("expected an unpublished hint for the admin, got %q", got)
+	}
+}
+
 func TestEventRoomMap_InfoDeskShowsGroundFloorRoutes(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "An event is assigned to Info Desk, room 004 on the ground floor.",
@@ -198,7 +282,7 @@ func TestEventRoomsUseEachPuljeAssignment(t *testing.T) {
 	seedEventVisibilityEventPulje(t, db, "other-event", models.PuljeFredagKveld, true)
 	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 43 WHERE event_id = 'other-event'`)
 
-	assignments, err := getEventRooms(db, "room-event", true)
+	assignments, err := getEventRooms(db, "room-event", true, false)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -139,6 +139,7 @@ CREATE TABLE
         ),
         start_at TEXT NOT NULL,
         end_at TEXT NOT NULL,
+        rooms_published INTEGER NOT NULL DEFAULT 0 CHECK (rooms_published IN (0, 1)),
         FOREIGN KEY (status) REFERENCES pulje_statuses (status) ON UPDATE CASCADE
     ) STRICT;
 
