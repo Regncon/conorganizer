@@ -799,7 +799,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		</div>
 		<div class="pulje-events-header">
 			if hasResult {
-				<h2>{ antallTekst(len(result.Events), "arrangement", "arrangementer") }</h2>
+				<h2>{ countText(len(result.Events), "arrangement", "arrangementer") }</h2>
 			} else {
 				<h2>Arrangementer</h2>
 			}
@@ -829,7 +829,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			}
 			if len(result.Unassigned) > 0 {
 				<div class="pulje-unassigned">
-					<h3>{ antallTekst(len(result.Unassigned), "deltaker", "deltakere") + " uten plass" }</h3>
+					<h3>{ countText(len(result.Unassigned), "deltaker", "deltakere") + " uten plass" }</h3>
 					<p>{ strings.Join(result.Unassigned, ", ") }</p>
 				</div>
 			}
@@ -842,11 +842,11 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 	</section>
 }
 
-func antallTekst(antall int, entall, flertall string) string {
-	if antall == 1 {
-		return fmt.Sprintf("%d %s", antall, entall)
+func countText(count int, singular, plural string) string {
+	if count == 1 {
+		return fmt.Sprintf("%d %s", count, singular)
 	}
-	return fmt.Sprintf("%d %s", antall, flertall)
+	return fmt.Sprintf("%d %s", count, plural)
 }
 
 // puljeAgeConfirmAction re-posts the pending placement with the age confirmation
