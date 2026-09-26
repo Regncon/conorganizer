@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
@@ -107,21 +108,15 @@ func TestPuljefordelingTabContent_ShowsRunningUnsatisfiedCount(t *testing.T) {
 	seedTabEventWithInterest(t, db, "kveldsspill", "Kveldsspill", models.PuljeLordagKveld)
 
 	// When / Then: earlier pulje — participant not yet satisfied.
-	fredag := strings.Join(
-		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil)), "#puljefordeling-tab"),
-		" ",
-	)
-	if !strings.Contains(fredag, "1 uten førstevalg så langt") {
-		t.Fatalf("expected Fredag tab to report 1 still without first choice\nactual text: %s", fredag)
+	fredag := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+	if got := withoutForstevalgTile(fredag); got != "1" {
+		t.Fatalf("expected Fredag tab to report 1 still without first choice, got %q", got)
 	}
 
 	// When / Then: later pulje — participant gets their first choice.
-	lordag := strings.Join(
-		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeLordagKveld, nil)), "#puljefordeling-tab"),
-		" ",
-	)
-	if !strings.Contains(lordag, "0 uten førstevalg så langt") {
-		t.Fatalf("expected Lørdag tab to report 0 still without first choice\nactual text: %s", lordag)
+	lordag := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeLordagKveld, nil))
+	if got := withoutForstevalgTile(lordag); got != "0" {
+		t.Fatalf("expected Lørdag tab to report 0 still without first choice, got %q", got)
 	}
 }
 
@@ -225,11 +220,11 @@ func TestPuljefordelingTabContent_PublishedTilesNotDraggable(t *testing.T) {
 	}
 }
 
-func TestPuljefordelingTabContent_PinEmojiForManualWithoutInterest(t *testing.T) {
+func TestPuljefordelingTabContent_PinMarkerForManualWithoutInterest(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en manuelt plassert deltaker uten egen interesse for arrangementet.",
 		When:  "Når fanen rendres.",
-		Then:  "Så skal flisen vise nåle-emoji i stedet for et interessenivå.",
+		Then:  "Så skal flisen vise nålemarkøren og ansiktet for ikke interessert.",
 	})
 
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_pin_emoji")
@@ -244,33 +239,13 @@ func TestPuljefordelingTabContent_PinEmojiForManualWithoutInterest(t *testing.T)
 		VALUES ('evA',?,1,'Player','manual')`, string(models.PuljeFredagKveld))
 
 	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
-	text := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
+	tile := doc.Find(".pulje-players li").First()
 
-	if !strings.Contains(text, "📌") {
-		t.Fatalf("manual pin without interest should show the pin emoji\nactual text: %s", text)
+	if tile.Find(".pulje-marker--pin").Length() != 1 {
+		t.Fatalf("manual pin without interest should show the pin marker")
 	}
-}
-
-func TestPuljeStatusToggles_ReflectWarningLockedAndCompletedState(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en pulje som er publisert (Completed).",
-		When:  "Når status-bryterne rendres.",
-		Then:  "Så skal lukking og publisering være avkrysset, og varselet være deaktivert.",
-	})
-
-	// Given
-	row := models.PuljeRow{ID: models.PuljeFredagKveld, Name: "Fredag Kveld", Status: models.PuljeStatusCompleted}
-
-	// When
-	doc := templtest.Render(t, puljeStatusToggles(row))
-
-	// Then
-	checked := doc.Find("input[type=checkbox][checked]")
-	if checked.Length() != 2 {
-		t.Fatalf("expected both toggles checked for Completed pulje, got %d checked", checked.Length())
-	}
-	if got := doc.Find("input[type=checkbox][disabled]").Length(); got != 1 {
-		t.Fatalf("expected closing warning toggle to be disabled for Completed pulje, got %d disabled toggles", got)
+	if emoji := tile.Find(".pulje-emoji").Text(); emoji != models.InterestLevelNone.Emoji() {
+		t.Fatalf("manual pin without interest should show %q, got %q", models.InterestLevelNone.Emoji(), emoji)
 	}
 }
 
@@ -417,4 +392,8 @@ func TestPuljefordelingTabContent_AdultGMInAdultsOnlyHasNoBadge(t *testing.T) {
 	if n := doc.Find(".pulje-gm .pulje-badge--error").Length(); n != 0 {
 		t.Fatalf("an adult GM must not get an under-18 badge, got %d", n)
 	}
+}
+
+func withoutForstevalgTile(doc *goquery.Document) string {
+	return strings.TrimSpace(doc.Find(`.pulje-stat[aria-controls="pulje-list-without-forstevalg"] .pulje-stat-value`).Text())
 }

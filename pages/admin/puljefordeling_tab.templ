@@ -11,13 +11,13 @@ import (
 	"strings"
 
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
+	smodel "github.com/Regncon/conorganizer/service/puljefordeling/solver/model"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 )
@@ -48,8 +48,8 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 			if err := layouts.Base(
 				"Puljefordeling",
 				userInfo,
-                db,
-                logger,
+				db,
+				logger,
 				puljefordelingIndex(db, logger, puljeID, eventImageDir),
 			).Render(r.Context(), w); err != nil {
 				logger.Error(fmt.Errorf("failed to render puljefordeling page: %w", err).Error(), "user_id", userInfo.Id)
@@ -102,6 +102,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 	// Add a manual pin (+). Force-pins the chosen billettholder into the event
 	// without touching their interests; removing the pin reverts them to emulation.
 	router.Post("/api/puljefordeling/assign", puljeTildelingsHandler(db, liveManager, logger))
+	router.Post("/api/puljefordeling/assign/preview", puljeAssignPreviewHandler(db, logger))
+	router.Post("/api/puljefordeling/{pulje}/{event}/{billettholderId}/preview", puljeRemovalPreviewHandler(db, logger, models.EventPlayerRolePlayer))
+	router.Post("/api/puljefordeling/{pulje}/{event}/{billettholderId}/gm/preview", puljeRemovalPreviewHandler(db, logger, models.EventPlayerRoleGM))
 	router.Put("/api/puljefordeling/interest", puljeInteresseHandler(db, liveManager, logger))
 
 	router.Delete("/api/puljefordeling/{pulje}/{event}/{billettholderId}/gm", func(w http.ResponseWriter, r *http.Request) {
@@ -192,22 +195,6 @@ func findPuljeRow(puljer []models.PuljeRow, pulje models.Pulje) (models.PuljeRow
 	return models.PuljeRow{}, false
 }
 
-// unsatisfiedAfter returns how many interested participants still have no
-// first-choice (top-choice) seat once the given pulje has been solved. The
-// emulation processes puljer chronologically, so this is PlayerCount minus the
-// running total of NewlySatisfied up to and including pulje. The bool is false
-// when pulje is not part of the emulation.
-func unsatisfiedAfter(em puljefordeling.Emulation, pulje models.Pulje) (int, bool) {
-	cumulative := 0
-	for _, p := range em.Puljer {
-		cumulative += p.NewlySatisfied
-		if p.PuljeID == pulje {
-			return em.PlayerCount - cumulative, true
-		}
-	}
-	return 0, false
-}
-
 templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje, eventImageDir *string) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
@@ -238,6 +225,7 @@ templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, 
 		data-signals__ifmissing:assignment-close-dialog="false"
 		data-signals__ifmissing:assignment-action-completed="false"
 		data-signals__ifmissing:clear-input="0"
+		data-signals__ifmissing:_pulje-list="''"
 		data-signals__ifmissing:dragged-billettholder-id="0"
 		data-signals__ifmissing:dragged-event-id="''"
 		data-signals__ifmissing:dragged-manual-seat="false"
@@ -254,55 +242,47 @@ templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, 
 		data-signals__ifmissing:_puljefordeling-assign-dialog-open="false"
 	>
 		<style>
-            .tabs {
-                display: flex;
-                overflow-x: auto;
-                margin-top: var(--responsive-page-section-spacing);
-                margin-bottom: -2px;
-                z-index: 2;
-            }
+			.pulje-tabs {
+				display: flex;
+				flex-wrap: wrap;
+				gap: var(--spacing-3x);
+				margin-block-end: var(--responsive-page-section-spacing);
 
-            .tabs a {
-                white-space: nowrap;
-                text-decoration: none;
-                padding: 0.75rem 1rem;
-                border: 2px solid transparent;
-                border-radius: var(--border-radius-2x) var(--border-radius-2x) 0 0;
-                color: var(--color-primary-text);
-                font-weight: 500;
-            }
+				a {
+					white-space: nowrap;
+					text-decoration: none;
+					padding: var(--spacing-3x) var(--spacing-5x);
+					border: 1px solid var(--level-3-border);
+					border-radius: var(--border-radius-2x);
+					background-color: var(--level-3-background);
+					color: var(--color-text-soft);
+					transition: border-color 200ms ease, color 200ms ease;
+				}
 
-            .tabs a:hover {
-                color: var(--color-primary-hover);
-            }
+				a:hover {
+					border-color: var(--bg-item-border-hover);
+					color: var(--color-text-strong);
+				}
 
-            .tabs a.active {
-                background: var(--bg-surface);
-                border-color: var(--color-primary);
-                border-bottom: none;
-                color: var(--color-primary);
-            }
-
-            .rooms-section {
-                display: flex;
-                flex-direction: column;
-                gap: var(--responsive-page-section-spacing);
-                border: 2px solid var(--color-primary);
-                border-radius: 0 0 var(--border-radius-2x) var(--border-radius-2x);
-                padding: var(--responsive-pane-padding);
-                background-color: var(--bg-surface);
-            }
-        </style>
-		<h1 class="page-heading" style="text-align: center;">Puljefordeling</h1>
-		<div class="tabs">
+				a[aria-current="page"] {
+					border: 2px solid var(--color-primary);
+					padding: calc(var(--spacing-3x) - 1px) calc(var(--spacing-5x) - 1px);
+					color: var(--color-primary);
+				}
+			}
+		</style>
+		<h1 class="page-heading">Puljefordeling</h1>
+		<nav class="pulje-tabs" aria-label="Puljer">
 			for _, pulje := range models.AllPuljer() {
 				<a
-					role="button"
 					href={ "/admin/puljefordeling/" + pulje }
 					class={ templ.KV("active", current == pulje) }
+					if current == pulje {
+						aria-current="page"
+					}
 				>{ pulje.Label() }</a>
 			}
-		</div>
+		</nav>
 		@puljefordelingTabContent(db, logger, current, eventImageDir, em, emErr)
 		@puljeAssignDialog(db, logger, current, em, emErr)
 		@puljeAgeWarningDialog()
@@ -328,7 +308,6 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		row, hasRow := findPuljeRow(puljer, pulje)
 
 		result, hasResult := findEmulatedPulje(em, pulje)
-		unsatisfied, hasUnsatisfied := unsatisfiedAfter(em, pulje)
 		var fordelingsvarsler []puljefordeling.Fordelingsvarsel
 		var kapasitetsvarsler []puljefordeling.Kapasitetsvarsel
 		var varslerErr error
@@ -343,127 +322,250 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		}
 	}}
 	<style>
-        .pulje-tab-header {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            gap: var(--spacing-4x);
-            flex-wrap: wrap;
-            border-bottom: 2px solid var(--bg-item-border);
-            padding-bottom: var(--spacing-2x);
-        }
-        .pulje-tab-stats {
-            display: flex;
-            gap: var(--spacing-4x);
-            flex-wrap: wrap;
-            color: var(--color-text-soft);
-        }
-        .pulje-tab-warn {
-            color: var(--color-text-warning, #e0a030);
-        }
-        .pulje-tab-actions {
+        .pulje-section {
+            container: pulje-section / inline-size;
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
-            gap: var(--spacing-2x);
+            gap: var(--responsive-page-section-spacing);
+        }
+        .pulje-meta-panel {
+            display: grid;
+            gap: var(--spacing-5x);
+            padding: var(--spacing-5x);
+            border-radius: var(--border-radius-2x);
+            background-color: var(--level-2-background);
+        }
+        @container pulje-section (width > 800px) {
+            .pulje-meta-panel {
+                grid-template-columns: 1fr minmax(16rem, auto);
+            }
+        }
+        .pulje-meta {
+            display: flex;
+            flex-direction: column;
+            place-content: center;
+            gap: var(--spacing-3x);
+            padding: var(--spacing-5x);
+            border: 1px solid var(--level-3-border);
+            border-radius: var(--border-radius-2x);
+            background-color: var(--level-3-background);
         }
         .pulje-status-controls {
             display: flex;
-            gap: var(--spacing-4x);
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: var(--spacing-3x);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .pulje-step-number {
+            display: inline-grid;
+            place-content: center;
+            flex: 0 0 auto;
+            inline-size: 1.75rem;
+            aspect-ratio: 1;
+            border: 1px solid var(--level-3-border);
+            border-radius: 50%;
+            color: var(--color-text-soft);
+            font-size: var(--text-body-small);
+            font-weight: 700;
         }
         .pulje-status-control {
             display: flex;
-            align-items: center;
-            gap: var(--spacing-2x);
+            place-items: center start;
+            gap: var(--spacing-3x);
+            padding: var(--spacing-3x) var(--spacing-4x);
+            border: 1px solid var(--level-3-border);
+            border-radius: var(--border-radius-2x);
+            background-color: var(--level-3-background);
             color: var(--color-text-soft);
             cursor: pointer;
+            transition: border-color 200ms ease;
+
+            &:hover {
+                border-color: var(--bg-item-border-hover);
+            }
+            &:has(input:checked) {
+                color: var(--color-text-strong);
+
+                .pulje-step-number {
+                    border-color: var(--color-primary);
+                    background-color: var(--color-primary);
+                    color: var(--level-1-background);
+                }
+            }
+            &:has(input:disabled) {
+                cursor: not-allowed;
+                color: var(--color-disabled);
+            }
+            input {
+                flex: 0 0 auto;
+            }
         }
         .pulje-legend {
             display: flex;
             flex-direction: column;
             gap: var(--spacing-1x);
+            padding-block-start: var(--spacing-3x);
+            border-block-start: 1px solid var(--level-3-border);
             color: var(--color-text-soft);
-            font-size: var(--text-small, 0.85rem);
+            font-size: var(--text-body-small);
+
+            p {
+                margin: 0;
+            }
+            .legend-dm-name {
+                color: turquoise;
+            }
+            .legend-icon {
+                display: inline-flex;
+                vertical-align: middle;
+            }
         }
-        .pulje-legend p {
-            margin: 0;
+        .pulje-events-header {
+            display: flex;
+            flex-wrap: wrap;
+            place-content: center space-between;
+            place-items: center;
+            gap: var(--spacing-3x) var(--spacing-5x);
         }
-        .pulje-legend .legend-strek {
-            padding-left: var(--spacing-1x);
-        }
-        .pulje-legend .legend-dm-name {
-            color: turquoise;
-        }
-        .pulje-legend .legend-moved {
-            border-left: 3px solid var(--color-accent-red);
-        }
-        .pulje-legend .legend-manual {
-            border-left: 3px solid var(--color-accent-yellow);
+        .pulje-commit-bar {
+            display: flex;
+            flex-wrap: wrap;
+            place-items: center;
+            gap: var(--spacing-3x) var(--spacing-5x);
+
+            p {
+                margin: 0;
+                font-style: italic;
+                color: var(--color-text-strong);
+            }
         }
         .pulje-event-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: var(--responsive-page-section-spacing);
+            gap: var(--spacing-4x);
         }
         .pulje-event {
-            position: relative;
-            overflow: hidden;
+            container: pulje-event / inline-size;
             display: flex;
-            flex-flow: column nowrap;
-            gap: var(--spacing-1x);
-            padding: var(--spacing-2x);
-            border: 1px solid var(--bg-item-border);
-            border-radius: var(--border-radius-1x);
-            background-color: var(--bg-item);
+            flex-direction: column;
+            gap: var(--spacing-3x);
+            padding: var(--spacing-3x);
+            border: 1px solid var(--level-3-border);
+            border-radius: var(--border-radius-2x);
+            background-color: var(--level-1-background);
             transition: border-color 300ms ease-in-out;
+
+            &:hover {
+                border-color: var(--bg-item-border-hover);
+            }
+            &.is-drag-over {
+                border-color: var(--color-primary);
+            }
         }
-        /* Faded banner art behind each game, mirroring the rooms cards. */
-        .pulje-event-bg {
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            width: 100%;
-            height: 100%;
+        .pulje-event-header {
+            display: flex;
+            place-items: start;
+            gap: var(--spacing-3x);
+        }
+        .pulje-event-thumb {
+            display: block;
+            flex: 0 0 auto;
+            inline-size: clamp(4rem, 22cqi, 6rem);
+            block-size: auto;
+            aspect-ratio: 2 / 1;
             object-fit: cover;
+            border-radius: var(--border-radius-1x);
+            background-color: var(--level-3-background);
         }
-        /* Full-box gradient so the tags and player list stay legible over the
-           image — these boxes carry far more text than the small room cards. */
-        .pulje-event::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            background: linear-gradient(
-                to bottom,
-                rgba(53, 57, 74, 0.82) 0%,
-                rgba(53, 57, 74, 0.9) 45%,
-                rgba(53, 57, 74, 0.97) 100%
-            );
+        .pulje-event-heading {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-1x);
+            min-inline-size: 0;
+
+            h3 {
+                color: var(--color-text-strong);
+                font-size: var(--text-body);
+                font-weight: 700;
+                overflow-wrap: anywhere;
+            }
         }
-        .pulje-event > *:not(.pulje-event-bg) {
-            position: relative;
-            z-index: 2;
+        .pulje-event-system {
+            margin: 0;
+            color: var(--color-primary);
+            font-size: var(--text-body-small);
         }
-        .pulje-event:hover {
-            border-color: var(--bg-item-border-hover);
-        }
-        .pulje-event.is-drag-over {
-            border-color: var(--color-primary);
-            background-color: var(--bg-surface);
-        }
-        /* Event property tags (game type, age, runtime, beginner/english). */
+        /* Game type with its label, then icon-only property badges. */
         .pulje-tags {
             display: flex;
-            flex-flow: row wrap;
-            gap: var(--spacing-1x) var(--spacing-3x);
+            flex-wrap: wrap;
+            place-content: center space-between;
+            place-items: center;
+            gap: var(--spacing-2x) var(--spacing-4x);
             color: var(--color-text-soft);
-            font-size: var(--text-small, 0.85rem);
+            font-size: var(--text-body-small);
         }
-        .pulje-tags > div {
-            background-color: rgba(20, 22, 30, 0.45);
-            padding: 0 var(--spacing-2x);
-            border-radius: var(--border-radius-1x);
+        .pulje-event-type {
+            display: inline-flex;
+            place-items: center;
+            gap: var(--spacing-2x);
+        }
+        .pulje-tag-icons {
+            display: flex;
+            gap: var(--spacing-3x);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+
+            li {
+                display: inline-flex;
+            }
+        }
+        .pulje-event-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-1x);
+        }
+        .pulje-group-header {
+            display: flex;
+            place-content: space-between;
+            place-items: center;
+            gap: var(--spacing-2x);
+        }
+        .pulje-group-heading {
+            margin: 0;
+            color: var(--color-text-strong);
+            font-size: var(--text-body-small);
+            font-weight: 600;
+        }
+        .pulje-capacity {
+            display: flex;
+            place-items: center;
+            gap: var(--spacing-3x);
+        }
+        .pulje-cap-bar {
+            inline-size: clamp(3rem, 20cqi, 5rem);
+            block-size: 4px;
+            border-radius: 2px;
+            background: linear-gradient(
+                to right,
+                var(--color-text-strong) var(--fill),
+                color-mix(in srgb, #C6CDF1 20%, transparent) var(--fill)
+            );
+        }
+        .pulje-cap {
+            display: inline-flex;
+            place-items: center;
+            gap: var(--spacing-1x);
+            padding: var(--spacing-1x) var(--spacing-2x);
+            border-radius: 999px;
+            background-color: var(--level-2-background);
+            color: var(--color-text-strong);
+            font-size: var(--text-body-small);
+            font-weight: 600;
+            white-space: nowrap;
         }
         .pulje-players li[draggable="true"] {
             cursor: grab;
@@ -471,44 +573,8 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-players li.is-dragging {
             opacity: 0.5;
         }
-        .pulje-event-top {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            gap: var(--spacing-2x);
-        }
-        .pulje-event-top h3 {
-            color: var(--color-text-strong);
-            font-size: var(--text-body);
-        }
-        .pulje-cap {
-            color: var(--color-text-soft);
-            white-space: nowrap;
-        }
-        .pulje-gm {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--spacing-2x);
-            place-items: center;
-            color: var(--color-text-soft);
-            font-style: italic;
-        }
         .pulje-badge--error {
             color: var(--color-text-error, #e05050);
-        }
-        .pulje-event.missing-dm {
-            border-color: var(--color-text-error, #e05050);
-        }
-        .pulje-missing-gm {
-            place-self: start;
-            block-size: auto;
-            min-block-size: var(--btn-height);
-            max-inline-size: 100%;
-            padding-block: var(--spacing-1x);
-            white-space: normal;
-            text-align: start;
-            color: var(--color-text-error, #e05050);
-            border-color: currentColor;
         }
         .pulje-badge {
             align-self: flex-start;
@@ -519,35 +585,49 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             font-size: var(--text-small, 0.85rem);
         }
         .pulje-players {
-            margin: var(--spacing-1x) 0 0;
+            margin: 0;
             padding: 0;
             list-style: none;
             display: flex;
             flex-direction: column;
             gap: var(--spacing-1x);
-            color: var(--color-text-soft);
+
         }
-        .pulje-players li {
+        .pulje-players li,
+        .pulje-gm {
             display: flex;
-            align-items: center;
+            place-items: center;
             gap: var(--spacing-2x);
-            padding: var(--spacing-1x);
-            border: 1px solid var(--bg-item-border);
+            min-block-size: 2.25rem;
+            margin: 0;
+            padding: var(--spacing-1x) var(--spacing-3x);
+            border: 1px solid var(--level-3-border);
             border-radius: var(--border-radius-1x);
-            background-color: rgba(20, 22, 30, 0.4);
-            backdrop-filter: blur(2px);
+            background-color: var(--level-3-background);
+            color: var(--color-text-strong);
+            font-size: var(--text-body-small);
         }
-        .pulje-players li.moved {
-            border-left: 3px solid var(--color-accent-red);
-        }
-        .pulje-players li.manual {
-            border-left: 3px solid var(--color-accent-yellow);
+        .pulje-player-name {
+            flex: 1 1 auto;
+            min-inline-size: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .pulje-dm {
             color: turquoise;
         }
+        .pulje-marker {
+            display: inline-flex;
+            flex: 0 0 auto;
+        }
+        .pulje-marker--moved {
+            color: var(--color-error);
+        }
+        .pulje-marker--pin {
+            color: var(--color-accent-orange);
+        }
         .pulje-remove {
-            margin-left: auto;
             flex: 0 0 auto;
             border: none;
             background: transparent;
@@ -555,23 +635,185 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             cursor: pointer;
             line-height: 1;
             padding: 0 var(--spacing-1x);
+
+            &:hover {
+                color: var(--color-error);
+            }
         }
-        .pulje-remove:hover {
-            color: var(--color-text-error, #e05050);
+        .pulje-row {
+            display: flex;
+            flex-wrap: wrap;
+            place-content: center space-between;
+            place-items: center;
+            gap: var(--spacing-2x) var(--spacing-4x);
+            inline-size: 100%;
+            min-block-size: 2.25rem;
+            margin: 0;
+            padding: var(--spacing-1x) var(--spacing-3x);
+            border: 1px dashed var(--level-3-border);
+            border-radius: var(--border-radius-1x);
+            background-color: var(--level-2-background);
+            color: var(--color-text-soft);
+            font: inherit;
+            font-size: var(--text-body-small);
+            text-align: start;
         }
-        .pulje-add {
-            align-self: flex-start;
-            margin-top: var(--spacing-1x);
-            border: 1px solid var(--bg-item-border);
+        button.pulje-row {
+            cursor: pointer;
+            transition: border-color 200ms ease;
+
+            &:hover {
+                border-color: var(--color-primary);
+            }
+        }
+        .pulje-row-status {
+            display: inline-flex;
+            place-items: center;
+            gap: var(--spacing-2x);
+            font-style: italic;
+        }
+        .pulje-row-status--warning {
+            color: var(--color-error);
+
+            .inline-icon {
+                color: var(--color-warning);
+            }
+        }
+        .pulje-row-action {
+            display: inline-flex;
+            place-items: center;
+            gap: var(--spacing-2x);
+            margin-inline-start: auto;
+            color: var(--color-text-soft);
+            font-weight: 600;
+        }
+        /* On narrow cards the status and the action don't fit on one line, so
+           only the + stays visible; the text is kept for screen readers. */
+        @container pulje-event (width < 400px) {
+            .pulje-row-status ~ .pulje-row-action .pulje-row-action-text {
+                position: absolute;
+                inline-size: 1px;
+                block-size: 1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+                white-space: nowrap;
+            }
+        }
+        .pulje-score {
+            position: relative;
+            flex: 0 0 auto;
+            cursor: help;
+
+            &:hover .pulje-score-details,
+            &:focus-visible .pulje-score-details {
+                display: grid;
+            }
+        }
+        .pulje-score-value {
+            display: inline-block;
+            min-inline-size: 2.5rem;
+            padding: 0 var(--spacing-2x);
+            border-radius: 999px;
+            background-color: var(--level-2-background);
+            color: var(--color-text-soft);
+            font-size: var(--text-body-small);
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            text-align: center;
+        }
+        .pulje-score-details {
+            display: none;
+            position: absolute;
+            inset-block-end: calc(100% + var(--spacing-2x));
+            inset-inline-end: 0;
+            z-index: 10;
+            gap: var(--spacing-2x);
+            inline-size: max-content;
+            max-inline-size: 20rem;
+            padding: var(--spacing-3x);
+            border: 1px solid var(--level-3-border);
+            border-radius: var(--border-radius-1x);
+            background-color: var(--level-1-background);
+            box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+            color: var(--color-text-soft);
+            font-size: var(--text-body-small);
+            font-weight: 400;
+
+            dl {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: var(--spacing-1x) var(--spacing-4x);
+                margin: 0;
+            }
+            dd {
+                margin: 0;
+                color: var(--color-text-strong);
+                font-variant-numeric: tabular-nums;
+                text-align: end;
+            }
+            .pulje-score-sum {
+                padding-block-start: var(--spacing-1x);
+                border-block-start: 1px solid var(--level-3-border);
+                color: var(--color-text-strong);
+                font-weight: 700;
+            }
+        }
+        .pulje-score-note {
+            font-style: italic;
+        }
+        .pulje-score-title {
+            color: var(--color-text-strong);
+            font-weight: 700;
+        }
+        .pulje-interest-trigger {
+            padding: 0;
+            border: none;
             border-radius: var(--border-radius-1x);
             background: transparent;
-            color: var(--color-text-soft);
+            font: inherit;
             cursor: pointer;
-            padding: var(--spacing-1x) var(--spacing-2x);
+
+            &:hover,
+            &:focus-visible {
+                background-color: var(--level-2-background);
+            }
         }
-        .pulje-add:hover {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
+        .pulje-interest-menu {
+            position-area: block-end span-inline-start;
+            position-try-fallbacks: flip-block;
+            margin: var(--spacing-1x) 0;
+            padding: var(--spacing-1x);
+            border: 1px solid var(--level-3-border);
+            border-radius: var(--border-radius-1x);
+            background-color: var(--level-1-background);
+            box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+            color: var(--color-text-strong);
+
+            &:popover-open {
+                display: grid;
+            }
+            button {
+                display: flex;
+                place-items: center;
+                gap: var(--spacing-2x);
+                padding: var(--spacing-1x) var(--spacing-3x);
+                border: none;
+                border-radius: var(--border-radius-1x);
+                background: transparent;
+                color: inherit;
+                font: inherit;
+                font-size: var(--text-body-small);
+                text-align: start;
+                cursor: pointer;
+
+                &:hover,
+                &:focus-visible {
+                    background-color: var(--level-3-background);
+                }
+            }
+            .is-current {
+                font-weight: 700;
+            }
         }
         .pulje-emoji {
             flex: 0 0 auto;
@@ -583,65 +825,87 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             font-style: italic;
         }
         .pulje-unassigned {
+            padding: var(--spacing-4x) var(--spacing-5x);
+            border-radius: var(--border-radius-2x);
+            background-color: var(--level-2-background);
             color: var(--color-text-soft);
+
+            h3 {
+                margin-block-end: var(--spacing-2x);
+                font-size: var(--text-body);
+                color: var(--color-text-strong);
+            }
+            p {
+                margin: 0;
+            }
         }
         .pulje-error {
             color: var(--color-text-error, #e05050);
         }
-        @media screen and (width > 1200px) {
+        @container pulje-section (width > 640px) {
             .pulje-event-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
-        @media screen and (width > 1800px) {
+        @container pulje-section (width > 1000px) {
             .pulje-event-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
     </style>
+	@puljeForstevalgStyles()
 	<section
 		id="puljefordeling-tab"
-		class="rooms-section"
+		class="pulje-section"
 		data-signals:pulje-status={ fmt.Sprintf("'%s'", string(row.Status)) }
 	>
-		<div class="pulje-tab-header">
-			<div>
-				if hasRow {
-					<h2>{ row.Name }</h2>
-				} else {
-					<h2>{ string(pulje) }</h2>
-				}
+		if hasRow {
+			<h2>{ row.Name }</h2>
+		} else {
+			<h2>{ pulje.Label() }</h2>
+		}
+		<div class="pulje-meta-panel">
+			<div class="pulje-meta">
 				if hasResult {
-					<div class="pulje-tab-stats">
-						<span>{ fmt.Sprintf("%d fikk førstevalg", result.NewlySatisfied) }</span>
-						if hasUnsatisfied {
-							<span>{ fmt.Sprintf("%d uten førstevalg så langt", unsatisfied) }</span>
-						}
-						<span>{ fmt.Sprintf("%d interessepoeng", result.TotalScore) }</span>
-						if len(result.Unassigned) > 0 {
-							<span class="pulje-tab-warn">{ fmt.Sprintf("%d uten plass", len(result.Unassigned)) }</span>
-						}
-					</div>
+					@puljeForstevalgStats(result)
 				}
+				<div class="pulje-legend">
+					<p>🤩 Veldig interessert · 😁 Interessert · 🙂 Litt interessert · 🫥 Ikke interessert</p>
+					<p><span class="legend-dm-name">Turkis navn</span> = Spilleder</p>
+					<p>
+						<span class="legend-icon pulje-marker--moved">
+							@icons.Icon(icons.MovedDown, icons.Size16)
+						</span> Flyttet ned for å gi plass ·
+						<span class="legend-icon pulje-marker--pin">
+							@icons.Icon(icons.Pin, icons.Size16)
+						</span> Manuelt plassert
+					</p>
+					<p><span class="pulje-score-value">810</span> = Algoritmepoeng (hold over tallet for utregning)</p>
+				</div>
 			</div>
-			<div class="pulje-tab-actions">
-				if hasRow {
-					@puljeStatusToggles(row)
+			if hasRow {
+				@puljeStatusToggles(row)
+			}
+		</div>
+		<div class="pulje-events-header">
+			if hasResult {
+				<h2>{ countText(len(result.Events), "arrangement", "arrangementer") }</h2>
+			} else {
+				<h2>Arrangementer</h2>
+			}
+			<div class="pulje-commit-bar">
+				if puljeIsCompleted(row.Status) {
+					<p>Fordelingen er publisert og kan ikke endres.</p>
+				} else {
+					<p>Fordelingen er midlertidig frem til du lagrer.</p>
 				}
 				<button
 					type="button"
-					class="btn btn--outline pulje-commit"
+					class="btn btn--primary pulje-commit"
 					disabled?={ puljeIsCompleted(row.Status) }
 					data-on:click={ fmt.Sprintf("if (confirm('Lagre denne fordelingen? Den blir tilgjengelig i andre visninger.')) { @post('/admin/api/puljefordeling/%s/commit') }", string(pulje)) }
 				>Lagre fordeling</button>
 			</div>
-		</div>
-		<div class="pulje-legend">
-			<p>🤩 Veldig interessert · 🙂 Middels · 🤨 Litt · 📌 Ikke interessert, manuelt plassert</p>
-			<p><span class="legend-dm-name">Turkis navn</span> = Spilleder</p>
-			<p>
-				<span class="legend-strek legend-moved">Rød strek</span> = flyttet NED for å gi plass · <span class="legend-strek legend-manual">Gul strek</span> = manuell
-			</p>
 		</div>
 		if emErr != nil {
 			<p class="pulje-error">Kunne ikke beregne fordeling: { emErr.Error() }</p>
@@ -653,19 +917,26 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			} else {
 				@puljeFordelingsvarsler(pulje, fordelingsvarsler, kapasitetsvarsler)
 			}
+			if len(result.Unassigned) > 0 {
+				<div class="pulje-unassigned">
+					<h3>{ countText(len(result.Unassigned), "deltaker", "deltakere") + " uten plass" }</h3>
+					<p>{ strings.Join(result.Unassigned, ", ") }</p>
+				</div>
+			}
 			<div class="pulje-event-grid">
 				for _, ev := range result.Events {
 					@puljeEventBox(pulje, ev, puljeIsCompleted(row.Status), eventImageDir)
 				}
 			</div>
-			if len(result.Unassigned) > 0 {
-				<div class="pulje-unassigned">
-					<h4>{ fmt.Sprintf("Uten plass (%d)", len(result.Unassigned)) }</h4>
-					<p>{ strings.Join(result.Unassigned, ", ") }</p>
-				</div>
-			}
 		}
 	</section>
+}
+
+func countText(count int, singular, plural string) string {
+	if count == 1 {
+		return fmt.Sprintf("%d %s", count, singular)
+	}
+	return fmt.Sprintf("%d %s", count, plural)
 }
 
 // puljeAgeConfirmAction re-posts the pending placement with the age confirmation
@@ -720,55 +991,73 @@ templ puljeAgeWarningDialog() {
 	</dialog>
 }
 
+// puljeStatusToggles renders the three puljefordeling steps. Each step is
+// disabled until the previous one is done, and locked once the next one is done;
+// puljeStatusStepAllowed enforces the same order on the server.
 templ puljeStatusToggles(pulje models.PuljeRow) {
-	<div class="pulje-status-controls">
-		<label class="pulje-status-control">
-			<input
-				if pulje.ClosingWarningActive {
-					checked
-				}
-				if pulje.Status != models.PuljeStatusOpen {
-					disabled
-				}
-				data-on:click={ fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID) }
-				type="checkbox"
-				class="checkbox input"
-			/>
-			<span>Vis advarsel om at puljefordeling stenger snart</span>
-		</label>
-		<label class="pulje-status-control">
-			<input
-				if puljeIsLocked(pulje.Status) {
-					checked
-				}
-				data-on:click={ puljeStatusUpdateAction(
-					pulje,
-					fmt.Sprintf("Vil du endre lukking for %s?", pulje.Name),
-					models.PuljeStatusLocked,
-					models.PuljeStatusOpen,
-				) }
-				type="checkbox"
-				class="checkbox input"
-			/>
-			<span>Puljefordeling lukket</span>
-		</label>
-		<label class="pulje-status-control">
-			<input
-				if puljeIsCompleted(pulje.Status) {
-					checked
-				}
-				data-on:click={ puljeStatusUpdateAction(
-					pulje,
-					fmt.Sprintf("Vil du endre publisering av puljefordeling for %s?", pulje.Name),
-					models.PuljeStatusCompleted,
-					models.PuljeStatusLocked,
-				) }
-				type="checkbox"
-				class="checkbox input"
-			/>
-			<span>Puljefordeling publisert</span>
-		</label>
-	</div>
+	<ol class="pulje-status-controls" aria-label="Steg for puljefordeling">
+		<li>
+			<label class="pulje-status-control">
+				<span class="pulje-step-number" aria-hidden="true">1</span>
+				<input
+					if puljeClosingWarningStepDone(pulje) {
+						checked
+					}
+					if pulje.Status != models.PuljeStatusOpen {
+						disabled
+					}
+					data-on:click={ fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID) }
+					type="checkbox"
+					class="checkbox input"
+				/>
+				<span>Vis advarsel om at puljefordeling stenger snart</span>
+			</label>
+		</li>
+		<li>
+			<label class="pulje-status-control">
+				<span class="pulje-step-number" aria-hidden="true">2</span>
+				<input
+					if puljeIsLocked(pulje.Status) {
+						checked
+					}
+					if !puljeStatusStepAllowed(pulje, models.PuljeStatusLocked) || !puljeStatusStepAllowed(pulje, models.PuljeStatusOpen) {
+						disabled
+					}
+					data-on:click={ puljeStatusUpdateAction(
+						pulje,
+						fmt.Sprintf("Vil du endre lukking for %s?", pulje.Name),
+						models.PuljeStatusLocked,
+						models.PuljeStatusOpen,
+					) }
+					type="checkbox"
+					class="checkbox input"
+				/>
+				<span>Puljefordeling lukket</span>
+			</label>
+		</li>
+		<li>
+			<label class="pulje-status-control">
+				<span class="pulje-step-number" aria-hidden="true">3</span>
+				<input
+					if puljeIsCompleted(pulje.Status) {
+						checked
+					}
+					if !puljeStatusStepAllowed(pulje, models.PuljeStatusCompleted) {
+						disabled
+					}
+					data-on:click={ puljeStatusUpdateAction(
+						pulje,
+						fmt.Sprintf("Vil du endre publisering av puljefordeling for %s?", pulje.Name),
+						models.PuljeStatusCompleted,
+						models.PuljeStatusLocked,
+					) }
+					type="checkbox"
+					class="checkbox input"
+				/>
+				<span>Puljefordeling publisert</span>
+			</label>
+		</li>
+	</ol>
 }
 
 templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, published bool, eventImageDir *string) {
@@ -778,126 +1067,268 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 		dropAttrs := templ.Attributes{}
 		if !published {
 			dropAttrs["data-on:dragover__prevent"] = fmt.Sprintf("$dragOverEvent = '%s'", ev.EventID)
-			dropAttrs["data-on:drop__prevent"] = fmt.Sprintf("$dragOverEvent = ''; $draggedBillettholderId && (($assignmentBillettholderId = $draggedBillettholderId), ($assignmentEventId = %q), ($assignmentPuljeId = %q), ($assignmentFromEventId = $draggedEventId), ($assignmentFromManualSeat = $draggedManualSeat), ($assignmentRole = 'Player'), ($assignmentFromAddMenu = false), ($assignmentConfirmation = ''), ($assignmentAgeConfirmed = false), @post('/admin/api/puljefordeling/assign'))", ev.EventID, string(pulje))
+			dropAttrs["data-on:drop__prevent"] = fmt.Sprintf("$dragOverEvent = ''; $draggedBillettholderId && $draggedEventId !== %[1]q && (($assignmentBillettholderId = $draggedBillettholderId), ($assignmentEventId = %[1]q), ($assignmentPuljeId = %[2]q), ($assignmentFromEventId = $draggedEventId), ($assignmentFromManualSeat = $draggedManualSeat), ($assignmentRole = 'Player'), ($assignmentFromAddMenu = false), ($assignmentConfirmation = ''), ($assignmentAgeConfirmed = false), @post('/admin/api/puljefordeling/assign/preview'))", ev.EventID, string(pulje))
 			dropAttrs["data-class:is-drag-over"] = fmt.Sprintf("$dragOverEvent === '%s'", ev.EventID)
 		}
 		imageBannerUrl := eventimage.GetEventImageUrl(ev.EventID, "banner", eventImageDir)
 	}}
-	<div class={ "pulje-event", templ.KV("missing-dm", ev.GMName == "") } { dropAttrs... }>
-		<img class="pulje-event-bg" src={ imageBannerUrl } alt="" aria-hidden="true"/>
-		<div class="pulje-event-top">
-			<h3>{ ev.Title }</h3>
-			<span class="pulje-cap">{ fmt.Sprintf("%d / %d", len(ev.AssignedPlayers), ev.Capacity) }</span>
-		</div>
+	<article class={ "pulje-event", templ.KV("missing-dm", ev.GMName == "") } { dropAttrs... }>
+		<header class="pulje-event-header">
+			<img class="pulje-event-thumb" src={ imageBannerUrl } alt="" aria-hidden="true"/>
+			<div class="pulje-event-heading">
+				<h3>{ ev.Title }</h3>
+				if ev.System != "" {
+					<p class="pulje-event-system">{ ev.System }</p>
+				}
+			</div>
+		</header>
 		@puljeEventTags(ev)
-		if len(ev.AssignedGMs) > 0 {
-			for _, gm := range ev.AssignedGMs {
-				<p class="pulje-gm">
-					<span>Spilleder: { gm.Name }</span>
-					if ev.AgeGroup == models.AgeGroupAdultsOnly && !gm.IsOver18 {
-						<span class="pulje-badge pulje-badge--error">Under 18</span>
-					}
-					if !published {
-						<button type="button" class="pulje-remove" aria-label={ "Fjern spilleder " + gm.Name } title={ "Fjern spilleder " + gm.Name } data-on:click={ fmt.Sprintf("@delete('/admin/api/puljefordeling/%s/%s/%d/gm')", string(pulje), ev.EventID, gm.BillettholderID) }>×</button>
-					}
-				</p>
-			}
-		} else if published {
-			<span class="pulje-badge pulje-badge--error">Mangler spilleder</span>
-		} else {
-			<button
-				type="button"
-				class="btn btn--outline pulje-missing-gm"
-				aria-haspopup="dialog"
-				aria-controls="puljefordeling-assign-dialog"
-				data-on:click={ puljeAssignDialogAction(pulje, ev, true) }
-			>Mangler spilleder · Legg til spilleder</button>
-		}
-		if ev.Undersubscribed {
-			<span class="pulje-badge">Få deltakere</span>
-		}
-		if len(ev.AssignedPlayers) > 0 {
-			<ul class="pulje-players">
-				for _, pl := range ev.AssignedPlayers {
-					{{
-						tileAttrs := templ.Attributes{}
-						if !published {
-							tileAttrs["draggable"] = "true"
-							tileAttrs["data-on:dragstart"] = fmt.Sprintf("$draggedBillettholderId = %d; $draggedEventId = %q; $draggedManualSeat = %t", pl.BillettholderID, ev.EventID, pl.Manual)
-							tileAttrs["data-on:dragend"] = "$draggedBillettholderId = 0; $draggedEventId = ''; $draggedManualSeat = false; $dragOverEvent = ''"
-							tileAttrs["data-class:is-dragging"] = fmt.Sprintf("$draggedBillettholderId === %d && $draggedEventId === %q", pl.BillettholderID, ev.EventID)
-						}
-						// A manual pin without any real interest shows a pin rather than a
-						// fabricated interest level; a genuine interest keeps its emoji.
-						emoji := pl.Level.Emoji()
-						if emoji == "" && pl.Manual {
-							emoji = "📌"
-						}
-					}}
-					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) } { tileAttrs... }>
-						<span class="pulje-emoji">{ emoji }</span>
-						<span class={ templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
-						if ev.AgeGroup == models.AgeGroupAdultsOnly && !pl.IsOver18 {
+		<section class="pulje-event-group" aria-label="Spilleder">
+			<h4 class="pulje-group-heading">Spilleder</h4>
+			if len(ev.AssignedGMs) > 0 {
+				for _, gm := range ev.AssignedGMs {
+					<p class="pulje-gm">
+						<span class="pulje-player-name">{ gm.Name }</span>
+						if ev.AgeGroup == models.AgeGroupAdultsOnly && !gm.IsOver18 {
 							<span class="pulje-badge pulje-badge--error">Under 18</span>
 						}
-						if pl.Manual && !published {
-							<button
-								type="button"
-								class="pulje-remove"
-								title="Fjern manuell plassering"
-								data-on:click={ fmt.Sprintf("@delete('/admin/api/puljefordeling/%s/%s/%d')", string(pulje), ev.EventID, pl.BillettholderID) }
-							>×</button>
+						if !published {
+							<button type="button" class="pulje-remove" aria-label={ "Fjern spilleder " + gm.Name } title={ "Fjern spilleder " + gm.Name } data-on:click={ fmt.Sprintf("@post('/admin/api/puljefordeling/%s/%s/%d/gm/preview')", string(pulje), ev.EventID, gm.BillettholderID) }>×</button>
 						}
-					</li>
+					</p>
 				}
-			</ul>
-		} else {
-			<p class="pulje-empty">Ingen deltakere</p>
+			} else if published {
+				<p class="pulje-row pulje-row--static">
+					@puljeRowStatus("Mangler spilleder", true)
+				</p>
+			} else {
+				<button
+					type="button"
+					class="pulje-row pulje-missing-gm"
+					aria-haspopup="dialog"
+					aria-controls="puljefordeling-assign-dialog"
+					data-on:click={ puljeAssignDialogAction(pulje, ev, true) }
+				>
+					@puljeRowStatus("Mangler spilleder", true)
+					@puljeRowAction("Finn spilleder")
+				</button>
+			}
+		</section>
+		<section class="pulje-event-group" aria-label="Deltakere">
+			<div class="pulje-group-header">
+				<h4 class="pulje-group-heading">Deltakere</h4>
+				<div class="pulje-capacity">
+					<span class="pulje-cap-bar" aria-hidden="true" style={ templ.SafeCSS(fmt.Sprintf("--fill: %d%%;", puljeCapacityPercent(ev))) }></span>
+					<span class="pulje-cap" title="Deltakere / plasser">
+						{ fmt.Sprintf("%d / %d", len(ev.AssignedPlayers), ev.Capacity) }
+						@icons.Icon(icons.User, icons.Size16)
+					</span>
+				</div>
+			</div>
+			if len(ev.AssignedPlayers) > 0 {
+				<ul class="pulje-players">
+					for _, pl := range ev.AssignedPlayers {
+						{{
+							tileAttrs := templ.Attributes{}
+							if !published {
+								tileAttrs["draggable"] = "true"
+								tileAttrs["data-on:dragstart"] = fmt.Sprintf("$draggedBillettholderId = %d; $draggedEventId = %q; $draggedManualSeat = %t", pl.BillettholderID, ev.EventID, pl.Manual)
+								tileAttrs["data-on:dragend"] = "$draggedBillettholderId = 0; $draggedEventId = ''; $draggedManualSeat = false; $dragOverEvent = ''"
+								tileAttrs["data-class:is-dragging"] = fmt.Sprintf("$draggedBillettholderId === %d && $draggedEventId === %q", pl.BillettholderID, ev.EventID)
+							}
+						}}
+						<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) } { tileAttrs... }>
+							<span class={ "pulje-player-name", templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
+							if ev.AgeGroup == models.AgeGroupAdultsOnly && !pl.IsOver18 {
+								<span class="pulje-badge pulje-badge--error">Under 18</span>
+							}
+							if pl.Moved {
+								<span class="pulje-marker pulje-marker--moved" title="Flyttet ned for å gi plass">
+									@icons.Icon(icons.MovedDown, icons.Size20)
+								</span>
+							}
+							if pl.Manual {
+								<span class="pulje-marker pulje-marker--pin" title="Manuelt plassert">
+									@icons.Icon(icons.Pin, icons.Size20)
+								</span>
+							}
+							if pl.Score != nil {
+								@puljeScore(*pl.Score, pl.Manual, puljeDOMID("pulje-score", ev.EventID, strconv.Itoa(pl.BillettholderID)))
+							}
+							@puljeInterest(pulje, ev.EventID, pl, published)
+							if pl.Manual && !published {
+								<button
+									type="button"
+									class="pulje-remove"
+									title="Fjern manuell plassering"
+									data-on:click={ fmt.Sprintf("@post('/admin/api/puljefordeling/%s/%s/%d/preview')", string(pulje), ev.EventID, pl.BillettholderID) }
+								>×</button>
+							}
+						</li>
+					}
+				</ul>
+			}
+			{{ playerStatus, playerWarning := puljePlayerRowStatus(ev) }}
+			if !published {
+				<button
+					type="button"
+					class="pulje-row pulje-add"
+					aria-haspopup="dialog"
+					aria-controls="puljefordeling-assign-dialog"
+					data-on:click={ puljeAssignDialogAction(pulje, ev, false) }
+				>
+					if playerStatus != "" {
+						@puljeRowStatus(playerStatus, playerWarning)
+					}
+					@puljeRowAction("Finn deltaker")
+				</button>
+			} else if playerWarning {
+				<p class="pulje-row pulje-row--static">
+					@puljeRowStatus(playerStatus, true)
+				</p>
+			}
+		</section>
+	</article>
+}
+
+// puljeCapacityPercent is how full the event is, capped at 100 so an
+// over-capacity event does not overflow the capacity bar.
+func puljeCapacityPercent(ev puljefordeling.EmulatedEvent) int {
+	if ev.Capacity <= 0 {
+		return 0
+	}
+	return min(100, len(ev.AssignedPlayers)*100/ev.Capacity)
+}
+
+// puljeInterest shows the participant's interest in this event. Outside a
+// published pulje the face opens a menu that sets that interest, so an admin
+// who moves or pins someone can record how interested they are and have the
+// fordeling (førstevalg and algoritmepoeng) use it.
+templ puljeInterest(pulje models.Pulje, eventID string, pl puljefordeling.AssignedPlayer, published bool) {
+	if published {
+		<span class="pulje-emoji" title={ pl.Level.Label() }>{ pl.Level.Emoji() }</span>
+	} else {
+		{{ menuID := puljeDOMID("pulje-interest", eventID, strconv.Itoa(pl.BillettholderID)) }}
+		<button
+			type="button"
+			class="pulje-emoji pulje-interest-trigger"
+			popovertarget={ menuID }
+			title={ "Interesse: " + pl.Level.Label() + ". Klikk for å endre." }
+			aria-label={ "Endre interesse for " + pl.Name + ", nå " + pl.Level.Label() }
+			style={ templ.SafeCSS("anchor-name: --" + menuID + ";") }
+		>{ pl.Level.Emoji() }</button>
+		<div id={ menuID } class="pulje-interest-menu" popover style={ templ.SafeCSS("position-anchor: --" + menuID + ";") }>
+			for _, level := range []models.InterestLevel{models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow, models.InterestLevelNone} {
+				<button
+					type="button"
+					class={ templ.KV("is-current", level == pl.Level) }
+					aria-pressed={ strconv.FormatBool(level == pl.Level) }
+					data-on:click={ puljeRowInterestAction(pulje, eventID, pl.BillettholderID, level) }
+				>
+					<span aria-hidden="true">{ level.Emoji() }</span>
+					{ puljeInterestLabel(level) }
+				</button>
+			}
+		</div>
+	}
+}
+
+// puljeScore shows the solver's score for a seat, with the calculation in a
+// tooltip that opens on hover or keyboard focus.
+templ puljeScore(score smodel.ScoreBreakdown, manual bool, id string) {
+	<span class="pulje-score" tabindex="0" aria-describedby={ id }>
+		<span class="pulje-score-value">{ strconv.Itoa(score.Total) }</span>
+		<span class="pulje-score-details" id={ id } role="tooltip">
+			<span class="pulje-score-title">Algoritmepoeng</span>
+			if manual {
+				<span class="pulje-score-note">Manuelt plassert. Poengene følger interessen for arrangementet.</span>
+			}
+			<dl>
+				for _, line := range puljeScoreLines(score) {
+					<dt>{ line.Label }</dt>
+					<dd>{ fmt.Sprintf("+%d", line.Points) }</dd>
+				}
+				<dt class="pulje-score-sum">Sum</dt>
+				<dd class="pulje-score-sum">{ strconv.Itoa(score.Total) }</dd>
+			</dl>
+		</span>
+	</span>
+}
+
+// puljePlayerRowStatus describes the open player seats shown in the dashed row
+// under the participant list, and whether that state needs the admin's attention.
+func puljePlayerRowStatus(ev puljefordeling.EmulatedEvent) (string, bool) {
+	switch {
+	case len(ev.AssignedPlayers) == 0:
+		return "Ingen deltakere", true
+	case ev.Undersubscribed:
+		return "Veldig få deltakere", true
+	case len(ev.AssignedPlayers) < ev.Capacity:
+		return "Ledig plass", false
+	default:
+		return "", false
+	}
+}
+
+templ puljeRowStatus(text string, warning bool) {
+	<span class={ "pulje-row-status", templ.KV("pulje-row-status--warning", warning) }>
+		if warning {
+			@icons.Icon(icons.Warning, icons.Size20)
 		}
-		if !published {
-			<button
-				type="button"
-				class="pulje-add"
-				aria-haspopup="dialog"
-				aria-controls="puljefordeling-assign-dialog"
-				data-on:click={ puljeAssignDialogAction(pulje, ev, false) }
-			>+ Legg til deltaker</button>
-		}
+		{ text }
+	</span>
+}
+
+templ puljeRowAction(text string) {
+	<span class="pulje-row-action">
+		<span class="pulje-row-action-text">{ text }</span>
+		@icons.Icon(icons.Plus, icons.Size20)
+	</span>
+}
+
+// puljeEventTags renders the event's game type with its label, followed by
+// icon-only badges for age group, runtime, beginner and English, using the same
+// SVG icons as the event detail page. The badges carry their label as a tooltip.
+templ puljeEventTags(ev puljefordeling.EmulatedEvent) {
+	<div class="pulje-tags">
+		<span class="pulje-event-type">
+			switch ev.EventType {
+				case models.EventTypeRoleplay:
+					@icons.Icon(icons.EventRoleplay, icons.Size24)
+				case models.EventTypeBoardGame:
+					@icons.Icon(icons.EventBoardgame, icons.Size24)
+				case models.EventTypeCardGame:
+					@icons.Icon(icons.EventCardgame, icons.Size24)
+				case models.EventTypeOther:
+					@icons.Icon(icons.EventOtherGames, icons.Size24)
+			}
+			{ ev.EventType.Label() }
+		</span>
+		<ul class="pulje-tag-icons">
+			if ev.AgeGroup == models.AgeGroupAdultsOnly {
+				@puljeTagIcon(ev.AgeGroup.BadgeLabel(), icons.EventAdultOnly)
+			}
+			if ev.AgeGroup == models.AgeGroupChildFriendly {
+				@puljeTagIcon(ev.AgeGroup.BadgeLabel(), icons.EventChildFriendly)
+			}
+			if ev.Runtime == models.RunTimeLongRunning {
+				@puljeTagIcon(ev.Runtime.BadgeLabel(), icons.TimeOver6Hours)
+			}
+			if ev.Runtime == models.RunTimeShortRunning {
+				@puljeTagIcon(ev.Runtime.BadgeLabel(), icons.TimeUnder3Hours)
+			}
+			if ev.BeginnerFriendly {
+				@puljeTagIcon("Nybegynnervennlig", icons.EventBeginnerFriendly)
+			}
+			if ev.CanBeRunInEnglish {
+				@puljeTagIcon("Can be run in English", icons.EventEnglish)
+			}
+		</ul>
 	</div>
 }
 
-// puljeEventTags renders the event's property badges (game type, age group,
-// runtime, beginner/English) using the same SVG icons as the event detail page,
-// so an admin can read a game's nature at a glance without leaving the view.
-templ puljeEventTags(ev puljefordeling.EmulatedEvent) {
-	<div class="pulje-tags">
-		switch ev.EventType {
-			case models.EventTypeRoleplay:
-				@event_components.Event_property(ev.EventType.Label(), icons.EventRoleplay)
-			case models.EventTypeBoardGame:
-				@event_components.Event_property(ev.EventType.Label(), icons.EventBoardgame)
-			case models.EventTypeCardGame:
-				@event_components.Event_property(ev.EventType.Label(), icons.EventCardgame)
-			case models.EventTypeOther:
-				@event_components.Event_property(ev.EventType.Label(), icons.EventOtherGames)
-		}
-		if ev.AgeGroup == models.AgeGroupAdultsOnly {
-			@event_components.Event_property(ev.AgeGroup.BadgeLabel(), icons.EventAdultOnly)
-		}
-		if ev.AgeGroup == models.AgeGroupChildFriendly {
-			@event_components.Event_property(ev.AgeGroup.BadgeLabel(), icons.EventChildFriendly)
-		}
-		if ev.Runtime == models.RunTimeLongRunning {
-			@event_components.Event_property(ev.Runtime.BadgeLabel(), icons.TimeOver6Hours)
-		}
-		if ev.Runtime == models.RunTimeShortRunning {
-			@event_components.Event_property(ev.Runtime.BadgeLabel(), icons.TimeUnder3Hours)
-		}
-		if ev.BeginnerFriendly {
-			@event_components.Event_property("Nybegynnervennlig", icons.EventBeginnerFriendly)
-		}
-		if ev.CanBeRunInEnglish {
-			@event_components.Event_property("Can be run in English", icons.EventEnglish)
-		}
-	</div>
+templ puljeTagIcon(label string, icon icons.IconType) {
+	<li title={ label } aria-label={ label }>
+		@icons.Icon(icon, icons.Size24)
+	</li>
 }

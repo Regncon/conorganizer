@@ -14,6 +14,7 @@ import (
 )
 
 var errPuljeNotFound = errors.New("pulje not found")
+var errPuljeStepOrder = errors.New("pulje status steps must be done in order")
 
 func getPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 	const query = `
@@ -91,7 +92,43 @@ func puljeStatusUpdateAction(
 	)
 }
 
+// puljeStatusStepAllowed enforces the three puljefordeling steps in order:
+// 1. closing warning, 2. locked, 3. published. A step can only be ticked when
+// the previous one is done, and only unticked while the next one is not.
+// Locking clears the closing warning, so a non-open pulje counts step 1 as done.
+func puljeStatusStepAllowed(current models.PuljeRow, next models.PuljeStatus) bool {
+	switch next {
+	case models.PuljeStatusOpen:
+		return current.Status != models.PuljeStatusCompleted
+	case models.PuljeStatusLocked:
+		return current.Status != models.PuljeStatusOpen || current.ClosingWarningActive
+	case models.PuljeStatusCompleted:
+		return current.Status != models.PuljeStatusOpen
+	default:
+		return false
+	}
+}
+
+func puljeClosingWarningStepDone(pulje models.PuljeRow) bool {
+	return pulje.ClosingWarningActive || pulje.Status != models.PuljeStatusOpen
+}
+
 func updatePuljeStatus(db *sql.DB, puljeID models.Pulje, status models.PuljeStatus) error {
+	current := models.PuljeRow{ID: puljeID}
+	err := db.QueryRow(
+		`SELECT status, closing_warning_active FROM puljer WHERE id = ?`,
+		puljeID,
+	).Scan(&current.Status, &current.ClosingWarningActive)
+	if errors.Is(err, sql.ErrNoRows) {
+		return errPuljeNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("load pulje %s status: %w", puljeID, err)
+	}
+	if !puljeStatusStepAllowed(current, status) {
+		return errPuljeStepOrder
+	}
+
 	const query = `
 		UPDATE puljer
 		SET status = ?, closing_warning_active = CASE WHEN ? = 'Open' THEN closing_warning_active ELSE FALSE END
@@ -163,6 +200,10 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.
 		if err := updatePuljeStatus(db, puljeID, store.PuljeStatus); err != nil {
 			if errors.Is(err, errPuljeNotFound) {
 				http.Error(w, "Pulje not found", http.StatusNotFound)
+				return
+			}
+			if errors.Is(err, errPuljeStepOrder) {
+				http.Error(w, "Forrige steg må være fullført først", http.StatusConflict)
 				return
 			}
 			logger.Error(err.Error(), "pulje_id", puljeID, "pulje_status", store.PuljeStatus)

@@ -37,6 +37,14 @@ func AddManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholder
 // does not touch the player's interest, so a later emulation may still seat them
 // in the same event by simulation (now as a non-manual placement).
 func RemoveManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholderID int) error {
+	return removeManualSeat(db, pulje, eventID, billettholderID)
+}
+
+type execer interface {
+	Exec(query string, args ...any) (sql.Result, error)
+}
+
+func removeManualSeat(db execer, pulje models.Pulje, eventID string, billettholderID int) error {
 	const query = `
 		DELETE FROM relation_events_players
 		WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ?
