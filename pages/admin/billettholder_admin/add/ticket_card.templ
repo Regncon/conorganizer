@@ -99,11 +99,11 @@ templ ticketCard(ticket checkIn.CheckInTicket, isBllettholder bool, searchTerm s
 			}
 		</div>
 		if ticket.TypeId == checkIn.TicketTypeMiddag {
-			<p style="margin:0; color: var(--color-accent);">
+			<p style="margin:0; color: var(--color-warning);">
 				<strong>Merk:</strong> Dette er en middagsbillett.
 			</p>
 		} else if isBllettholder {
-			<p style="margin:0; color: var(--color-accent);">
+			<p style="margin:0; color: var(--color-warning);">
 				<strong>Merk:</strong> Denne billetten er allerede konvertert til en billettholder.
 			</p>
 		} else {

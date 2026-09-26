@@ -384,7 +384,7 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             padding: 4px;
             border: 1px solid var(--bg-item-border);
             border-radius: 4px;
-            background: var(--bg-main, var(--bg-item));
+            background: var(--bg-item);
             cursor: grab;
             a {
                 display: flex;
@@ -469,7 +469,7 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             font-size: 20px;
             line-height: 1;
             cursor: pointer;
-            &:hover { background: var(--bg-main, var(--bg-item)); }
+            &:hover { background: var(--bg-item); }
             &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
             &:disabled { opacity: 0.5; cursor: wait; }
         }

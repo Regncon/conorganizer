@@ -34,7 +34,7 @@ if (!customElements.get("admin-billettholder-search")) {
 
         .input {
             background-color: var(--bg-item);
-            color: var(--color-text-primary);
+            color: var(--color-text-soft);
             border-radius: var(--border-radius-2x);
             min-height: 2.6rem;
             border: 1px solid var(--bg-item-border);
@@ -75,15 +75,10 @@ if (!customElements.get("admin-billettholder-search")) {
             line-height: 1;
             border-radius: var(--btn-border-radius);
             border-style: solid;
-            border-width: var(--btn-border-width);
+            border-width: 1px;
             cursor: pointer;
             user-select: none;
-            transition:
-                background-color var(--btn-transition-duration) ease,
-                color var(--btn-transition-duration) ease,
-                border-color var(--btn-transition-duration) ease,
-                box-shadow var(--btn-transition-duration) ease,
-                transform var(--btn-transition-duration) ease;
+            transition: var(--btn-transition);
             inline-size: auto;
             max-inline-size: 100%;
             text-align: left;

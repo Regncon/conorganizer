@@ -593,16 +593,16 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-players li.is-dragging {
             opacity: 0.5;
         }
-        .pulje-badge--error {
-            color: var(--color-text-error, #e05050);
-        }
         .pulje-badge {
             align-self: flex-start;
             padding: 0 var(--spacing-2x);
             border-radius: var(--border-radius-1x);
             background-color: var(--bg-surface);
-            color: var(--color-text-warning, #e0a030);
-            font-size: var(--text-small, 0.85rem);
+            color: var(--color-warning);
+            font-size: var(--text-body-small);
+        }
+        .pulje-badge--error {
+            color: var(--color-error);
         }
         .pulje-players {
             margin: 0;
@@ -860,7 +860,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             }
         }
         .pulje-error {
-            color: var(--color-text-error, #e05050);
+            color: var(--color-error);
         }
         @container pulje-section (width > 640px) {
             .pulje-event-grid {

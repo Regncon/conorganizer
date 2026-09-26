@@ -368,7 +368,7 @@ hr {
 
 .input {
     background-color: var(--bg-item);
-    color: var(--color-text-primary);
+    color: var(--color-text-soft);
     border-radius: var(--border-radius-2x);
     min-height: 2.6rem;
     border: 1px solid var(--bg-item-border);
@@ -410,7 +410,7 @@ hr {
 }
 
 .slider::-moz-range-track {
-    background: var(--color-primary-focus);
+    background: var(--bg-item-border);
 }
 
 /* WebKit (Chrome/Edge/Safari): thumb only; track fill can’t be styled separately with pure CSS */
@@ -621,13 +621,13 @@ input {
 }
 
 .kladd {
-    color: var(--color-soft-text);
-    border-color: var(--color-soft-text);
+    color: var(--color-text-soft);
+    border-color: var(--color-text-soft);
 }
 
 .innsendt {
-    color: var(--color-soft-text);
-    border-color: var(--color-soft-text);
+    color: var(--color-text-soft);
+    border-color: var(--color-text-soft);
 }
 
 .publisert {
