@@ -31,12 +31,31 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 			<script defer src="https://unpkg.com/popper.js@1"></script>
 			<script defer src="https://unpkg.com/tippy.js@5"></script>
 			<script>
+				// Tooltips also cover content Datastar patches in after load, and a
+				// tooltip inside a modal dialog is attached to that dialog, since
+				// anything attached to <body> is drawn underneath an open modal.
 				window.addEventListener(
 					"load",
 					function () {
-						tippy("[data-tippy-content]", {
-							animation: "scale-subtle",
-						});
+						const init = (root) => {
+							const targets = root.matches?.("[data-tippy-content]") ? [root] : [];
+							targets.push(...(root.querySelectorAll?.("[data-tippy-content]") ?? []));
+							for (const el of targets) {
+								if (el._tippy) continue;
+								tippy(el, {
+									animation: "scale-subtle",
+									appendTo: (ref) => ref.closest("dialog") ?? document.body,
+								});
+							}
+						};
+						init(document.body);
+						new MutationObserver((mutations) => {
+							for (const mutation of mutations) {
+								for (const node of mutation.addedNodes) {
+									if (node.nodeType === Node.ELEMENT_NODE) init(node);
+								}
+							}
+						}).observe(document.body, { childList: true, subtree: true });
 					},
 					false,
 				);

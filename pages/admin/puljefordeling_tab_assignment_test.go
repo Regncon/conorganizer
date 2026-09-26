@@ -276,7 +276,8 @@ func TestPuljefordelingAssignDialog_RendersSixActionsAndClosesAfterSuccess(t *te
 			t.Errorf("expected one %q action", label)
 		}
 	}
-	if action := dialog.Find("button").First().AttrOr("data-on:click", ""); !strings.Contains(action, "/admin/api/puljefordeling/assign") || !strings.Contains(action, "assignmentCloseDialog = true") {
+	assignAction := dialog.Find("button").FilterFunction(func(_ int, s *goquery.Selection) bool { return strings.TrimSpace(s.Text()) == "Tildel som spilleder" })
+	if action := assignAction.AttrOr("data-on:click", ""); !strings.Contains(action, "/admin/api/puljefordeling/assign") || !strings.Contains(action, "assignmentCloseDialog = true") {
 		t.Fatalf("expected assignment action to request and then await server-side dialog close, got %q", action)
 	}
 	if effect := dialog.AttrOr("data-effect", ""); !strings.Contains(effect, "assignmentActionCompleted") || !strings.Contains(effect, ".close()") {
@@ -354,9 +355,8 @@ func TestPuljefordelingCommitRoute_PersistsSolverPicks(t *testing.T) {
 	testutil.MustExec(t, db, `INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level) VALUES (1,'evA',?,?)`,
 		string(fredag), string(models.InterestLevelHigh))
 
-	req := httptest.NewRequest(http.MethodPost, "/api/puljefordeling/FredagKveld/commit", nil)
-	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, req)
+	preview := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit/preview", 0, "", "", "")
+	rec := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit", 0, "", "", `,"saveConfirmation":"`+confirmationFromResponse(t, preview)+`"`)
 
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("want 204, got %d (%s)", rec.Code, rec.Body.String())

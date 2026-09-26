@@ -50,9 +50,22 @@ type Tildelingsvarsel struct {
 	Bekreftelse       string
 	Handling          string
 	KanBekrefte       bool
+	Consequences      *Consequences // set by PreviewAssignment
 }
 
 func TildelBillettholder(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, error) {
+	return assign(db, valg, false)
+}
+
+// PreviewAssignment runs the same checks as TildelBillettholder but never
+// saves. It always returns a confirmable warning (unless the change is a no-op)
+// with the consequences for others in the pulje; confirming it means calling
+// TildelBillettholder with its Bekreftelse.
+func PreviewAssignment(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, error) {
+	return assign(db, valg, true)
+}
+
+func assign(db *sql.DB, valg Tildelingsvalg, preview bool) (*Tildelingsvarsel, error) {
 	if err := validerTildelingsvalg(valg); err != nil {
 		return nil, err
 	}
@@ -68,6 +81,10 @@ func TildelBillettholder(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, er
 		return nil, err
 	}
 	if !valg.FraLeggTil {
+		// Dropping a player back on the event they came from changes nothing.
+		if valg.FraEventID != "" && valg.FraEventID == valg.EventID {
+			return nil, nil
+		}
 		fraEventID, err := finnFlyttetSpillerplass(valg.FraEventID, valg.FraManuellPlass, grunnlag.tildelinger)
 		if err != nil {
 			return nil, err
@@ -78,6 +95,17 @@ func TildelBillettholder(db *sql.DB, valg Tildelingsvalg) (*Tildelingsvarsel, er
 				return nil, nil
 			}
 		}
+	}
+	if preview {
+		varsel := buildTildelingsvarsel(valg, grunnlag)
+		consequences, err := previewConsequences(tx, valg.PuljeID, valg.BillettholderID, func(tx *sql.Tx) error {
+			return lagreTildeling(tx, valg)
+		})
+		if err != nil {
+			return nil, err
+		}
+		varsel.Consequences = &consequences
+		return varsel, nil
 	}
 	if varsel := lagTildelingsvarsel(valg, grunnlag); varsel != nil {
 		if !varsel.KanBekrefte {
@@ -158,6 +186,16 @@ func FjernTildeling(db *sql.DB, pulje models.Pulje, eventID string, billettholde
 	if _, err := hentTildelingsgrunnlag(tx, valg); err != nil {
 		return err
 	}
+	if err := deleteAssignment(tx, pulje, eventID, billettholderID, role); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("fullfør fjerning av tildeling: %w", err)
+	}
+	return nil
+}
+
+func deleteAssignment(tx *sql.Tx, pulje models.Pulje, eventID string, billettholderID int, role models.EventPlayerRole) error {
 	result, err := tx.Exec(
 		`DELETE FROM relation_events_players WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ? AND role = ?`,
 		eventID, pulje, billettholderID, role,
@@ -171,9 +209,6 @@ func FjernTildeling(db *sql.DB, pulje models.Pulje, eventID string, billettholde
 	}
 	if rowsAffected == 0 {
 		return fmt.Errorf("finn %s-tildeling for billettholder %d på %s i %s: %w", role, billettholderID, eventID, pulje, sql.ErrNoRows)
-	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("fullfør fjerning av tildeling: %w", err)
 	}
 	return nil
 }
@@ -320,7 +355,19 @@ func validerTildelingsvalg(valg Tildelingsvalg) error {
 	return nil
 }
 
+// lagTildelingsvarsel returns the warning the admin must confirm, or nil when
+// the assignment can be saved as it is.
 func lagTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tildelingsvarsel {
+	varsel := buildTildelingsvarsel(valg, grunnlag)
+	if !tildelingerKreverBekreftelse(valg, grunnlag.tildelinger) && varsel.Aldersvarsel == "" && varsel.Kapasitetsvarsel == "" && (valg.Bekreftelse == "" || valg.Bekreftelse == varsel.Bekreftelse) {
+		return nil
+	}
+	return varsel
+}
+
+// buildTildelingsvarsel describes the assignment, its warnings and the token
+// that confirms exactly this assignment.
+func buildTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tildelingsvarsel {
 	bekreftelse := tildelingsbekreftelse(valg, grunnlag)
 	harGM := false
 	for _, tildeling := range grunnlag.tildelinger {
@@ -343,10 +390,6 @@ func lagTildelingsvarsel(valg Tildelingsvalg, grunnlag tildelingsgrunnlag) *Tild
 	}
 	aldersvarsel := strings.Join(aldersvarsler, " ")
 	kapasitetsvarsel := strings.Join(kapasitetsvarsler, " ")
-	bekreftelseKreves := tildelingerKreverBekreftelse(valg, grunnlag.tildelinger)
-	if !bekreftelseKreves && aldersvarsel == "" && kapasitetsvarsel == "" && (valg.Bekreftelse == "" || valg.Bekreftelse == bekreftelse) {
-		return nil
-	}
 
 	varsel := &Tildelingsvarsel{
 		BillettholderID:   valg.BillettholderID,

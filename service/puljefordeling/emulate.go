@@ -22,11 +22,12 @@ import (
 type AssignedPlayer struct {
 	BillettholderID int // participant id, for manual-seat removal from the UI
 	Name            string
-	IsDM            bool                 // runs at least one game in the weekend (DM bump)
-	Level           models.InterestLevel // their interest in the game they got
-	Moved           bool                 // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
-	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
-	IsOver18        bool                 // participant is over 18; a seated minor in an AdultsOnly game is always an admin pin
+	IsDM            bool                   // runs at least one game in the weekend (DM bump)
+	Level           models.InterestLevel   // their interest in the game they got
+	Moved           bool                   // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
+	Manual          bool                   // manually pinned into this event by an admin (source='manual'), not placed by the solver
+	IsOver18        bool                   // participant is over 18; a seated minor in an AdultsOnly game is always an admin pin
+	Score           *smodel.ScoreBreakdown // how the solver valued this seat; nil for a pin without interest and for replayed (published) puljer
 }
 
 type AssignedGM struct {
@@ -48,11 +49,12 @@ const (
 type EmulatedEvent struct {
 	EventID           string
 	Title             string
+	System            string
 	Capacity          int
 	AssignedGMs       []AssignedGM
 	GMName            string           // sorted GM names, empty if the event has no GM assigned
 	GMIsOver18        bool             // true when all GMs are adults; any minor keeps the 18+ warning visible
-	AssignedPlayers   []AssignedPlayer // sorted by name
+	AssignedPlayers   []AssignedPlayer // sorted by solver score (highest first, unscored last), then name
 	Undersubscribed   bool             // fewer than the solver's viable-player threshold
 	EventType         models.EventType
 	AgeGroup          models.AgeGroup
@@ -63,12 +65,24 @@ type EmulatedEvent struct {
 
 // EmulatedPulje is the proposed seating for one pulje (time slot).
 type EmulatedPulje struct {
-	PuljeID        models.Pulje
-	Name           string
-	Events         []EmulatedEvent
-	Unassigned     []string // names of interested participants who got no seat
-	NewlySatisfied int      // participants who got a top-choice seat this pulje
-	TotalScore     int      // sum of actual (unadjusted) interest scores
+	PuljeID           models.Pulje
+	Name              string
+	Events            []EmulatedEvent
+	Unassigned        []string           // names of interested participants who got no seat
+	NewlySatisfied    int                // participants who got a top-choice seat this pulje
+	TotalScore        int                // sum of actual (unadjusted) interest scores
+	GotForstevalg     []PuljeParticipant // participants who got their førstevalg this pulje, by name
+	WithoutForstevalg []PuljeParticipant // participants still without førstevalg after this pulje; those who wanted it here first
+}
+
+// PuljeParticipant is one participant in a pulje's førstevalg lists.
+type PuljeParticipant struct {
+	BillettholderID  int
+	Name             string
+	EventTitle       string               // their seat this pulje; empty when they have none
+	Level            models.InterestLevel // their interest in that seat
+	IsGM             bool                 // they run EventTitle this pulje
+	WantedForstevalg bool                 // gave Veldig interessert on an event they could be seated in this pulje
 }
 
 // Emulation is the full preview across all puljer.
@@ -81,6 +95,7 @@ type Emulation struct {
 
 type eligibleEvent struct {
 	title             string
+	system            string
 	capacity          int
 	eventType         models.EventType
 	ageGroup          models.AgeGroup
@@ -194,7 +209,9 @@ func emulateSeatings(db emulationQuerier) (Emulation, error) {
 		} else {
 			res = state.SolveSlotFixed(slot, players, pins[pulje.ID])
 		}
-		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, over18, prefs, dmSet, pins[pulje.ID], events[pulje.ID]))
+		shaped := shapePulje(pulje, slot, res, gms, names, over18, prefs, dmSet, pins[pulje.ID], events[pulje.ID])
+		shaped.GotForstevalg, shaped.WithoutForstevalg = forstevalgLists(shaped, slot, res, players, state.IsSatisfied)
+		emulation.Puljer = append(emulation.Puljer, shaped)
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
 
@@ -237,10 +254,11 @@ func shapePulje(
 			EventID:         ev.ID,
 			Title:           ev.Name,
 			Capacity:        ev.Capacity,
-			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, over18, prefs, dmSet, moved, manual),
+			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, over18, prefs, dmSet, moved, manual, res.Scores),
 			Undersubscribed: under[ev.ID],
 		}
 		if m, ok := meta[ev.ID]; ok {
+			emEv.System = m.system
 			emEv.EventType = m.eventType
 			emEv.AgeGroup = m.ageGroup
 			emEv.Runtime = m.runtime
@@ -270,6 +288,71 @@ func shapePulje(
 	return out
 }
 
+// forstevalgLists lists who got their førstevalg in this pulje, and who is
+// still without it once this pulje is done, each with their seat this pulje.
+// satisfied reports the fairness state after the pulje has been solved.
+func forstevalgLists(
+	pulje EmulatedPulje,
+	slot smodel.Slot,
+	res smodel.SlotResult,
+	players []smodel.Player,
+	satisfied func(playerID string) bool,
+) (got, without []PuljeParticipant) {
+	seats := make(map[int]PuljeParticipant)
+	for _, ev := range pulje.Events {
+		for _, pl := range ev.AssignedPlayers {
+			seats[pl.BillettholderID] = PuljeParticipant{EventTitle: ev.Title, Level: pl.Level}
+		}
+		for _, gm := range ev.AssignedGMs {
+			seats[gm.BillettholderID] = PuljeParticipant{EventTitle: ev.Title, IsGM: true}
+		}
+	}
+	participant := func(p smodel.Player) PuljeParticipant {
+		bh, _ := strconv.Atoi(p.ID)
+		d := seats[bh]
+		d.BillettholderID = bh
+		d.Name = p.Name
+		d.WantedForstevalg = wantedForstevalg(p, slot)
+		return d
+	}
+
+	newly := make(map[string]bool, len(res.NewlySatisfied))
+	for _, pid := range res.NewlySatisfied {
+		newly[pid] = true
+	}
+	for _, p := range players {
+		switch {
+		case newly[p.ID]:
+			got = append(got, participant(p))
+		case !satisfied(p.ID):
+			without = append(without, participant(p))
+		}
+	}
+	sort.SliceStable(got, func(i, j int) bool { return got[i].Name < got[j].Name })
+	sort.SliceStable(without, func(i, j int) bool {
+		if without[i].WantedForstevalg != without[j].WantedForstevalg {
+			return without[i].WantedForstevalg
+		}
+		return without[i].Name < without[j].Name
+	})
+	return got, without
+}
+
+// wantedForstevalg reports whether the player gave Veldig interessert on an
+// event in this slot that they could be seated in (an 18+ game does not count
+// for a minor).
+func wantedForstevalg(p smodel.Player, slot smodel.Slot) bool {
+	for _, ev := range slot.Events {
+		if ev.AdultsOnly && !p.IsOver18 {
+			continue
+		}
+		if p.Prefs[slot.ID][ev.ID] == smodel.MaxScore {
+			return true
+		}
+	}
+	return false
+}
+
 // assignedPlayers turns solver player IDs into display rows: name, DM flag, the
 // interest level the player had for the game they were seated in, whether the
 // solver relocated them off a higher-scoring event (the moved set), and whether
@@ -283,6 +366,7 @@ func assignedPlayers(
 	dmSet map[int]bool,
 	moved map[string]bool,
 	manual map[string][]string,
+	scores map[string]smodel.ScoreBreakdown,
 ) []AssignedPlayer {
 	if len(ids) == 0 {
 		return nil
@@ -302,14 +386,30 @@ func assignedPlayers(
 			Manual:          slices.Contains(manual[id], eventID),
 			IsOver18:        over18[bh],
 		}
+		if score, ok := scores[id]; ok {
+			ap.Score = &score
+		}
 		if byPulje, ok := prefs[bh]; ok {
 			got := byPulje[puljeID][eventID]
 			ap.Level = models.InterestLevelFromScore(int(got))
 		}
 		out = append(out, ap)
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	sort.SliceStable(out, func(i, j int) bool {
+		if si, sj := scoreTotal(out[i].Score), scoreTotal(out[j].Score); si != sj {
+			return si > sj
+		}
+		return out[i].Name < out[j].Name
+	})
 	return out
+}
+
+// scoreTotal orders participants by solver score; a seat without a score sorts last.
+func scoreTotal(score *smodel.ScoreBreakdown) int {
+	if score == nil {
+		return -1
+	}
+	return score.Total
 }
 
 // --- data loading -----------------------------------------------------------
@@ -368,7 +468,7 @@ func loadCompletedAssignments(db emulationQuerier) (map[models.Pulje]map[string]
 
 func loadEligibleEvents(db emulationQuerier) (map[models.Pulje]map[string]eligibleEvent, error) {
 	const query = `
-		SELECT ep.pulje_id, e.id, e.title, e.max_players,
+		SELECT ep.pulje_id, e.id, e.title, COALESCE(e.system, ''), e.max_players,
 		       e.event_type, e.age_group, e.event_runtime,
 		       e.beginner_friendly, e.can_be_run_in_english
 		FROM relation_event_puljer ep
@@ -389,7 +489,7 @@ func loadEligibleEvents(db emulationQuerier) (map[models.Pulje]map[string]eligib
 		var maxPlayers int
 		var ev eligibleEvent
 		if err := rows.Scan(
-			&pulje, &eventID, &title, &maxPlayers,
+			&pulje, &eventID, &title, &ev.system, &maxPlayers,
 			&ev.eventType, &ev.ageGroup, &ev.runtime,
 			&ev.beginnerFriendly, &ev.canBeRunInEnglish,
 		); err != nil {
