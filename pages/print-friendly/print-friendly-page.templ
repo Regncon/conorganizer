@@ -10,199 +10,334 @@ import (
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/event"
-	"github.com/Regncon/conorganizer/service/puljer"
+	"github.com/Regncon/conorganizer/service/program"
+	puljerService "github.com/Regncon/conorganizer/service/puljer"
+	"github.com/Regncon/conorganizer/service/rooms"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 )
 
-// func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
-// func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
 func PrintFriendlyRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
 	logger = logger.With("component", "print_friendly")
-
 	router.Get("/print", func(w http.ResponseWriter, r *http.Request) {
-		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(r.Context())
 		if err := layouts.Base(
 			"Regncon program utskriftsvennlig",
-			userInfo,
-			db,
-			logger,
-			printFriendlyPage(db, eventImageDir, logger),
-		).Render(ctx, w); err != nil {
+			userInfo, db, logger, printFriendlyPage(db, eventImageDir, logger),
+		).Render(r.Context(), w); err != nil {
 			logger.Error(fmt.Errorf("failed to render print-friendly page: %w", err).Error(), "user_id", userInfo.Id)
 		}
 	})
 	return nil
 }
 
-type PuljePrintBlock struct {
-	Pulje  models.PuljeRow
-	Events []models.Event
+type printOccurrence struct {
+	Pulje      models.PuljeRow
+	RoomID     int
+	RoomName   string
+	RoomNumber string
+	RoomFloor  int
+	MapPath    string
+	HasRoom    bool
 }
 
-type EventsPrintByPulje map[models.Pulje]*PuljePrintBlock
+type printEvent struct {
+	Event       models.Event
+	Occurrences []printOccurrence
+}
 
-/*
-SELECT
+type printRoomGroup struct {
+	Room       printOccurrence
+	Puljer     []models.PuljeRow
+}
 
-		id,
-		title,
-		intro,
-		description,
-		system,
-		event_type,
-		age_group,
-		event_runtime,
-		host_name,
-		user_id,
-		email,
-		phone_number,
-		max_players,
-		beginner_friendly,
-		can_be_run_in_english,
-		notes,
-		status
-	    FROM events WHERE id = ?
-*/
-func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
-	const q = `
-		SELECT
-			e.id,
-			e.title,
-            e.intro,
-            e.description,
-            e.system,
-            e.event_type,
-            e.age_group,
-            e.event_runtime,
-            e.host_name,
-            e.user_id,
-            e.email,
-            e.phone_number,
-            e.max_players,
-            e.beginner_friendly,
-            e.can_be_run_in_english,
-            e.notes,
-            e.status,
+func groupPrintRooms(occurrences []printOccurrence) []printRoomGroup {
+	groups := make([]printRoomGroup, 0, len(occurrences))
+	for _, occurrence := range occurrences {
+		index := -1
+		for i := range groups {
+			if groups[i].Room.RoomID == occurrence.RoomID {
+				index = i
+				break
+			}
+		}
+		if index < 0 {
+			groups = append(groups, printRoomGroup{Room: occurrence})
+			index = len(groups) - 1
+		}
+		groups[index].Puljer = append(groups[index].Puljer, occurrence.Pulje)
+	}
+	return groups
+}
 
-			-- pulje
-			e.pulje_id,
-			e.pulje_name,
-			e.pulje_start_at,
-			e.pulje_end_at
-		FROM v_events_by_pulje_active e
-        ORDER BY e.pulje_start_at DESC, e.created_at DESC, e.id ASC
-	`
+type printPuljeBlock struct {
+	Pulje  models.PuljeRow
+	Events []printEvent
+}
 
-	rows, err := db.Query(q)
+type printDay struct {
+	Label         string
+	ProgramEvents []printEvent
+	Blocks        []printPuljeBlock
+}
+
+type printEventKey struct {
+	PuljeID models.Pulje
+	EventID string
+}
+
+type printEventRow struct {
+	Event      models.Event
+	Occurrence printOccurrence
+}
+
+// Use the root page's day model for event inclusion and order.
+func getPrintDays(db *sql.DB) ([]printDay, error) {
+	days, err := program.GetDays(db)
 	if err != nil {
-		return nil, fmt.Errorf("query events by pulje for print: %w", err)
+		return nil, err
 	}
-	defer rows.Close()
+	rows, err := getPrintEventRows(db)
+	if err != nil {
+		return nil, err
+	}
 
-	out := make(EventsPrintByPulje)
-
-	for rows.Next() {
-		var (
-			ev                 models.Event
-			puljeID, puljeName string
-			startAt, endAt     models.DBDateTime
-		)
-
-		if err := rows.Scan(
-			&ev.ID,
-			&ev.Title,
-			&ev.Intro,
-			&ev.Description,
-			&ev.System,
-			&ev.EventType,
-			&ev.AgeGroup,
-			&ev.Runtime,
-			&ev.HostName,
-			&ev.UserID,
-			&ev.Email,
-			&ev.PhoneNumber,
-			&ev.MaxPlayers,
-			&ev.BeginnerFriendly,
-			&ev.CanBeRunInEnglish,
-			&ev.Notes,
-			&ev.Status,
-
-			&puljeID,
-			&puljeName,
-			&startAt,
-			&endAt,
-		); err != nil {
-			return nil, fmt.Errorf("scan print-friendly event row: %w", err)
-		}
-
-		key := models.Pulje(puljeID)
-		block, ok := out[key]
-		if !ok {
-			pulje, err := puljerService.BuildPulje(key, puljeName, "", startAt, endAt)
-			if err != nil {
-				return nil, err
+	out := make([]printDay, 0, len(days))
+	for _, day := range days {
+		printedDay := printDay{Label: day.Label()}
+		for _, item := range day.ProgramEvents {
+			row, ok := rows[printEventKey{item.PuljeID, item.Event.Id}]
+			if !ok {
+				return nil, fmt.Errorf("missing print event %s in pulje %s", item.Event.Id, item.PuljeID)
 			}
-
-			block = &PuljePrintBlock{
-				Pulje: pulje,
+			printedEvent := printEvent{Event: row.Event}
+			for _, block := range day.Blocks {
+				if occurrence, exists := rows[printEventKey{block.Pulje.ID, item.Event.Id}]; exists {
+					printedEvent.Occurrences = append(printedEvent.Occurrences, occurrence.Occurrence)
+				}
 			}
-			out[key] = block
+			printedDay.ProgramEvents = append(printedDay.ProgramEvents, printedEvent)
 		}
-
-		block.Events = append(block.Events, ev)
+		for _, block := range day.Blocks {
+			printedBlock := printPuljeBlock{Pulje: block.Pulje}
+			for _, item := range block.RaffleEvents() {
+				row, ok := rows[printEventKey{block.Pulje.ID, item.Id}]
+				if !ok {
+					return nil, fmt.Errorf("missing print event %s in pulje %s", item.Id, block.Pulje.ID)
+				}
+				printedBlock.Events = append(printedBlock.Events, printEvent{
+					Event: row.Event, Occurrences: []printOccurrence{row.Occurrence},
+				})
+			}
+			if len(printedBlock.Events) > 0 {
+				printedDay.Blocks = append(printedDay.Blocks, printedBlock)
+			}
+		}
+		out = append(out, printedDay)
 	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate print-friendly event rows: %w", err)
-	}
-
 	return out, nil
 }
 
-templ eventPulje(pulje models.Pulje, byPulje EventsPrintByPulje, eventImageDir *string) {
-	{{ block := byPulje[pulje] }}
-	if block == nil {
-		return
+func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
+	const query = `
+		SELECT e.id, e.title, e.intro, e.description, e.system, e.event_type,
+			e.age_group, e.event_runtime, e.host_name, e.user_id, e.email,
+			e.phone_number, e.max_players, e.beginner_friendly,
+			e.can_be_run_in_english, e.notes, e.status,
+			e.pulje_id, e.pulje_name, e.pulje_start_at, e.pulje_end_at,
+			COALESCE(e.room_id, 0), COALESCE(e.room_name, ''),
+			COALESCE(e.room_number, ''), COALESCE(e.room_floor, 0)
+		FROM v_events_by_pulje_active e
+	`
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("query events for print: %w", err)
 	}
-	<section id={ pulje }>
-		<div>
-			for _, blockEvent := range block.Events {
-				<h2 class="pulje-heading">
-					{ block.Pulje.Name }
-					<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
-				</h2>
-				<hr style="margin-block: 1rem;"/>
-				@event.Event_mobile(&blockEvent, components.PreviousNext{}, nil, eventImageDir)
-				<div class="pagebreak"></div>
-			}
+	defer rows.Close()
+
+	out := make(map[printEventKey]printEventRow)
+	for rows.Next() {
+		var row printEventRow
+		var puljeID models.Pulje
+		var puljeName string
+		var startAt, endAt models.DBDateTime
+		var roomID int
+		if err := rows.Scan(
+			&row.Event.ID, &row.Event.Title, &row.Event.Intro,
+			&row.Event.Description, &row.Event.System, &row.Event.EventType,
+			&row.Event.AgeGroup, &row.Event.Runtime, &row.Event.HostName,
+			&row.Event.UserID, &row.Event.Email, &row.Event.PhoneNumber,
+			&row.Event.MaxPlayers, &row.Event.BeginnerFriendly,
+			&row.Event.CanBeRunInEnglish, &row.Event.Notes, &row.Event.Status,
+			&puljeID, &puljeName, &startAt, &endAt,
+			&roomID, &row.Occurrence.RoomName,
+			&row.Occurrence.RoomNumber, &row.Occurrence.RoomFloor,
+		); err != nil {
+			return nil, fmt.Errorf("scan print event row: %w", err)
+		}
+		row.Occurrence.Pulje, err = puljerService.BuildPulje(puljeID, puljeName, "", startAt, endAt)
+		if err != nil {
+			return nil, err
+		}
+		row.Occurrence.HasRoom = roomID != 0
+		row.Occurrence.RoomID = roomID
+		row.Occurrence.MapPath, _ = rooms.MapPathForRoom(row.Occurrence.RoomNumber)
+		out[printEventKey{puljeID, row.Event.ID}] = row
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate print event rows: %w", err)
+	}
+	return out, nil
+}
+
+templ printEventSheet(dayLabel string, groupLabel string, item printEvent, eventImageDir *string) {
+	<article class="print-event-sheet">
+		<div class="print-sheet-heading">
+			<span class="print-sheet-day">{ dayLabel }</span>
+			<span class="print-sheet-group">{ groupLabel }</span>
 		</div>
-	</section>
+		@event.Event_mobile(&item.Event, components.PreviousNext{}, nil, eventImageDir) {
+			<div class="print-room-list">
+				for _, group := range groupPrintRooms(item.Occurrences) {
+					<div class="print-room">
+						for _, pulje := range group.Puljer {
+							<p>{ pulje.Name } · { pulje.TimeRange() }</p>
+						}
+						if group.Room.HasRoom {
+							<p>{ group.Room.RoomName } (rom { group.Room.RoomNumber }, { fmt.Sprintf("%d. etasje", group.Room.RoomFloor) })</p>
+						} else {
+							<p>Rom ikke tildelt</p>
+						}
+						if group.Room.MapPath != "" {
+							<div class="print-room-map">
+								<img src={ group.Room.MapPath } alt={ fmt.Sprintf("Kart til %s, rom %s", group.Room.RoomName, group.Room.RoomNumber) }/>
+							</div>
+						}
+					</div>
+				}
+			</div>
+		}
+	</article>
 }
 
 templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	{{ days, err := getPrintDays(db) }}
+	if err != nil {
+		{{ logger.Error(fmt.Errorf("failed to get events for print: %w", err).Error()) }}
+		<p>Kunne ikke hente arrangementene: { err.Error() }</p>
+		return
+	}
+	<div id="print-page">
+		<h1 class="print-page-title">Program til utskrift</h1>
+		for _, day := range days {
+			<section class="print-day">
+				<h2 class="print-day-title">{ day.Label }</h2>
+				if len(day.ProgramEvents) > 0 {
+					<section class="print-group">
+						<h3 class="print-group-title">Programoversikt</h3>
+						for _, item := range day.ProgramEvents {
+							@printEventSheet(day.Label, "Programoversikt", item, eventImageDir)
+						}
+					</section>
+				}
+				for _, block := range day.Blocks {
+					<section class="print-group">
+						<h3 class="print-group-title">{ block.Pulje.Name } ({ block.Pulje.TimeRange() })</h3>
+						for _, item := range block.Events {
+							@printEventSheet(day.Label, block.Pulje.Name, item, eventImageDir)
+						}
+					</section>
+				}
+			</section>
+		}
+	</div>
+	@printStyles()
+}
+
+templ printStyles() {
 	<style>
+		#print-page {
+			margin-inline: auto;
+			inline-size: min(100%, 900px);
+			.print-day { margin-block: 2rem; }
+			.print-group { margin-block: 1.5rem; }
+			.print-event-sheet { margin-block: 1rem 2rem; }
+			.print-sheet-heading { display: flex; gap: 1rem; }
+			.print-room-list { display: grid; gap: 0.5rem; }
+			.print-room p { margin-block: 0 0.25rem; }
+			.print-room-map img { display: block; inline-size: auto; max-inline-size: 100%; max-block-size: 70mm; }
+		}
+
 		@media print {
-			.pagebreak {
-				page-break-after: always;
+			@page { size: A4; margin: 12mm; }
+			html { color-scheme: light; background: #fff; }
+			body { margin: 0; background: #fff; color: #000; }
+			main { padding: 0; }
+			#print-page {
+				--bg-base: #fff;
+				--bg-surface: #fff;
+				--color-primary: #000;
+				--color-primary-text: #000;
+				--color-secondary-text: #000;
+				--color-text-strong: #000;
+				--color-text-soft: #000;
+				inline-size: 100%;
+				color: #000;
+				font-size: 10pt;
+				.print-page-title, .print-day-title, .print-group-title { display: none; }
+				.print-day, .print-group { margin: 0; }
+				.print-event-sheet {
+					break-after: page;
+					margin: 0;
+					color: #000;
+					* { color: #000; }
+				}
+				.print-day:last-of-type .print-group:last-of-type .print-event-sheet:last-of-type { break-after: auto; }
+				.print-sheet-heading { font-size: 11pt; font-weight: bold; margin-block-end: 3mm; }
+				.event-page-wrapper {
+					display: block;
+					inline-size: 100%;
+					padding: 0;
+					margin: 0;
+					.stack { display: block; }
+					.event-image { inline-size: 100%; block-size: 44mm; object-fit: cover; }
+					.event-header {
+						position: relative;
+						margin: -10mm 6mm 0;
+						padding: 3mm 5mm;
+						background: #fff;
+						text-align: start;
+					}
+					.title { font-size: 21pt; white-space: normal; overflow: visible; }
+					.intro { display: block; line-clamp: unset; overflow: visible; }
+					.event-information {
+						display: grid;
+						grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+						grid-template-areas:
+							"details details"
+							"description rooms";
+						gap: 6mm;
+						margin-block-start: 5mm;
+						padding: 0;
+					}
+					.event-details-pane { display: contents; }
+					.surface-pane-title { display: none; }
+					.event-details {
+						grid-area: details;
+						display: grid;
+						grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+						gap: 6mm;
+						hr { display: none; }
+					}
+					.event-details-section { gap: 2mm; padding: 0; }
+					.description { grid-area: description; padding: 0; }
+					.description p { margin-block: 1mm; }
+				}
+				.print-room-list { grid-area: rooms; display: grid; gap: 3mm; }
+				.print-room { min-inline-size: 0; break-inside: avoid; }
+				.print-room-map img { inline-size: 100%; max-block-size: 95mm; object-fit: contain; filter: invert(1); }
+				.print-room-list:has(.print-room:nth-child(2)) .print-room-map img { max-block-size: 55mm; }
 			}
 		}
 	</style>
-	<h1>Print Friendly Page</h1>
-	{{ eventsByPulje, err := getEventsByPuljeForPrint(db) }}
-	{{ puljer, puljerErr := puljerService.GetAllPuljer(db) }}
-	if err != nil || puljerErr != nil {
-		{{
-			if puljerErr != nil {
-				err = puljerErr
-			}
-		}}
-		{{ logger.Error(fmt.Errorf("failed to get events for print: %w", err).Error()) }}
-		<p>Error fetching events: { err.Error() }</p>
-		return
-	}
-	for _, pulje := range puljer {
-		@eventPulje(pulje.ID, eventsByPulje, eventImageDir)
-	}
 }

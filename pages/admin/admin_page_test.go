@@ -22,6 +22,7 @@ func TestAdminPage_RendersBreadcrumbAndAdminAreaLinks(t *testing.T) {
 		"/admin/approval/",
 		"/admin/billettholder/",
 		"/admin/rooms/",
+		"/print",
 	}
 	db := testutil.CreateTestDB(t, "admin_page")
 	testutil.MustExec(t, db, `
@@ -43,5 +44,8 @@ func TestAdminPage_RendersBreadcrumbAndAdminAreaLinks(t *testing.T) {
 		if !slices.Contains(actualHrefs, expectedHref) {
 			t.Fatalf("expected admin page href %q in %v", expectedHref, actualHrefs)
 		}
+	}
+	if got, exists := doc.Find(".admin-card:last-child img").Attr("src"); !exists || got != "/static/printer.webp" {
+		t.Fatalf("last admin card image src = %q, want /static/printer.webp", got)
 	}
 }
