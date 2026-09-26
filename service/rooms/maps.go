@@ -4,6 +4,7 @@ var roomMaps = map[string]string{
 	"001": "/static/rooms/terminus-0-etasje-001.svg",
 	"002": "/static/rooms/terminus-0-etasje-002.svg",
 	"003": "/static/rooms/terminus-0-etasje-003.svg",
+	"004": "/static/rooms/terminus-0-etasje-004.svg",
 	"705": "/static/rooms/terminus-7-etasje-705.svg",
 	"706": "/static/rooms/terminus-7-etasje-706.svg",
 	"707": "/static/rooms/terminus-7-etasje-707.svg",

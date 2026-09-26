@@ -55,6 +55,13 @@ func eventRoomDialogID(eventID string, puljeID models.Pulje) string {
 	return fmt.Sprintf("event-room-map-%s-%s", eventID, puljeID)
 }
 
+func roomMapStartPoints(floor int) string {
+	if floor == 0 {
+		return "heisene og trappen"
+	}
+	return "trappegangen"
+}
+
 type eventRoomGroup struct {
 	Room    models.Room
 	MapPath string

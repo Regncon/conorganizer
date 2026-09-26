@@ -8,6 +8,7 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
@@ -21,6 +22,32 @@ func createEventRoomTestDB(t *testing.T) *sql.DB {
 	testutil.MustExec(t, db, `INSERT INTO rooms(id, name, room_number, floor, max_concurrent_games) VALUES (42, 'Amalie Hansen', '705', 7, 1)`)
 	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 42 WHERE event_id = 'room-event'`)
 	return db
+}
+
+func TestEventRoomMap_InfoDeskShowsGroundFloorRoutes(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "An event is assigned to Info Desk, room 004 on the ground floor.",
+		When:  "The event page displays the room map.",
+		Then:  "The map points to room 004 and describes routes from both the lifts and stairs.",
+	})
+
+	// Given
+	expectedMapPath := "/static/rooms/terminus-0-etasje-004.svg"
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE rooms SET name = 'Info Desk', room_number = '004', floor = 0 WHERE id = 42`)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+	mapImage := doc.Find(".event-room-dialog img")
+
+	// Then
+	if got := mapImage.AttrOr("src", ""); got != expectedMapPath {
+		t.Fatalf("map = %q, want %q", got, expectedMapPath)
+	}
+	if got := mapImage.AttrOr("alt", ""); !strings.Contains(got, "heisene og trappen") {
+		t.Fatalf("map alt text does not describe both starting points: %q", got)
+	}
 }
 
 func TestEventRoomVisibility(t *testing.T) {
