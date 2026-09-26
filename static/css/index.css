@@ -35,8 +35,10 @@
     --color-disabled: #ccd1e980;
 
     --bg-tooltip: #11111b;
-    --bg-base: #1a1b26;
+    --bg-base: #0E0F16;
+    --bg-base-indent:#15161E;
 
+    /* surface & item  is replaced with level 2 and 3 respectively */
     --bg-surface: #252735;
     --bg-surface-border: var(--bg-item-border);
     --bg-surface-border-hover: var(--bg-item-border-hover);
@@ -48,16 +50,27 @@
     --bg-item-border-hover: #7f8198;
     --bg-item-border: #494D62;
     --item-flat-active: hsl(230deg 40% 86% / 20%);
-
+    
+    /* level 1 */
     --level-1-background: #1B1E2C;
-
+    
+    /* level 2 */
+    --level-2-state-layer: #CBD2E0;
+    --level-2-state-base: #232537;
     --level-2-background: #232638;
-
+    --level-2-background-hover: color-mix(in srgb, var(--level-2-state-layer) 5%, var(--level-2-state-base));
+    --level-2-background-active: color-mix(in srgb, var(--level-2-state-layer) 10%, var(--level-2-state-base));
+    --level-2-border: #31374F;
+    --level-2-border-hover: color-mix(in srgb, var(--level-2-state-layer) 40%, var(--level-2-border));
+    
+    /* level 3 */
     --level-3-background: #2B3045;
+    --level-3-background-hover: #3D4461; 
+    --level-3-background-active: #495174;
     --level-3-border: #495174;
+    --level-3-border-hover: color-mix(in srgb, var(--color-text-soft) 40%, var(--level-3-border));
 
     --bg-backdrop: #11111B;
-    --bg-indent: #15161E;
 
     /* text & font */
     --text-body: 16px;
