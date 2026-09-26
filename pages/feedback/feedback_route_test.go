@@ -20,21 +20,21 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func TestFeedbackRoute_PostWithOnlyWentWellStoresIt(t *testing.T) {
+func TestFeedbackRoute_PostWithMessageStoresIt(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en innlogget bruker som bare fyller ut 'Hva fungerte bra?'.",
+		Given: "Gitt en innlogget bruker som fyller ut tilbakemeldingen.",
 		When:  "Når tilbakemeldingen sendes inn.",
 		Then:  "Så skal den lagres, og skjemaet skal erstattes med en takkemelding.",
 	})
 
 	// Given
-	expectedWentWell := "Påmeldingen var enkel å finne."
-	db, router := setupFeedbackRouteTest(t, "feedback_post_went_well_only")
+	expectedMessage := "Påmeldingen var enkel å finne."
+	db, router := setupFeedbackRouteTest(t, "feedback_post_message")
 
 	// When
 	recorder := postFeedbackSignals(t, router, feedbackSubmission{
 		Category: string(feedback.CategoryWebsite),
-		WentWell: expectedWentWell,
+		Message:  expectedMessage,
 	})
 
 	// Then
@@ -49,7 +49,7 @@ func TestFeedbackRoute_PostWithOnlyWentWellStoresIt(t *testing.T) {
 		t.Fatalf("expected the thank-you fragment to reuse the #feedback-form id, got: %s", elements)
 	}
 	entries := mustListFeedback(t, db, "")
-	if len(entries) != 1 || entries[0].WentWell != expectedWentWell || entries[0].CouldImprove != "" || entries[0].Category != feedback.CategoryWebsite {
+	if len(entries) != 1 || entries[0].Message != expectedMessage || entries[0].Category != feedback.CategoryWebsite {
 		t.Fatalf("expected exactly one stored entry matching the submission, got: %+v", entries)
 	}
 }
@@ -68,7 +68,7 @@ func TestFeedbackRoute_PostWithTopicsStoresThem(t *testing.T) {
 	// When
 	recorder := postFeedbackSignals(t, router, feedbackSubmission{
 		Category: string(feedback.CategoryWebsite),
-		WentWell: "Registreringen gikk fint.",
+		Message:  "Registreringen gikk fint.",
 		Topics:   []string{string(feedback.TopicSignup), string(feedback.TopicMobile)},
 	})
 
@@ -99,17 +99,16 @@ func TestFeedbackRoute_PostSuccessClearsEarlierValidationErrors(t *testing.T) {
 
 	// Given
 	expectedErrors := map[string]string{
-		feedbackCategorySignal:     "",
-		feedbackWentWellSignal:     "",
-		feedbackCouldImproveSignal: "",
-		feedbackTopicsSignal:       "",
+		feedbackCategorySignal: "",
+		feedbackMessageSignal:  "",
+		feedbackTopicsSignal:   "",
 	}
 	_, router := setupFeedbackRouteTest(t, "feedback_post_clears_errors")
 
 	// When
 	recorder := postFeedbackSignals(t, router, feedbackSubmission{
 		Category: string(feedback.CategoryConvention),
-		WentWell: "Fin festival.",
+		Message:  "Fin festival.",
 	})
 
 	// Then
@@ -125,10 +124,9 @@ func TestFeedbackRoute_ResetClearsValidationErrors(t *testing.T) {
 
 	// Given
 	expectedErrors := map[string]string{
-		feedbackCategorySignal:     "",
-		feedbackWentWellSignal:     "",
-		feedbackCouldImproveSignal: "",
-		feedbackTopicsSignal:       "",
+		feedbackCategorySignal: "",
+		feedbackMessageSignal:  "",
+		feedbackTopicsSignal:   "",
 	}
 	_, router := setupFeedbackRouteTest(t, "feedback_reset_clears_errors")
 
@@ -140,27 +138,26 @@ func TestFeedbackRoute_ResetClearsValidationErrors(t *testing.T) {
 	assertFeedbackSignal(t, recorder.Body.String(), "feedbackErrors", expectedErrors)
 }
 
-func TestFeedbackRoute_PostWithBothTextsEmptyShowsRequiredErrorAndStoresNothing(t *testing.T) {
+func TestFeedbackRoute_PostWithEmptyMessageShowsRequiredErrorAndStoresNothing(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en innlogget bruker som lar begge tekstfeltene stå tomme.",
+		Given: "Gitt en innlogget bruker som lar tilbakemeldingen stå tom.",
 		When:  "Når tilbakemeldingen sendes inn.",
 		Then:  "Så skal en norsk feilmelding vises, og ingenting skal lagres.",
 	})
 
 	// Given
-	expectedError := "Fyll ut minst ett av feltene."
-	db, router := setupFeedbackRouteTest(t, "feedback_post_both_empty")
+	expectedError := "Skriv en tilbakemelding."
+	db, router := setupFeedbackRouteTest(t, "feedback_post_empty_message")
 
 	// When
 	recorder := postFeedbackSignals(t, router, feedbackSubmission{
-		Category:     string(feedback.CategoryOther),
-		WentWell:     "   ",
-		CouldImprove: "",
+		Category: string(feedback.CategoryOther),
+		Message:  "   ",
 	})
 
 	// Then
 	assertFeedbackSignal(t, recorder.Body.String(), "feedbackErrors", map[string]string{
-		feedbackWentWellSignal: expectedError,
+		feedbackMessageSignal: expectedError,
 	})
 	if count := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM feedback`); count != 0 {
 		t.Fatalf("expected no stored feedback, got %d", count)
@@ -181,7 +178,7 @@ func TestFeedbackRoute_PostUnknownCategoryShowsErrorAndStoresNothing(t *testing.
 	// When
 	recorder := postFeedbackSignals(t, router, feedbackSubmission{
 		Category: "",
-		WentWell: "Noe fornuftig å si.",
+		Message:  "Noe fornuftig å si.",
 	})
 
 	// Then
@@ -207,7 +204,7 @@ func TestFeedbackRoute_PostTooLongTextShowsErrorAndStoresNothing(t *testing.T) {
 	// When
 	recorder := postFeedbackSignals(t, router, feedbackSubmission{
 		Category: string(feedback.CategoryWebsite),
-		WentWell: tooLong,
+		Message:  tooLong,
 	})
 
 	// Then
@@ -234,12 +231,12 @@ func TestFeedbackRoute_PostWithEmailShowsPersonalInfoErrorAndStoresNothing(t *te
 	// When
 	recorder := postFeedbackSignals(t, router, feedbackSubmission{
 		Category: string(feedback.CategoryWebsite),
-		WentWell: "Kontakt meg på kari@example.no for detaljer.",
+		Message:  "Kontakt meg på kari@example.no for detaljer.",
 	})
 
 	// Then
 	assertFeedbackSignal(t, recorder.Body.String(), "feedbackErrors", map[string]string{
-		feedbackWentWellSignal: expectedError,
+		feedbackMessageSignal: expectedError,
 	})
 	if count := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM feedback`); count != 0 {
 		t.Fatalf("expected no stored feedback, got %d", count)
@@ -259,13 +256,13 @@ func TestFeedbackRoute_PostWithPhoneNumberShowsPersonalInfoErrorAndStoresNothing
 
 	// When
 	recorder := postFeedbackSignals(t, router, feedbackSubmission{
-		Category:     string(feedback.CategoryWebsite),
-		CouldImprove: "Ring meg på 12345678 gjerne.",
+		Category: string(feedback.CategoryWebsite),
+		Message:  "Ring meg på 12345678 gjerne.",
 	})
 
 	// Then
 	assertFeedbackSignal(t, recorder.Body.String(), "feedbackErrors", map[string]string{
-		feedbackCouldImproveSignal: expectedError,
+		feedbackMessageSignal: expectedError,
 	})
 	if count := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM feedback`); count != 0 {
 		t.Fatalf("expected no stored feedback, got %d", count)
@@ -310,7 +307,7 @@ func TestFeedbackRoute_UnauthenticatedPostIsRejectedAndStoresNothing(t *testing.
 	db, router := setupFeedbackRouteTest(t, "feedback_post_unauthenticated")
 	body, err := json.Marshal(feedbackSubmission{
 		Category: string(feedback.CategoryWebsite),
-		WentWell: "Skal ikke lagres.",
+		Message:  "Skal ikke lagres.",
 	})
 	if err != nil {
 		t.Fatalf("failed to marshal Datastar signals: %v", err)
@@ -470,7 +467,7 @@ func assertFeedbackSignal(t *testing.T, body string, signalKey string, expected 
 		}
 		merged := map[string]string{}
 		maps.Copy(merged, values)
-		for _, key := range []string{feedbackCategorySignal, feedbackWentWellSignal, feedbackCouldImproveSignal, feedbackTopicsSignal} {
+		for _, key := range []string{feedbackCategorySignal, feedbackMessageSignal, feedbackTopicsSignal} {
 			if _, wanted := expected[key]; !wanted {
 				expected[key] = ""
 			}

@@ -183,21 +183,6 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 				padding-inline: var(--spacing-2x);
 			}
 
-			.feedback-entry-section {
-				display: flex;
-				flex-direction: column;
-				gap: var(--spacing-1x);
-			}
-
-			.feedback-entry-heading {
-				margin: 0;
-				font-size: 0.8125rem;
-				font-weight: 600;
-				color: var(--color-text-soft);
-				text-transform: uppercase;
-				letter-spacing: 0.02em;
-			}
-
 			.feedback-entry-text {
 				margin: 0;
 				max-inline-size: min(70ch, 100cqi);
@@ -242,18 +227,7 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 								}
 							</ul>
 						}
-						if entry.WentWell != "" {
-							<div class="feedback-entry-section">
-								<h3 class="feedback-entry-heading">Fungerte bra</h3>
-								<p class="feedback-entry-text feedback-entry-went-well">{ entry.WentWell }</p>
-							</div>
-						}
-						if entry.CouldImprove != "" {
-							<div class="feedback-entry-section">
-								<h3 class="feedback-entry-heading">Kan bli bedre</h3>
-								<p class="feedback-entry-text feedback-entry-could-improve">{ entry.CouldImprove }</p>
-							</div>
-						}
+						<p class="feedback-entry-text feedback-entry-message">{ entry.Message }</p>
 					</li>
 				}
 			</ul>

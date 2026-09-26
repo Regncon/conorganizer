@@ -18,19 +18,17 @@ import (
 )
 
 const (
-	feedbackCategorySignal     = "feedbackCategory"
-	feedbackWentWellSignal     = "feedbackWentWell"
-	feedbackCouldImproveSignal = "feedbackCouldImprove"
-	feedbackTopicsSignal       = "feedbackTopics"
-	feedbackFormElementID      = "feedback-form"
+	feedbackCategorySignal = "feedbackCategory"
+	feedbackMessageSignal  = "feedbackMessage"
+	feedbackTopicsSignal   = "feedbackTopics"
+	feedbackFormElementID  = "feedback-form"
 )
 
 // feedbackSubmission is the Datastar signal payload the feedback form posts.
 type feedbackSubmission struct {
-	Category     string   `json:"feedbackCategory"`
-	WentWell     string   `json:"feedbackWentWell"`
-	CouldImprove string   `json:"feedbackCouldImprove"`
-	Topics       []string `json:"feedbackTopics"`
+	Category string   `json:"feedbackCategory"`
+	Message  string   `json:"feedbackMessage"`
+	Topics   []string `json:"feedbackTopics"`
 }
 
 // SetupFeedbackRoute registers the logged-in feedback form. router is the
@@ -95,10 +93,9 @@ func submitFeedback(w http.ResponseWriter, r *http.Request, db *sql.DB, logger *
 	}
 
 	submission := feedback.Submission{
-		Category:     feedback.Category(payload.Category),
-		WentWell:     payload.WentWell,
-		CouldImprove: payload.CouldImprove,
-		Topics:       toTopics(payload.Topics),
+		Category: feedback.Category(payload.Category),
+		Message:  payload.Message,
+		Topics:   toTopics(payload.Topics),
 	}
 
 	sse := datastar.NewSSE(w, r)
@@ -116,7 +113,7 @@ func submitFeedback(w http.ResponseWriter, r *http.Request, db *sql.DB, logger *
 
 	if err := feedback.Submit(db, submission); err != nil {
 		logger.Error(fmt.Errorf("failed to store feedback: %w", err).Error())
-		feedbackErrors.Set(feedbackWentWellSignal, "Klarte ikke å lagre tilbakemeldingen. Prøv igjen.")
+		feedbackErrors.Set(feedbackMessageSignal, "Klarte ikke å lagre tilbakemeldingen. Prøv igjen.")
 		if patchErr := feedbackErrors.Patch(sse); patchErr != nil {
 			logger.Error(fmt.Errorf("failed to patch feedback storage error: %w", patchErr).Error())
 		}
@@ -147,14 +144,12 @@ func feedbackSignalForField(field string) string {
 	switch field {
 	case feedback.FieldCategory:
 		return feedbackCategorySignal
-	case feedback.FieldWentWell:
-		return feedbackWentWellSignal
-	case feedback.FieldCouldImprove:
-		return feedbackCouldImproveSignal
+	case feedback.FieldMessage:
+		return feedbackMessageSignal
 	case feedback.FieldTopics:
 		return feedbackTopicsSignal
 	}
-	return feedbackWentWellSignal
+	return feedbackMessageSignal
 }
 
 // feedbackFieldErrorMessage is the Norwegian message shown for one
@@ -162,7 +157,7 @@ func feedbackSignalForField(field string) string {
 func feedbackFieldErrorMessage(fieldError feedback.FieldError) string {
 	switch fieldError.Code {
 	case feedback.CodeRequired:
-		return "Fyll ut minst ett av feltene."
+		return "Skriv en tilbakemelding."
 	case feedback.CodeTooLong:
 		return fmt.Sprintf("Teksten er for lang (maks %d tegn).", feedback.MaxTextLength)
 	case feedback.CodePersonalInfo:
@@ -177,5 +172,5 @@ func feedbackFieldErrorMessage(fieldError feedback.FieldError) string {
 }
 
 func newFeedbackErrors() *errorfeedback.FeedbackErrors {
-	return errorfeedback.New(feedbackCategorySignal, feedbackWentWellSignal, feedbackCouldImproveSignal, feedbackTopicsSignal)
+	return errorfeedback.New(feedbackCategorySignal, feedbackMessageSignal, feedbackTopicsSignal)
 }

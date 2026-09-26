@@ -55,10 +55,10 @@ func feedbackHasTopicsExpr() string {
 	return fmt.Sprintf("[%s].includes($%s)", strings.Join(withTopics, ", "), feedbackCategorySignal)
 }
 
-// feedbackTextDescribedBy lists the ids describing a text field: its error
-// message, its character counter and, while shown, its personal info hint.
-// The hint is only referenced while visible, since aria-describedby reads
-// directly referenced elements even when they are hidden.
+// feedbackTextDescribedBy lists the ids describing the message field: its
+// error message, its character counter and, while shown, its personal info
+// hint. The hint is only referenced while visible, since aria-describedby
+// reads directly referenced elements even when they are hidden.
 func feedbackTextDescribedBy(fieldKey string, withPersonalInfoHint bool) string {
 	ids := fmt.Sprintf("feedback-%s-error feedback-%s-counter", fieldKey, fieldKey)
 	if withPersonalInfoHint {
@@ -71,10 +71,10 @@ func feedbackTextDescribedByExpr(fieldKey, personalInfoSignal string) string {
 	return fmt.Sprintf("%s ? '%s' : '%s'", personalInfoSignal, feedbackTextDescribedBy(fieldKey, true), feedbackTextDescribedBy(fieldKey, false))
 }
 
-// feedbackSubmitDescribedByExpr points the submit button at whichever
-// personal info hint explains why it is disabled.
+// feedbackSubmitDescribedByExpr points the submit button at the personal
+// info hint that explains why it is disabled.
 func feedbackSubmitDescribedByExpr() string {
-	return "[$_wentWellPersonalInfo ? 'feedback-went-well-personal-info' : '', $_couldImprovePersonalInfo ? 'feedback-could-improve-personal-info' : ''].filter(Boolean).join(' ')"
+	return "$_messagePersonalInfo ? 'feedback-message-personal-info' : ''"
 }
 
 // feedbackResetExpr keeps the category the user came in with (for example
@@ -194,27 +194,16 @@ templ feedbackFormPage(preselected feedback.Category) {
 				}
 			}
 
-			.feedback-texts-helptext {
-				margin: 0;
-				margin-block-start: calc(-1 * var(--spacing-1x));
-				color: var(--color-text-soft);
-				font-size: var(--text-body-small);
-			}
-
-			.feedback-texts {
-				display: grid;
-				gap: var(--spacing-5x);
-			}
-
 			.feedback-text-field {
 				display: flex;
 				flex-direction: column;
 				gap: var(--spacing-2x);
-				font-size: var(--text-body-small);
-				font-weight: 600;
+				color: var(--color-text-strong);
+				font-size: var(--text-body);
+				font-weight: 700;
 
 				textarea {
-					min-block-size: 7.5rem;
+					min-block-size: 10rem;
 					padding: var(--spacing-3x) var(--spacing-4x);
 					font: inherit;
 					font-size: var(--text-body);
@@ -222,6 +211,13 @@ templ feedbackFormPage(preselected feedback.Category) {
 					line-height: 1.5;
 					resize: vertical;
 				}
+			}
+
+			.feedback-field-helptext {
+				margin: 0;
+				color: var(--color-text-soft);
+				font-size: var(--text-body-small);
+				font-weight: 400;
 			}
 
 			.feedback-message-footer {
@@ -266,9 +262,6 @@ templ feedbackFormPage(preselected feedback.Category) {
 
 		@container feedback-page (width > 40rem) {
 			.feedback-page {
-				.feedback-texts {
-					grid-template-columns: repeat(2, 1fr);
-				}
 				.feedback-submit {
 					align-self: end;
 					min-inline-size: 16rem;
@@ -328,10 +321,9 @@ templ feedbackFormWrapper(preselected feedback.Category) {
 		id={ feedbackFormElementID }
 		class="feedback-content"
 		data-signals={ components.DataSignals(map[string]any{
-			feedbackCategorySignal:     string(preselected),
-			feedbackWentWellSignal:     "",
-			feedbackCouldImproveSignal: "",
-			feedbackTopicsSignal:       []string{},
+			feedbackCategorySignal: string(preselected),
+			feedbackMessageSignal:  "",
+			feedbackTopicsSignal:   []string{},
 		}) }
 	>
 		<p class="feedback-privacy-hint">
@@ -348,8 +340,7 @@ templ feedbackFormWrapper(preselected feedback.Category) {
 			data-personal-info-min-long-digits={ strconv.Itoa(feedback.MinLongNumberDigits) }
 			data-personal-info-date-pattern={ feedback.DateOrTimeRangePattern }
 			data-personal-info-date-replacement={ feedback.DateOrTimeRangeReplacement }
-			data-computed:_went-well-personal-info={ fmt.Sprintf("window.feedbackContainsPersonalInfo($%s, el)", feedbackWentWellSignal) }
-			data-computed:_could-improve-personal-info={ fmt.Sprintf("window.feedbackContainsPersonalInfo($%s, el)", feedbackCouldImproveSignal) }
+			data-computed:_message-personal-info={ fmt.Sprintf("window.feedbackContainsPersonalInfo($%s, el)", feedbackMessageSignal) }
 			{ errorfeedback.DefaultMessage("Klarte ikke å sende inn. Prøv igjen.")... }
 		>
 			<fieldset class="feedback-categories-field">
@@ -403,68 +394,38 @@ templ feedbackFormWrapper(preselected feedback.Category) {
 					}
 				}
 			</fieldset>
-			<fieldset class="feedback-texts-field">
-				<legend class="feedback-group-label">Tilbakemeldingen din</legend>
-				<p class="feedback-texts-helptext">Fyll ut minst ett av feltene.</p>
-				<div class="feedback-texts">
-					<label class="label feedback-text-field" for="feedback-went-well">
-						Hva fungerte bra?
-						<textarea
-							id="feedback-went-well"
-							name="feedbackWentWell"
-							class="input"
-							data-bind={ feedbackWentWellSignal }
-							rows="4"
-							maxlength={ strconv.Itoa(feedback.MaxTextLength) }
-							aria-describedby={ feedbackTextDescribedBy("went-well", false) }
-							data-attr:aria-describedby={ feedbackTextDescribedByExpr("went-well", "$_wentWellPersonalInfo") }
-						></textarea>
-						<div class="feedback-message-footer">
-							<span id="feedback-went-well-error">
-								@errorfeedback.RenderMessage(feedbackWentWellSignal)
-							</span>
-							<span
-								id="feedback-went-well-counter"
-								class="feedback-char-counter"
-								data-text={ fmt.Sprintf("$%s.length + ' / %d tegn'", feedbackWentWellSignal, feedback.MaxTextLength) }
-							>{ fmt.Sprintf("0 / %d tegn", feedback.MaxTextLength) }</span>
-						</div>
-						<p id="feedback-went-well-personal-info" class="feedback-personal-info-hint" style="display: none" data-show="$_wentWellPersonalInfo">
-							Det ser ut som du har skrevet en e-postadresse eller et telefonnummer. Fjern det før du sender.
-						</p>
-					</label>
-					<label class="label feedback-text-field" for="feedback-could-improve">
-						Hva kan bli bedre?
-						<textarea
-							id="feedback-could-improve"
-							name="feedbackCouldImprove"
-							class="input"
-							data-bind={ feedbackCouldImproveSignal }
-							rows="4"
-							maxlength={ strconv.Itoa(feedback.MaxTextLength) }
-							aria-describedby={ feedbackTextDescribedBy("could-improve", false) }
-							data-attr:aria-describedby={ feedbackTextDescribedByExpr("could-improve", "$_couldImprovePersonalInfo") }
-						></textarea>
-						<div class="feedback-message-footer">
-							<span id="feedback-could-improve-error">
-								@errorfeedback.RenderMessage(feedbackCouldImproveSignal)
-							</span>
-							<span
-								id="feedback-could-improve-counter"
-								class="feedback-char-counter"
-								data-text={ fmt.Sprintf("$%s.length + ' / %d tegn'", feedbackCouldImproveSignal, feedback.MaxTextLength) }
-							>{ fmt.Sprintf("0 / %d tegn", feedback.MaxTextLength) }</span>
-						</div>
-						<p id="feedback-could-improve-personal-info" class="feedback-personal-info-hint" style="display: none" data-show="$_couldImprovePersonalInfo">
-							Det ser ut som du har skrevet en e-postadresse eller et telefonnummer. Fjern det før du sender.
-						</p>
-					</label>
+			<label class="label feedback-text-field" for="feedback-message">
+				Tilbakemelding
+				<span class="feedback-field-helptext">Fortell gjerne hva som fungerte bra, og hva som kan bli bedre.</span>
+				<textarea
+					id="feedback-message"
+					name="feedbackMessage"
+					class="input"
+					placeholder="F.eks. «Påmeldingen var enkel, men programmet var vanskelig å finne på mobil.»"
+					data-bind={ feedbackMessageSignal }
+					rows="6"
+					maxlength={ strconv.Itoa(feedback.MaxTextLength) }
+					aria-describedby={ feedbackTextDescribedBy("message", false) }
+					data-attr:aria-describedby={ feedbackTextDescribedByExpr("message", "$_messagePersonalInfo") }
+				></textarea>
+				<div class="feedback-message-footer">
+					<span id="feedback-message-error">
+						@errorfeedback.RenderMessage(feedbackMessageSignal)
+					</span>
+					<span
+						id="feedback-message-counter"
+						class="feedback-char-counter"
+						data-text={ fmt.Sprintf("$%s.length + ' / %d tegn'", feedbackMessageSignal, feedback.MaxTextLength) }
+					>{ fmt.Sprintf("0 / %d tegn", feedback.MaxTextLength) }</span>
 				</div>
-			</fieldset>
+				<p id="feedback-message-personal-info" class="feedback-personal-info-hint" style="display: none" data-show="$_messagePersonalInfo">
+					Det ser ut som du har skrevet en e-postadresse eller et telefonnummer. Fjern det før du sender.
+				</p>
+			</label>
 			<button
 				type="submit"
 				class="btn btn--primary feedback-submit"
-				data-attr:disabled={ "$_wentWellPersonalInfo || $_couldImprovePersonalInfo" }
+				data-attr:disabled={ "$_messagePersonalInfo" }
 				data-attr:aria-describedby={ feedbackSubmitDescribedByExpr() }
 			>
 				Send tilbakemelding

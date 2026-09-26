@@ -13,16 +13,15 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-// MaxTextLength is the maximum number of characters (runes) in each text field
+// MaxTextLength is the maximum number of characters (runes) in the message
 // after surrounding whitespace is trimmed.
-const MaxTextLength = 1000
+const MaxTextLength = 2000
 
 // Field names used in FieldError.
 const (
-	FieldCategory     = "category"
-	FieldWentWell     = "wentWell"
-	FieldCouldImprove = "couldImprove"
-	FieldTopics       = "topics"
+	FieldCategory = "category"
+	FieldMessage  = "message"
+	FieldTopics   = "topics"
 )
 
 // Error codes used in FieldError.
@@ -38,10 +37,9 @@ var ErrInvalidFeedback = errors.New("invalid feedback")
 
 // Submission is feedback as sent by a user.
 type Submission struct {
-	Category     Category
-	WentWell     string
-	CouldImprove string
-	Topics       []Topic
+	Category Category
+	Message  string
+	Topics   []Topic
 }
 
 // FieldError describes why one field of a Submission was rejected.
@@ -52,29 +50,26 @@ type FieldError struct {
 
 // Entry is one stored piece of feedback.
 type Entry struct {
-	ID           int
-	Category     Category
-	WentWell     string
-	CouldImprove string
-	Topics       []Topic
-	CreatedAt    models.DBDateTime
+	ID        int
+	Category  Category
+	Message   string
+	Topics    []Topic
+	CreatedAt models.DBDateTime
 }
 
-// Validate returns every problem with the submission. Texts are trimmed before
-// they are checked. An empty result means the submission can be stored.
+// Validate returns every problem with the submission. The message is trimmed
+// before it is checked. An empty result means the submission can be stored.
 func (s Submission) Validate() []FieldError {
 	var errs []FieldError
 	if !s.Category.Valid() {
 		errs = append(errs, FieldError{Field: FieldCategory, Code: CodeInvalid})
 	}
 
-	wentWell := strings.TrimSpace(s.WentWell)
-	couldImprove := strings.TrimSpace(s.CouldImprove)
-	if wentWell == "" && couldImprove == "" {
-		errs = append(errs, FieldError{Field: FieldWentWell, Code: CodeRequired})
+	message := strings.TrimSpace(s.Message)
+	if message == "" {
+		errs = append(errs, FieldError{Field: FieldMessage, Code: CodeRequired})
 	}
-	errs = appendTextErrors(errs, FieldWentWell, wentWell)
-	errs = appendTextErrors(errs, FieldCouldImprove, couldImprove)
+	errs = appendTextErrors(errs, FieldMessage, message)
 
 	if !validTopics(s.Category, s.Topics) {
 		errs = append(errs, FieldError{Field: FieldTopics, Code: CodeInvalid})
@@ -103,8 +98,9 @@ func validTopics(category Category, topics []Topic) bool {
 	return true
 }
 
-// Submit validates and stores a piece of feedback with trimmed texts. Invalid
-// input returns an error wrapping ErrInvalidFeedback and nothing is stored.
+// Submit validates and stores a piece of feedback with a trimmed message.
+// Invalid input returns an error wrapping ErrInvalidFeedback and nothing is
+// stored.
 func Submit(db *sql.DB, s Submission) error {
 	if errs := s.Validate(); len(errs) > 0 {
 		return fmt.Errorf("%w: %v", ErrInvalidFeedback, errs)
@@ -120,8 +116,8 @@ func Submit(db *sql.DB, s Submission) error {
 	}
 
 	if _, err := db.Exec(
-		`INSERT INTO feedback (category, went_well, could_improve, topics) VALUES (?, ?, ?, ?)`,
-		string(s.Category), strings.TrimSpace(s.WentWell), strings.TrimSpace(s.CouldImprove), string(topicsJSON),
+		`INSERT INTO feedback (category, message, topics) VALUES (?, ?, ?)`,
+		string(s.Category), strings.TrimSpace(s.Message), string(topicsJSON),
 	); err != nil {
 		return fmt.Errorf("insert feedback: %w", err)
 	}
@@ -131,7 +127,7 @@ func Submit(db *sql.DB, s Submission) error {
 // List returns stored feedback, newest first. An empty category returns all.
 func List(db *sql.DB, category Category) ([]Entry, error) {
 	rows, err := db.Query(`
-		SELECT id, category, went_well, could_improve, topics, created_at
+		SELECT id, category, message, topics, created_at
 		FROM feedback
 		WHERE ? = '' OR category = ?
 		ORDER BY created_at DESC, id DESC`,
@@ -146,7 +142,7 @@ func List(db *sql.DB, category Category) ([]Entry, error) {
 	for rows.Next() {
 		var entry Entry
 		var topicsJSON string
-		if err := rows.Scan(&entry.ID, &entry.Category, &entry.WentWell, &entry.CouldImprove, &topicsJSON, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.ID, &entry.Category, &entry.Message, &topicsJSON, &entry.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan feedback: %w", err)
 		}
 		entry.Topics = []Topic{}
