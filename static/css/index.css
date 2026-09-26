@@ -73,7 +73,7 @@
     /* backdrop */
     --bg-backdrop: #0009;
 
-    /* text & font */
+    /* font sizes */
     --text-heading-1-xl: 52px;
     --text-heading-1-xl-lh: 1.2;
     --text-heading-1: 40px;
@@ -93,10 +93,11 @@
     --text-heading-2-mobile-lh: 1.3;
     --text-article-mobile: 16px;
     --text-article-mobile-lh: 1.5;
-
-    --font-sans-serif: "Open Sans", Helvetica, sans-serif;
-    --font-serif: "EB Garamond", Georgia, Times, serif;
-    --font-monospace: "Fira Code", monospace;
+    
+    /* font families */
+    --font-sans-serif: "Open Sans", "Helvetica", sans-serif;
+    --font-serif: "EB Garamond", "Georgia", "Times", serif;
+    --font-monospace: "Fira Code", "monospace";
 
     /* spacings */
     --spacing-1x: 4px;
