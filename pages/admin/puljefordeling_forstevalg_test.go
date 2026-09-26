@@ -12,9 +12,9 @@ import (
 
 func TestPuljeForstevalgStats_TilesOpenListsOfParticipants(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en pulje der én fikk førstevalg, to mangler det og én er without plass.",
+		Given: "Gitt en pulje der én fikk førstevalg, to mangler det og én er uten plass.",
 		When:  "Når førstevalgsoversikten rendres.",
-		Then:  "Så skal hver flis vise antallet og åpne en liste med deltakerne, without interessepoeng.",
+		Then:  "Så skal hver flis vise antallet og åpne en liste med deltakerne, uten interessepoeng.",
 	})
 
 	// Given
