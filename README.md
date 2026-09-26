@@ -85,6 +85,20 @@ go tool task download:main
 go tool task download:demo
 ```
 
+Add `:db` or `:images` to download only one part, for example
+`go tool task download:main:images`.
+
+- **Mac/Linux:** the download runs on your machine and needs `ssh`, `sqlite3`
+  and `tar`.
+- **Windows:** the download runs inside the Docker container, so keep
+  `docker compose up` running. Without Go installed on Windows, run the task in
+  the container instead: `docker compose exec webserver go tool task download:main`.
+  The container has no SSH key, so ssh asks for your password, once per run.
+  After the container has been recreated, it also asks you to confirm the
+  server's fingerprint.
+
+Restart the application after downloading a database so it uses the new file.
+
 ## Run a Restored Database Backup
 
 `restored.lekeplassen.regncon.no` runs a selected production database backup.
