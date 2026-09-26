@@ -159,11 +159,6 @@ templ feedbackFormPage(preselected feedback.Category) {
 				}
 			}
 
-			.feedback-category-button.selected {
-				border-color: var(--color-primary);
-				background: color-mix(in srgb, var(--color-primary) 14%, var(--bg-item));
-				color: var(--color-text-strong);
-			}
 
 			.feedback-topics {
 				display: flex;
@@ -187,10 +182,34 @@ templ feedbackFormPage(preselected feedback.Category) {
 					border-color: var(--bg-item-border-hover);
 					color: var(--color-text-strong);
 				}
-				&.selected {
-					border-color: var(--color-primary);
+			}
+
+			/* Category buttons and topic chips share one focus and selected look,
+			   so a selected choice keeps its colour and gets a matching focus ring. */
+			.feedback-category-button,
+			.feedback-topic-chip {
+				&:focus-visible {
+					outline: none;
+					box-shadow: 0 0 0 3px var(--color-secondary-focus-visible);
+				}
+			}
+
+			.feedback-category-button.selected,
+			.feedback-topic-chip.selected {
+				border-color: var(--color-primary);
+				background: color-mix(in srgb, var(--color-primary) 14%, var(--bg-item));
+				color: var(--color-text-strong);
+
+				&:focus,
+				&:focus-visible {
 					background: color-mix(in srgb, var(--color-primary) 14%, var(--bg-item));
 					color: var(--color-text-strong);
+				}
+				&:focus {
+					box-shadow: none;
+				}
+				&:focus-visible {
+					box-shadow: 0 0 0 3px var(--color-primary-focus-visible);
 				}
 			}
 
