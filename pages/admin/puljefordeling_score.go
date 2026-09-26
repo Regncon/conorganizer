@@ -27,7 +27,7 @@ func puljeScoreLines(score smodel.ScoreBreakdown) []puljeScoreLine {
 	}
 	lines := []puljeScoreLine{{Label: band, Points: score.Band}}
 	if score.MissBonus > 0 {
-		label := fmt.Sprintf("Ikke fått førstevalg i %s", antallTekst(score.Misses, "pulje", "puljer"))
+		label := fmt.Sprintf("Ikke fått førstevalg i %s", countText(score.Misses, "pulje", "puljer"))
 		lines = append(lines, puljeScoreLine{Label: label, Points: score.MissBonus})
 	}
 	if score.NeverSeatedBump > 0 {
