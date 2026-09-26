@@ -299,21 +299,34 @@ templ printStyles() {
 					inline-size: 100%;
 					padding: 0;
 					margin: 0;
-					.stack { display: flex; gap: 3mm; place-items: start; }
-					.event-image { inline-size: 30mm; block-size: 24mm; object-fit: cover; }
-					.event-header { flex: 1; padding: 0; margin: 0; background: #fff; text-align: start; }
+					.stack { display: block; }
+					.event-image { inline-size: 100%; block-size: 44mm; object-fit: cover; }
+					.event-header {
+						position: relative;
+						margin: -10mm 6mm 0;
+						padding: 3mm 5mm;
+						background: #fff;
+						text-align: start;
+					}
 					.title { font-size: 21pt; white-space: normal; overflow: visible; }
 					.intro { display: block; line-clamp: unset; overflow: visible; }
-					.event-information { display: flex; gap: 4mm; padding: 0; }
-					.event-details-pane { padding: 0; border: 0; background: #fff; }
+					.event-information {
+						display: grid;
+						grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+						gap: 6mm;
+						margin-block-start: 5mm;
+						padding: 0;
+					}
+					.event-details-pane { grid-area: auto; padding: 0; border: 0; background: #fff; }
 					.event-details { display: flex; gap: 2mm; }
-					.event-details-section { gap: 2mm; }
-					.description { padding: 0; }
+					.event-details-section { gap: 2mm; padding: 0; }
+					.description { grid-area: auto; padding: 0; }
 					.description p { margin-block: 1mm; }
 				}
-				.print-room-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3mm; }
+				.print-room-list { display: grid; gap: 3mm; }
 				.print-room { min-inline-size: 0; break-inside: avoid; }
-				.print-room-map img { max-inline-size: min(100%, 70mm); max-block-size: 65mm; object-fit: contain; filter: invert(1); }
+				.print-room-map img { inline-size: 100%; max-block-size: 95mm; object-fit: contain; filter: invert(1); }
+				.print-room-list:has(.print-room:nth-child(2)) .print-room-map img { max-block-size: 55mm; }
 			}
 		}
 	</style>
