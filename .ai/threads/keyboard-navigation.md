@@ -23,7 +23,7 @@ The lines in question are:
 
 
 
-Let's have a discussion before implementing any code. Please share your suggestions at any time. Only ask clarifying questions if you have them. 
+Let's have a discussion before implementing any code. Please share your suggestions at any time. Only ask clarifying questions if you have them.
 
 Time: 2026-07-24 13:41:31
 --- Codex Run ---
@@ -57,9 +57,9 @@ One adjacent accessibility improvement worth considering in the same small chang
 Time: 2026-07-24 13:41:31
 --- Next Prompt ---
 
-Yes, let's update the alt text to "Regncon framside" as well. 
+Yes, let's update the alt text to "Regncon framside" as well.
 
-Go ahead and implement the changes. 
+Go ahead and implement the changes.
 
 Time: 2026-07-24 13:45:09
 --- Codex Run ---
@@ -87,8 +87,8 @@ Note: there is an unrelated untracked `.ai/threads/keyboard-navigation.md` in th
 Time: 2026-07-24 13:45:09
 --- Next Prompt ---
 
-One small detail. The logo is round, perhaps we should make the focus ring round as well? 
-Is there a clean way to implement this in CSS without making it hacky? 
+One small detail. The logo is round, perhaps we should make the focus ring round as well?
+Is there a clean way to implement this in CSS without making it hacky?
 Have a look at the logo svg too: static/RegnconLogo.svg
 
 Let's keep the discussion going before implementing any code.
@@ -116,7 +116,7 @@ I would not try to make the ring trace the exact SVG silhouette. That would mean
 Time: 2026-07-24 13:50:18
 --- Next Prompt ---
 
-Nice. I changed the border-radius to 50% in the CSS for the logo link and it looks great. 
+Nice. I changed the border-radius to 50% in the CSS for the logo link and it looks great.
 Next, let's do some cleaning before we move. Remove any unused CSS classes and styles from the header template.
 
 Time: 2026-07-24 14:00:59
@@ -213,8 +213,8 @@ The color swap is applied. I’m rerunning the relevant tests, even though this 
 Tests passed. I’m checking the final diff so I can confirm the exact CSS variables now in use.
 Updated [static/css/card.css](/home/cinmay/Documents/conorganizer/static/css/card.css:98) to use the gray/secondary colors:
 
-- Hover/focus border: `var(--color-secondary)`
-- Focus outline: `var(--color-secondary-focus-visible)`
+- Hover/focus border: `var(--color-text-soft)`
+- Focus outline: `var(--color-text-soft-focus-visible)`
 
 Verification passed:
 

@@ -107,11 +107,11 @@
 
 .event-card-container:hover,
 .event-card-container:focus-visible {
-    border-color: var(--color-secondary);
+    border-color: var(--color-text-soft);
 }
 
 .event-card-container:focus-visible {
-    outline: 3px solid var(--color-secondary-focus-visible);
+    outline: 3px solid var(--color-text-soft-focus-visible);
 }
 
 .event-card-thumbnail {
@@ -236,8 +236,8 @@
 }
 
 .event-bar-container:focus-visible {
-    border-color: var(--color-secondary);
-    outline: 3px solid var(--color-secondary-focus-visible);
+    border-color: var(--color-text-soft);
+    outline: 3px solid var(--color-text-soft-focus-visible);
 }
 
 .event-bar-title {
@@ -296,6 +296,6 @@
 }
 
 .profile-event-bar:focus-visible {
-    outline: 3px solid var(--color-secondary-focus-visible);
+    outline: 3px solid var(--color-text-soft-focus-visible);
     outline-offset: 2px;
 }

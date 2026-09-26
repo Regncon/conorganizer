@@ -232,12 +232,10 @@ templ mainMenuButtonsStyles() {
 }
 
 templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
-
-    {{
-        r := chi.RouteContext(ctx)
-        path := r.RoutePattern()
-    }}
-
+	{{
+	r := chi.RouteContext(ctx)
+	path := r.RoutePattern()
+	}}
 	<section class="main-menu-buttons">
 		<a href="/" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", path == "/") }>
 			@icons.Icon(icons.Home, icons.Size20)
@@ -501,7 +499,7 @@ templ desktopBillettholderMenuStyles() {
 					summary {
 						cursor: pointer;
 						list-style: none;
-						color: var(--color-secondary);
+						color: var(--color-text-soft);
 						text-decoration: none;
 
 						&:focus-visible {
@@ -782,8 +780,8 @@ templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions) {
 			</div>
 		} else {
 			<div data-class:selected="$_phoneMenuOpen">
-                @icons.Icon(icons.Menu, icons.Size20)
-            </div>
+				@icons.Icon(icons.Menu, icons.Size20)
+			</div>
 		}
 		<span class="menu-button-text" data-class:selected="$_phoneMenuOpen">
 			Meny

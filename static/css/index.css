@@ -22,13 +22,9 @@
         var(--level-2-state-base);
 
     /* Deprecated variable, use color-primary instead */
-
-    --color-secondary-text: var(--color-text-soft);
-    --color-secondary: #ccd1e9;
     --color-secondary-hover: #ccd1e91a;
     --color-secondary-focus-visible: #ccd1e980;
     --color-secondary-active: #ccd1e933;
-
     --color-accent-blue: #8EADEE;
     --color-accent-purple: #C6A0F6;
     --color-accent-pink: #F5BDE6;
@@ -38,13 +34,10 @@
     --color-accent-green: var(--color-success);
     --color-accent-teal: #8BD5CA;
     --color-accent-cyan: #83C3E0;
-
     --color-success: #A6DA95;
     --color-warning: #EED49F;
     --color-error: #ED8796;
-
     --color-disabled: #ccd1e980;
-
     --bg-tooltip: #11111b;
     --bg-base: #0E0F16;
     --bg-base-indent:#15161E;
@@ -55,7 +48,6 @@
     --bg-surface-border-hover: var(--bg-item-border-hover);
     --bg-surface-hover: #353847;
     --bg-surface-active: #474957;
-
     --bg-item: #35394a;
     --bg-item-hover: #44485A;
     --bg-item-border-hover: #7f8198;
@@ -104,7 +96,7 @@
     --text-heading-2-mobile-lh: 1.3;
     --text-article-mobile: 16px;
     --text-article-mobile-lh: 1.5;
-    
+
     /* font families */
     --font-sans-serif: "Open Sans", "Helvetica", sans-serif;
     --font-serif: "EB Garamond", "Georgia", "Times", serif;
@@ -163,6 +155,7 @@
         --responsive-h2-margin: var(--spacing-5x);
     }
 }
+
 @media screen and (width > 1200px) {
     :root {
         --responsive-top-of-page-spacing: var(--spacing-10x);
@@ -652,7 +645,6 @@ input {
 }
 
 @media print {
-
     .no-print,
     .no-print * {
         display: none !important;

@@ -88,7 +88,7 @@ if (!customElements.get("admin-billettholder-search")) {
             max-inline-size: 100%;
             text-align: left;
             border-color: var(--btn-outline-border);
-            color: var(--color-secondary);
+            color: var(--color-text-soft);
             background-color: transparent;
             margin: 0 var(--spacing-2x) var(--spacing-2x) 0;
             vertical-align: top;
