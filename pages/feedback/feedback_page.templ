@@ -1,0 +1,182 @@
+package feedback
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/errorfeedback"
+	"github.com/Regncon/conorganizer/service/feedback"
+)
+
+func feedbackCategoryButtonClass(category, selected feedback.Category) string {
+	class := "btn btn--outline feedback-category-button"
+	if category == selected {
+		class += " selected"
+	}
+	return class
+}
+
+templ feedbackFormPage(preselected feedback.Category) {
+	<section class="page-content-container feedback-page">
+		<h1 class="page-heading">Gi tilbakemelding</h1>
+		<p class="page-heading-helptext">Tilbakemeldingen din hjelper oss å gjøre Regncon bedre.</p>
+		<div class="surface-pane">
+			@feedbackFormWrapper(preselected)
+		</div>
+	</section>
+}
+
+templ feedbackFormWrapper(preselected feedback.Category) {
+	<style>
+		.feedback-page {
+			container-type: inline-size;
+			container-name: feedback-page;
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+
+			.feedback-content,
+			.feedback-thank-you {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-4x);
+			}
+
+			.feedback-privacy-hint {
+				margin: 0;
+				padding: var(--spacing-3x) var(--spacing-4x);
+				border-inline-start: 4px solid var(--color-warning);
+				border-radius: var(--border-radius-1x);
+				background-color: color-mix(in srgb, var(--color-warning) 12%, transparent);
+				color: var(--color-text-strong);
+			}
+
+			.feedback-categories-field {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-2x);
+				margin: 0;
+				padding: 0;
+				border: none;
+			}
+
+			.feedback-form {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-3x);
+			}
+
+			.label {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-1x);
+				font-weight: 600;
+				font-size: var(--text-body-small);
+			}
+
+			.feedback-categories {
+				display: flex;
+				flex-wrap: wrap;
+				gap: var(--spacing-2x);
+			}
+
+			.feedback-category-button.selected {
+				border-color: var(--color-primary);
+				background: var(--bg-item-hover);
+				color: var(--color-text-strong);
+			}
+
+			.feedback-message-footer {
+				display: flex;
+				place-content: space-between;
+				gap: var(--spacing-2x);
+			}
+
+			.feedback-char-counter {
+				color: var(--color-text-soft);
+				font-size: var(--text-body-small);
+			}
+
+			.feedback-thank-you {
+				place-items: start;
+
+				h2 {
+					margin: 0;
+				}
+			}
+		}
+
+		@container feedback-page (width < 30rem) {
+			.feedback-page .feedback-categories {
+				flex-direction: column;
+			}
+		}
+	</style>
+	<div
+		id={ feedbackFormElementID }
+		class="feedback-content"
+		data-signals={ components.DataSignals(map[string]any{
+			feedbackCategorySignal: string(preselected),
+			feedbackMessageSignal:  "",
+		}) }
+	>
+		<p class="feedback-privacy-hint">
+			Ikke skriv personopplysninger, som navn, e-post, telefonnummer eller noe annet som kan identifisere deg eller andre.
+		</p>
+		<form
+			class="feedback-form"
+			data-on:submit="evt.preventDefault(); @post('/tilbakemelding')"
+			{ errorfeedback.DefaultMessage("Klarte ikke å sende inn. Prøv igjen.")... }
+		>
+			<fieldset class="feedback-categories-field">
+				<legend class="label">Hva gjelder tilbakemeldingen?</legend>
+				<div class="feedback-categories">
+					for _, category := range feedback.Categories {
+						<button
+							type="button"
+							class={ feedbackCategoryButtonClass(category, preselected) }
+							aria-pressed={ fmt.Sprintf("%t", category == preselected) }
+							data-class:selected={ fmt.Sprintf("$%s === '%s'", feedbackCategorySignal, category) }
+							data-attr:aria-pressed={ fmt.Sprintf("$%s === '%s' ? 'true' : 'false'", feedbackCategorySignal, category) }
+							data-on:click={ fmt.Sprintf("$%s = '%s'", feedbackCategorySignal, category) }
+						>
+							{ category.Label() }
+						</button>
+					}
+				</div>
+				@errorfeedback.RenderMessage(feedbackCategorySignal)
+			</fieldset>
+			<label class="label" for="feedback-message">
+				Tilbakemelding
+				<textarea
+					id="feedback-message"
+					name="feedbackMessage"
+					class="input"
+					data-bind={ feedbackMessageSignal }
+					rows="6"
+					maxlength={ strconv.Itoa(feedback.MaxMessageLength) }
+					required
+				></textarea>
+			</label>
+			<div class="feedback-message-footer">
+				@errorfeedback.RenderMessage(feedbackMessageSignal)
+				<span
+					class="feedback-char-counter"
+					data-text={ fmt.Sprintf("$%s.length + ' / %d tegn'", feedbackMessageSignal, feedback.MaxMessageLength) }
+				>{ fmt.Sprintf("0 / %d tegn", feedback.MaxMessageLength) }</span>
+			</div>
+			<button type="submit" class="btn btn--primary">Send tilbakemelding</button>
+		</form>
+	</div>
+}
+
+templ feedbackThankYou() {
+	<div id={ feedbackFormElementID } class="feedback-thank-you">
+		<h2>Takk for tilbakemeldingen!</h2>
+		<p>Vi setter pris på at du tar deg tid til å hjelpe oss å gjøre Regncon bedre.</p>
+		<button type="button" class="btn btn--outline" data-on:click="@get('/tilbakemelding/reset')">
+			Send en tilbakemelding til
+		</button>
+	</div>
+}

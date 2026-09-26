@@ -93,6 +93,14 @@ templ adminPage(db *sql.DB) {
 					) {
 						<a role="button" href="/print" class="btn btn--outline">Gå til utskrift</a>
 					}
+					@adminCard(
+						"Tilbakemeldinger",
+						"Se tilbakemeldinger fra brukere om nettsiden og festivalen.",
+						"/static/call-to-action-avatar.webp",
+						"Feedback",
+					) {
+						<a role="button" href="/admin/tilbakemeldinger/" class="btn btn--outline">Gå til tilbakemeldinger</a>
+					}
 				</div>
 			</div>
 		</div>

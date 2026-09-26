@@ -252,6 +252,12 @@ templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
 					Min Side
 				</span>
 			</a>
+			<a href="/tilbakemelding" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", strings.Contains(path, "/tilbakemelding")) }>
+				@icons.Icon(icons.Comment, icons.Size20)
+				<span class="menu-button-text">
+					Gi tilbakemelding
+				</span>
+			</a>
 		}
 		if userInfo.IsLoggedIn && userInfo.IsAdmin {
 			<a href="/admin" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", strings.Contains(path, "/admin")) }>
@@ -617,6 +623,7 @@ templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, billettholde
 					</button>
 				}
 				<a href="/profile">Min Profil</a>
+				<a href="/tilbakemelding">Gi tilbakemelding</a>
 				<a
 					href="https://www.regncon.no/vanlege-sporsmal/"
 					target="_blank"
@@ -878,6 +885,7 @@ templ phoneMenuDialog(userInfo requestctx.UserRequestInfo, billettholderOptions 
 					</button>
 				}
 				<a href="/profile">Min Profil</a>
+				<a href="/tilbakemelding">Gi tilbakemelding</a>
 				<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" rel="noopener noreferrer" class="border-bottom external-link">
 					Vanlige Spørsmål
 					@icons.Icon(icons.ExternalLink, icons.Size24)

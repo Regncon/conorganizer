@@ -53,3 +53,29 @@ func TestProfilePage_RendersBreadcrumbAndBillettholderSelectionMetadata(t *testi
 		t.Fatalf("profile live init mismatch\nexpected data-init to contain: %q\nactual:                        %q", expectedInitPath, actualInit)
 	}
 }
+
+func TestProfilePage_RendersFeedbackLink(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at Min Side vises for en innlogget bruker.",
+		When:  "Når profilsiden rendres.",
+		Then:  "Så skal siden inneholde en lenke for å gi tilbakemelding.",
+	})
+
+	// Given
+	expectedFeedbackHref := "/tilbakemelding"
+	db, logger := testutil.CreateTestDBAndLogger(t, "profile_page_feedback")
+	user := requestctx.UserRequestInfo{
+		IsLoggedIn: true,
+		Id:         "profile-page-user",
+		Email:      "profile-page-user@example.com",
+	}
+
+	// When
+	doc := templtest.Render(t, ProfilePage(user, nil, nil, 0, nil, db, logger, nil))
+	actualFeedbackLinkExists := doc.Find(`a[href="` + expectedFeedbackHref + `"]`).Length() > 0
+
+	// Then
+	if !actualFeedbackLinkExists {
+		t.Fatalf("expected profile page to contain a link to %q", expectedFeedbackHref)
+	}
+}

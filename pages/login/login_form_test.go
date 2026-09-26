@@ -36,11 +36,11 @@ func TestLoginForm_RendersDescopeWidgetAndPostLoginRedirect(t *testing.T) {
 		"fetch('/auth/session'",
 		"sessionJwt",
 		"refreshJwt",
-		"window.location.href = '/auth/post-login';",
+		"window.location.href = '/auth/post-login?neste=' + encodeURIComponent(loginNeste);",
 	}
 
 	// When
-	doc := templtest.Render(t, loginForm())
+	doc := templtest.Render(t, loginForm("/"))
 	widget := doc.Find("descope-wc")
 	actualScriptSources := collectScriptSources(doc)
 	actualInlineScript := doc.Find("script:not([src])").Text()
@@ -62,6 +62,26 @@ func TestLoginForm_RendersDescopeWidgetAndPostLoginRedirect(t *testing.T) {
 		if !strings.Contains(actualInlineScript, expectedInlineScriptPart) {
 			t.Fatalf("inline script mismatch\nexpected script to contain: %q\nactual script:              %q", expectedInlineScriptPart, actualInlineScript)
 		}
+	}
+}
+
+func TestLoginForm_CarriesNesteReturnTargetToPostLogin(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren ble sendt til innlogging fra en bestemt side.",
+		When:  "Når innloggingskomponenten rendres med en 'neste'-returmål.",
+		Then:  "Så skal returmålet ligge klart på widget-wrapperen for JavaScript å lese.",
+	})
+
+	// Given
+	expectedNeste := "/tilbakemelding?om=festivalen"
+
+	// When
+	doc := templtest.Render(t, loginForm(expectedNeste))
+	actualNeste, exists := doc.Find(".descope-login-wrapper").Attr("data-login-neste")
+
+	// Then
+	if !exists || actualNeste != expectedNeste {
+		t.Fatalf("expected data-login-neste %q, got %q (exists=%v)", expectedNeste, actualNeste, exists)
 	}
 }
 
