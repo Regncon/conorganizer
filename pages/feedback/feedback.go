@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/layouts"
@@ -20,15 +18,19 @@ import (
 )
 
 const (
-	feedbackCategorySignal = "feedbackCategory"
-	feedbackMessageSignal  = "feedbackMessage"
-	feedbackFormElementID  = "feedback-form"
+	feedbackCategorySignal     = "feedbackCategory"
+	feedbackWentWellSignal     = "feedbackWentWell"
+	feedbackCouldImproveSignal = "feedbackCouldImprove"
+	feedbackTopicsSignal       = "feedbackTopics"
+	feedbackFormElementID      = "feedback-form"
 )
 
 // feedbackSubmission is the Datastar signal payload the feedback form posts.
 type feedbackSubmission struct {
-	Category string `json:"feedbackCategory"`
-	Message  string `json:"feedbackMessage"`
+	Category     string   `json:"feedbackCategory"`
+	WentWell     string   `json:"feedbackWentWell"`
+	CouldImprove string   `json:"feedbackCouldImprove"`
+	Topics       []string `json:"feedbackTopics"`
 }
 
 // SetupFeedbackRoute registers the logged-in feedback form. router is the
@@ -43,7 +45,7 @@ func SetupFeedbackRoute(router chi.Router, db *sql.DB, logger *slog.Logger) erro
 
 		feedbackRouter.Get("/reset", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
-			if err := sse.PatchElementTempl(feedbackFormWrapper("")); err != nil {
+			if err := sse.PatchElementTempl(feedbackFormWrapper(preselectedCategory(r))); err != nil {
 				logger.Error(fmt.Errorf("failed to patch reset feedback form: %w", err).Error())
 			}
 			// The error signals use __ifmissing, so the new form would show
@@ -61,9 +63,14 @@ func SetupFeedbackRoute(router chi.Router, db *sql.DB, logger *slog.Logger) erro
 	return nil
 }
 
+// preselectedCategory maps ?om=<slug> to a category. Some category is always
+// selected: an unrecognized or missing slug falls back to the website
+// category, since the form always needs one preselected.
 func preselectedCategory(r *http.Request) feedback.Category {
-	category, _ := feedback.CategoryFromSlug(r.URL.Query().Get("om"))
-	return category
+	if category, ok := feedback.CategoryFromSlug(r.URL.Query().Get("om")); ok {
+		return category
+	}
+	return feedback.CategoryWebsite
 }
 
 func renderFeedbackPage(w http.ResponseWriter, r *http.Request, db *sql.DB, logger *slog.Logger, preselected feedback.Category) {
@@ -81,36 +88,35 @@ func renderFeedbackPage(w http.ResponseWriter, r *http.Request, db *sql.DB, logg
 }
 
 func submitFeedback(w http.ResponseWriter, r *http.Request, db *sql.DB, logger *slog.Logger) {
-	submission := &feedbackSubmission{}
-	if err := datastar.ReadSignals(r, submission); err != nil {
+	payload := &feedbackSubmission{}
+	if err := datastar.ReadSignals(r, payload); err != nil {
 		http.Error(w, "Klarte ikke å lese skjemadata", http.StatusBadRequest)
 		return
 	}
 
-	category := feedback.Category(submission.Category)
-	message := strings.TrimSpace(submission.Message)
-
-	feedbackErrors := newFeedbackErrors()
-	if !category.Valid() {
-		feedbackErrors.Set(feedbackCategorySignal, "Velg hva tilbakemeldingen gjelder.")
-	}
-	if message == "" {
-		feedbackErrors.Set(feedbackMessageSignal, "Skriv en tilbakemelding før du sender inn.")
-	} else if length := utf8.RuneCountInString(message); length > feedback.MaxMessageLength {
-		feedbackErrors.Set(feedbackMessageSignal, fmt.Sprintf("Tilbakemeldingen er for lang (%d av maks %d tegn).", length, feedback.MaxMessageLength))
+	submission := feedback.Submission{
+		Category:     feedback.Category(payload.Category),
+		WentWell:     payload.WentWell,
+		CouldImprove: payload.CouldImprove,
+		Topics:       toTopics(payload.Topics),
 	}
 
 	sse := datastar.NewSSE(w, r)
-	if feedbackErrors.HasErrors() {
+	feedbackErrors := newFeedbackErrors()
+
+	if fieldErrors := submission.Validate(); len(fieldErrors) > 0 {
+		for _, fieldError := range fieldErrors {
+			feedbackErrors.Set(feedbackSignalForField(fieldError.Field), feedbackFieldErrorMessage(fieldError))
+		}
 		if err := feedbackErrors.Patch(sse); err != nil {
 			logger.Error(fmt.Errorf("failed to patch feedback validation errors: %w", err).Error())
 		}
 		return
 	}
 
-	if err := feedback.Submit(db, category, submission.Message); err != nil {
+	if err := feedback.Submit(db, submission); err != nil {
 		logger.Error(fmt.Errorf("failed to store feedback: %w", err).Error())
-		feedbackErrors.Set(feedbackMessageSignal, "Klarte ikke å lagre tilbakemeldingen. Prøv igjen.")
+		feedbackErrors.Set(feedbackWentWellSignal, "Klarte ikke å lagre tilbakemeldingen. Prøv igjen.")
 		if patchErr := feedbackErrors.Patch(sse); patchErr != nil {
 			logger.Error(fmt.Errorf("failed to patch feedback storage error: %w", patchErr).Error())
 		}
@@ -122,11 +128,54 @@ func submitFeedback(w http.ResponseWriter, r *http.Request, db *sql.DB, logger *
 	if err := feedbackErrors.Patch(sse); err != nil {
 		logger.Error(fmt.Errorf("failed to clear feedback validation errors: %w", err).Error())
 	}
-	if err := sse.PatchElementTempl(feedbackThankYou()); err != nil {
+	if err := sse.PatchElementTempl(feedbackThankYou(submission.Category)); err != nil {
 		logger.Error(fmt.Errorf("failed to patch feedback thank-you: %w", err).Error())
 	}
 }
 
+func toTopics(values []string) []feedback.Topic {
+	topics := make([]feedback.Topic, len(values))
+	for i, value := range values {
+		topics[i] = feedback.Topic(value)
+	}
+	return topics
+}
+
+// feedbackSignalForField maps a service field name to the frontend signal
+// name the matching error message is shown under.
+func feedbackSignalForField(field string) string {
+	switch field {
+	case feedback.FieldCategory:
+		return feedbackCategorySignal
+	case feedback.FieldWentWell:
+		return feedbackWentWellSignal
+	case feedback.FieldCouldImprove:
+		return feedbackCouldImproveSignal
+	case feedback.FieldTopics:
+		return feedbackTopicsSignal
+	}
+	return feedbackWentWellSignal
+}
+
+// feedbackFieldErrorMessage is the Norwegian message shown for one
+// FieldError, matching the same rule the frontend already checked live.
+func feedbackFieldErrorMessage(fieldError feedback.FieldError) string {
+	switch fieldError.Code {
+	case feedback.CodeRequired:
+		return "Fyll ut minst ett av feltene."
+	case feedback.CodeTooLong:
+		return fmt.Sprintf("Teksten er for lang (maks %d tegn).", feedback.MaxTextLength)
+	case feedback.CodePersonalInfo:
+		return "Det ser ut som du har skrevet en e-postadresse eller et telefonnummer. Fjern det før du sender."
+	case feedback.CodeInvalid:
+		if fieldError.Field == feedback.FieldTopics {
+			return "Velg emner som passer til valgt kategori."
+		}
+		return "Velg hva tilbakemeldingen gjelder."
+	}
+	return "Klarte ikke å validere skjemaet. Prøv igjen."
+}
+
 func newFeedbackErrors() *errorfeedback.FeedbackErrors {
-	return errorfeedback.New(feedbackCategorySignal, feedbackMessageSignal)
+	return errorfeedback.New(feedbackCategorySignal, feedbackWentWellSignal, feedbackCouldImproveSignal, feedbackTopicsSignal)
 }
