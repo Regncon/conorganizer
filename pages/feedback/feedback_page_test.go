@@ -152,11 +152,11 @@ func TestFeedbackFormPage_ExposesPersonalInfoPatternValuesForTheScript(t *testin
 	if got := form.AttrOr("data-personal-info-date-replacement", ""); got != feedback.DateOrTimeRangeReplacement {
 		t.Fatalf("expected date replacement %q, got %q", feedback.DateOrTimeRangeReplacement, got)
 	}
-	digitCounts := form.AttrOr("data-personal-info-digit-counts", "")
-	for _, count := range feedback.BannedDigitCounts {
-		if !strings.Contains(digitCounts, strconv.Itoa(count)) {
-			t.Fatalf("expected banned digit counts %q to contain %d", digitCounts, count)
-		}
+	if got := form.AttrOr("data-personal-info-phone-digits", ""); got != strconv.Itoa(feedback.PhoneNumberDigits) {
+		t.Fatalf("expected phone digits %d, got %q", feedback.PhoneNumberDigits, got)
+	}
+	if got := form.AttrOr("data-personal-info-min-long-digits", ""); got != strconv.Itoa(feedback.MinLongNumberDigits) {
+		t.Fatalf("expected min long digits %d, got %q", feedback.MinLongNumberDigits, got)
 	}
 	if doc.Find("script").Length() == 0 {
 		t.Fatalf("expected an inline script implementing the personal info check")

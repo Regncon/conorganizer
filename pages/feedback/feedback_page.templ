@@ -1,7 +1,6 @@
 package feedback
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -82,16 +81,6 @@ func feedbackSubmitDescribedByExpr() string {
 // from a QR code) preselected on the fresh form.
 func feedbackResetExpr(category feedback.Category) string {
 	return fmt.Sprintf("@get('/tilbakemelding/reset?om=%s')", category.Slug())
-}
-
-// feedbackBannedDigitCountsJSON exposes feedback.BannedDigitCounts as a JSON
-// array so the inline script can use the exact same rule as the backend.
-func feedbackBannedDigitCountsJSON() string {
-	bytes, err := json.Marshal(feedback.BannedDigitCounts)
-	if err != nil {
-		return "[]"
-	}
-	return string(bytes)
 }
 
 templ feedbackFormPage(preselected feedback.Category) {
@@ -320,11 +309,12 @@ templ feedbackPersonalInfoScript() {
 			var dateOrTimeRange = new RegExp(form.dataset.personalInfoDatePattern, "g");
 			var withoutDates = text.replace(dateOrTimeRange, form.dataset.personalInfoDateReplacement);
 			var digitRun = new RegExp(form.dataset.personalInfoDigitPattern, "g");
-			var bannedDigitCounts = JSON.parse(form.dataset.personalInfoDigitCounts || "[]");
+			var phoneDigits = Number(form.dataset.personalInfoPhoneDigits);
+			var minLongDigits = Number(form.dataset.personalInfoMinLongDigits);
 			var matches = withoutDates.match(digitRun) || [];
 			for (var i = 0; i < matches.length; i++) {
 				var digitCount = (matches[i].match(/\d/g) || []).length;
-				if (bannedDigitCounts.includes(digitCount)) {
+				if (digitCount === phoneDigits || digitCount >= minLongDigits) {
 					return true;
 				}
 			}
@@ -354,7 +344,8 @@ templ feedbackFormWrapper(preselected feedback.Category) {
 			data-on:submit="evt.preventDefault(); @post('/tilbakemelding')"
 			data-personal-info-email-marker={ feedback.EmailMarker }
 			data-personal-info-digit-pattern={ feedback.DigitRunPattern }
-			data-personal-info-digit-counts={ feedbackBannedDigitCountsJSON() }
+			data-personal-info-phone-digits={ strconv.Itoa(feedback.PhoneNumberDigits) }
+			data-personal-info-min-long-digits={ strconv.Itoa(feedback.MinLongNumberDigits) }
 			data-personal-info-date-pattern={ feedback.DateOrTimeRangePattern }
 			data-personal-info-date-replacement={ feedback.DateOrTimeRangeReplacement }
 			data-computed:_went-well-personal-info={ fmt.Sprintf("window.feedbackContainsPersonalInfo($%s, el)", feedbackWentWellSignal) }
