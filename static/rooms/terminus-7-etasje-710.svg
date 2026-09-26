@@ -237,8 +237,8 @@
         <use xlink:href="#room-710-lift-symbol" x="330" y="543" />
         <use xlink:href="#room-710-lift-symbol" x="386" y="543" />
         <text x="461" y="571" font-size="17">Heis</text>
-        <use xlink:href="#room-710-stair-symbol" x="422" y="645" />
-        <text x="452" y="711">Trapp ned</text>
+        <use xlink:href="#room-710-stair-symbol" x="448" y="645" />
+        <text x="478" y="711">Trapp</text>
         <g id="room-710-right-emergency-exit" opacity="0.55">
           <use xlink:href="#room-710-stair-symbol" x="1045" y="625" />
           <text x="1075" y="698" font-size="17">Nødutgang</text>

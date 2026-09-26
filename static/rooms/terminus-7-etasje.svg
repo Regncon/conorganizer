@@ -267,8 +267,8 @@
       <use xlink:href="#lift-symbol" x="386" y="543"/>
       <text x="461" y="571" font-size="17">Heis</text>
 
-      <use xlink:href="#stair-symbol" x="422" y="645"/>
-      <text x="452" y="711">Trapp ned</text>
+      <use xlink:href="#stair-symbol" x="448" y="645"/>
+      <text x="478" y="711">Trapp</text>
 
       <g id="right-emergency-exit" opacity="0.55">
         <use xlink:href="#stair-symbol" x="1045" y="625"/>
