@@ -105,26 +105,9 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 			flex-wrap: wrap;
 			gap: var(--spacing-2x);
 
-			a {
-				text-decoration: none;
-				padding-block: var(--spacing-2x);
-				padding-inline: var(--spacing-4x);
-				border: 1px solid var(--bg-item-border);
-				border-radius: var(--border-radius-2x);
-				background: var(--bg-item);
-				color: var(--color-text-soft);
-				transition: var(--btn-transition);
-
-				&:hover {
-					border-color: var(--bg-item-border-hover);
-					color: var(--color-text-strong);
-					background: color-mix(in srgb, var(--bg-item) 85%, var(--color-primary) 15%);
-				}
-
-				&[aria-current="page"] {
-					border-color: var(--color-primary);
-					color: var(--color-primary);
-				}
+			a[aria-current="page"] {
+				border-color: var(--color-primary);
+				color: var(--color-primary);
 			}
 		}
 
@@ -145,17 +128,13 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 			display: flex;
 			flex-direction: column;
 			gap: var(--spacing-2x);
-			border: 1px solid var(--bg-item-border);
-			border-radius: var(--border-radius-2x);
-			background: var(--bg-surface);
-			padding: var(--responsive-pane-padding);
 
 			.feedback-entry-meta {
 				display: flex;
 				flex-wrap: wrap;
 				place-content: start space-between;
 				gap: var(--spacing-2x);
-				font-size: 0.875rem;
+				font-size: var(--text-body-small);
 				color: var(--color-text-soft);
 			}
 
@@ -174,7 +153,7 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 			}
 
 			.feedback-entry-topic {
-				font-size: 0.8125rem;
+				font-size: var(--text-body-small);
 				color: var(--color-text-soft);
 				background: var(--bg-item);
 				border: 1px solid var(--bg-item-border);
@@ -204,9 +183,9 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 	<div class="page-content-container feedback-admin">
 		<h1 class="page-heading">Tilbakemeldinger</h1>
 		<nav class="feedback-filter-tabs" aria-label="Filtrer tilbakemeldinger">
-			<a href="/admin/tilbakemeldinger/" if activeCategory == "" { aria-current="page" }>Alle</a>
+			<a href="/admin/tilbakemeldinger/" class="btn btn--outline" if activeCategory == "" { aria-current="page" }>Alle</a>
 			for _, category := range feedback.Categories {
-				<a href={ feedbackFilterHref(category) } if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
+				<a href={ feedbackFilterHref(category) } class="btn btn--outline" if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
 			}
 		</nav>
 		<p class="feedback-count">{ feedbackCountLabel(len(entries)) }</p>
@@ -215,7 +194,7 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 		} else {
 			<ul class="feedback-list">
 				for _, entry := range entries {
-					<li class="feedback-entry">
+					<li class="surface-pane feedback-entry">
 						<div class="feedback-entry-meta">
 							<span class="feedback-entry-category">{ entry.Category.Label() }</span>
 							<time class="feedback-entry-time">{ formatFeedbackTime(entry.CreatedAt) }</time>
