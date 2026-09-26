@@ -22,8 +22,8 @@ func TestAdminPage_RendersBreadcrumbAndAdminAreaLinks(t *testing.T) {
 		"/admin/approval/",
 		"/admin/billettholder/",
 		"/admin/rooms/",
-		"/print",
 		"/admin/tilbakemeldinger/",
+		"/print",
 	}
 	db := testutil.CreateTestDB(t, "admin_page")
 	testutil.MustExec(t, db, `

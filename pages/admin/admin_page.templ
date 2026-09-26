@@ -86,20 +86,20 @@ templ adminPage(db *sql.DB) {
 						<a role="button" href="/admin/rooms/" class="btn btn--outline">Gå til rom-oversikt</a>
 					}
 					@adminCard(
-						"Utskriftsvennlig program",
-						"Skriv ut programmet med arrangementsdetaljer og romkart.",
-						"/static/printer.webp",
-						"Skriver",
-					) {
-						<a role="button" href="/print" class="btn btn--outline">Gå til utskrift</a>
-					}
-					@adminCard(
 						"Tilbakemeldinger",
 						"Se tilbakemeldinger fra brukere om nettsiden og festivalen.",
 						"/static/call-to-action-avatar.webp",
 						"Feedback",
 					) {
 						<a role="button" href="/admin/tilbakemeldinger/" class="btn btn--outline">Gå til tilbakemeldinger</a>
+					}
+					@adminCard(
+						"Utskriftsvennlig program",
+						"Skriv ut programmet med arrangementsdetaljer og romkart.",
+						"/static/printer.webp",
+						"Skriver",
+					) {
+						<a role="button" href="/print" class="btn btn--outline">Gå til utskrift</a>
 					}
 				</div>
 			</div>
