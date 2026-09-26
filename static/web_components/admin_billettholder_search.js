@@ -97,7 +97,7 @@ if (!customElements.get("admin-billettholder-search")) {
                 outline: none;
                 background-color: var(--btn-secondary-hover-bg);
                 color: var(--btn-secondary-active-text);
-                box-shadow: 0 0 0 3px var(--btn-secondary-focus-shadow);
+                box-shadow: var(--btn-secondary-shadow);
             }
         }
 

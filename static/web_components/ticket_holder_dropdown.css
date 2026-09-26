@@ -59,7 +59,7 @@
         &:focus,
         &:focus-visible {
             color: var(--btn-primary-active-text);
-            box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
+            box-shadow: var(--btn-primary-shadow);
         }
     }
 

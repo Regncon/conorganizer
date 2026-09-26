@@ -21,6 +21,7 @@
     --btn-primary-active-bg: var(--color-primary-active);
     --btn-primary-active-text: var(--color-text-strong);
     --btn-primary-focus-shadow: var(--color-primary-focus-visible);
+    --btn-primary-shadow: var(--btn-shadow-size) var(--btn-primary-focus-shadow);
 
     /* secondary */
     --btn-secondary-bg: transparent;
@@ -29,6 +30,7 @@
     --btn-secondary-active-bg: var(--btn-flat-active);
     --btn-secondary-active-text: var(--color-text-strong);
     --btn-secondary-focus-shadow: var(--color-text-soft-50);
+    --btn-secondary-shadow: var(--btn-shadow-size) var(--btn-secondary-focus-shadow);
 
     /* ghost */
     --btn-ghost-hover-bg: var(--btn-flat-hover);
@@ -79,7 +81,7 @@
     outline: none;
     background-color: var(--btn-primary-hover-bg);
     color: var(--btn-primary-active-text);
-    box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
+    box-shadow: var(--btn-primary-shadow);
 }
 
 .btn--primary:active {
@@ -111,7 +113,7 @@
     outline: none;
     background-color: var(--btn-secondary-hover-bg);
     color: var(--btn-secondary-active-text);
-    box-shadow: 0 0 0 3px var(--btn-secondary-focus-shadow);
+    box-shadow: var(--btn-secondary-shadow);
 }
 
 .btn--secondary:active {
@@ -173,7 +175,7 @@
 .btn--cta:focus-visible,
 .btn--cta:focus {
     outline: none;
-    box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
+    box-shadow: var(--btn-primary-shadow);
     background-color: var(--color-primary-hover);
     color: var(--btn-primary-active-text);
 }
