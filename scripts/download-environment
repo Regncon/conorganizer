@@ -11,7 +11,7 @@ target="${2:-all}"
 
 usage() {
     cat >&2 <<'USAGE'
-Usage: scripts/download-environment main|demo [all|db|images]
+Usage: bash scripts/download-environment main|demo [all|db|images]
 USAGE
 }
 
@@ -118,8 +118,8 @@ download_images() {
     log "downloading ${environment} images to ${local_image_dir}"
     mkdir -p "$local_image_dir"
 
-    ssh_remote "if [ ! -d '${remote_image_dir}' ]; then echo 'missing image directory: ${remote_image_dir}' >&2; exit 1; fi; tar -C '${remote_image_dir}' -cf - ." \
-        | tar -C "$local_image_dir" -xf -
+    ssh_remote "if [ ! -d '${remote_image_dir}' ]; then echo 'missing image directory: ${remote_image_dir}' >&2; exit 1; fi; cd '${remote_image_dir}' && find . -mindepth 1 -print0 | tar --no-recursion --null --files-from=- --create --file=-" \
+        | tar --no-same-owner --no-same-permissions --no-overwrite-dir --touch -C "$local_image_dir" -xf -
 
     log "images downloaded: ${local_image_dir}"
 }
