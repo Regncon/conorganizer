@@ -29,14 +29,14 @@ func TestFeedbackAdminPage_RendersEntriesNewestFirst(t *testing.T) {
 	// Given
 	expectedTexts := []string{"nyest", "midten", "eldst"}
 	db, _ := testutil.CreateTestDBAndLogger(t, "feedback_admin_newest_first")
-	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, "midten", "", "2026-09-20T12:00:00.000Z")
-	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, "nyest", "", "2026-09-21T12:00:00.000Z")
-	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, "eldst", "", "2026-09-19T12:00:00.000Z")
+	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, "midten", "2026-09-20T12:00:00.000Z")
+	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, "nyest", "2026-09-21T12:00:00.000Z")
+	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, "eldst", "2026-09-19T12:00:00.000Z")
 	entries := mustListFeedback(t, db, "")
 
 	// When
 	doc := templtest.Render(t, feedbackAdminPage(entries, ""))
-	actualTexts := templtest.CollectTexts(doc, ".feedback-entry-went-well")
+	actualTexts := templtest.CollectTexts(doc, ".feedback-entry-message")
 
 	// Then
 	if len(actualTexts) != len(expectedTexts) {
@@ -59,16 +59,16 @@ func TestFeedbackAdminPage_FiltersByCategoryAndMarksActiveTab(t *testing.T) {
 	// Given
 	expectedText := "om festivalen"
 	db, _ := testutil.CreateTestDBAndLogger(t, "feedback_admin_filter")
-	insertFeedbackAdminEntry(t, db, feedback.CategoryWebsite, "om nettsiden", "", "2026-09-20T12:00:00.000Z")
-	insertFeedbackAdminEntry(t, db, feedback.CategoryConvention, expectedText, "", "2026-09-20T13:00:00.000Z")
-	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, "om noe annet", "", "2026-09-20T14:00:00.000Z")
+	insertFeedbackAdminEntry(t, db, feedback.CategoryWebsite, "om nettsiden", "2026-09-20T12:00:00.000Z")
+	insertFeedbackAdminEntry(t, db, feedback.CategoryConvention, expectedText, "2026-09-20T13:00:00.000Z")
+	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, "om noe annet", "2026-09-20T14:00:00.000Z")
 
 	activeCategory := resolveFeedbackCategoryFilter("festivalen")
 	entries := mustListFeedback(t, db, activeCategory)
 
 	// When
 	doc := templtest.Render(t, feedbackAdminPage(entries, activeCategory))
-	actualTexts := templtest.CollectTexts(doc, ".feedback-entry-went-well")
+	actualTexts := templtest.CollectTexts(doc, ".feedback-entry-message")
 	activeTabText := templtest.CollectTexts(doc, `a[aria-current="page"]`)
 
 	// Then
@@ -125,43 +125,28 @@ func TestFeedbackAdminPage_RendersEmptyState(t *testing.T) {
 	}
 }
 
-func TestFeedbackAdminPage_ShowsBothTextsAndTopicsWhenPresent(t *testing.T) {
+func TestFeedbackAdminPage_ShowsMessageAndTopicsWhenPresent(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en tilbakemelding med begge tekstfelt og emner.",
+		Given: "Gitt en tilbakemelding med både tekst og emner.",
 		When:  "Når admin-listen rendres.",
-		Then:  "Så vises begge tekstene under sine overskrifter, og emnene som chips.",
+		Then:  "Så vises teksten, og emnene som chips.",
 	})
 
 	// Given
-	expectedWentWell := "Påmeldingen var enkel."
-	expectedCouldImprove := "Programmet var tregt på mobil."
+	expectedMessage := "Påmeldingen var enkel, men programmet var tregt på mobil."
 	db, _ := testutil.CreateTestDBAndLogger(t, "feedback_admin_texts_and_topics")
-	insertFeedbackAdminEntryWithTopics(t, db, feedback.CategoryWebsite, expectedWentWell, expectedCouldImprove,
+	insertFeedbackAdminEntryWithTopics(t, db, feedback.CategoryWebsite, expectedMessage,
 		[]feedback.Topic{feedback.TopicSignup, feedback.TopicMobile}, "2026-09-20T12:00:00.000Z")
 	entries := mustListFeedback(t, db, "")
 
 	// When
 	doc := templtest.Render(t, feedbackAdminPage(entries, ""))
-	actualHeadings := templtest.CollectTexts(doc, ".feedback-entry-heading")
-	actualWentWell := templtest.CollectTexts(doc, ".feedback-entry-went-well")
-	actualCouldImprove := templtest.CollectTexts(doc, ".feedback-entry-could-improve")
+	actualMessage := templtest.CollectTexts(doc, ".feedback-entry-message")
 	actualTopics := templtest.CollectTexts(doc, ".feedback-entry-topic")
 
 	// Then
-	expectedHeadings := []string{"Fungerte bra", "Kan bli bedre"}
-	if len(actualHeadings) != len(expectedHeadings) {
-		t.Fatalf("expected headings %v, got %v", expectedHeadings, actualHeadings)
-	}
-	for i, expectedHeading := range expectedHeadings {
-		if actualHeadings[i] != expectedHeading {
-			t.Fatalf("expected heading %q at %d, got %q", expectedHeading, i, actualHeadings[i])
-		}
-	}
-	if len(actualWentWell) != 1 || actualWentWell[0] != expectedWentWell {
-		t.Fatalf("expected went-well text %q, got %v", expectedWentWell, actualWentWell)
-	}
-	if len(actualCouldImprove) != 1 || actualCouldImprove[0] != expectedCouldImprove {
-		t.Fatalf("expected could-improve text %q, got %v", expectedCouldImprove, actualCouldImprove)
+	if len(actualMessage) != 1 || actualMessage[0] != expectedMessage {
+		t.Fatalf("expected message %q, got %v", expectedMessage, actualMessage)
 	}
 	expectedTopics := []string{"Påmelding", "Mobil"}
 	if len(actualTopics) != len(expectedTopics) {
@@ -174,35 +159,27 @@ func TestFeedbackAdminPage_ShowsBothTextsAndTopicsWhenPresent(t *testing.T) {
 	}
 }
 
-func TestFeedbackAdminPage_OmitsEmptyTextSectionAndTopicList(t *testing.T) {
+func TestFeedbackAdminPage_OmitsTopicListWhenNoTopics(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en tilbakemelding med kun ett tekstfelt utfylt og ingen emner.",
+		Given: "Gitt en tilbakemelding uten emner.",
 		When:  "Når admin-listen rendres.",
-		Then:  "Så vises kun den utfylte tekstseksjonen, og ingen emneliste.",
+		Then:  "Så vises ingen emneliste.",
 	})
 
 	// Given
-	expectedWentWell := "Alt fungerte bra."
+	expectedMessage := "Alt fungerte bra."
 	db, _ := testutil.CreateTestDBAndLogger(t, "feedback_admin_omits_empty")
-	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, expectedWentWell, "", "2026-09-20T12:00:00.000Z")
+	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, expectedMessage, "2026-09-20T12:00:00.000Z")
 	entries := mustListFeedback(t, db, "")
 
 	// When
 	doc := templtest.Render(t, feedbackAdminPage(entries, ""))
-	actualHeadings := templtest.CollectTexts(doc, ".feedback-entry-heading")
-	actualWentWell := templtest.CollectTexts(doc, ".feedback-entry-went-well")
-	actualCouldImprove := templtest.CollectTexts(doc, ".feedback-entry-could-improve")
+	actualMessage := templtest.CollectTexts(doc, ".feedback-entry-message")
 	actualTopicListCount := doc.Find(".feedback-entry-topics").Length()
 
 	// Then
-	if len(actualHeadings) != 1 || actualHeadings[0] != "Fungerte bra" {
-		t.Fatalf("expected only the went-well heading, got %v", actualHeadings)
-	}
-	if len(actualWentWell) != 1 || actualWentWell[0] != expectedWentWell {
-		t.Fatalf("expected went-well text %q, got %v", expectedWentWell, actualWentWell)
-	}
-	if len(actualCouldImprove) != 0 {
-		t.Fatalf("expected no could-improve section, got %v", actualCouldImprove)
+	if len(actualMessage) != 1 || actualMessage[0] != expectedMessage {
+		t.Fatalf("expected message %q, got %v", expectedMessage, actualMessage)
 	}
 	if actualTopicListCount != 0 {
 		t.Fatalf("expected no topic list, got %d", actualTopicListCount)
@@ -217,18 +194,18 @@ func TestFeedbackAdminPage_PreservesLineBreaksInText(t *testing.T) {
 	})
 
 	// Given
-	expectedWentWell := "Første linje\nAndre linje"
+	expectedMessage := "Første linje\nAndre linje"
 	db, _ := testutil.CreateTestDBAndLogger(t, "feedback_admin_line_breaks")
-	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, expectedWentWell, "", "2026-09-20T12:00:00.000Z")
+	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, expectedMessage, "2026-09-20T12:00:00.000Z")
 	entries := mustListFeedback(t, db, "")
 
 	// When
 	doc := templtest.Render(t, feedbackAdminPage(entries, ""))
-	actualWentWell := doc.Find(".feedback-entry-went-well").First().Text()
+	actualMessage := doc.Find(".feedback-entry-message").First().Text()
 
 	// Then
-	if actualWentWell != expectedWentWell {
-		t.Fatalf("expected line breaks to be preserved, expected %q, got %q", expectedWentWell, actualWentWell)
+	if actualMessage != expectedMessage {
+		t.Fatalf("expected line breaks to be preserved, expected %q, got %q", expectedMessage, actualMessage)
 	}
 }
 
@@ -263,7 +240,7 @@ func TestFeedbackAdminRoute_NonAdminIsForbiddenAndSeesNoFeedback(t *testing.T) {
 	expectedStatus := http.StatusForbidden
 	secretText := "hemmelig tilbakemelding"
 	db, logger := testutil.CreateTestDBAndLogger(t, "feedback_admin_non_admin")
-	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, secretText, "", "2026-09-20T12:00:00.000Z")
+	insertFeedbackAdminEntry(t, db, feedback.CategoryOther, secretText, "2026-09-20T12:00:00.000Z")
 	router := chi.NewRouter()
 	adminRouter := router.With(
 		userctx.UserMiddleware(logger, db),
@@ -288,12 +265,12 @@ func TestFeedbackAdminRoute_NonAdminIsForbiddenAndSeesNoFeedback(t *testing.T) {
 	}
 }
 
-func insertFeedbackAdminEntry(t *testing.T, db *sql.DB, category feedback.Category, wentWell, couldImprove, createdAt string) {
+func insertFeedbackAdminEntry(t *testing.T, db *sql.DB, category feedback.Category, message, createdAt string) {
 	t.Helper()
-	insertFeedbackAdminEntryWithTopics(t, db, category, wentWell, couldImprove, nil, createdAt)
+	insertFeedbackAdminEntryWithTopics(t, db, category, message, nil, createdAt)
 }
 
-func insertFeedbackAdminEntryWithTopics(t *testing.T, db *sql.DB, category feedback.Category, wentWell, couldImprove string, topics []feedback.Topic, createdAt string) {
+func insertFeedbackAdminEntryWithTopics(t *testing.T, db *sql.DB, category feedback.Category, message string, topics []feedback.Topic, createdAt string) {
 	t.Helper()
 	if topics == nil {
 		topics = []feedback.Topic{}
@@ -303,8 +280,8 @@ func insertFeedbackAdminEntryWithTopics(t *testing.T, db *sql.DB, category feedb
 		t.Fatalf("marshal topics: %v", err)
 	}
 	testutil.MustExec(t, db,
-		`INSERT INTO feedback (category, went_well, could_improve, topics, created_at) VALUES (?, ?, ?, ?, ?)`,
-		string(category), wentWell, couldImprove, string(topicsJSON), createdAt,
+		`INSERT INTO feedback (category, message, topics, created_at) VALUES (?, ?, ?, ?)`,
+		string(category), message, string(topicsJSON), createdAt,
 	)
 }
 

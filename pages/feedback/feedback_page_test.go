@@ -48,11 +48,8 @@ func TestFeedbackFormPage_DefaultsToWebsiteCategoryWithoutOmParam(t *testing.T) 
 	if pressedCount != 1 {
 		t.Fatalf("expected exactly one pressed category button, got %d", pressedCount)
 	}
-	if doc.Find("textarea#feedback-went-well").AttrOr("maxlength", "") != strconv.Itoa(feedback.MaxTextLength) {
-		t.Fatalf("expected 'went well' textarea maxlength %d", feedback.MaxTextLength)
-	}
-	if doc.Find("textarea#feedback-could-improve").AttrOr("maxlength", "") != strconv.Itoa(feedback.MaxTextLength) {
-		t.Fatalf("expected 'could improve' textarea maxlength %d", feedback.MaxTextLength)
+	if doc.Find("textarea#feedback-message").AttrOr("maxlength", "") != strconv.Itoa(feedback.MaxTextLength) {
+		t.Fatalf("expected message textarea maxlength %d", feedback.MaxTextLength)
 	}
 	if templtest.CollectTexts(doc, "button[type=submit]")[0] != "Send tilbakemelding" {
 		t.Fatalf("expected submit button labelled 'Send tilbakemelding'")
@@ -215,37 +212,63 @@ func TestFeedbackFormPage_HidesTopicsQuestionWhenCategoryHasNoTopics(t *testing.
 	}
 }
 
-func TestFeedbackFormPage_DescribesTextFieldsAndSubmitButtonForAssistiveTech(t *testing.T) {
+func TestFeedbackFormPage_DescribesMessageFieldAndSubmitButtonForAssistiveTech(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at tilbakemeldingssiden rendres.",
-		When:  "Når en skjermleser leser tekstfeltene og send-knappen.",
-		Then:  "Så skal feltene peke på feilmelding og tegnteller, og personvernhintet og knappen skal kobles til når hintet vises.",
+		When:  "Når en skjermleser leser tekstfeltet og send-knappen.",
+		Then:  "Så skal feltet peke på feilmelding og tegnteller, og personvernhintet og knappen skal kobles til når hintet vises.",
 	})
 
-	for _, fieldKey := range []string{"went-well", "could-improve"} {
-		// Given
-		expectedDescribedBy := "feedback-" + fieldKey + "-error feedback-" + fieldKey + "-counter"
-		expectedHintID := "feedback-" + fieldKey + "-personal-info"
+	// Given
+	expectedDescribedBy := "feedback-message-error feedback-message-counter"
+	expectedHintID := "feedback-message-personal-info"
 
-		// When
-		doc := templtest.Render(t, feedbackFormPage(feedback.CategoryWebsite))
-		textarea := doc.Find("textarea#feedback-" + fieldKey)
+	// When
+	doc := templtest.Render(t, feedbackFormPage(feedback.CategoryWebsite))
+	textarea := doc.Find("textarea#feedback-message")
 
-		// Then
-		if got := textarea.AttrOr("aria-describedby", ""); got != expectedDescribedBy {
-			t.Fatalf("expected textarea aria-describedby %q, got %q", expectedDescribedBy, got)
+	// Then
+	if got := textarea.AttrOr("aria-describedby", ""); got != expectedDescribedBy {
+		t.Fatalf("expected textarea aria-describedby %q, got %q", expectedDescribedBy, got)
+	}
+	for _, id := range strings.Fields(expectedDescribedBy + " " + expectedHintID) {
+		if doc.Find("#"+id).Length() != 1 {
+			t.Fatalf("expected exactly one element with id %q", id)
 		}
-		for _, id := range strings.Fields(expectedDescribedBy + " " + expectedHintID) {
-			if doc.Find("#"+id).Length() != 1 {
-				t.Fatalf("expected exactly one element with id %q", id)
-			}
-		}
-		if !strings.Contains(textarea.AttrOr("data-attr:aria-describedby", ""), expectedHintID) {
-			t.Fatalf("expected textarea to reference %q while the hint is shown", expectedHintID)
-		}
-		if !strings.Contains(doc.Find("button[type=submit]").AttrOr("data-attr:aria-describedby", ""), expectedHintID) {
-			t.Fatalf("expected submit button to reference %q while it is disabled by that hint", expectedHintID)
-		}
+	}
+	if !strings.Contains(textarea.AttrOr("data-attr:aria-describedby", ""), expectedHintID) {
+		t.Fatalf("expected textarea to reference %q while the hint is shown", expectedHintID)
+	}
+	if !strings.Contains(doc.Find("button[type=submit]").AttrOr("data-attr:aria-describedby", ""), expectedHintID) {
+		t.Fatalf("expected submit button to reference %q while it is disabled by that hint", expectedHintID)
+	}
+}
+
+func TestFeedbackFormPage_ShowsHelpTextAndPlaceholderUnderMessageLabel(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at tilbakemeldingssiden rendres.",
+		When:  "Når feltet for tilbakemelding vises.",
+		Then:  "Så skal det vise hjelpetekst om hva som fungerte bra og hva som kan bli bedre, med en plassholdertekst.",
+	})
+
+	// Given
+	expectedLabel := "Tilbakemelding"
+	expectedHelpText := "Fortell gjerne hva som fungerte bra, og hva som kan bli bedre."
+
+	// When
+	doc := templtest.Render(t, feedbackFormPage(feedback.CategoryWebsite))
+	label := doc.Find(`label[for="feedback-message"]`)
+	textarea := doc.Find("textarea#feedback-message")
+
+	// Then
+	if !strings.Contains(label.Text(), expectedLabel) {
+		t.Fatalf("expected label to contain %q, got %q", expectedLabel, label.Text())
+	}
+	if !strings.Contains(label.Text(), expectedHelpText) {
+		t.Fatalf("expected help text %q under the label, got %q", expectedHelpText, label.Text())
+	}
+	if placeholder := textarea.AttrOr("placeholder", ""); placeholder == "" {
+		t.Fatalf("expected the textarea to have a placeholder")
 	}
 }
 

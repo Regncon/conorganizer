@@ -15,15 +15,14 @@ func TestSubmit_StoredFeedbackIsListedWithTopics(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given an empty feedback table.",
 		When:  "When a user submits feedback about the website with topics.",
-		Then:  "Then the feedback is listed with its category, texts, topics and a creation time.",
+		Then:  "Then the feedback is listed with its category, message, topics and a creation time.",
 	})
 
 	// Given
 	expected := Submission{
-		Category:     CategoryWebsite,
-		WentWell:     "Påmeldingen var enkel å finne.",
-		CouldImprove: "Programmet er tregt på mobil.",
-		Topics:       []Topic{TopicSignup, TopicMobile},
+		Category: CategoryWebsite,
+		Message:  "Påmeldingen var enkel å finne, men programmet er tregt på mobil.",
+		Topics:   []Topic{TopicSignup, TopicMobile},
 	}
 	db, _ := testutil.CreateTestDBAndLogger(t, "feedback_round_trip")
 
@@ -39,7 +38,7 @@ func TestSubmit_StoredFeedbackIsListedWithTopics(t *testing.T) {
 		t.Fatalf("expected 1 entry, got %d", len(entries))
 	}
 	entry := entries[0]
-	if entry.Category != expected.Category || entry.WentWell != expected.WentWell || entry.CouldImprove != expected.CouldImprove {
+	if entry.Category != expected.Category || entry.Message != expected.Message {
 		t.Fatalf("expected %+v, got %+v", expected, entry)
 	}
 	if !reflect.DeepEqual(entry.Topics, expected.Topics) {
@@ -62,7 +61,7 @@ func TestSubmit_StoresNoTopicsAsEmptyList(t *testing.T) {
 	db, _ := testutil.CreateTestDBAndLogger(t, "feedback_no_topics")
 
 	// When
-	err := Submit(db, Submission{Category: CategoryOther, CouldImprove: "Mer kaffe."})
+	err := Submit(db, Submission{Category: CategoryOther, Message: "Mer kaffe."})
 
 	// Then
 	if err != nil {
@@ -101,7 +100,7 @@ func TestList_ReturnsNewestFirst(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected list to succeed: %v", err)
 	}
-	assertWentWell(t, entries, expectedTexts)
+	assertMessages(t, entries, expectedTexts)
 }
 
 func TestList_FiltersByCategory(t *testing.T) {
@@ -125,26 +124,24 @@ func TestList_FiltersByCategory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected list to succeed: %v", err)
 	}
-	assertWentWell(t, entries, expectedTexts)
+	assertMessages(t, entries, expectedTexts)
 }
 
 func TestSubmit_TrimsSurroundingWhitespace(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given texts with surrounding whitespace.",
+		Given: "Given a message with surrounding whitespace.",
 		When:  "When the feedback is submitted.",
-		Then:  "Then the texts are stored without the surrounding whitespace.",
+		Then:  "Then the message is stored without the surrounding whitespace.",
 	})
 
 	// Given
-	expectedWentWell := "Flotte lokaler."
-	expectedCouldImprove := "Mer kaffe, takk."
+	expectedMessage := "Flotte lokaler, men mer kaffe, takk."
 	db, _ := testutil.CreateTestDBAndLogger(t, "feedback_trim")
 
 	// When
 	err := Submit(db, Submission{
-		Category:     CategoryConvention,
-		WentWell:     " \tFlotte lokaler.\n",
-		CouldImprove: "  \n\tMer kaffe, takk. \n ",
+		Category: CategoryConvention,
+		Message:  " \tFlotte lokaler, men mer kaffe, takk.\n",
 	})
 
 	// Then
@@ -152,56 +149,21 @@ func TestSubmit_TrimsSurroundingWhitespace(t *testing.T) {
 		t.Fatalf("expected submit to succeed: %v", err)
 	}
 	entry := mustList(t, db, "")[0]
-	if entry.WentWell != expectedWentWell || entry.CouldImprove != expectedCouldImprove {
-		t.Fatalf("expected %q/%q, got %q/%q", expectedWentWell, expectedCouldImprove, entry.WentWell, entry.CouldImprove)
+	if entry.Message != expectedMessage {
+		t.Fatalf("expected %q, got %q", expectedMessage, entry.Message)
 	}
 }
 
-func TestSubmit_AcceptsOnlyOneText(t *testing.T) {
+func TestValidate_RequiresMessage(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given feedback with only one of the two texts filled in.",
-		When:  "When the feedback is submitted.",
-		Then:  "Then it is accepted.",
-	})
-
-	cases := []struct {
-		name       string
-		submission Submission
-	}{
-		{name: "only went well", submission: Submission{Category: CategoryOther, WentWell: "Bra stemning."}},
-		{name: "only could improve", submission: Submission{Category: CategoryOther, CouldImprove: "Mer skilting."}},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Given
-			expectedCount := 1
-			db, _ := testutil.CreateTestDBAndLogger(t, "feedback_one_text")
-
-			// When
-			err := Submit(db, tc.submission)
-
-			// Then
-			if err != nil {
-				t.Fatalf("expected submit to succeed: %v", err)
-			}
-			if count := len(mustList(t, db, "")); count != expectedCount {
-				t.Fatalf("expected %d entry, got %d", expectedCount, count)
-			}
-		})
-	}
-}
-
-func TestValidate_RequiresAtLeastOneText(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "Given feedback where both texts are empty or whitespace.",
+		Given: "Given feedback where the message is empty or only whitespace.",
 		When:  "When the submission is validated.",
-		Then:  "Then it is rejected as required on the went well field.",
+		Then:  "Then it is rejected as required on the message field.",
 	})
 
 	// Given
-	expectedErrors := []FieldError{{Field: FieldWentWell, Code: CodeRequired}}
-	submission := Submission{Category: CategoryWebsite, WentWell: " \n", CouldImprove: "\t "}
+	expectedErrors := []FieldError{{Field: FieldMessage, Code: CodeRequired}}
+	submission := Submission{Category: CategoryWebsite, Message: " \n\t "}
 
 	// When
 	errs := submission.Validate()
@@ -222,7 +184,7 @@ func TestValidate_RejectsUnknownCategory(t *testing.T) {
 	for _, category := range []Category{"", "food"} {
 		// Given
 		expectedErrors := []FieldError{{Field: FieldCategory, Code: CodeInvalid}}
-		submission := Submission{Category: category, WentWell: "Hei"}
+		submission := Submission{Category: category, Message: "Hei"}
 
 		// When
 		errs := submission.Validate()
@@ -234,11 +196,11 @@ func TestValidate_RejectsUnknownCategory(t *testing.T) {
 	}
 }
 
-func TestValidate_LimitsEachTextInRunes(t *testing.T) {
+func TestValidate_LimitsMessageInRunes(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given texts of multi-byte characters at and over the maximum length.",
+		Given: "Given a message of multi-byte characters at and over the maximum length.",
 		When:  "When the submission is validated.",
-		Then:  "Then the limit counts characters per field, and only the too long field is reported.",
+		Then:  "Then the limit counts characters, and only a too long message is reported.",
 	})
 
 	cases := []struct {
@@ -247,19 +209,14 @@ func TestValidate_LimitsEachTextInRunes(t *testing.T) {
 		expected   []FieldError
 	}{
 		{
-			name:       "both at max",
-			submission: Submission{Category: CategoryOther, WentWell: strings.Repeat("ø", MaxTextLength), CouldImprove: strings.Repeat("å", MaxTextLength)},
+			name:       "at max",
+			submission: Submission{Category: CategoryOther, Message: strings.Repeat("ø", MaxTextLength)},
 			expected:   nil,
 		},
 		{
-			name:       "went well too long",
-			submission: Submission{Category: CategoryOther, WentWell: strings.Repeat("ø", MaxTextLength+1)},
-			expected:   []FieldError{{Field: FieldWentWell, Code: CodeTooLong}},
-		},
-		{
-			name:       "could improve too long",
-			submission: Submission{Category: CategoryOther, WentWell: "Bra", CouldImprove: strings.Repeat("å", MaxTextLength+1)},
-			expected:   []FieldError{{Field: FieldCouldImprove, Code: CodeTooLong}},
+			name:       "over max",
+			submission: Submission{Category: CategoryOther, Message: strings.Repeat("ø", MaxTextLength+1)},
+			expected:   []FieldError{{Field: FieldMessage, Code: CodeTooLong}},
 		},
 	}
 
@@ -281,9 +238,9 @@ func TestValidate_LimitsEachTextInRunes(t *testing.T) {
 
 func TestSubmit_StoresTextAtMaxLength(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given texts of exactly the maximum number of multi-byte characters.",
+		Given: "Given a message of exactly the maximum number of multi-byte characters.",
 		When:  "When the feedback is submitted.",
-		Then:  "Then the database accepts and stores them.",
+		Then:  "Then the database accepts and stores it.",
 	})
 
 	// Given
@@ -291,13 +248,13 @@ func TestSubmit_StoresTextAtMaxLength(t *testing.T) {
 	db, _ := testutil.CreateTestDBAndLogger(t, "feedback_max_length")
 
 	// When
-	err := Submit(db, Submission{Category: CategoryOther, WentWell: expectedText, CouldImprove: expectedText})
+	err := Submit(db, Submission{Category: CategoryOther, Message: expectedText})
 
 	// Then
 	if err != nil {
 		t.Fatalf("expected submit to succeed: %v", err)
 	}
-	assertWentWell(t, mustList(t, db, ""), []string{expectedText})
+	assertMessages(t, mustList(t, db, ""), []string{expectedText})
 }
 
 func TestValidate_TopicsMustBelongToCategoryAndBeUnique(t *testing.T) {
@@ -323,7 +280,7 @@ func TestValidate_TopicsMustBelongToCategoryAndBeUnique(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given
 			expectedErrors := []FieldError{{Field: FieldTopics, Code: CodeInvalid}}
-			submission := Submission{Category: tc.category, WentWell: "Hei", Topics: tc.topics}
+			submission := Submission{Category: tc.category, Message: "Hei", Topics: tc.topics}
 
 			// When
 			errs := submission.Validate()
@@ -338,17 +295,16 @@ func TestValidate_TopicsMustBelongToCategoryAndBeUnique(t *testing.T) {
 
 func TestValidate_RejectsPersonalInfoPerField(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given a phone number in one text and an email in the other.",
+		Given: "Given a phone number in the message.",
 		When:  "When the submission is validated.",
-		Then:  "Then both fields are reported as containing personal info.",
+		Then:  "Then the message field is reported as containing personal info.",
 	})
 
 	// Given
 	expectedErrors := []FieldError{
-		{Field: FieldWentWell, Code: CodePersonalInfo},
-		{Field: FieldCouldImprove, Code: CodePersonalInfo},
+		{Field: FieldMessage, Code: CodePersonalInfo},
 	}
-	submission := Submission{Category: CategoryOther, WentWell: "Ring meg på 123 45 678", CouldImprove: "kari@example.no"}
+	submission := Submission{Category: CategoryOther, Message: "Ring meg på 123 45 678"}
 
 	// When
 	errs := submission.Validate()
@@ -367,15 +323,14 @@ func TestSubmit_RejectsInvalidFeedbackWithoutStoring(t *testing.T) {
 	})
 
 	cases := []submitCase{
-		{name: "no text", submission: Submission{Category: CategoryWebsite}},
-		{name: "unknown category", submission: Submission{Category: "food", WentWell: "Hei"}},
-		{name: "too long", submission: Submission{Category: CategoryWebsite, CouldImprove: strings.Repeat("a", MaxTextLength+1)}},
-		{name: "foreign topic", submission: Submission{Category: CategoryWebsite, WentWell: "Hei", Topics: []Topic{TopicFood}}},
+		{name: "no message", submission: Submission{Category: CategoryWebsite}},
+		{name: "unknown category", submission: Submission{Category: "food", Message: "Hei"}},
+		{name: "too long", submission: Submission{Category: CategoryWebsite, Message: strings.Repeat("a", MaxTextLength+1)}},
+		{name: "foreign topic", submission: Submission{Category: CategoryWebsite, Message: "Hei", Topics: []Topic{TopicFood}}},
 	}
 	for _, example := range personalInfoExamples {
 		cases = append(cases,
-			submitCase{name: "went well " + example, submission: Submission{Category: CategoryOther, WentWell: "Hei " + example}},
-			submitCase{name: "could improve " + example, submission: Submission{Category: CategoryOther, WentWell: "Hei", CouldImprove: example}},
+			submitCase{name: "message " + example, submission: Submission{Category: CategoryOther, Message: "Hei " + example}},
 		)
 	}
 
@@ -508,9 +463,9 @@ type submitCase struct {
 	submission Submission
 }
 
-func insertFeedback(t *testing.T, db *sql.DB, category Category, wentWell, createdAt string) {
+func insertFeedback(t *testing.T, db *sql.DB, category Category, message, createdAt string) {
 	t.Helper()
-	testutil.MustExec(t, db, `INSERT INTO feedback (category, went_well, created_at) VALUES (?, ?, ?)`, string(category), wentWell, createdAt)
+	testutil.MustExec(t, db, `INSERT INTO feedback (category, message, created_at) VALUES (?, ?, ?)`, string(category), message, createdAt)
 }
 
 func mustList(t *testing.T, db *sql.DB, category Category) []Entry {
@@ -522,14 +477,14 @@ func mustList(t *testing.T, db *sql.DB, category Category) []Entry {
 	return entries
 }
 
-func assertWentWell(t *testing.T, entries []Entry, expected []string) {
+func assertMessages(t *testing.T, entries []Entry, expected []string) {
 	t.Helper()
 	if len(entries) != len(expected) {
 		t.Fatalf("expected %d entries, got %d: %+v", len(expected), len(entries), entries)
 	}
 	for i, entry := range entries {
-		if entry.WentWell != expected[i] {
-			t.Fatalf("expected entry %d to be %q, got %q", i, expected[i], entry.WentWell)
+		if entry.Message != expected[i] {
+			t.Fatalf("expected entry %d to be %q, got %q", i, expected[i], entry.Message)
 		}
 	}
 }
