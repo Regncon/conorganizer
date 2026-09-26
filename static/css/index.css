@@ -70,7 +70,7 @@
     --level-3-border: #495174;
     --level-3-border-hover: color-mix(in srgb, var(--color-text-soft) 40%, var(--level-3-border));
     
-    /* used for image upload when it has image */
+    /* backdrop */
     --bg-backdrop: #0009;
 
     /* text & font */
