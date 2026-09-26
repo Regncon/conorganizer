@@ -22,7 +22,7 @@ func TestTicketCard_WhenTicketCanBeConverted_RendersConvertAction(t *testing.T) 
 		"Bestilling:",
 		"9001",
 		"Adult",
-		"OlaNordmann",
+		"Ola Nordmann",
 		"ola@example.com",
 		"Over 18",
 		"Konverter billett til deltager",
