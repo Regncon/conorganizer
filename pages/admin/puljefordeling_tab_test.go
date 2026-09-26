@@ -257,7 +257,7 @@ func TestPuljeStatusToggles_ReflectsActiveClosingWarning(t *testing.T) {
 		ClosingWarningActive: true,
 	}
 
-	doc := templtest.Render(t, puljeStatusToggles(row))
+	doc := templtest.Render(t, puljeStatusToggles(row, false))
 	warning := doc.Find("input[type=checkbox]").Eq(0)
 	if warning.Length() != 1 || !warning.Is("[checked]") {
 		t.Fatal("expected active closing warning toggle to be checked")
