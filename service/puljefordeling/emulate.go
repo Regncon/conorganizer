@@ -48,6 +48,7 @@ const (
 type EmulatedEvent struct {
 	EventID           string
 	Title             string
+	System            string
 	Capacity          int
 	AssignedGMs       []AssignedGM
 	GMName            string           // sorted GM names, empty if the event has no GM assigned
@@ -81,6 +82,7 @@ type Emulation struct {
 
 type eligibleEvent struct {
 	title             string
+	system            string
 	capacity          int
 	eventType         models.EventType
 	ageGroup          models.AgeGroup
@@ -241,6 +243,7 @@ func shapePulje(
 			Undersubscribed: under[ev.ID],
 		}
 		if m, ok := meta[ev.ID]; ok {
+			emEv.System = m.system
 			emEv.EventType = m.eventType
 			emEv.AgeGroup = m.ageGroup
 			emEv.Runtime = m.runtime
@@ -368,7 +371,7 @@ func loadCompletedAssignments(db emulationQuerier) (map[models.Pulje]map[string]
 
 func loadEligibleEvents(db emulationQuerier) (map[models.Pulje]map[string]eligibleEvent, error) {
 	const query = `
-		SELECT ep.pulje_id, e.id, e.title, e.max_players,
+		SELECT ep.pulje_id, e.id, e.title, COALESCE(e.system, ''), e.max_players,
 		       e.event_type, e.age_group, e.event_runtime,
 		       e.beginner_friendly, e.can_be_run_in_english
 		FROM relation_event_puljer ep
@@ -389,7 +392,7 @@ func loadEligibleEvents(db emulationQuerier) (map[models.Pulje]map[string]eligib
 		var maxPlayers int
 		var ev eligibleEvent
 		if err := rows.Scan(
-			&pulje, &eventID, &title, &maxPlayers,
+			&pulje, &eventID, &title, &ev.system, &maxPlayers,
 			&ev.eventType, &ev.ageGroup, &ev.runtime,
 			&ev.beginnerFriendly, &ev.canBeRunInEnglish,
 		); err != nil {

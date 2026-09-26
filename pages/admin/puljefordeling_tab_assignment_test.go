@@ -276,7 +276,8 @@ func TestPuljefordelingAssignDialog_RendersSixActionsAndClosesAfterSuccess(t *te
 			t.Errorf("expected one %q action", label)
 		}
 	}
-	if action := dialog.Find("button").First().AttrOr("data-on:click", ""); !strings.Contains(action, "/admin/api/puljefordeling/assign") || !strings.Contains(action, "assignmentCloseDialog = true") {
+	assignAction := dialog.Find("button").FilterFunction(func(_ int, s *goquery.Selection) bool { return strings.TrimSpace(s.Text()) == "Tildel som spilleder" })
+	if action := assignAction.AttrOr("data-on:click", ""); !strings.Contains(action, "/admin/api/puljefordeling/assign") || !strings.Contains(action, "assignmentCloseDialog = true") {
 		t.Fatalf("expected assignment action to request and then await server-side dialog close, got %q", action)
 	}
 	if effect := dialog.AttrOr("data-effect", ""); !strings.Contains(effect, "assignmentActionCompleted") || !strings.Contains(effect, ".close()") {

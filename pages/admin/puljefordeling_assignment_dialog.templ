@@ -291,10 +291,14 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em 
 			data-on:close="$_puljefordelingAssignDialogOpen = false; $assignmentActionCompleted = false; $assignmentBillettholderId = 0; $clearInput = $clearInput + 1"
 			data-on:click__stop="if (evt.target === el) $_puljefordelingAssignDialogOpen = false"
 		>
-			<h3 id="puljefordeling-assign-title" data-text="$assignmentPickerTitle">Administrer deltaker</h3>
+			<header class="pulje-assignment-header">
+				<h3 id="puljefordeling-assign-title" data-text="$assignmentPickerTitle">Administrer deltaker</h3>
+				<button type="button" class="btn btn--ghost btn-icon-only" aria-label="Lukk" data-on:click="$_puljefordelingAssignDialogOpen = false">
+					@icons.Icon(icons.Close, icons.Size24)
+				</button>
+			</header>
 			@puljeAssignmentPicker(db, logger)
 			@puljeAssignmentInterests(db, logger, pulje, em, emErr)
-			<button class="btn btn--outline" type="button" data-on:click="$_puljefordelingAssignDialogOpen = false">Lukk</button>
 		</dialog>
 	}
 	<style>
@@ -304,7 +308,11 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje, em 
 			overflow: auto;
 			container: pulje-assignment-dialog / inline-size;
 
-			h3 {
+			.pulje-assignment-header {
+				display: flex;
+				place-content: space-between;
+				place-items: center;
+				gap: var(--spacing-3x);
 				margin-block-end: var(--spacing-3x);
 			}
 
