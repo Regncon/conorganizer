@@ -1,0 +1,75 @@
+package profilecomponent
+
+import "github.com/Regncon/conorganizer/components/icons"
+
+// FeedbackPrompt invites the player to give feedback on the website or the
+// convention.
+templ FeedbackPrompt() {
+	<style>
+    .feedback-prompt {
+        container: feedback-prompt / inline-size;
+        border-inline-start: 4px solid var(--color-primary);
+        background-color: color-mix(in srgb, var(--color-primary) 8%, var(--level-2-background));
+    }
+
+    .feedback-prompt-layout {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        place-items: center start;
+        gap: var(--spacing-3x) var(--spacing-4x);
+
+        h2,
+        p {
+            margin: 0;
+        }
+        h2 {
+            color: var(--color-text-strong);
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+        .btn {
+            grid-column: 1 / -1;
+            inline-size: fit-content;
+        }
+    }
+
+    .feedback-prompt-icon {
+        display: inline-grid;
+        place-content: center;
+        inline-size: 2.75rem;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+        color: var(--color-primary);
+    }
+
+    .feedback-prompt-text {
+        display: grid;
+        gap: var(--spacing-1x);
+        color: var(--color-text-soft);
+    }
+
+    @container feedback-prompt (width > 28rem) {
+        .feedback-prompt-layout {
+            grid-template-columns: auto 1fr auto;
+
+            .btn {
+                grid-column: 3;
+                grid-row: 1;
+            }
+        }
+    }
+	</style>
+	<section class="surface-pane feedback-prompt" aria-labelledby="feedback-prompt-title">
+		<div class="feedback-prompt-layout">
+			<span class="feedback-prompt-icon" aria-hidden="true">
+				@icons.Icon(icons.Comment, icons.Size24)
+			</span>
+			<div class="feedback-prompt-text">
+				<h2 id="feedback-prompt-title" class="surface-pane-title">Har du en tilbakemelding?</h2>
+				<p>Fortell oss hva du synes om nettsiden eller festivalen. Det tar bare et minutt.</p>
+			</div>
+			<a href="/tilbakemelding" class="btn btn--primary">Gi tilbakemelding</a>
+		</div>
+	</section>
+}
