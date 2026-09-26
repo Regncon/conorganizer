@@ -313,17 +313,27 @@ templ printStyles() {
 					.event-information {
 						display: grid;
 						grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+						grid-template-areas:
+							"details details"
+							"description rooms";
 						gap: 6mm;
 						margin-block-start: 5mm;
 						padding: 0;
 					}
-					.event-details-pane { grid-area: auto; padding: 0; border: 0; background: #fff; }
-					.event-details { display: flex; gap: 2mm; }
+					.event-details-pane { display: contents; }
+					.surface-pane-title { display: none; }
+					.event-details {
+						grid-area: details;
+						display: grid;
+						grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+						gap: 6mm;
+						hr { display: none; }
+					}
 					.event-details-section { gap: 2mm; padding: 0; }
-					.description { grid-area: auto; padding: 0; }
+					.description { grid-area: description; padding: 0; }
 					.description p { margin-block: 1mm; }
 				}
-				.print-room-list { display: grid; gap: 3mm; }
+				.print-room-list { grid-area: rooms; display: grid; gap: 3mm; }
 				.print-room { min-inline-size: 0; break-inside: avoid; }
 				.print-room-map img { inline-size: 100%; max-block-size: 95mm; object-fit: contain; filter: invert(1); }
 				.print-room-list:has(.print-room:nth-child(2)) .print-room-map img { max-block-size: 55mm; }
