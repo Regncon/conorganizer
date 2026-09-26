@@ -80,7 +80,7 @@ func TestUpdateInterest_WhenProgramPublishingIsOff_RejectsInterestChangeAndKeeps
 
 func TestUpdateInterest_WhenLegacyPuljePublishedFlagIsOff_AllowsInterestChange(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at arrangementet er i puljen, men den gamle publiseringsflagget står av.",
+		Given: "Gitt at arrangementet er i puljen, men det gamle publiseringsflagget står av.",
 		When:  "Når interessen forsøkes endret.",
 		Then:  "Så skal endringen lagres fordi flagget ikke lenger styrer interessevalg.",
 	})

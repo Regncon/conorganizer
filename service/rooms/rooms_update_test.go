@@ -22,7 +22,7 @@ func TestUpdateRoom_UpdatesAllFieldsWithoutChangingID(t *testing.T) {
 		Name:       "Tangerud",
 		RoomNumber: "209",
 		Floor:      2,
-		Notes:      "Dette er ei oppdatert note",
+		Notes:      "Dette er en oppdatert note",
 	}
 
 	// When

@@ -248,7 +248,7 @@ func TestEmulateSeatings_MinorNotSeatedInAdultsOnlyEvent(t *testing.T) {
 	seedEvent(t, db, "ev18", "Attende", 2, fredag)
 	markEventAdultsOnly(t, db, "ev18")
 
-	seedParticipant(t, db, 1, "Vaksen", "Voksdal")
+	seedParticipant(t, db, 1, "Voksen", "Voksdal")
 	markParticipantOver18(t, db, 1)
 	seedParticipant(t, db, 2, "Ungdom", "Ungsdal")
 
@@ -267,7 +267,7 @@ func TestEmulateSeatings_MinorNotSeatedInAdultsOnlyEvent(t *testing.T) {
 		t.Fatal("ev18 missing from emulation")
 	}
 
-	if got := playerNames(ev.AssignedPlayers); !slices.Equal(got, []string{"Vaksen Voksdal"}) {
+	if got := playerNames(ev.AssignedPlayers); !slices.Equal(got, []string{"Voksen Voksdal"}) {
 		t.Errorf("only the adult should be seated in an AdultsOnly event, got %v", got)
 	}
 	if !slices.Contains(em.Puljer[0].Unassigned, "Ungdom Ungsdal") {

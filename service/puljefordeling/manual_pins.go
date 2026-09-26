@@ -33,11 +33,63 @@ func AddManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholder
 
 // RemoveManualSeat deletes an admin-pinned player seat (source='manual',
 // role='Player') for the given pulje/event/participant. It only removes manual
-// player pins — solver seats and GM rows are left untouched. Removing the pin
-// does not touch the player's interest, so a later emulation may still seat them
-// in the same event by simulation (now as a non-manual placement).
+// player pins — other solver seats and GM rows are left untouched. Removing the
+// pin does not touch the player's interest, so the emulation seats them again by
+// simulation.
+//
+// Once the pulje's distribution has been saved, the player's new solver seat is
+// saved right away as well. A manual move already replaced their saved seat, so
+// without this, undoing the move would leave them without a saved seat until the
+// next "Lagre fordeling". Seat changes it causes for others stay unsaved.
 func RemoveManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholderID int) error {
-	return removeManualSeat(db, pulje, eventID, billettholderID)
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin remove manual seat: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := removeManualSeat(tx, pulje, eventID, billettholderID); err != nil {
+		return err
+	}
+	if err := restoreSolverSeat(tx, pulje, billettholderID); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// restoreSolverSeat saves the billettholder's emulated seat in pulje as a solver
+// seat, if the pulje's distribution has been saved before and they have no
+// other saved Player seat there.
+func restoreSolverSeat(tx *sql.Tx, pulje models.Pulje, billettholderID int) error {
+	var saved, ownSeats int
+	if err := tx.QueryRow(
+		`SELECT
+			COALESCE(SUM(CASE WHEN source = ? THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN billettholder_id = ? THEN 1 ELSE 0 END), 0)
+		 FROM relation_events_players WHERE pulje_id = ? AND role = ?`,
+		SourceSolver, billettholderID, pulje, models.EventPlayerRolePlayer,
+	).Scan(&saved, &ownSeats); err != nil {
+		return fmt.Errorf("check saved seats in %s: %w", pulje, err)
+	}
+	if saved == 0 || ownSeats > 0 {
+		return nil
+	}
+	em, err := emulateSeatings(tx)
+	if err != nil {
+		return fmt.Errorf("emulate after removing manual seat: %w", err)
+	}
+	seats, _, _ := puljeSeats(em, pulje)
+	seat, ok := seats[billettholderID]
+	if !ok || seat.IsGM {
+		return nil
+	}
+	if _, err := tx.Exec(
+		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source) VALUES (?, ?, ?, ?, ?)`,
+		seat.EventID, pulje, billettholderID, models.EventPlayerRolePlayer, SourceSolver,
+	); err != nil {
+		return fmt.Errorf("restore solver seat for billettholder %d in %s: %w", billettholderID, pulje, err)
+	}
+	return nil
 }
 
 type execer interface {

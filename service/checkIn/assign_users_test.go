@@ -77,9 +77,9 @@ func TestAssociateUserWithBillettholder_WhenAssociationsAlreadyExist_ReturnsNoCr
 
 func TestAssociateUsersWithBillettholderEmail_CreatesAssociationForMatchingUserEmail(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at ein billettholder har fått lagt til ei manuell e-postadresse, og ein eksisterande brukar har same e-postadresse med annan casing.",
-		When:  "Når e-postadressa blir forsona mot brukarar.",
-		Then:  "Så skal billettholderen få ei varig brukar-tilknyting.",
+		Given: "Gitt at en billettholder har fått lagt til en manuell e-postadresse, og en eksisterende bruker har samme e-postadresse med annen casing.",
+		When:  "Når e-postadressen blir avstemt mot brukere.",
+		Then:  "Så skal billettholderen få en varig brukertilknytning.",
 	})
 
 	// Given
@@ -107,9 +107,9 @@ func TestAssociateUsersWithBillettholderEmail_CreatesAssociationForMatchingUserE
 
 func TestAssociateUsersWithBillettholderEmail_DoesNotDuplicateExistingAssociation(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at ein billettholder allereie er knytt til ein brukar via ei manuell e-postadresse.",
-		When:  "Når same e-postforsoning køyrer på nytt.",
-		Then:  "Så skal det framleis berre finnast ei brukar-tilknyting.",
+		Given: "Gitt at en billettholder allerede er knyttet til en bruker via en manuell e-postadresse.",
+		When:  "Når samme e-postavstemming kjører på nytt.",
+		Then:  "Så skal det fortsatt bare finnes én brukertilknytning.",
 	})
 
 	// Given
@@ -138,9 +138,9 @@ func TestAssociateUsersWithBillettholderEmail_DoesNotDuplicateExistingAssociatio
 
 func TestDisassociateUsersFromBillettholderEmail_RemovesAssociationWhenNoRemainingEmailMatchesUser(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at ei manuell e-postadresse er fjerna frå ein billettholder, og ingen attverande e-postadresser på billettholderen samsvarer med brukaren.",
-		When:  "Når e-postadressa blir forsona mot brukar-tilknytingar.",
-		Then:  "Så skal den varige brukar-tilknytinga fjernast.",
+		Given: "Gitt at en manuell e-postadresse er fjernet fra en billettholder, og ingen gjenværende e-postadresser på billettholderen samsvarer med brukeren.",
+		When:  "Når e-postadressen blir avstemt mot brukertilknytninger.",
+		Then:  "Så skal den varige brukertilknytningen fjernes.",
 	})
 
 	// Given
@@ -171,9 +171,9 @@ func TestDisassociateUsersFromBillettholderEmail_RemovesAssociationWhenNoRemaini
 
 func TestDisassociateUsersFromBillettholderEmail_KeepsAssociationWhenRemainingEmailStillMatchesUser(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at ei manuell e-postadresse er fjerna frå ein billettholder, men ei anna attverande e-postadresse på same billettholder framleis samsvarer med brukaren.",
-		When:  "Når e-postadressa blir forsona mot brukar-tilknytingar.",
-		Then:  "Så skal den varige brukar-tilknytinga behaldast.",
+		Given: "Gitt at en manuell e-postadresse er fjernet fra en billettholder, men en annen gjenværende e-postadresse på samme billettholder fortsatt samsvarer med brukeren.",
+		When:  "Når e-postadressen blir avstemt mot brukertilknytninger.",
+		Then:  "Så skal den varige brukertilknytningen beholdes.",
 	})
 
 	// Given

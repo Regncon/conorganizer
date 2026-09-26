@@ -91,7 +91,7 @@ func TestPuljeStatusToggles_OpenWithoutWarningOnlyEnablesFirstStep(t *testing.T)
 	row := models.PuljeRow{ID: models.PuljeFredagKveld, Name: "Fredag Kveld", Status: models.PuljeStatusOpen}
 
 	// When
-	doc := templtest.Render(t, puljeStatusToggles(row))
+	doc := templtest.Render(t, puljeStatusToggles(row, false))
 
 	// Then
 	assertStepStates(t, doc, expected)
@@ -109,7 +109,7 @@ func TestPuljeStatusToggles_ActiveWarningEnablesLockStep(t *testing.T) {
 	row := models.PuljeRow{ID: models.PuljeFredagKveld, Name: "Fredag Kveld", Status: models.PuljeStatusOpen, ClosingWarningActive: true}
 
 	// When
-	doc := templtest.Render(t, puljeStatusToggles(row))
+	doc := templtest.Render(t, puljeStatusToggles(row, false))
 
 	// Then
 	assertStepStates(t, doc, expected)
@@ -127,7 +127,7 @@ func TestPuljeStatusToggles_LockedPuljeEnablesUnlockAndPublish(t *testing.T) {
 	row := models.PuljeRow{ID: models.PuljeFredagKveld, Name: "Fredag Kveld", Status: models.PuljeStatusLocked}
 
 	// When
-	doc := templtest.Render(t, puljeStatusToggles(row))
+	doc := templtest.Render(t, puljeStatusToggles(row, false))
 
 	// Then
 	assertStepStates(t, doc, expected)
@@ -145,7 +145,7 @@ func TestPuljeStatusToggles_CompletedPuljeOnlyEnablesUnpublish(t *testing.T) {
 	row := models.PuljeRow{ID: models.PuljeFredagKveld, Name: "Fredag Kveld", Status: models.PuljeStatusCompleted}
 
 	// When
-	doc := templtest.Render(t, puljeStatusToggles(row))
+	doc := templtest.Render(t, puljeStatusToggles(row, false))
 
 	// Then
 	assertStepStates(t, doc, expected)

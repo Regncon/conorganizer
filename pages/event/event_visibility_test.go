@@ -416,7 +416,7 @@ func TestEventPageContent_WhenProgramPublishingIsOff_DoesNotRenderInterestDialog
 
 func TestEventPageContent_WhenLegacyPuljePublishedFlagIsOff_StillRendersInterestDialog(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at programmet og arrangementet er publisert, men den gamle puljeflagget står av.",
+		Given: "Gitt at programmet og arrangementet er publisert, men det gamle puljeflagget står av.",
 		When:  "Når arrangementssiden vises.",
 		Then:  "Så skal dialogen fortsatt rendres fordi flagget ikke lenger styrer synlighet.",
 	})

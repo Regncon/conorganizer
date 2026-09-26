@@ -89,9 +89,9 @@ func TestPuljefordelingTabContent_RendersAddPickerAndManualRemove(t *testing.T) 
 
 func TestLoadPuljeAssignmentEventInterests_UsesOneSQLiteConnectionAtATime(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt ei SQLite-database med berre éin tilgjengeleg tilkopling.",
-		When:  "Når dialogen lastar interesser og spelarleiarar.",
-		Then:  "Så blir kvar spørjing ferdig før den neste bruker tilkoplinga.",
+		Given: "Gitt en SQLite-database med bare én tilgjengelig tilkobling.",
+		When:  "Når dialogen laster interesser og spilledere.",
+		Then:  "Så blir hver spørring ferdig før den neste bruker tilkoblingen.",
 	})
 
 	// Given
@@ -172,8 +172,8 @@ func postAssignSignals(t *testing.T, router http.Handler, bhID int, eventID, pul
 func TestPuljefordelingInterestRoute_WhenPuljeIsLocked_UpdatesInterest(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en låst pulje med en eksisterende interesse.",
-		When:  "Når en administrator endrer interessa i puljefordeling.",
-		Then:  "Så blir interessa oppdatert.",
+		When:  "Når en administrator endrer interessen i puljefordeling.",
+		Then:  "Så blir interessen oppdatert.",
 	})
 
 	// Given
@@ -198,9 +198,9 @@ func TestPuljefordelingInterestRoute_WhenPuljeIsLocked_UpdatesInterest(t *testin
 
 func TestPuljefordelingInterestRoute_WhenSetToNone_DeletesOnlyCurrentInterest(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en åpen pulje med interesse for eitt arrangement.",
-		When:  "Når administratoren vel Ikkje interessert.",
-		Then:  "Så blir berre interessa for det arrangementet fjerna.",
+		Given: "Gitt en åpen pulje med interesse for ett arrangement.",
+		When:  "Når administratoren velger Ikke interessert.",
+		Then:  "Så blir bare interessen for det arrangementet fjernet.",
 	})
 
 	// Given
@@ -221,9 +221,9 @@ func TestPuljefordelingInterestRoute_WhenSetToNone_DeletesOnlyCurrentInterest(t 
 
 func TestPuljefordelingInterestRoute_WhenPuljeIsCompleted_RejectsChange(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en publisert pulje med ei interesse.",
-		When:  "Når administratoren prøver å fjerne interessa.",
-		Then:  "Så blir endringa avvist og interessa står urørt.",
+		Given: "Gitt en publisert pulje med en interesse.",
+		When:  "Når administratoren prøver å fjerne interessen.",
+		Then:  "Så blir endringen avvist og interessen står urørt.",
 	})
 
 	// Given
@@ -271,7 +271,7 @@ func TestPuljefordelingAssignDialog_RendersSixActionsAndClosesAfterSuccess(t *te
 	if actions := dialog.Find("button[data-attr\\:disabled]"); actions.Length() != 6 {
 		t.Fatalf("expected six selection-dependent actions, got %d", actions.Length())
 	}
-	for _, label := range []string{"Tildel som spilleder", "Tildel som spiller", "Veldig interessert", "Middels interessert", "Litt interessert", "Ikkje interessert"} {
+	for _, label := range []string{"Tildel som spilleder", "Tildel som spiller", "Veldig interessert", "Middels interessert", "Litt interessert", "Ikke interessert"} {
 		if dialog.Find("button").FilterFunction(func(_ int, s *goquery.Selection) bool { return strings.TrimSpace(s.Text()) == label }).Length() != 1 {
 			t.Errorf("expected one %q action", label)
 		}
@@ -355,9 +355,8 @@ func TestPuljefordelingCommitRoute_PersistsSolverPicks(t *testing.T) {
 	testutil.MustExec(t, db, `INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level) VALUES (1,'evA',?,?)`,
 		string(fredag), string(models.InterestLevelHigh))
 
-	req := httptest.NewRequest(http.MethodPost, "/api/puljefordeling/FredagKveld/commit", nil)
-	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, req)
+	preview := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit/preview", 0, "", "", "")
+	rec := postAssignmentSignals(t, router, http.MethodPost, "/api/puljefordeling/FredagKveld/commit", 0, "", "", `,"saveConfirmation":"`+confirmationFromResponse(t, preview)+`"`)
 
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("want 204, got %d (%s)", rec.Code, rec.Body.String())
@@ -501,7 +500,7 @@ func seedAssignFixture(t *testing.T, db *sql.DB, pulje models.Pulje, ageGroup mo
 	t.Helper()
 	seedTabPulje(t, db, pulje, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
 	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group, is_in_puljefordeling)
-		VALUES ('evA','Voksenspel','','','','','',4,?,1)`, string(ageGroup))
+		VALUES ('evA','Voksenspill','','','','','',4,?,1)`, string(ageGroup))
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(pulje))
 	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id, is_over_18)
 		VALUES (1,'Kari','Nordmann',0,'',0,1,?)`, boolToInt(over18))

@@ -27,14 +27,14 @@ func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logge
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 		if eventId == "" {
-			http.Error(w, "Arrangement-ID manglar. Fekk: "+eventId, http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID mangler. Fikk: "+eventId, http.StatusBadRequest)
 			return
 		}
 		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(ctx)
 		showUploadToast := r.URL.Query().Get("uploaded") == "source"
 		if err := layouts.Base(
-			"Legg til bilete",
+			"Legg til bilde",
 			userInfo,
 			db,
 			logger,
@@ -50,7 +50,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
 			logger.Warn("Event ID is required")
-			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID mangler", http.StatusBadRequest)
 			return
 		}
 		logger.Info("Uploading event image", "event_id", eventID)
@@ -58,13 +58,13 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 		file, header, err := r.FormFile("image")
 		if err != nil {
 			logger.Error(fmt.Errorf("failed to get image from form for event %s: %w", eventID, err).Error())
-			http.Error(w, "Klarte ikkje å hente bilete frå skjemaet", http.StatusBadRequest)
+			http.Error(w, "Klarte ikke å hente bildet fra skjemaet", http.StatusBadRequest)
 			return
 		}
 		defer file.Close()
 		if err := removeExistingSourceImages(eventID, eventImageDir); err != nil {
 			logger.Error("Failed to remove existing source images", "error", err)
-			http.Error(w, "Klarte ikkje å erstatte biletet", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikke å erstatte bildet", http.StatusInternalServerError)
 			return
 		}
 		filename := sourceImageFilename(eventID, header.Filename)
@@ -72,19 +72,19 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 		out, err := os.Create(imagePath)
 		if err != nil {
 			logger.Error(fmt.Errorf("failed to create image file %q: %w", imagePath, err).Error())
-			http.Error(w, "Klarte ikkje å lagre biletet", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikke å lagre bildet", http.StatusInternalServerError)
 			return
 		}
 		defer out.Close()
 		_, err = io.Copy(out, file)
 		if err != nil {
 			logger.Error(fmt.Errorf("failed to save image file %q: %w", imagePath, err).Error())
-			http.Error(w, "Klarte ikkje å lagre biletet", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikke å lagre bildet", http.StatusInternalServerError)
 			return
 		}
 		if err := formsubmission.TouchEventUpdatedAt(r.Context(), db, logger, eventID); err != nil {
 			logger.Error(fmt.Errorf("failed to touch event after source image upload for event %s: %w", eventID, err).Error())
-			http.Error(w, "Klarte ikkje å oppdatere revisjonsspor for arrangementsbiletet", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikke å oppdatere revisjonsspor for arrangementsbildet", http.StatusInternalServerError)
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
@@ -116,20 +116,20 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 		eventID := chi.URLParam(r, "id")
 		if strings.TrimSpace(eventID) == "" {
 			logger.Warn("Event ID is required")
-			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID mangler", http.StatusBadRequest)
 			return
 		}
 		imageKind := r.FormValue("kind")
 		if imageKind != "card" && imageKind != "banner" {
 			logger.Warn("Invalid image kind", "imageKind", imageKind)
-			http.Error(w, "Ugyldig bilettype", http.StatusBadRequest)
+			http.Error(w, "Ugyldig bildetype", http.StatusBadRequest)
 			return
 		}
 		logger.Info("Uploading cropped event image", "event_id", eventID, "imageKind", imageKind)
 		file, _, err := r.FormFile("image")
 		if err != nil {
 			logger.Error(fmt.Errorf("failed to get cropped image from form for event %s: %w", eventID, err).Error())
-			http.Error(w, "Klarte ikkje å hente bilete frå skjemaet", http.StatusBadRequest)
+			http.Error(w, "Klarte ikke å hente bildet fra skjemaet", http.StatusBadRequest)
 			return
 		}
 		defer file.Close()
@@ -138,19 +138,19 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 		out, err := os.Create(imagePath)
 		if err != nil {
 			logger.Error(fmt.Errorf("failed to create cropped image file %q: %w", imagePath, err).Error())
-			http.Error(w, "Klarte ikkje å lagre biletet", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikke å lagre bildet", http.StatusInternalServerError)
 			return
 		}
 		defer out.Close()
 		_, err = io.Copy(out, file)
 		if err != nil {
 			logger.Error(fmt.Errorf("failed to save cropped image file %q: %w", imagePath, err).Error())
-			http.Error(w, "Klarte ikkje å lagre biletet", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikke å lagre bildet", http.StatusInternalServerError)
 			return
 		}
 		if err := formsubmission.TouchEventUpdatedAt(r.Context(), db, logger, eventID); err != nil {
 			logger.Error(fmt.Errorf("failed to touch event after cropped image upload for event %s: %w", eventID, err).Error())
-			http.Error(w, "Klarte ikkje å oppdatere revisjonsspor for arrangementsbiletet", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikke å oppdatere revisjonsspor for arrangementsbildet", http.StatusInternalServerError)
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
@@ -234,16 +234,16 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	}}
 	if eventErr != nil {
 		{{ logger.Error(fmt.Errorf("failed to load event image page for event %s: %w", eventId, eventErr).Error()) }}
-		<p>Klarte ikkje å hente arrangement: { eventErr.Error() }</p>
+		<p>Klarte ikke å hente arrangement: { eventErr.Error() }</p>
 		return
 	}
 	if event == nil {
 		{{ logger.Warn("Event not found for event image page", "event_id", eventId) }}
-		<p>Fann ikkje arrangementet</p>
+		<p>Fant ikke arrangementet</p>
 		return
 	}
 	<script type="module" src="/static/web_components/banner_cropper.js"></script>
-	@toast.Render("Lagra", icons.ProgressComplete)
+	@toast.Render("Lagret", icons.ProgressComplete)
 	<script type="module" src="/static/js/custom-actions/upload-with-progress.js"></script>
 	<style>
 
@@ -425,10 +425,10 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
         }
     </style>
 	@components.Breadcrumbs([]components.BreadcrumbPath{
-		{Name: "Heim", Url: "/"},
+		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: "/profile/"},
 		{Name: title, Url: "/profile/new/" + eventId + "/"},
-		{Name: "Legg til bilete", Url: ""},
+		{Name: "Legg til bilde", Url: ""},
 	})
 	<article
 		class="page-content-container"
@@ -456,7 +456,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		>
 			Tilbake
 		</a>
-		<h1>Legg til bilete</h1>
+		<h1>Legg til bilde</h1>
 		<div
 			class="img-upload-form-content"
 			data-signals={ components.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
@@ -464,23 +464,23 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			<div class="surface-pane info-text-content">
 				<div>
 					<p class="image-upload-info-label">
-						Ver venleg og ikkje bruk AI/KI-genererte bilete
+						Vær vennlig og ikke bruk AI/KI-genererte bilder
 					</p>
 					<p>
-						Sidan AI/KI-genererte bilete er eit betent tema, ønskjer vi i RegnCon ikkje
-						at arrangørar skal bruke slike bilete som hovudbilete for arrangementet sitt.
+						Siden AI/KI-genererte bilder er et betent tema, ønsker vi i RegnCon ikke
+						at arrangører skal bruke slike bilder som hovedbilde for arrangementet sitt.
 					</p>
 					<p>
-						Om du er i tvil om bruk av bilete, anbefaler vi å finne bilete som er ope
-						tilgjengelege for bruk, eller bilete som elles blir brukte til å demonstrere
-						og promotere spelet/systemet du skal bruke på arrangementet.
+						Hvis du er i tvil om bruk av bilder, anbefaler vi å finne bilder som er åpent
+						tilgjengelige for bruk, eller bilder som ellers blir brukt til å demonstrere
+						og promotere spillet/systemet du skal bruke på arrangementet.
 					</p>
 				</div>
 			</div>
 			<div
 				class="surface-pane image-upload-content"
 			>
-				<h4>Last opp bilete</h4>
+				<h4>Last opp bilde</h4>
 				<form
 					enctype="multipart/form-data"
 					method="post"
@@ -514,8 +514,8 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					<p
 						data-show="$_cropperImageLoading"
 						style="display: none;"
-					>Lastar bilete. Ver venleg og vent...</p>
-					<p style="display: none; margin: 0px;" data-show="$sourceImageUrl !== '' && !$_uploading  && !$_cropperImageLoading">Klikk eller dra og slipp for å bytte bilete</p>
+					>Laster bilde. Vær vennlig og vent...</p>
+					<p style="display: none; margin: 0px;" data-show="$sourceImageUrl !== '' && !$_uploading  && !$_cropperImageLoading">Klikk eller dra og slipp for å bytte bilde</p>
 					<p style="display: none;" data-show="$sourceImageUrl === '' && !$_uploading && !$_cropperImageLoading" data-text="$_add_drag_over ? 'Slipp bildet her' : 'Klikk her eller dra et bilde inn for å laste det opp.'">
 						Klikk her eller dra et bilde inn for å laste det opp.
 					</p>
@@ -526,7 +526,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						<div class="image-upload-progress" role="progressbar" aria-label="Laster opp bilde" aria-valuemin="0" aria-valuemax="100" data-attr:aria-valuenow="$_uploadProgress">
 							<div class="progress-bar" data-style="{'--progress': $_uploadProgress}"></div>
 						</div>
-						<span data-text="$_uploadProgress === 100 ? 'Lastar bilete. Ver venleg og vent...' : ''"></span>
+						<span data-text="$_uploadProgress === 100 ? 'Laster bilde. Vær vennlig og vent...' : ''"></span>
 					</div>
 					<p class="feedback-error" style="display: none;" data-show="$_uploadError" data-text="$_uploadError"></p>
 				</form>
@@ -546,7 +546,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 				<div
 					class="cropper-placeholder-canvas"
 					role="status"
-					aria-label="Lastar bilete"
+					aria-label="Laster bilde"
 				>
 					@icons.Icon(icons.Loading, icons.Size40)
 				</div>
@@ -559,7 +559,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 				<div
 					class="cropper-placeholder-canvas "
 					role="status"
-					aria-label="Lastar bilete"
+					aria-label="Laster bilde"
 				>
 					@icons.Icon(icons.Loading, icons.Size40)
 				</div>
