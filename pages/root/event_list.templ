@@ -3,10 +3,11 @@ package root
 import (
 	"database/sql"
 	"time"
-
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/program"
+	"log/slog"
+	"github.com/Regncon/conorganizer/service/puljer"
 )
 
 templ flatEventList(events []models.EventCardModel, eventImageDir *string) {
@@ -112,3 +113,22 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 		}
 	</div>
 }
+
+templ PuljeWarningBar(puljeId string, db *sql.DB, logger *slog.Logger) {
+
+    {{
+        pulje, puljeErr := puljerService.GetPulje(puljeId, db)
+
+        if (puljeErr != nil) {
+            logger.Error(puljeErr.Error())
+        }
+
+        if (pulje.ClosingWarningActive) {
+
+        }
+    }}
+
+
+
+}
+
