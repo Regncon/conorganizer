@@ -49,7 +49,8 @@ templ programDaySchedule(day program.Day) {
 	}
 }
 
-templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publishedDay *program.Day) {
+templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publishedDay *program.Day, logger *slog.Logger) {
+
 	<style>
 		.event-pulje-overview {
 			display: flex;
@@ -92,6 +93,7 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 							for _, row := range programEventRows(publishedDay.ProgramEvents) {
 								<div class={ "program-event-row", templ.KV("reversed", row.Reversed) }>
 									for _, programEvent := range row.Events {
+                                        @PuljeAlert(string(programEvent.PuljeID), db, logger)
 										@components.ProgramEventCard(programEvent.Event, eventImageDir, string(programEvent.PuljeID), publishedDay.QueryValue())
 									}
 								</div>
@@ -114,7 +116,7 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 	</div>
 }
 
-templ PuljeWarningBar(puljeId string, db *sql.DB, logger *slog.Logger) {
+templ PuljeAlert(puljeId string, db *sql.DB, logger *slog.Logger) {
 
     {{
         pulje, puljeErr := puljerService.GetPulje(puljeId, db)
@@ -122,13 +124,19 @@ templ PuljeWarningBar(puljeId string, db *sql.DB, logger *slog.Logger) {
         if (puljeErr != nil) {
             logger.Error(puljeErr.Error())
         }
-
-        if (pulje.ClosingWarningActive) {
-
-        }
     }}
 
+    if (pulje.ClosingWarningActive && pulje.Status == models.PuljeStatusOpen) {
+            <p> puljen er iferd med å bli låst </p>
+    }
 
+    if (pulje.Status == models.PuljeStatusLocked) {
+        <p> puljen er låst</p>
+    }
+
+    if (pulje.Status == models.PuljeStatusCompleted) {
+        <p> puljen er lukket</p>
+    }
 
 }
 

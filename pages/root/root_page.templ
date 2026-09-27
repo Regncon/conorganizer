@@ -6,19 +6,20 @@ import (
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/program"
+	"log/slog"
 )
 
-templ rootPage(db *sql.DB, eventImageDir *string, requestedDate string) {
+templ rootPage(db *sql.DB, eventImageDir *string, requestedDate string, logger *slog.Logger) {
 	<div id="root-page-wrapper">
-		@rootPageContentForDate(db, eventImageDir, requestedDate)
+		@rootPageContentForDate(db, eventImageDir, requestedDate, logger)
 	</div>
 }
 
-templ rootPageContent(db *sql.DB, eventImageDir *string) {
-	@rootPageContentForDate(db, eventImageDir, "")
+templ rootPageContent(db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	@rootPageContentForDate(db, eventImageDir, "", logger)
 }
 
-templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string) {
+templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string, logger *slog.Logger) {
 	{{ programPublished, err := program.IsPublished(db) }}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
@@ -40,14 +41,14 @@ templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate st
 				@programDaySelector(programDays, selectedDayIndex)
 				@components.CallToAction()
 				{{ selectedDay := programDays[selectedDayIndex] }}
-				@eventList(db, eventImageDir, true, &selectedDay)
+				@eventList(db, eventImageDir, true, &selectedDay, logger)
 			} else {
 				@components.CallToAction()
-				@eventList(db, eventImageDir, true, nil)
+				@eventList(db, eventImageDir, true, nil, logger)
 			}
 		} else {
 			@components.CallToAction()
-			@eventList(db, eventImageDir, false, nil)
+			@eventList(db, eventImageDir, false, nil, logger)
 		}
 	}
 }
