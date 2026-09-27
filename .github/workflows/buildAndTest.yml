@@ -76,11 +76,18 @@ jobs:
             - name: Build binary
               run: go build -o conorganizer
 
+            # Preview deploys run goose against their cloned database. Fixed
+            # environments (main, demo, restored) are still migrated manually.
+            - name: Build goose
+              run: GOBIN="$PWD" go install github.com/pressly/goose/v3/cmd/goose@v3.28.0
+
             - name: Upload binary artifact
               uses: actions/upload-artifact@v4
               with:
                   name: conorganizer
-                  path: conorganizer
+                  path: |
+                      conorganizer
+                      goose
 
     deploy-fixed:
         needs: build
@@ -220,6 +227,9 @@ jobs:
                   mkdir -p deploy_bundle
 
                   cp artifacts/conorganizer deploy_bundle/conorganizer.new
+                  cp artifacts/goose deploy_bundle/goose
+                  mkdir -p deploy_bundle/migrations
+                  cp migrations/*.sql deploy_bundle/migrations/
 
                   sed \
                     -e "s/%SAFE_NAME%/$SAFE_NAME/g" \

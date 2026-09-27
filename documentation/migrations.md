@@ -2,6 +2,8 @@
 
 Conorganizer database migrations use [Goose](https://pressly.github.io/goose/). They are applied manually; do not add automatic migrations to application startup, health checks, readiness checks, or systemd startup.
 
+The only exception is PR preview environments. On every PR deploy, `deploy/deploy.sh` runs `goose up -allow-missing` against the preview database, which is cloned from main on the first deploy. The main, demo, and restored environments are never migrated by CI; use the procedure below for them. Goose does not re-run a migration that has already been applied, so if a PR edits one, delete that preview's database to make the next deploy clone it again.
+
 ## Create a migration
 
 Install the [Goose CLI](https://pressly.github.io/goose/installation/) and, from the repository root, create a SQL migration:

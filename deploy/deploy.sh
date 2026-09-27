@@ -105,6 +105,14 @@ if [[ "$FIXED_ENVIRONMENT" == "false" ]]; then
     echo "[deploy] Event-images dir already exists for branch: $BRANCH_IMG_DIR (skipping copy)"
   fi
 
+  # Runs on every preview deploy so later PR pushes get their new migrations.
+  # -allow-missing applies migrations older than the current version, e.g. from
+  # main merged into the PR. Runs before chown so any files created as root are
+  # handed to the service user.
+  echo "[deploy] Applying goose migrations to $BRANCH_DB_FILE"
+  chmod +x "$APP_DIR/goose"
+  "$APP_DIR/goose" -env /dev/null -dir "$APP_DIR/migrations" sqlite3 "$BRANCH_DB_FILE" up -allow-missing
+
   chown -R "$SERVICE_USER:$SERVICE_GROUP" "$BRANCH_DATA_DIR"
 else
   echo "[deploy] SAFE_NAME=$SAFE_NAME is fixed config-as-code environment, not cloning data directories."
