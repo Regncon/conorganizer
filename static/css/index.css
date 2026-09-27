@@ -21,9 +21,7 @@
         ),
         var(--level-2-state-base);
 
-    /* Deprecated variable, use color-primary instead */
-    --color-secondary-focus-visible: #ccd1e980;
-    --color-secondary-active: #ccd1e933;
+    /* accent colors */
     --color-accent-blue: #8eadee;
     --color-accent-purple: #c6a0f6;
     --color-accent-pink: #f5bde6;
@@ -319,7 +317,7 @@ a.inline-link:focus-visible {
 }
 
 a.inline-link:focus-visible {
-    outline: 2px solid var(--color-secondary-focus-visible);
+    outline: 2px solid var(--color-text-soft-50);
     outline-offset: 2px;
     border-radius: var(--border-radius-1x);
 }
@@ -448,7 +446,7 @@ input {
 }
 
 :where(a[href], button, summary, [role="button"], input:not([type="hidden"]), select, textarea):focus-visible {
-    outline: 2px solid var(--color-secondary-focus-visible);
+    outline: 2px solid var(--color-text-soft-50);
     outline-offset: 2px;
 }
 
