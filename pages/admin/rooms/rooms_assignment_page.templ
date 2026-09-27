@@ -579,11 +579,11 @@ templ roomsPublishControl(db *sql.DB, pulje models.Pulje) {
 			<div class="rooms-publish-control-body">
 				<div class="rooms-publish-state">
 					<span class="rooms-publish-state-label">Publiser romfordeling</span>
-					<strong class="rooms-publish-state-value" data-text="$roomsPublished ? 'Synlig for alle' : 'Bare synlig for administratorer'">
+					<strong class="rooms-publish-state-value" data-text="$roomsPublished ? 'Synlig for alle' : 'Ikke publisert'">
 						if roomsPublished {
 							Synlig for alle
 						} else {
-							Bare synlig for administratorer
+							Ikke publisert
 						}
 					</strong>
 				</div>

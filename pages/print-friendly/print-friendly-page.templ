@@ -23,7 +23,7 @@ func PrintFriendlyRoute(router chi.Router, db *sql.DB, eventImageDir *string, lo
 		userInfo := userctx.GetUserRequestInfo(r.Context())
 		if err := layouts.Base(
 			"Regncon program utskriftsvennlig",
-			userInfo, db, logger, printFriendlyPage(db, eventImageDir, logger, userInfo.IsAdmin),
+			userInfo, db, logger, printFriendlyPage(db, eventImageDir, logger),
 		).Render(r.Context(), w); err != nil {
 			logger.Error(fmt.Errorf("failed to render print-friendly page: %w", err).Error(), "user_id", userInfo.Id)
 		}
@@ -92,12 +92,12 @@ type printEventRow struct {
 }
 
 // Use the root page's day model for event inclusion and order.
-func getPrintDays(db *sql.DB, isAdmin bool) ([]printDay, error) {
+func getPrintDays(db *sql.DB) ([]printDay, error) {
 	days, err := program.GetDays(db)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := getPrintEventRows(db, isAdmin)
+	rows, err := getPrintEventRows(db)
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +139,8 @@ func getPrintDays(db *sql.DB, isAdmin bool) ([]printDay, error) {
 }
 
 // getPrintEventRows returns the printable schedule rows.
-// Non-admins never see the room for a pulje whose room assignment is not published yet.
-func getPrintEventRows(db *sql.DB, isAdmin bool) (map[printEventKey]printEventRow, error) {
+// Nobody, admins included, sees the room for a pulje whose room assignment is not published yet.
+func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
 	const query = `
 		SELECT e.id, e.title, e.intro, e.description, e.system, e.event_type,
 			e.age_group, e.event_runtime, e.host_name, e.user_id, e.email,
@@ -185,7 +185,7 @@ func getPrintEventRows(db *sql.DB, isAdmin bool) (map[printEventKey]printEventRo
 		if err != nil {
 			return nil, err
 		}
-		if isAdmin || roomsPublished {
+		if roomsPublished {
 			row.Occurrence.HasRoom = roomID != 0
 			row.Occurrence.RoomID = roomID
 			row.Occurrence.MapPath, _ = rooms.MapPathForRoom(row.Occurrence.RoomNumber)
@@ -228,8 +228,8 @@ templ printEventSheet(dayLabel string, groupLabel string, item printEvent, event
 	</article>
 }
 
-templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger, isAdmin bool) {
-	{{ days, err := getPrintDays(db, isAdmin) }}
+templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	{{ days, err := getPrintDays(db) }}
 	if err != nil {
 		{{ logger.Error(fmt.Errorf("failed to get events for print: %w", err).Error()) }}
 		<p>Kunne ikke hente arrangementene: { err.Error() }</p>

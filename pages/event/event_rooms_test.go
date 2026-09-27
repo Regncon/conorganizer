@@ -169,16 +169,13 @@ func TestEventRoomVisibility_NonAdminSeesRoomWhenPuljeRoomsPublished(t *testing.
 	if doc.Find(".event-room-button").Length() != 1 {
 		t.Fatal("expected the map button to be visible")
 	}
-	if doc.Find(".event-room-unpublished").Length() != 0 {
-		t.Fatal("published room assignment should not show the unpublished hint")
-	}
 }
 
-func TestEventRoomVisibility_AdminSeesRoomAndUnpublishedHint(t *testing.T) {
+func TestEventRoomVisibility_AdminSeesTimeOnlyWhenPuljeRoomsUnpublished(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "A room assignment for a pulje whose rooms are not published.",
 		When:  "An admin views the event page.",
-		Then:  "The room and map remain visible, alongside an unpublished hint.",
+		Then:  "The admin, like everyone else, sees the time but not the room name or map.",
 	})
 
 	// Given
@@ -190,14 +187,14 @@ func TestEventRoomVisibility_AdminSeesRoomAndUnpublishedHint(t *testing.T) {
 	doc := templtest.Render(t, event_page_content("room-event", true, testutil.NewTestLogger(), db, nil, request))
 
 	// Then
-	if got := doc.Find(".event-room-name").Text(); got != "Amalie Hansen" {
-		t.Fatalf("expected the admin to still see the room name, got %q", got)
+	if strings.Contains(doc.Text(), "Amalie Hansen") {
+		t.Fatal("unpublished room name should be hidden from admins too")
 	}
-	if doc.Find(".event-room-button").Length() != 1 {
-		t.Fatal("expected the admin to still see the map button")
+	if doc.Find(".event-room-button, .event-room-dialog img").Length() != 0 {
+		t.Fatal("unpublished room map should be hidden from admins too")
 	}
-	if got := doc.Find(".event-room-unpublished").Text(); !strings.Contains(got, "ikke publisert") {
-		t.Fatalf("expected an unpublished hint for the admin, got %q", got)
+	if got := doc.Find(".event-schedule-unassigned").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
+		t.Fatalf("expected the time to remain visible, got %q", got)
 	}
 }
 
@@ -282,7 +279,7 @@ func TestEventRoomsUseEachPuljeAssignment(t *testing.T) {
 	seedEventVisibilityEventPulje(t, db, "other-event", models.PuljeFredagKveld, true)
 	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 43 WHERE event_id = 'other-event'`)
 
-	assignments, err := getEventRooms(db, "room-event", true, false)
+	assignments, err := getEventRooms(db, "room-event", true)
 	if err != nil {
 		t.Fatal(err)
 	}

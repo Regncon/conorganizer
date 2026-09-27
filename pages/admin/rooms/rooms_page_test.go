@@ -537,7 +537,7 @@ func TestRoomsAssignmentLiveContent_RendersPublishSwitchAsUncheckedWhenUnpublish
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en pulje uten publisert romfordeling.",
 		When:  "Når romfordelingssiden rendres.",
-		Then:  "Så skal bryteren være avkrysset av og vise at romfordelingen bare er synlig for administratorer.",
+		Then:  "Så skal bryteren være avkrysset av og vise at romfordelingen ikke er publisert.",
 	})
 
 	// Given
@@ -557,7 +557,7 @@ func TestRoomsAssignmentLiveContent_RendersPublishSwitchAsUncheckedWhenUnpublish
 	if _, actualChecked := toggle.Attr("checked"); actualChecked != expectedChecked {
 		t.Fatalf("checked mismatch\nexpected: %v\nactual:   %v", expectedChecked, actualChecked)
 	}
-	if !strings.Contains(doc.Find(".rooms-publish-control").Text(), "Bare synlig for administratorer") {
+	if !strings.Contains(doc.Find(".rooms-publish-control").Text(), "Ikke publisert") {
 		t.Fatal("expected the unpublished state text to be rendered")
 	}
 }

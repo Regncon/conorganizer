@@ -135,7 +135,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 			class="btn btn--primary admin-edit-event-link"
 		>Administrator - rediger arrangementer</a>
 	}
-	{{ roomAssignments, roomsErr := getEventRooms(db, eventId, programPublished, userInfo.IsAdmin) }}
+	{{ roomAssignments, roomsErr := getEventRooms(db, eventId, programPublished) }}
 	if roomsErr != nil {
 		{{ logger.Error(roomsErr.Error(), "event_id", eventId) }}
 	}

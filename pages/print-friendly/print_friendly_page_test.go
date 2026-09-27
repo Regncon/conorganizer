@@ -91,7 +91,7 @@ func TestPrintFriendlyPage_OrdersDaysAndDeduplicatesProgramEventsWithinEachDay(t
 	assignPrintEvent(t, db, "sunday-raffle", models.PuljeSondagMorgen, 705)
 
 	// When
-	doc := templtest.Render(t, printFriendlyPage(db, nil, testutil.NewTestLogger(), false))
+	doc := templtest.Render(t, printFriendlyPage(db, nil, testutil.NewTestLogger()))
 	actualDayHeadings := make([]string, 0)
 	doc.Find("section.print-day").Each(func(_ int, section *goquery.Selection) {
 		actualDayHeadings = append(actualDayHeadings, strings.Join(strings.Fields(section.Find(".print-sheet-day").First().Text()), " "))
@@ -133,7 +133,7 @@ func TestPrintFriendlyPage_ShowsOneMapForAProgramEventUsingTheSameRoomTwice(t *t
 	assignPrintEvent(t, db, "shared-program", models.PuljeLordagKveld, 710)
 
 	// When
-	doc := templtest.Render(t, printFriendlyPage(db, nil, testutil.NewTestLogger(), false))
+	doc := templtest.Render(t, printFriendlyPage(db, nil, testutil.NewTestLogger()))
 	sheet := doc.Find("article.print-event-sheet")
 	actualMaps := printSheetMapSources(sheet)
 	actualTimes := strings.Join(strings.Fields(sheet.Find(".print-room").Text()), " ")
@@ -150,10 +150,10 @@ func TestPrintFriendlyPage_ShowsOneMapForAProgramEventUsingTheSameRoomTwice(t *t
 	}
 }
 
-func TestPrintFriendlyPage_NonAdminSeesNoRoomForUnpublishedPulje(t *testing.T) {
+func TestPrintFriendlyPage_ShowsNoRoomForUnpublishedPulje(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "A print event assigned to a room in a pulje whose rooms are not published.",
-		When:  "A non-admin renders the printable program.",
+		When:  "Anyone, admins included, renders the printable program.",
 		Then:  "The sheet shows no room information for that occurrence.",
 	})
 
@@ -166,46 +166,18 @@ func TestPrintFriendlyPage_NonAdminSeesNoRoomForUnpublishedPulje(t *testing.T) {
 	assignPrintEvent(t, db, "shared-program", models.PuljeLordagMorgen, 705)
 
 	// When
-	doc := templtest.Render(t, printFriendlyPage(db, nil, testutil.NewTestLogger(), false))
+	doc := templtest.Render(t, printFriendlyPage(db, nil, testutil.NewTestLogger()))
 	sheet := doc.Find("article.print-event-sheet")
 
 	// Then
 	if strings.Contains(sheet.Text(), "Morning room") {
-		t.Fatal("room name should be hidden from non-admins for an unpublished pulje")
+		t.Fatal("room name should be hidden for an unpublished pulje")
 	}
 	if !strings.Contains(sheet.Find(".print-room").Text(), "Rom ikke tildelt") {
 		t.Fatal("expected the occurrence to render as having no room assigned")
 	}
 	if sheet.Find(".print-room-map").Length() != 0 {
-		t.Fatal("map should be hidden from non-admins for an unpublished pulje")
-	}
-}
-
-func TestPrintFriendlyPage_AdminSeesRoomForUnpublishedPulje(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "A print event assigned to a room in a pulje whose rooms are not published.",
-		When:  "An admin renders the printable program.",
-		Then:  "The sheet still shows the room and map for that occurrence.",
-	})
-
-	// Given
-	db := createPrintPageTestDB(t)
-	insertPrintPulje(t, db, models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
-	testutil.MustExec(t, db, `UPDATE puljer SET rooms_published = 0 WHERE id = ?`, models.PuljeLordagMorgen)
-	insertPrintRoom(t, db, 705, "Morning room", "705")
-	insertPrintEvent(t, db, "shared-program", "Shared Program", false)
-	assignPrintEvent(t, db, "shared-program", models.PuljeLordagMorgen, 705)
-
-	// When
-	doc := templtest.Render(t, printFriendlyPage(db, nil, testutil.NewTestLogger(), true))
-	sheet := doc.Find("article.print-event-sheet")
-
-	// Then
-	if !strings.Contains(sheet.Find(".print-room").Text(), "Morning room") {
-		t.Fatal("expected the admin to still see the room name")
-	}
-	if sheet.Find(".print-room-map").Length() != 1 {
-		t.Fatal("expected the admin to still see the room map")
+		t.Fatal("map should be hidden for an unpublished pulje")
 	}
 }
 

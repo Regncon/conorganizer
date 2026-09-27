@@ -13,15 +13,12 @@ type eventRoom struct {
 	Room  models.Room
 	// MapPath is empty when the room is hidden, or has no map.
 	MapPath string
-	// RoomsPublished reports whether the pulje's room assignment is published to non-admin users.
-	RoomsPublished bool
 }
 
 // getEventRooms returns the room assignments for an event's active puljer.
-// Non-admins never see the room for a pulje whose room assignment is not published yet:
+// Nobody, admins included, sees the room for a pulje whose room assignment is not published yet:
 // the room is cleared to its zero value so the schedule entry renders as unassigned.
-// Admins always see the room, with RoomsPublished reporting whether it is visible to others.
-func getEventRooms(db *sql.DB, eventID string, programPublished bool, isAdmin bool) ([]eventRoom, error) {
+func getEventRooms(db *sql.DB, eventID string, programPublished bool) ([]eventRoom, error) {
 	if !programPublished {
 		return nil, nil
 	}
@@ -45,11 +42,12 @@ func getEventRooms(db *sql.DB, eventID string, programPublished bool, isAdmin bo
 	var assignments []eventRoom
 	for rows.Next() {
 		var assignment eventRoom
-		if err := rows.Scan(&assignment.Pulje.ID, &assignment.Pulje.Name, &assignment.Pulje.StartAt, &assignment.Pulje.EndAt, &assignment.RoomsPublished,
+		var roomsPublished bool
+		if err := rows.Scan(&assignment.Pulje.ID, &assignment.Pulje.Name, &assignment.Pulje.StartAt, &assignment.Pulje.EndAt, &roomsPublished,
 			&assignment.Room.ID, &assignment.Room.Name, &assignment.Room.RoomNumber, &assignment.Room.Floor, &assignment.Room.PublicNotes); err != nil {
 			return nil, fmt.Errorf("scan room for event %s: %w", eventID, err)
 		}
-		if isAdmin || assignment.RoomsPublished {
+		if roomsPublished {
 			assignment.MapPath, _ = rooms.MapPathForRoom(assignment.Room.RoomNumber)
 		} else {
 			assignment.Room = models.Room{}
@@ -77,8 +75,6 @@ type eventRoomGroup struct {
 	Room    models.Room
 	MapPath string
 	Puljer  []models.PuljeRow
-	// RoomsPublished is false when any pulje grouped under this room has an unpublished room assignment.
-	RoomsPublished bool
 }
 
 // Input and output follow the first occurrence of each room in the schedule.
@@ -91,12 +87,9 @@ func groupEventRooms(assignments []eventRoom) []eventRoomGroup {
 		if !exists {
 			groupIndex = len(groups)
 			groupIndexByRoomID[assignment.Room.ID] = groupIndex
-			groups = append(groups, eventRoomGroup{Room: assignment.Room, MapPath: assignment.MapPath, RoomsPublished: true})
+			groups = append(groups, eventRoomGroup{Room: assignment.Room, MapPath: assignment.MapPath})
 		}
 		groups[groupIndex].Puljer = append(groups[groupIndex].Puljer, assignment.Pulje)
-		if !assignment.RoomsPublished {
-			groups[groupIndex].RoomsPublished = false
-		}
 	}
 	return groups
 }
