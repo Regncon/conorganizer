@@ -81,7 +81,12 @@ templ formModal() {
 				@errorfeedback.RenderMessage("public_notes")
 			</label>
 			<label class="label color-strong form-group">
-				<p>🔒 Admin-notater</p>
+				<p class="room-note-label">
+					<span class="room-note-icon" aria-hidden="true">
+						@icons.Icon(icons.Lock, icons.Size16)
+					</span>
+					Admin-notater
+				</p>
 				<small>Vises bare for administratorer.</small>
 				<textarea
 					name="admin_notes"

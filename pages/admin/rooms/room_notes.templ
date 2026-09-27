@@ -24,7 +24,12 @@ templ roomNotes(publicNotes, adminNotes string) {
 			}
 			if strings.TrimSpace(adminNotes) != "" {
 				<div class="room-note">
-					<dt><span aria-hidden="true">🔒</span> Admin-notater</dt>
+					<dt>
+						<span class="room-note-icon" aria-hidden="true">
+							@icons.Icon(icons.Lock, icons.Size16)
+						</span>
+						Admin-notater
+					</dt>
 					<dd>{ adminNotes }</dd>
 				</div>
 			}
@@ -49,7 +54,9 @@ templ roomNotesPopover(roomID int64, roomNumber, publicNotes, adminNotes string)
 				<span aria-hidden="true">🌐</span>
 			}
 			if strings.TrimSpace(adminNotes) != "" {
-				<span aria-hidden="true">🔒</span>
+				<span class="room-note-icon" aria-hidden="true">
+					@icons.Icon(icons.Lock, icons.Size16)
+				</span>
 			}
 		</button>
 		<div id={ popoverID } popover class="room-notes-popover">
@@ -77,6 +84,9 @@ templ roomNotesStyles() {
             margin: 0;
 
             dt {
+                display: flex;
+                place-items: center;
+                gap: var(--spacing-1x);
                 font-weight: 600;
                 font-size: var(--text-body-small);
             }
@@ -87,6 +97,17 @@ templ roomNotesStyles() {
                 white-space: pre-wrap;
                 overflow-wrap: anywhere;
             }
+        }
+
+        .room-note-label {
+            display: flex;
+            place-items: center;
+            gap: var(--spacing-1x);
+        }
+
+        .room-note-icon {
+            display: inline-flex;
+            flex: 0 0 auto;
         }
 
         .room-notes-toggle {
