@@ -2,79 +2,46 @@
 
 Conorganizer database migrations use [Goose](https://pressly.github.io/goose/). They are applied manually; do not add automatic migrations to application startup, health checks, readiness checks, or systemd startup.
 
-The only exception is PR preview environments. On every PR deploy, `deploy/deploy.sh` runs `goose up -allow-missing` against the preview database, which is cloned from main on the first deploy. The main, demo, and restored environments are never migrated by CI; use the procedure below for them. Goose does not re-run a migration that has already been applied, so if a PR edits one, delete that preview's database to make the next deploy clone it again.
+The only exception is PR preview environments. On every PR deploy, `deploy/deploy.sh` runs `goose up -allow-missing` against the preview database, which is cloned from main on the first deploy. The main, demo, and restored environments are never migrated by CI; main and demo are migrated with the procedure below. Goose does not re-run a migration that has already been applied, so if a PR edits one, delete that preview's database to make the next deploy clone it again.
 
 ## Create a migration
 
-Install the [Goose CLI](https://pressly.github.io/goose/installation/) and, from the repository root, create a SQL migration:
+From the repository root, create a SQL migration with the same Goose version that CI uses:
 
 ```console
-goose create <brief-description> sql
+go run github.com/pressly/goose/v3/cmd/goose@v3.28.0 -dir migrations create <brief-description> sql
 ```
 
 See the [Goose annotations guide](https://pressly.github.io/goose/documentation/annotations/) for the migration-file format.
 
 ## Apply migrations on the server
 
-This is a manual maintenance-window procedure. Replace every placeholder with the correct value for the server and environment. Do not introduce shell variables or run the procedure as a copied script.
+Every push to main deploys Goose and `migrations/*.sql` next to each fixed environment's binary in `/opt/conorganizer/<environment>/`, but never runs them. The server scripts below use those deployed files, so no repository checkout is needed. The `restored` environment is not migrated.
 
-1. Enable the maintenance page in `/etc/caddy/Caddyfile`, then restart Caddy. Confirm that the public URL shows the maintenance page.
-
-    ```console
-    sudoedit /etc/caddy/Caddyfile
-    sudo systemctl restart caddy
-    ```
-
-2. Stop both application services.
+1. Enable the maintenance page for `program.regncon.no`.
 
     ```console
-    sudo systemctl stop <main-service>
-    sudo systemctl stop <demo-service>
+    sudo conorganizer-maintenance-mode on
     ```
 
-3. Back up both databases. `conorganizer-sqlite-backup` backs up the main database; make a separate SQLite backup of the demo database.
+2. Merge the pull request and wait for CI to deploy main. Until the migration has run, the new binary runs against the old schema, which is why the public site is in maintenance mode.
+
+3. Back up the main database.
 
     ```console
     sudo conorganizer-sqlite-backup
-    sudo sqlite3 <demo-database-path> ".backup '<demo-backup-path>/pre-migration-<migration-id>-events.db'"
     ```
 
-4. Update the checkout that contains the migrations.
+4. Migrate the demo and main databases. The script backs up demo to `events.db.pre-migrate-<timestamp>` next to its database, migrates demo, and then migrates main. It stops at the first failure, so a failing demo migration never reaches main.
 
     ```console
-    cd <checkout-containing-migrations>
-    git pull
+    sudo conorganizer-sqlite-migrate
     ```
 
-5. Migrate the demo database. Move it into the checkout, where the Goose command expects `database/events.db`, then restore its service ownership before starting the service.
+5. Verify the migration on `https://main.lekeplassen.regncon.no` and `https://demo.lekeplassen.regncon.no`, which are not affected by maintenance mode.
+
+6. Disable the maintenance page and verify `https://program.regncon.no`.
 
     ```console
-    sudo mv <demo-database-path> database/events.db
-    sudo chown <operator>:<operator> database/events.db
-    goose -env /dev/null -dir migrations sqlite3 database/events.db up
-    sqlite3 database/events.db "PRAGMA integrity_check;"
-    sudo mv database/events.db <demo-database-path>
-    sudo chown deploy:www-data <demo-database-path>
-    sudo systemctl start <demo-service>
-    sudo systemctl status <demo-service>
-    ```
-
-6. Migrate the main database in the same way.
-
-    ```console
-    sudo mv <main-database-path> database/events.db
-    sudo chown <operator>:<operator> database/events.db
-    goose -env /dev/null -dir migrations sqlite3 database/events.db up
-    sqlite3 database/events.db "PRAGMA integrity_check;"
-    sudo mv database/events.db <main-database-path>
-    sudo chown deploy:www-data <main-database-path>
-    sudo systemctl start <main-service>
-    sudo systemctl status <main-service>
-    ```
-
-7. Disable the maintenance page and restart Caddy. Verify the real public URL before considering the migration complete.
-
-    ```console
-    sudoedit /etc/caddy/Caddyfile
-    sudo systemctl restart caddy
+    sudo conorganizer-maintenance-mode off
     ```

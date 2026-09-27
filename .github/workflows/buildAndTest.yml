@@ -77,7 +77,9 @@ jobs:
               run: go build -o conorganizer
 
             # Preview deploys run goose against their cloned database. Fixed
-            # environments (main, demo, restored) are still migrated manually.
+            # environments (main, demo, restored) only receive goose and the
+            # migrations for the manual conorganizer-sqlite-migrate; CI never
+            # runs goose there.
             - name: Build goose
               run: GOBIN="$PWD" go install github.com/pressly/goose/v3/cmd/goose@v3.28.0
 
@@ -120,6 +122,9 @@ jobs:
 
                   mkdir -p deploy_bundle
                   cp artifacts/conorganizer deploy_bundle/conorganizer.new
+                  cp artifacts/goose deploy_bundle/goose
+                  mkdir -p deploy_bundle/migrations
+                  cp migrations/*.sql deploy_bundle/migrations/
                   cp deploy/deploy.sh deploy_bundle/deploy.sh
 
                   ls -l deploy_bundle

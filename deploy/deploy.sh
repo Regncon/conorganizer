@@ -64,6 +64,10 @@ if [[ "$FIXED_ENVIRONMENT" == "false" ]]; then
   fi
 fi
 
+# Artifacts lose the executable bit. Previews run goose below; fixed
+# environments only keep it for conorganizer-sqlite-migrate.
+chmod +x "$APP_DIR/goose"
+
 if [[ "$FIXED_ENVIRONMENT" == "false" ]]; then
   if [[ ! -d "$MAIN_DATA_DIR" ]]; then
     echo "[deploy] ERROR: main data dir $MAIN_DATA_DIR does not exist; cannot clone data." >&2
@@ -110,7 +114,6 @@ if [[ "$FIXED_ENVIRONMENT" == "false" ]]; then
   # main merged into the PR. Runs before chown so any files created as root are
   # handed to the service user.
   echo "[deploy] Applying goose migrations to $BRANCH_DB_FILE"
-  chmod +x "$APP_DIR/goose"
   "$APP_DIR/goose" -env /dev/null -dir "$APP_DIR/migrations" sqlite3 "$BRANCH_DB_FILE" up -allow-missing
 
   chown -R "$SERVICE_USER:$SERVICE_GROUP" "$BRANCH_DATA_DIR"
