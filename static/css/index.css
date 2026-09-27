@@ -34,9 +34,6 @@
     --color-success: #a6da95;
     --color-warning: #eed49f;
     --color-error: #ed8796;
-    --bg-tooltip: #11111b;
-    --bg-base: #0e0f16;
-    --bg-base-indent: #15161e;
 
     /* surface & item  is replaced with level 2 and 3 respectively */
     --bg-surface: #252735;
@@ -49,6 +46,11 @@
     --bg-item-border-hover: #7f8198;
     --bg-item-border: #494d62;
     --item-flat-active: hsl(230deg 40% 86% / 20%);
+
+    /* background */
+    --bg-base: #0e0f16;
+    --bg-base-indent: #15161e;
+    --bg-tooltip: #11111b;
 
     /* level 1 */
     --level-1-background: #1b1e2c;
