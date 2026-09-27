@@ -6,8 +6,6 @@ import (
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/program"
-	"log/slog"
-	"github.com/Regncon/conorganizer/service/puljer"
 )
 
 templ flatEventList(events []models.EventCardModel, eventImageDir *string) {
@@ -49,8 +47,7 @@ templ programDaySchedule(day program.Day) {
 	}
 }
 
-templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publishedDay *program.Day, logger *slog.Logger) {
-
+templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publishedDay *program.Day) {
 	<style>
 		.event-pulje-overview {
 			display: flex;
@@ -81,11 +78,34 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 				margin: 0 0 var(--spacing-5x);
 			}
 		}
+
+		.pulje-alerts {
+			display: grid;
+			gap: var(--spacing-2x);
+		}
+		.pulje-alert {
+			--pulje-alert-color: var(--color-accent-orange);
+
+			margin: 0;
+			padding-block: var(--spacing-3x);
+			padding-inline: var(--spacing-4x);
+			border-inline-start: var(--spacing-1x) solid var(--pulje-alert-color);
+			border-radius: var(--border-radius-1x);
+			background: color-mix(in srgb, var(--pulje-alert-color) 12%, var(--bg-base));
+			color: var(--color-text-strong);
+		}
+		.pulje-alert.is-locked {
+			--pulje-alert-color: var(--color-accent-blue);
+		}
+		.pulje-alert.is-completed {
+			--pulje-alert-color: var(--color-accent-green);
+		}
 	</style>
 	<div class="page-content-container event-pulje-overview">
 		if programPublished {
 			if publishedDay != nil {
 				@programDaySchedule(*publishedDay)
+				@puljeAlerts(publishedDay.Blocks)
 				if len(publishedDay.ProgramEvents) > 0 {
 					<section class="container-inner-padding program-section">
 						<h2 class="pulje-heading">Programoversikt</h2>
@@ -93,7 +113,6 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 							for _, row := range programEventRows(publishedDay.ProgramEvents) {
 								<div class={ "program-event-row", templ.KV("reversed", row.Reversed) }>
 									for _, programEvent := range row.Events {
-                                        @PuljeAlert(string(programEvent.PuljeID), db, logger)
 										@components.ProgramEventCard(programEvent.Event, eventImageDir, string(programEvent.PuljeID), publishedDay.QueryValue())
 									}
 								</div>
@@ -116,27 +135,19 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 	</div>
 }
 
-templ PuljeAlert(puljeId string, db *sql.DB, logger *slog.Logger) {
-
-    {{
-        pulje, puljeErr := puljerService.GetPulje(puljeId, db)
-
-        if (puljeErr != nil) {
-            logger.Error(puljeErr.Error())
-        }
-    }}
-
-    if (pulje.ClosingWarningActive && pulje.Status == models.PuljeStatusOpen) {
-            <p> puljen er iferd med å bli låst </p>
-    }
-
-    if (pulje.Status == models.PuljeStatusLocked) {
-        <p> puljen er låst</p>
-    }
-
-    if (pulje.Status == models.PuljeStatusCompleted) {
-        <p> puljen er lukket</p>
-    }
-
+templ puljeAlerts(blocks []program.PuljeBlock) {
+	{{ alerts := collectPuljeAlerts(blocks) }}
+	if len(alerts) > 0 {
+		<div class="pulje-alerts container-inner-padding" role="status">
+			for _, alert := range alerts {
+				<p class={ "pulje-alert", alert.Class }>
+					if alert.PuljeName != "" {
+						<strong>{ alert.PuljeName }:</strong> { alert.Message }
+					} else {
+						{ alert.Message }
+					}
+				</p>
+			}
+		</div>
+	}
 }
-

@@ -24,24 +24,6 @@ func GetActivePuljeForEvent(eventID string, db *sql.DB) ([]models.PuljeRow, erro
 	return scanPulje(rows)
 }
 
-func GetPulje(puljeID string, db *sql.DB) (models.PuljeRow, error) {
-	const query = `
-		SELECT p.id, p.name, p.status, p.closing_warning_active, p.start_at, p.end_at
-		FROM puljer p
-		WHERE p.id = ?
-	`
-
-	rows, err := db.Query(query, puljeID)
-	if err != nil {
-		return models.PuljeRow{}, fmt.Errorf("query pulje id failed for %s: %w", puljeID, err)
-	}
-	defer rows.Close()
-
-    puljer, err := scanPulje(rows)
-
-    return puljer[0], err
-}
-
 func GetAllPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 	const query = `
 		SELECT id, name, status, closing_warning_active, start_at, end_at

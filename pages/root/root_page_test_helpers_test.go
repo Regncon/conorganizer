@@ -73,6 +73,12 @@ func insertRootPagePuljeWithDetails(t *testing.T, db *sql.DB, puljeID models.Pul
 	`, puljeID, name, models.PuljeStatusOpen, startAt, endAt)
 }
 
+func setRootPagePuljeStatus(t *testing.T, db *sql.DB, puljeID models.Pulje, status models.PuljeStatus, closingWarningActive bool) {
+	t.Helper()
+
+	mustExec(t, db, `UPDATE puljer SET status = ?, closing_warning_active = ? WHERE id = ?`, status, closingWarningActive, puljeID)
+}
+
 func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus, isInPuljefordeling bool) {
 	t.Helper()
 
