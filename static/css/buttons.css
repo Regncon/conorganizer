@@ -40,8 +40,8 @@
 
     /* disabled */
     --btn-disabled-bg: transparent;
-    --btn-disabled-border: var(--color-disabled);
-    --btn-disabled-text: var(--color-disabled);
+    --btn-disabled-border: var(--color-text-soft);
+    --btn-disabled-text: var(--color-text-soft);
 
     /* shadow */
     --btn-shadow-size: 0 0 0 3px;
