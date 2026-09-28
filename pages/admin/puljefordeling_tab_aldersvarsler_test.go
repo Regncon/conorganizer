@@ -42,8 +42,11 @@ func TestPuljefordeling_AldersvarselForUnder18SattPaaVoksenarrangementAvSolveren
 	if merke.Length() != 1 {
 		t.Fatalf("forventet ett under 18-merke ved deltakeren, fikk %d", merke.Length())
 	}
-	if got := merke.Find("svg").Length(); got != 2 {
-		t.Errorf("under 18-merket skal vise 18+-ikonet med forbudsskilt over, fikk %d ikoner", got)
+	if got := merke.Find("svg").Length(); got != 1 {
+		t.Errorf("under 18-merket skal vise ett ikon, fikk %d", got)
+	}
+	if !merke.HasClass("under-18-merke") || merke.Find("svg path").Length() != 2 {
+		t.Errorf("under 18-merket skal bruke barneikonet (to stier), fikk %d stier", merke.Find("svg path").Length())
 	}
 	if preserve, _ := warning.Attr("data-preserve-attr"); preserve != "open" {
 		t.Error("åpnet aldersvarsel må beholdes under oppdatering")
