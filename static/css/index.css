@@ -1,75 +1,38 @@
 :root {
+    /* text colors */
     --color-text-strong: #f1f3f9;
     --color-text-soft: #ccd1e9;
     --color-text-soft-50: hsl(from var(--color-text-soft) h s l / 50%);
     --color-text-soft-20: hsl(from var(--color-text-soft) h s l / 20%);
 
-    /* call to action banner */
-    --banner-glow: #4966e2;
-
     /* primary colors */
-    --color-primary-text: var(--color-text-soft);
     --color-primary: #e7a965;
+    --color-primary-text: var(--color-text-soft);
     --color-primary-hover: hsl(from var(--color-primary) h s l / 40%);
     --color-primary-active: hsl(from var(--color-primary) h s l / 60%);
     --color-primary-focus-visible: hsl(from var(--color-primary) h s l / 50%);
 
-    /* Gradient background colors */
-    --color-primary-background-gradient:
-        linear-gradient(
-            to right,
-            hsl(from var(--color-primary) h s l / 25%),
-            hsl(from var(--color-primary) h s l / 20%)
-        ),
-        var(--level-2-state-base);
-    --color-blue-background-gradient:
-        linear-gradient(
-            to right,
-            hsl(from var(--color-accent-blue) h s l / 25%),
-            hsl(from var(--color-accent-blue) h s l / 20%)
-        ),
-        var(--level-2-state-base);
-    --color-yellow-background-gradient:
-        linear-gradient(to right, hsl(from #ffe8a3 h s l / 25%), hsl(from #ffe8a3 h s l / 20%)),
-        var(--level-2-state-base);
-    --color-green-background-gradient:
-        linear-gradient(
-            to right,
-            hsl(from var(--color-accent-green) h s l / 25%),
-            hsl(from var(--color-accent-green) h s l / 20%)
-        ),
-        var(--level-2-state-base);
+    /* status colors */
+    --color-success: #a6da95;
+    --color-warning: #eed49f;
+    --color-error: #ed8796;
 
     /* accent colors */
-    --color-accent-blue: #8eadee;
-    --color-accent-purple: #c6a0f6;
-    --color-accent-pink: #f5bde6;
     --color-accent-red: var(--color-error);
     --color-accent-orange: #f5a97f;
     --color-accent-yellow: var(--color-warning);
     --color-accent-green: var(--color-success);
     --color-accent-teal: #8bd5ca;
     --color-accent-cyan: #83c3e0;
-    --color-success: #a6da95;
-    --color-warning: #eed49f;
-    --color-error: #ed8796;
-
-    /* surface & item  is replaced with level 2 and 3 respectively */
-    --bg-surface: #252735;
-    --bg-surface-border: var(--bg-item-border);
-    --bg-surface-border-hover: var(--bg-item-border-hover);
-    --bg-surface-hover: #353847;
-    --bg-surface-active: #474957;
-    --bg-item: #35394a;
-    --bg-item-hover: #44485a;
-    --bg-item-border-hover: #7f8198;
-    --bg-item-border: #494d62;
-    --item-flat-active: hsl(230deg 40% 86% / 20%);
+    --color-accent-blue: #8eadee;
+    --color-accent-purple: #c6a0f6;
+    --color-accent-pink: #f5bde6;
 
     /* background */
     --bg-base: #0e0f16;
     --bg-base-indent: #15161e;
     --bg-tooltip: #11111b;
+    --bg-backdrop: #0009;
 
     /* level 1 */
     --level-1-background: #1b1e2c;
@@ -90,8 +53,46 @@
     --level-3-border: #495174;
     --level-3-border-hover: color-mix(in srgb, var(--color-text-soft) 40%, var(--level-3-border));
 
-    /* backdrop */
-    --bg-backdrop: #0009;
+    /* Gradient background colors */
+    --color-primary-background-gradient:
+        linear-gradient(
+            to right,
+            hsl(from var(--color-primary) h s l / 25%),
+            hsl(from var(--color-primary) h s l / 20%)
+        ),
+        var(--level-2-state-base);
+    --color-yellow-background-gradient:
+        linear-gradient(to right, hsl(from #ffe8a3 h s l / 25%), hsl(from #ffe8a3 h s l / 20%)),
+        var(--level-2-state-base);
+    --color-green-background-gradient:
+        linear-gradient(
+            to right,
+            hsl(from var(--color-accent-green) h s l / 25%),
+            hsl(from var(--color-accent-green) h s l / 20%)
+        ),
+        var(--level-2-state-base);
+    --color-blue-background-gradient:
+        linear-gradient(
+            to right,
+            hsl(from var(--color-accent-blue) h s l / 25%),
+            hsl(from var(--color-accent-blue) h s l / 20%)
+        ),
+        var(--level-2-state-base);
+
+    /* call to action banner */
+    --banner-glow: #4966e2;
+
+    /* surface & item  is replaced with level 2 and 3 respectively */
+    --bg-surface: #252735;
+    --bg-surface-border: var(--bg-item-border);
+    --bg-surface-border-hover: var(--bg-item-border-hover);
+    --bg-surface-hover: #353847;
+    --bg-surface-active: #474957;
+    --bg-item: #35394a;
+    --bg-item-hover: #44485a;
+    --bg-item-border-hover: #7f8198;
+    --bg-item-border: #494d62;
+    --item-flat-active: hsl(230deg 40% 86% / 20%);
 
     /* font sizes */
     --text-heading-1-xl: 52px;
