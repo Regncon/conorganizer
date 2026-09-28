@@ -13,11 +13,30 @@
     --color-primary-hover: hsl(from var(--color-primary) h s l / 40%);
     --color-primary-active: hsl(from var(--color-primary) h s l / 60%);
     --color-primary-focus-visible: hsl(from var(--color-primary) h s l / 50%);
+
+    /* Gradient background colors */
     --color-primary-background-gradient:
         linear-gradient(
             to right,
             hsl(from var(--color-primary) h s l / 25%),
             hsl(from var(--color-primary) h s l / 20%)
+        ),
+        var(--level-2-state-base);
+    --color-blue-background-gradient:
+        linear-gradient(
+            to right,
+            hsl(from var(--color-accent-blue) h s l / 25%),
+            hsl(from var(--color-accent-blue) h s l / 20%)
+        ),
+        var(--level-2-state-base);
+    --color-yellow-background-gradient:
+        linear-gradient(to right, hsl(from #ffe8a3 h s l / 25%), hsl(from #ffe8a3 h s l / 20%)),
+        var(--level-2-state-base);
+    --color-green-background-gradient:
+        linear-gradient(
+            to right,
+            hsl(from var(--color-accent-green) h s l / 25%),
+            hsl(from var(--color-accent-green) h s l / 20%)
         ),
         var(--level-2-state-base);
 
