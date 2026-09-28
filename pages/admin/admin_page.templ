@@ -86,6 +86,14 @@ templ adminPage(db *sql.DB) {
 						<a role="button" href="/admin/rooms/" class="btn btn--outline">Gå til rom-oversikt</a>
 					}
 					@adminCard(
+						"Tilbakemeldinger",
+						"Se tilbakemeldinger fra brukere om nettsiden og festivalen.",
+						"/static/feedback.webp",
+						"En gelékube full av brev og ruller under et skilt med teksten Feedback",
+					) {
+						<a role="button" href="/admin/tilbakemeldinger/" class="btn btn--outline">Gå til tilbakemeldinger</a>
+					}
+					@adminCard(
 						"Utskriftsvennlig program",
 						"Skriv ut programmet med arrangementsdetaljer og romkart.",
 						"/static/printer.webp",
