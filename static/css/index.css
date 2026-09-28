@@ -33,6 +33,7 @@
     --bg-base-indent: #15161e;
     --bg-tooltip: #11111b;
     --bg-backdrop: #0009;
+    --color-primary-background-dark: color-mix(in srgb, var(--color-primary) 8%, var(--level-2-state-base));
 
     /* level 1 */
     --level-1-background: #1b1e2c;
