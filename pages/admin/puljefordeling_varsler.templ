@@ -16,10 +16,35 @@ func fordelingsvarselOppsummering(varsel puljefordeling.Fordelingsvarsel) string
 	return fmt.Sprintf("%d spillederoppdrag · %d %s", varsel.AntallGMOppdrag, varsel.AntallSpillerplasser, plasser)
 }
 
-templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordelingsvarsel, kapasitetsvarsler []puljefordeling.Kapasitetsvarsel) {
-	if len(varsler) > 0 || len(kapasitetsvarsler) > 0 {
+templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordelingsvarsel, kapasitetsvarsler []puljefordeling.Kapasitetsvarsel, aldersvarsler []puljefordeling.Aldersvarsel) {
+	if len(varsler) > 0 || len(kapasitetsvarsler) > 0 || len(aldersvarsler) > 0 {
 		<section class="fordelingsvarsler" aria-labelledby={ "fordelingsvarsler-" + string(pulje) }>
 			<h3 id={ "fordelingsvarsler-" + string(pulje) }><span aria-hidden="true">⚠</span> Varsler om tildelinger</h3>
+			if len(aldersvarsler) > 0 {
+				<h4>Under 18 på 18+-arrangement</h4>
+				<p>Disse billettholderne er under 18 år og er satt opp på et arrangement med 18-årsgrense. Aldersgrensen håndteres manuelt, så sjekk dem før puljen publiseres.</p>
+				for _, varsel := range aldersvarsler {
+					<details
+						id={ fmt.Sprintf("aldersvarsel-%s-%s", pulje, varsel.EventID) }
+						data-aldersvarsel={ varsel.EventID }
+						data-preserve-attr="open"
+					>
+						<summary><strong>{ varsel.EventTitle }</strong><span>{ fmt.Sprintf("%d under 18", len(varsel.Deltakere)) }</span></summary>
+						<ul>
+							for _, deltaker := range varsel.Deltakere {
+								<li>
+									if deltaker.Role == models.EventPlayerRoleGM {
+										<strong>Spilleder:</strong>
+									} else {
+										<strong>Spiller:</strong>
+									}
+									{ " " + deltaker.Navn }
+								</li>
+							}
+						</ul>
+					</details>
+				}
+			}
 			if len(kapasitetsvarsler) > 0 {
 				<h4>Over kapasitet</h4>
 				<p>Disse arrangementene har flere spillere enn oppgitt kapasitet. Manuelle spillerplasser beholdes. Åpne arrangementet for å se spillerne.</p>
