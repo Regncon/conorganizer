@@ -171,6 +171,7 @@ templ roomsIndex(children templ.Component, puljeQuery models.Pulje) {
                 background: var(--bg-surface-hover);
             }
         </style>
+		@roomNotesStyles()
 		<h1 class="page-heading" style="text-align: center;">Administrer rom og fordeling av events</h1>
 		<div class="tabs">
 			<a role="button" href="/admin/rooms/" class={ templ.KV("active", puljeQuery == "/") }>Rediger rom</a>

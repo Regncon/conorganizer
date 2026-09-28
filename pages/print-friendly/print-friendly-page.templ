@@ -138,6 +138,8 @@ func getPrintDays(db *sql.DB) ([]printDay, error) {
 	return out, nil
 }
 
+// getPrintEventRows returns the printable schedule rows.
+// Nobody, admins included, sees the room for a pulje whose room assignment is not published yet.
 func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
 	const query = `
 		SELECT e.id, e.title, e.intro, e.description, e.system, e.event_type,
@@ -145,9 +147,11 @@ func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
 			e.phone_number, e.max_players, e.beginner_friendly,
 			e.can_be_run_in_english, e.notes, e.status,
 			e.pulje_id, e.pulje_name, e.pulje_start_at, e.pulje_end_at,
+			p.rooms_published,
 			COALESCE(e.room_id, 0), COALESCE(e.room_name, ''),
 			COALESCE(e.room_number, ''), COALESCE(e.room_floor, 0)
 		FROM v_events_by_pulje_active e
+		JOIN puljer p ON p.id = e.pulje_id
 	`
 	rows, err := db.Query(query)
 	if err != nil {
@@ -161,6 +165,7 @@ func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
 		var puljeID models.Pulje
 		var puljeName string
 		var startAt, endAt models.DBDateTime
+		var roomsPublished bool
 		var roomID int
 		if err := rows.Scan(
 			&row.Event.ID, &row.Event.Title, &row.Event.Intro,
@@ -170,6 +175,7 @@ func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
 			&row.Event.MaxPlayers, &row.Event.BeginnerFriendly,
 			&row.Event.CanBeRunInEnglish, &row.Event.Notes, &row.Event.Status,
 			&puljeID, &puljeName, &startAt, &endAt,
+			&roomsPublished,
 			&roomID, &row.Occurrence.RoomName,
 			&row.Occurrence.RoomNumber, &row.Occurrence.RoomFloor,
 		); err != nil {
@@ -179,9 +185,11 @@ func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
 		if err != nil {
 			return nil, err
 		}
-		row.Occurrence.HasRoom = roomID != 0
-		row.Occurrence.RoomID = roomID
-		row.Occurrence.MapPath, _ = rooms.MapPathForRoom(row.Occurrence.RoomNumber)
+		if roomsPublished {
+			row.Occurrence.HasRoom = roomID != 0
+			row.Occurrence.RoomID = roomID
+			row.Occurrence.MapPath, _ = rooms.MapPathForRoom(row.Occurrence.RoomNumber)
+		}
 		out[printEventKey{puljeID, row.Event.ID}] = row
 	}
 	if err := rows.Err(); err != nil {

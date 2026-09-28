@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Regncon/conorganizer/models"
 )
@@ -21,18 +22,20 @@ func CreateRoom(db *sql.DB, data models.Room) (*models.Room, models.RoomFormErro
 			name,
 			room_number,
 			floor,
-			notes,
+			public_notes,
+			admin_notes,
 			max_concurrent_games,
 			is_disabled
         )
-        VALUES (?, ?, ?, ?, 0, 0)
+        VALUES (?, ?, ?, ?, ?, 0, 0)
     `
 
 	result, err := db.Exec(query,
 		data.Name,
 		data.RoomNumber,
 		data.Floor,
-		data.Notes,
+		data.PublicNotes,
+		data.AdminNotes,
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed: rooms.room_number") {
@@ -93,14 +96,16 @@ func UpdateRoom(db *sql.DB, data models.Room) (*models.Room, models.RoomFormErro
 			name = ?,
 			room_number = ?,
 			floor = ?,
-			notes = ?
+			public_notes = ?,
+			admin_notes = ?
 		WHERE id = ?
 		RETURNING
 			id,
 			name,
 			room_number,
 			floor,
-			notes
+			public_notes,
+			admin_notes
 	`
 
 	var updated models.Room
@@ -110,14 +115,16 @@ func UpdateRoom(db *sql.DB, data models.Room) (*models.Room, models.RoomFormErro
 		data.Name,
 		data.RoomNumber,
 		data.Floor,
-		data.Notes,
+		data.PublicNotes,
+		data.AdminNotes,
 		data.ID,
 	).Scan(
 		&updated.ID,
 		&updated.Name,
 		&updated.RoomNumber,
 		&updated.Floor,
-		&updated.Notes,
+		&updated.PublicNotes,
+		&updated.AdminNotes,
 	)
 
 	if err != nil {
@@ -163,9 +170,20 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.
 		args = append(args, *data.Floor)
 	}
 
-	if data.Notes != nil {
-		setParts = append(setParts, "notes = ?")
-		args = append(args, *data.Notes)
+	if data.PublicNotes != nil {
+		if utf8.RuneCountInString(*data.PublicNotes) > maxRoomNotesLength {
+			errors.AddError(models.RoomErrorPublicNotes, "Offentlige notater kan ikke være lengre enn 1000 tegn")
+		}
+		setParts = append(setParts, "public_notes = ?")
+		args = append(args, *data.PublicNotes)
+	}
+
+	if data.AdminNotes != nil {
+		if utf8.RuneCountInString(*data.AdminNotes) > maxRoomNotesLength {
+			errors.AddError(models.RoomErrorAdminNotes, "Admin-notater kan ikke være lengre enn 1000 tegn")
+		}
+		setParts = append(setParts, "admin_notes = ?")
+		args = append(args, *data.AdminNotes)
 	}
 
 	// Check if any data was being updated
@@ -188,7 +206,8 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.
 			name,
 			room_number,
 			floor,
-			notes;
+			public_notes,
+			admin_notes;
 	`, strings.Join(setParts, ", "))
 
 	// Add ID to constructed args
@@ -201,7 +220,8 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.
 		&updated.Name,
 		&updated.RoomNumber,
 		&updated.Floor,
-		&updated.Notes,
+		&updated.PublicNotes,
+		&updated.AdminNotes,
 	)
 
 	if err != nil {
@@ -224,7 +244,8 @@ func GetRoomByID(db *sql.DB, roomID int) (*models.Room, error) {
 			name,
 			room_number,
 			floor,
-			notes
+			public_notes,
+			admin_notes
 		FROM rooms
 		WHERE id = ?
 	`
@@ -236,7 +257,8 @@ func GetRoomByID(db *sql.DB, roomID int) (*models.Room, error) {
 		&room.Name,
 		&room.RoomNumber,
 		&room.Floor,
-		&room.Notes,
+		&room.PublicNotes,
+		&room.AdminNotes,
 	)
 
 	if err != nil {
@@ -259,7 +281,8 @@ func GetAllRooms(db *sql.DB) ([]models.Room, error) {
 			name,
 			room_number,
 			floor,
-			notes
+			public_notes,
+			admin_notes
 		FROM rooms
 		ORDER BY floor ASC, room_number ASC
 	`
@@ -281,7 +304,8 @@ func GetAllRooms(db *sql.DB) ([]models.Room, error) {
 			&room.Name,
 			&room.RoomNumber,
 			&room.Floor,
-			&room.Notes,
+			&room.PublicNotes,
+			&room.AdminNotes,
 		)
 
 		if err != nil {
@@ -310,7 +334,8 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
             r.name,
             r.room_number,
             r.floor,
-            r.notes,
+            r.public_notes,
+            r.admin_notes,
 
             e.id,
             e.title,
@@ -348,7 +373,8 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 			&row.RoomName,
 			&row.RoomNumber,
 			&row.Floor,
-			&row.RoomNotes,
+			&row.RoomPublicNotes,
+			&row.RoomAdminNotes,
 
 			&row.EventID,
 			&row.EventTitle,
@@ -372,7 +398,8 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 				Name:             row.RoomName,
 				RoomNumber:       row.RoomNumber,
 				Floor:            row.Floor,
-				Notes:            row.RoomNotes,
+				PublicNotes:      row.RoomPublicNotes,
+				AdminNotes:       row.RoomAdminNotes,
 				AssignedEventsID: []models.RoomEventPuljeSummary{},
 			}
 		}

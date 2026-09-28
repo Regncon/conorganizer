@@ -3,6 +3,7 @@ package program
 import (
 	"database/sql"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/Regncon/conorganizer/models"
@@ -43,10 +44,24 @@ func (day Day) Label() string {
 	return fmt.Sprintf("%s %d.%d", norwegianWeekdays[day.Date.Weekday()], day.Date.Day(), day.Date.Month())
 }
 
-func GetDays(db *sql.DB) ([]Day, error) {
+var loadLocation = sync.OnceValues(func() (*time.Location, error) {
 	location, err := time.LoadLocation(programTimeZone)
 	if err != nil {
 		return nil, fmt.Errorf("load program time zone %q: %w", programTimeZone, err)
+	}
+	return location, nil
+})
+
+// Location is the convention's time zone (Europe/Oslo), used for every time
+// shown to users. It is loaded once.
+func Location() (*time.Location, error) {
+	return loadLocation()
+}
+
+func GetDays(db *sql.DB) ([]Day, error) {
+	location, err := Location()
+	if err != nil {
+		return nil, err
 	}
 
 	puljer, err := puljerService.GetAllPuljer(db)

@@ -2,6 +2,7 @@ package event
 
 import (
 	"fmt"
+	"strings"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 )
@@ -31,34 +32,37 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 			<div class="event-room-list">
 				for _, group := range groups {
 					{{ dialogID := eventRoomDialogID(eventID, group.Puljer[0].ID) }}
-					if group.MapPath != "" {
-						<button
-							type="button"
-							id={ dialogID + "-button" }
-							class="event-room-button"
-							aria-haspopup="dialog"
-							aria-controls={ dialogID }
-							data-on:click={ fmt.Sprintf("$_eventRoomMapDialog = %q", dialogID) }
-						>
-							@eventRoomTimes(group.Puljer)
-							<span class="event-room-name">{ group.Room.Name }</span>
-							<span class="event-room-action">
-								Se rommet
-								<span aria-hidden="true">
-									@icons.Icon(icons.Map, icons.Size20)
+					<div class="event-room-entry">
+						if group.MapPath != "" {
+							<button
+								type="button"
+								id={ dialogID + "-button" }
+								class="event-room-button"
+								aria-haspopup="dialog"
+								aria-controls={ dialogID }
+								data-on:click={ fmt.Sprintf("$_eventRoomMapDialog = %q", dialogID) }
+							>
+								@eventRoomTimes(group.Puljer)
+								<span class="event-room-name">{ group.Room.Name }</span>
+								<span class="event-room-action">
+									Se rommet
+									<span aria-hidden="true">
+										@icons.Icon(icons.Map, icons.Size20)
+									</span>
 								</span>
-							</span>
-						</button>
-					} else if group.Room.ID != 0 {
-						<div class="event-room-unmapped">
-							@eventRoomTimes(group.Puljer)
-							<span class="event-room-name">{ group.Room.Name }</span>
-						</div>
-					} else {
-						<div class="event-schedule-unassigned">
-							@eventRoomTimes(group.Puljer)
-						</div>
-					}
+							</button>
+						} else if group.Room.ID != 0 {
+							<div class="event-room-unmapped">
+								@eventRoomTimes(group.Puljer)
+								<span class="event-room-name">{ group.Room.Name }</span>
+							</div>
+						} else {
+							<div class="event-schedule-unassigned">
+								@eventRoomTimes(group.Puljer)
+							</div>
+						}
+						@eventRoomNote(group.Room.PublicNotes)
+					</div>
 				}
 			</div>
 			// Dialogs remain keyed by pulje so an open map follows a room reassignment.
@@ -83,6 +87,19 @@ templ eventRoomTimes(puljer []models.PuljeRow) {
 	</span>
 }
 
+// eventRoomNote renders a room's public notes for GMs and players.
+// Notes are always rendered as escaped text (never as data-tippy-content) so a note can never inject HTML.
+templ eventRoomNote(publicNotes string) {
+	if strings.TrimSpace(publicNotes) != "" {
+		<p class="event-room-note">
+			<span aria-hidden="true">
+				@icons.Icon(icons.Info, icons.Size20)
+			</span>
+			{ publicNotes }
+		</p>
+	}
+}
+
 templ eventRoomDialog(dialogID string, group eventRoomGroup) {
 	<dialog
 		id={ dialogID }
@@ -103,6 +120,7 @@ templ eventRoomDialog(dialogID string, group eventRoomGroup) {
 			<p class="event-room-floor">{ fmt.Sprintf("%d. etasje", group.Room.Floor) }</p>
 			<h2 id={ dialogID + "-title" }>{ group.Room.Name }</h2>
 			@eventRoomTimes(group.Puljer)
+			@eventRoomNote(group.Room.PublicNotes)
 			<img
 				src={ group.MapPath }
 				alt={ roomMapAlt(group.Room) }
@@ -117,6 +135,23 @@ templ eventRoomStyles() {
 			display: grid;
 			gap: var(--spacing-3x);
 			margin-bottom: var(--spacing-3x);
+		}
+		.event-room-entry {
+			display: grid;
+			gap: var(--spacing-2x);
+		}
+		.event-room-note {
+			display: flex;
+			gap: var(--spacing-2x);
+			padding-inline: var(--spacing-3x);
+			margin: 0;
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+			white-space: pre-wrap;
+			overflow-wrap: anywhere;
+		}
+		.event-room-dialog .event-room-note {
+			margin-block-end: var(--spacing-4x);
 		}
 		.event-room-button, .event-room-unmapped, .event-schedule-unassigned {
 			padding: var(--spacing-3x);

@@ -67,17 +67,37 @@ templ formModal() {
 				@errorfeedback.RenderMessage("floor")
 			</label>
 			<label class="label color-strong form-group">
-				<p>Notater</p>
+				<p>🌐 Offentlige notater</p>
+				<small>Vises for spilledere og deltakere på arrangementssiden, f.eks. hvordan man finner rommet.</small>
 				<textarea
-					name="notes"
-					title="Her kan du skrive notater for rommet"
-					placeholder="Her kan du skrive notater for rommet"
+					name="public_notes"
+					title="Notater som vises for alle på arrangementssiden"
+					placeholder="Inngang via kafeen, ta heisen til 7. etasje"
 					rows="4"
 					class="input"
-					data-bind="notes"
-					{ errorfeedback.Attrs("notes")... }
+					data-bind="public_notes"
+					{ errorfeedback.Attrs("public_notes")... }
 				></textarea>
-				@errorfeedback.RenderMessage("notes")
+				@errorfeedback.RenderMessage("public_notes")
+			</label>
+			<label class="label color-strong form-group">
+				<p class="room-note-label">
+					<span class="room-note-icon" aria-hidden="true">
+						@icons.Icon(icons.Lock, icons.Size16)
+					</span>
+					Admin-notater
+				</p>
+				<small>Vises bare for administratorer.</small>
+				<textarea
+					name="admin_notes"
+					title="Notater som bare vises for administratorer"
+					placeholder="Nøkkel hentes i resepsjonen"
+					rows="4"
+					class="input"
+					data-bind="admin_notes"
+					{ errorfeedback.Attrs("admin_notes")... }
+				></textarea>
+				@errorfeedback.RenderMessage("admin_notes")
 			</label>
 			<span class="button-group">
 				<button
@@ -138,10 +158,7 @@ templ roomCard(room models.Room) {
 				<p>{ room.Name }</p>
 			}
 		</span>
-		if room.Notes != "" {
-			<p style="border-bottom: 1px solid var(--bg-item-border);">Notater</p>
-			<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
-		}
+		@roomNotes(room.PublicNotes, room.AdminNotes)
 		<button
 			type="button"
 			class="btn btn--secondary room-edit"
