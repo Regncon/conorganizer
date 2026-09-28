@@ -8,20 +8,19 @@ import (
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
-func TestFinnAldersvarsler_SpillerOgGMUnder18PaaVoksenarrangementVarsles(t *testing.T) {
+func TestFinnAldersvarsler_SpillerUnder18PaaVoksenarrangementVarsles(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt et 18+-arrangement der solveren har satt en spiller under 18, og en GM under 18 leder det.",
 		When:  "Når aldersvarsler beregnes for forhåndsvisningen.",
-		Then:  "Så gir arrangementet ett varsel som nevner både spilleren og GM-en med rolle.",
+		Then:  "Så gir arrangementet ett varsel som bare nevner spilleren, ikke GM-en.",
 	})
 
 	// Given
 	expected := []Aldersvarsel{{
 		EventID:    "ev18",
 		EventTitle: "Voksenspill",
-		Deltakere: []Aldersvarseldeltaker{
-			{BillettholderID: 3, Navn: "Gunnar GM", Role: models.EventPlayerRoleGM},
-			{BillettholderID: 2, Navn: "Kari Nordmann", Role: models.EventPlayerRolePlayer},
+		Spillere: []Aldersvarselspiller{
+			{BillettholderID: 2, Navn: "Kari Nordmann"},
 		},
 	}}
 	pulje := EmulatedPulje{PuljeID: models.PuljeFredagKveld, Events: []EmulatedEvent{{

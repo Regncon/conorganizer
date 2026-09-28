@@ -23,24 +23,19 @@ templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordel
 			<h3 id={ "fordelingsvarsler-" + string(pulje) }><span aria-hidden="true">⚠</span> Varsler om tildelinger</h3>
 			if len(aldersvarsler) > 0 {
 				<h4>Under 18 på 18+-arrangement</h4>
-				<p>Disse billettholderne er under 18 år og er satt opp på et arrangement med 18-årsgrense. Aldersgrensen håndteres manuelt, så sjekk dem før puljen publiseres.</p>
+				<p>Disse spillerne er under 18 år og er satt opp på et arrangement med 18-årsgrense. Aldersgrensen håndteres manuelt, så sjekk dem før puljen publiseres.</p>
 				for _, varsel := range aldersvarsler {
 					<details
 						id={ fmt.Sprintf("aldersvarsel-%s-%s", pulje, varsel.EventID) }
 						data-aldersvarsel={ varsel.EventID }
 						data-preserve-attr="open"
 					>
-						<summary><strong>{ varsel.EventTitle }</strong><span>{ fmt.Sprintf("%d under 18", len(varsel.Deltakere)) }</span></summary>
+						<summary><strong>{ varsel.EventTitle }</strong><span>{ fmt.Sprintf("%d under 18", len(varsel.Spillere)) }</span></summary>
 						<ul>
-							for _, deltaker := range varsel.Deltakere {
+							for _, spiller := range varsel.Spillere {
 								<li class="aldersvarsel-deltaker">
 									@under18Merke()
-									if deltaker.Role == models.EventPlayerRoleGM {
-										<strong>Spilleder:</strong>
-									} else {
-										<strong>Spiller:</strong>
-									}
-									<span class="aldersvarsel-navn">{ deltaker.Navn }</span>
+									<span class="aldersvarsel-navn">{ spiller.Navn }</span>
 								</li>
 							}
 						</ul>
