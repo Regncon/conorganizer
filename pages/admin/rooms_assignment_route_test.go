@@ -10,7 +10,9 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
+	roomService "github.com/Regncon/conorganizer/service/rooms"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
@@ -134,5 +136,96 @@ func TestRoomAssignment_CreatesAndPublishesRelationForApprovedEvent(t *testing.T
 	}
 	if !strings.Contains(recorder.Body.String(), "room-saved") {
 		t.Fatal("successful assignment should notify the page")
+	}
+}
+
+func TestRoomAssignmentPublish_TogglesRoomsPublishedInDatabase(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a pulje with an unpublished room assignment.",
+		When:  "When an admin toggles the publish switch on.",
+		Then:  "Then the database records the room assignment as published.",
+	})
+
+	// Given
+	expectedPublished := true
+	ns, err := embeddednats.New(context.Background(), embeddednats.WithNATSServerOptions(&natsserver.Options{
+		Host: "127.0.0.1", Port: -1, JetStream: true, StoreDir: t.TempDir(),
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { ns.Close() })
+	ns.WaitForServer()
+	manager, err := live.NewManager(context.Background(), ns, sessions.NewCookieStore([]byte("room-assignment-publish-test")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "room_assignment_publish_route")
+	pulje := models.PuljeFredagKveld
+	testutil.MustExec(t, db, `INSERT INTO puljer(id,name,status,start_at,end_at) VALUES(?,?,'Open','2026-10-09T18:00:00Z','2026-10-09T23:00:00Z')`, pulje, pulje)
+
+	router := chi.NewRouter()
+	if err := SetupAdminRoute(router, logger, manager, db, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	// When
+	recorder := httptest.NewRecorder()
+	body := strings.NewReader(`{"roomsPublished": true}`)
+	request := httptest.NewRequest(http.MethodPut, "/admin/rooms/api/assignment/FredagKveld/publish", body)
+	request.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(recorder, request)
+
+	// Then
+	if recorder.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusNoContent, recorder.Code, recorder.Body.String())
+	}
+	actualPublished, err := roomService.RoomsPublished(db, pulje)
+	if err != nil {
+		t.Fatalf("failed to read rooms published: %v", err)
+	}
+	if actualPublished != expectedPublished {
+		t.Fatalf("published mismatch\nexpected: %v\nactual:   %v", expectedPublished, actualPublished)
+	}
+}
+
+func TestRoomAssignmentPublish_WhenPuljeIsInvalid_ReturnsBadRequest(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given no valid pulje in the request path.",
+		When:  "When the publish route is called.",
+		Then:  "Then the request is rejected as a bad request.",
+	})
+
+	// Given
+	expectedStatus := http.StatusBadRequest
+	ns, err := embeddednats.New(context.Background(), embeddednats.WithNATSServerOptions(&natsserver.Options{
+		Host: "127.0.0.1", Port: -1, JetStream: true, StoreDir: t.TempDir(),
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { ns.Close() })
+	ns.WaitForServer()
+	manager, err := live.NewManager(context.Background(), ns, sessions.NewCookieStore([]byte("room-assignment-publish-invalid-test")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "room_assignment_publish_route_invalid")
+	router := chi.NewRouter()
+	if err := SetupAdminRoute(router, logger, manager, db, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	// When
+	recorder := httptest.NewRecorder()
+	body := strings.NewReader(`{"roomsPublished": true}`)
+	request := httptest.NewRequest(http.MethodPut, "/admin/rooms/api/assignment/NotAPulje/publish", body)
+	router.ServeHTTP(recorder, request)
+
+	// Then
+	if recorder.Code != expectedStatus {
+		t.Fatalf("expected status %d, got %d: %s", expectedStatus, recorder.Code, recorder.Body.String())
 	}
 }

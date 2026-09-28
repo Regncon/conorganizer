@@ -482,6 +482,75 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             padding-block-start: 4px;
             padding-inline: 8px;
         }
+        .rooms-heading-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--spacing-4x);
+            h2 { margin: 0; }
+        }
+        .rooms-publish-error { color: var(--color-error); }
+        .rooms-publish-control-body {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2x);
+        }
+        .rooms-publish-state {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-1x);
+        }
+        .rooms-publish-state-label {
+            color: var(--color-text-soft);
+            font-size: var(--text-body-small);
+        }
+        .rooms-publish-state-value {
+            color: var(--color-text-strong);
+        }
+        .rooms-publish-switch {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            flex: 0 0 auto;
+            cursor: pointer;
+        }
+        .rooms-publish-switch input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+        .rooms-publish-switch-track {
+            position: relative;
+            display: inline-flex;
+            width: 52px;
+            height: 30px;
+            border: 1px solid var(--bg-item-border-hover);
+            border-radius: 999px;
+            background-color: var(--bg-surface);
+            transition: var(--btn-transition);
+        }
+        .rooms-publish-switch-thumb {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            background-color: var(--color-text-soft);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        .rooms-publish-switch input:checked + .rooms-publish-switch-track {
+            border-color: var(--color-primary);
+            background-color: var(--color-primary-hover);
+        }
+        .rooms-publish-switch input:checked + .rooms-publish-switch-track .rooms-publish-switch-thumb {
+            transform: translateX(22px);
+            background-color: var(--color-primary);
+        }
+        .rooms-publish-switch input:focus-visible + .rooms-publish-switch-track {
+            box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
+        }
 	</style>
 	{{ allEvents := getApprovedEventsForPulje(db, logger, pulje) }}
 	<div
@@ -499,6 +568,41 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
 templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
 	{{ allEvents := getApprovedEventsForPulje(db, logger, pulje) }}
 	@roomsAssignmentLiveContent(db, logger, pulje, eventImageDir, allEvents)
+}
+
+templ roomsPublishControl(db *sql.DB, pulje models.Pulje) {
+	{{ roomsPublished, roomsPublishedErr := roomService.RoomsPublished(db, pulje) }}
+	if roomsPublishedErr != nil {
+		<p class="rooms-publish-error">Kunne ikke hente publiseringsstatus: { roomsPublishedErr.Error() }</p>
+	} else {
+		<div class="rooms-publish-control" data-signals:rooms-published={ fmt.Sprintf("%t", roomsPublished) }>
+			<div class="rooms-publish-control-body">
+				<div class="rooms-publish-state">
+					<span class="rooms-publish-state-label">Publiser romfordeling</span>
+					<strong class="rooms-publish-state-value" data-text="$roomsPublished ? 'Synlig for alle' : 'Ikke publisert'">
+						if roomsPublished {
+							Synlig for alle
+						} else {
+							Ikke publisert
+						}
+					</strong>
+				</div>
+				<label class="rooms-publish-switch">
+					<input
+						type="checkbox"
+						role="switch"
+						aria-label="Publiser romfordeling"
+						data-bind="roomsPublished"
+						checked?={ roomsPublished }
+						data-on:change={ fmt.Sprintf("@put('/admin/rooms/api/assignment/%s/publish')", pulje) }
+					/>
+					<span class="rooms-publish-switch-track" aria-hidden="true">
+						<span class="rooms-publish-switch-thumb"></span>
+					</span>
+				</label>
+			</div>
+		</div>
+	}
 }
 
 templ roomsAssignmentLiveContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string, allEvents []models.RoomEventPuljeSummaryJson) {
@@ -525,7 +629,10 @@ templ roomsAssignmentLiveContent(db *sql.DB, logger *slog.Logger, pulje models.P
 				}
 			</div>
 		}
-		<h2>Romfordeling for { pulje.Label() }</h2>
+		<div class="rooms-heading-row">
+			<h2>Romfordeling for { pulje.Label() }</h2>
+			@roomsPublishControl(db, pulje)
+		</div>
 		{{ floors := getRoomsPuljeByFloor(db, logger, pulje) }}
 		for _, floorGroup := range floors {
 			if mapPath, hasMap := roomService.MapPathForFloor(floorGroup.Floor); hasMap {

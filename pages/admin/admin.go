@@ -402,6 +402,39 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						sse := datastar.NewSSE(w, r)
 						_ = sse.ExecuteScript(`document.getElementById('assignment-dialog')?.close(); window.dispatchEvent(new Event('room-saved'))`)
 					})
+
+					roomsAssignmentRouter.Put("/publish", func(w http.ResponseWriter, r *http.Request) {
+						puljeQuery := chi.URLParam(r, "pulje")
+						puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
+						if !isPujeIDValid {
+							http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
+							return
+						}
+
+						type Store struct {
+							RoomsPublished bool `json:"roomsPublished"`
+						}
+
+						store := &Store{}
+						if err := datastar.ReadSignals(r, store); err != nil {
+							http.Error(w, err.Error(), http.StatusBadRequest)
+							return
+						}
+
+						if err := roomService.SetRoomsPublished(db, puljeID, store.RoomsPublished); err != nil {
+							logger.Error(fmt.Errorf("failed to update rooms published for pulje %s: %w", puljeID, err).Error())
+							http.Error(w, "Klarte ikke å oppdatere publiseringsstatus.", http.StatusInternalServerError)
+							return
+						}
+
+						if err := liveManager.Broadcast(r.Context(), live.BucketRooms, live.BucketEvents); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast rooms publishing update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+
+						w.WriteHeader(http.StatusNoContent)
+					})
 				})
 			})
 
