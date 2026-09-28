@@ -34,8 +34,16 @@ func TestPuljefordeling_AldersvarselForUnder18SattPaaVoksenarrangementAvSolveren
 	if !strings.Contains(warning.Find("summary").Text(), "Voksenspill") {
 		t.Errorf("aldersvarselet mangler arrangementet: %q", warning.Find("summary").Text())
 	}
-	if !strings.Contains(warning.Find("li").Text(), expectedName) {
-		t.Errorf("aldersvarselet mangler %q: %q", expectedName, warning.Find("li").Text())
+	deltaker := warning.Find("li.aldersvarsel-deltaker")
+	if got := deltaker.Find(".aldersvarsel-navn").Text(); got != expectedName {
+		t.Errorf("uthevet navn = %q, vil ha %q", got, expectedName)
+	}
+	merke := deltaker.Find(`.under-18-merke[role="img"][aria-label="Under 18 år på 18+-arrangement"]`)
+	if merke.Length() != 1 {
+		t.Fatalf("forventet ett under 18-merke ved deltakeren, fikk %d", merke.Length())
+	}
+	if got := merke.Find("svg").Length(); got != 2 {
+		t.Errorf("under 18-merket skal vise 18+-ikonet med forbudsskilt over, fikk %d ikoner", got)
 	}
 	if preserve, _ := warning.Attr("data-preserve-attr"); preserve != "open" {
 		t.Error("åpnet aldersvarsel må beholdes under oppdatering")
