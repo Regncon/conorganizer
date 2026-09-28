@@ -473,27 +473,78 @@ func TestSelectedInterest_SolverPlayerDoesNotShowAssignmentNotice(t *testing.T) 
 	}
 }
 
-func TestSelectedInterest_SwitchingMinorAndAdultReplacesAgeNoticeWithChoices(t *testing.T) {
+func TestSelectedInterest_SwitchingMinorAndAdult_AgeNoticeFollowsMinorAndBothCanChoose(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "An adults-only event and associated adult and minor billettholdere.",
-		When:  "The minor is selected and then the adult is selected again.",
-		Then:  "The age notice appears and clears while interest selection remains correct.",
+		Given: "Gitt et arrangement anbefalt for voksne (18+) og en tilknyttet voksen og mindreårig billettholder.",
+		When:  "Når den mindreårige velges og deretter den voksne velges igjen.",
+		Then:  "Så vises aldersvarselet bare for den mindreårige, og begge kan velge interesse.",
 	})
+
 	// Given
 	expectedAdultInterest := models.InterestLevelHigh
 	db := createEventInterestTestDB(t)
 	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, expectedAdultInterest)
 	seedNoticeBillettholder(t, db, 902, false)
-	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupAdultsOnly)
-	mustExecEventInterestTest(t, db, `UPDATE events SET age_group = ? WHERE id = ?`, models.AgeGroupAdultsOnly, fixture.eventID)
+	setEventInterestTestAdultsOnly(t, db, fixture.eventID)
 
 	// When
 	minor := decodeInterestContent(t, requestInterestContent(t, db, fixture, 902))
 	adult := decodeInterestContent(t, requestInterestContent(t, db, fixture, fixture.billettholderID))
 
 	// Then
-	if !minor.ShowUnder18 || minor.CanChoose || adult.ShowUnder18 || !adult.CanChoose || adult.Interest != expectedAdultInterest {
+	if !minor.ShowUnder18 || !minor.CanChoose || adult.ShowUnder18 || !adult.CanChoose || adult.Interest != expectedAdultInterest {
 		t.Fatalf("incorrect age or interest content: minor=%+v adult=%+v", minor, adult)
+	}
+}
+
+func TestSelectedInterest_WhenMinorViewsDefaultAgeEvent_ShowsNoAgeNotice(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en billettholder under 18 år og et arrangement uten aldersanbefaling.",
+		When:  "Når arrangementet vises for den mindreårige.",
+		Then:  "Så vises interessevalgene uten aldersvarsel.",
+	})
+
+	// Given
+	expectedShowUnder18 := false
+	expectedCanChoose := true
+	expectedShowAssigned := false
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
+	seedNoticeBillettholder(t, db, 902, false)
+
+	// When
+	actual := decodeInterestContent(t, requestInterestContent(t, db, fixture, 902))
+
+	// Then
+	if actual.ShowUnder18 != expectedShowUnder18 || actual.CanChoose != expectedCanChoose || actual.ShowAssigned != expectedShowAssigned {
+		t.Fatalf("a minor on a default age event should only see interest choices, got %+v", actual)
+	}
+}
+
+func TestSelectedInterest_AgeNoticeRecommendsInsteadOfForbidding(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en billettholder under 18 år og et arrangement anbefalt for voksne (18+).",
+		When:  "Når aldersvarselet vises.",
+		Then:  "Så anbefaler teksten arrangementet for voksne uten å si at den mindreårige ikke kan melde seg på.",
+	})
+
+	// Given
+	expectedWording := "anbefalt for deltakere som er 18 år"
+	forbiddenWording := "kan ikke melde seg på"
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
+	seedNoticeBillettholder(t, db, 902, false)
+	setEventInterestTestAdultsOnly(t, db, fixture.eventID)
+
+	// When
+	actual := decodeInterestContent(t, requestInterestContent(t, db, fixture, 902))
+
+	// Then
+	if !strings.Contains(actual.AgeNoticeText, expectedWording) {
+		t.Fatalf("age notice mismatch\nexpected to contain: %q\nactual:              %q", expectedWording, actual.AgeNoticeText)
+	}
+	if strings.Contains(actual.AgeNoticeText, forbiddenWording) {
+		t.Fatalf("age notice must not forbid sign-up, got %q", actual.AgeNoticeText)
 	}
 }
 
@@ -517,30 +568,30 @@ func TestSelectedInterest_AssignmentOnlyBlocksItsOwnPulje(t *testing.T) {
 	}
 }
 
-func TestSelectedInterest_WhenMinorIsAlreadyAssigned_ShowsOnlyTheAgeNotice(t *testing.T) {
+func TestSelectedInterest_WhenMinorIsAlreadyAssigned_ShowsAssignmentWithoutAgeNotice(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at en billettholder under 18 år er tildelt et arrangement i puljen.",
-		When:  "Når et 18-års arrangement i samme pulje blir vist.",
-		Then:  "Så skal bare aldersvarselet vises, ikke tildelingsvarselet.",
+		When:  "Når et arrangement anbefalt for voksne (18+) i samme pulje blir vist.",
+		Then:  "Så vises tildelingsvarselet uten aldersvarsel, siden tildelingen er arrangørenes valg.",
 	})
 
 	// Given
-	expectedShowUnder18 := true
-	expectedShowAssigned := false
+	expectedShowUnder18 := false
+	expectedShowAssigned := true
 	expectedCanChoose := false
+	expectedAssigned := noticeAssignment{Title: "Assigned elsewhere", Role: "Player", EventID: "assigned-event"}
 	db := createEventInterestTestDB(t)
 	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
 	seedNoticeBillettholder(t, db, 902, false)
-	seedNoticeAssignmentForBillettholder(t, db, fixture, 902, "Player", "manual", "Assigned elsewhere")
-	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupAdultsOnly)
-	mustExecEventInterestTest(t, db, `UPDATE events SET age_group = ? WHERE id = ?`, models.AgeGroupAdultsOnly, fixture.eventID)
+	seedNoticeAssignmentForBillettholder(t, db, fixture, 902, "Player", "manual", expectedAssigned.Title)
+	setEventInterestTestAdultsOnly(t, db, fixture.eventID)
 
 	// When
 	actual := decodeInterestContent(t, requestInterestContent(t, db, fixture, 902))
 
 	// Then
-	if actual.ShowUnder18 != expectedShowUnder18 || actual.ShowAssigned != expectedShowAssigned || actual.CanChoose != expectedCanChoose {
-		t.Fatalf("an assigned minor should see the age notice alone, got %+v", actual)
+	if actual.ShowUnder18 != expectedShowUnder18 || actual.ShowAssigned != expectedShowAssigned || actual.CanChoose != expectedCanChoose || actual.Assigned != expectedAssigned {
+		t.Fatalf("an assigned minor should see the assignment without the age notice, got %+v", actual)
 	}
 }
 
@@ -600,6 +651,42 @@ func TestInterestUpdateRoute_WhenSignalsArePosted_StoresChosenInterestLevel(t *t
 	}
 }
 
+func TestInterestUpdateRoute_WhenMinorOnAdultsOnlyEvent_StoresChosenInterestLevel(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en billettholder under 18 år og et arrangement anbefalt for voksne (18+) i en åpen pulje.",
+		When:  "Når nettleseren sender den mindreåriges interessevalg til oppdateringsruten.",
+		Then:  "Så lagres det valgte interessenivået for den mindreårige.",
+	})
+
+	// Given
+	expectedInterest := models.InterestLevelMedium
+	minorID := 902
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
+	seedNoticeBillettholder(t, db, minorID, false)
+	setEventInterestTestAdultsOnly(t, db, fixture.eventID)
+	router := chi.NewRouter()
+	router.Put("/event/api/{idx}/interest/update/interest", interestUpdateHandler(&live.Manager{}, db, testutil.NewTestLogger()))
+	body := fmt.Sprintf(
+		`{"billettHolderId":%d,"puljeId":%q,"currentInterestLevelChoice":%q}`,
+		minorID, fixture.puljeID, expectedInterest,
+	)
+	request := httptest.NewRequest(http.MethodPut, "/event/api/"+fixture.eventID+"/interest/update/interest", strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	request = request.WithContext(authctx.WithUserToken(request.Context(), fixture.userExternalID, "event-interest-user@example.com"))
+	response := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(response, request)
+
+	// Then
+	// The zero live.Manager cannot broadcast, so the status is not part of this behavior.
+	actualInterest := getEventInterestTestInterest(t, db, fixture.eventID, minorID, fixture.puljeID)
+	if actualInterest != expectedInterest {
+		t.Fatalf("stored interest mismatch\nexpected: %v\nactual:   %v\nbody: %s", expectedInterest, actualInterest, response.Body.String())
+	}
+}
+
 func TestEventInterests_RendersPermanentWrapperBeforeBillettholderSelection(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "The dialog initially has no selected billettholder.",
@@ -656,6 +743,44 @@ func TestEventInterests_InitialRenderShowsAssignmentForSelectedBillettholder(t *
 	}
 }
 
+func TestEventInterests_InitialRenderShowsAgeNoticeAndChoicesForSelectedMinor(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at utvalgsinformasjonskapselen peker på en tilknyttet billettholder under 18 år.",
+		When:  "Når interessedialogen for et arrangement anbefalt for voksne (18+) rendres på serveren.",
+		Then:  "Så vises aldersvarselet sammen med interessevalgene, uten tildelingsvarsel.",
+	})
+
+	// Given
+	expectedAgeNoticeCount := 1
+	expectedChoicesCount := 1
+	expectedAssignedCount := 0
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
+	seedNoticeBillettholder(t, db, 902, false)
+	request := httptest.NewRequest(http.MethodGet, "/event/"+fixture.eventID, nil)
+	request.AddCookie(&http.Cookie{Name: requestctx.SelectedBillettholderCookieName, Value: "902"})
+	userInfo := noticeUserInfo()
+	associated := noticeAssociatedBillettholdere(fixture.billettholderID, 902)
+	var doc *goquery.Document
+	handler := requestctx.BillettholderSelectionMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		doc = templtest.Render(t, event_components.EventInterests(userInfo, fixture.eventID, string(fixture.puljeID), "Viewed event", models.AgeGroupAdultsOnly, nil, associated, db, r, testutil.NewTestLogger()))
+	}))
+
+	// When
+	handler.ServeHTTP(httptest.NewRecorder(), request)
+
+	// Then
+	if actual := doc.Find("#interest-content .interest-under-18").Length(); actual != expectedAgeNoticeCount {
+		t.Fatalf("age notice count mismatch\nexpected: %d\nactual:   %d", expectedAgeNoticeCount, actual)
+	}
+	if actual := doc.Find("#interest-content .interest-buttons").Length(); actual != expectedChoicesCount {
+		t.Fatalf("interest choices count mismatch\nexpected: %d\nactual:   %d", expectedChoicesCount, actual)
+	}
+	if actual := doc.Find("#interest-content .interest-already-assigned").Length(); actual != expectedAssignedCount {
+		t.Fatalf("assignment notice count mismatch\nexpected: %d\nactual:   %d", expectedAssignedCount, actual)
+	}
+}
+
 func TestEventInterests_InitialRenderIgnoresCookieForUnassociatedBillettholder(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at utvalgsinformasjonskapselen peker på en billettholder brukeren ikke er tilknyttet.",
@@ -699,11 +824,12 @@ type noticeAssignment struct {
 }
 
 type noticeResponse struct {
-	ShowAssigned bool
-	ShowUnder18  bool
-	CanChoose    bool
-	Assigned     noticeAssignment
-	Interest     models.InterestLevel
+	ShowAssigned  bool
+	ShowUnder18   bool
+	CanChoose     bool
+	AgeNoticeText string
+	Assigned      noticeAssignment
+	Interest      models.InterestLevel
 }
 
 func requestInterestContent(t *testing.T, db *sql.DB, fixture eventInterestUpdateFixture, selectedID int) *httptest.ResponseRecorder {
@@ -748,9 +874,10 @@ func decodeInterestContent(t *testing.T, response *httptest.ResponseRecorder) no
 		t.Fatalf("expected only the protected interest content: %s", html)
 	}
 	actual := noticeResponse{
-		ShowAssigned: wrapper.Find(".interest-already-assigned").Length() == 1,
-		ShowUnder18:  wrapper.Find(".interest-under-18").Length() == 1,
-		CanChoose:    wrapper.Find(".interest-buttons").Length() == 1,
+		ShowAssigned:  wrapper.Find(".interest-already-assigned").Length() == 1,
+		ShowUnder18:   wrapper.Find(".interest-under-18").Length() == 1,
+		CanChoose:     wrapper.Find(".interest-buttons").Length() == 1,
+		AgeNoticeText: strings.Join(strings.Fields(wrapper.Find(".interest-under-18").Text()), " "),
 	}
 	if actual.ShowAssigned {
 		card := wrapper.Find(".clickable-event-card")
