@@ -11,6 +11,7 @@ documentation/testing/*.pdf
 docs/superpowers/
 
 local-event-images/*
+!local-event-images/.gitkeep
 backup-service/regncon
 *_templ.go
 *_templ.txt

@@ -72,18 +72,34 @@ templ adminPage(db *sql.DB) {
 					@adminCard(
 						"Puljeoppsett",
 						"Dra spill inn i puljene og se hvor mange spill, 18+ og nybegynnervennlige hver pulje har. Advarer om en spilleder har to spill i samme pulje.",
-						"/static/call-to-action-avatar.webp",
-						"Schedule games into puljer",
+						"/static/puljeoppsett.webp",
+						"En trollmann planlegger på et blått kart under et skilt med teksten Puljeoppsett",
 					) {
 						<a role="button" href="/admin/puljeoppsett/" class="btn btn--outline">Gå til puljeoppsett</a>
 					}
 					@adminCard(
 						"Administrer rom",
 						"Her kan du legge til, modifisere og få en oversikt over tilgjengelige rom",
-						"static/terminus-7-etasje-thumbnail.webp",
+						"static/rooms-thumbnail.webp",
 						"Administrate rooms",
 					) {
 						<a role="button" href="/admin/rooms/" class="btn btn--outline">Gå til rom-oversikt</a>
+					}
+					@adminCard(
+						"Tilbakemeldinger",
+						"Se tilbakemeldinger fra brukere om nettsiden og festivalen.",
+						"/static/feedback.webp",
+						"En gelékube full av brev og ruller under et skilt med teksten Feedback",
+					) {
+						<a role="button" href="/admin/tilbakemeldinger/" class="btn btn--outline">Gå til tilbakemeldinger</a>
+					}
+					@adminCard(
+						"Utskriftsvennlig program",
+						"Skriv ut programmet med arrangementsdetaljer og romkart.",
+						"/static/printer.webp",
+						"Skriver",
+					) {
+						<a role="button" href="/print" class="btn btn--outline">Gå til utskrift</a>
 					}
 				</div>
 			</div>

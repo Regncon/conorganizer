@@ -13,7 +13,7 @@ class RoomMap extends HTMLElement {
                 :host { display: block; min-inline-size: 0; container-type: inline-size; }
                 .scroll { overflow-x: auto; border-radius: 8px; }
                 .stage { position: relative; min-inline-size: 1100px; }
-                svg { display: block; inline-size: 100%; block-size: auto; background: white; }
+                svg { display: block; inline-size: 100%; block-size: auto; background: var(--bg-surface, #252735); }
                 [data-room-target] { pointer-events: none; }
                 .map-room { position: absolute; padding: 3px; box-sizing: border-box; }
                 .map-room slot { display: block; block-size: 100%; }

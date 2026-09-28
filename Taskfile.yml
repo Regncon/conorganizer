@@ -218,27 +218,45 @@ tasks:
 
     download:main:
         cmds:
-            - ./scripts/download-environment main all
+            - cmd: docker compose exec -e DB_SSH_USER={{.DB_SSH_USER}} webserver bash scripts/download-environment main all
+              platforms: [windows]
+            - cmd: bash scripts/download-environment main all
+              platforms: [linux, darwin]
 
     download:main:db:
         cmds:
-            - ./scripts/download-environment main db
+            - cmd: docker compose exec -e DB_SSH_USER={{.DB_SSH_USER}} webserver bash scripts/download-environment main db
+              platforms: [windows]
+            - cmd: bash scripts/download-environment main db
+              platforms: [linux, darwin]
 
     download:main:images:
         cmds:
-            - ./scripts/download-environment main images
+            - cmd: docker compose exec -e DB_SSH_USER={{.DB_SSH_USER}} webserver bash scripts/download-environment main images
+              platforms: [windows]
+            - cmd: bash scripts/download-environment main images
+              platforms: [linux, darwin]
 
     download:demo:
         cmds:
-            - ./scripts/download-environment demo all
+            - cmd: docker compose exec -e DB_SSH_USER={{.DB_SSH_USER}} webserver bash scripts/download-environment demo all
+              platforms: [windows]
+            - cmd: bash scripts/download-environment demo all
+              platforms: [linux, darwin]
 
     download:demo:db:
         cmds:
-            - ./scripts/download-environment demo db
+            - cmd: docker compose exec -e DB_SSH_USER={{.DB_SSH_USER}} webserver bash scripts/download-environment demo db
+              platforms: [windows]
+            - cmd: bash scripts/download-environment demo db
+              platforms: [linux, darwin]
 
     download:demo:images:
         cmds:
-            - ./scripts/download-environment demo images
+            - cmd: docker compose exec -e DB_SSH_USER={{.DB_SSH_USER}} webserver bash scripts/download-environment demo images
+              platforms: [windows]
+            - cmd: bash scripts/download-environment demo images
+              platforms: [linux, darwin]
 
     # Kill all running air, templ and taks processes
     kill:

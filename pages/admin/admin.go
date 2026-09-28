@@ -30,6 +30,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 		puljefordelingRoute(adminRouter, db, liveManager, baseLogger, eventImageDir)
 		puljeoppsettRoute(adminRouter, db, liveManager, baseLogger, eventImageDir)
 		programPublishingRoute(adminRouter, db, liveManager, logger)
+		feedbackAdminRoute(adminRouter, db, baseLogger)
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			liveManager.Stream(w, r, live.Page{
 				Buckets: []live.Bucket{live.BucketEvents},
@@ -136,7 +137,8 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 								store.Name = room.Name
 								store.RoomNumber = room.RoomNumber
 								store.Floor = room.Floor
-								store.Notes = room.Notes
+								store.PublicNotes = room.PublicNotes
+								store.AdminNotes = room.AdminNotes
 							}
 						}
 
@@ -175,11 +177,12 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 						room := models.Room{
-							ID:         int(roomID),
-							Name:       store.Name,
-							RoomNumber: store.RoomNumber,
-							Floor:      store.Floor,
-							Notes:      store.Notes,
+							ID:          int(roomID),
+							Name:        store.Name,
+							RoomNumber:  store.RoomNumber,
+							Floor:       store.Floor,
+							PublicNotes: store.PublicNotes,
+							AdminNotes:  store.AdminNotes,
 						}
 
 						// Decide between create and update based on room ID
@@ -398,6 +401,39 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						// Close modal on success
 						sse := datastar.NewSSE(w, r)
 						_ = sse.ExecuteScript(`document.getElementById('assignment-dialog')?.close(); window.dispatchEvent(new Event('room-saved'))`)
+					})
+
+					roomsAssignmentRouter.Put("/publish", func(w http.ResponseWriter, r *http.Request) {
+						puljeQuery := chi.URLParam(r, "pulje")
+						puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
+						if !isPujeIDValid {
+							http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
+							return
+						}
+
+						type Store struct {
+							RoomsPublished bool `json:"roomsPublished"`
+						}
+
+						store := &Store{}
+						if err := datastar.ReadSignals(r, store); err != nil {
+							http.Error(w, err.Error(), http.StatusBadRequest)
+							return
+						}
+
+						if err := roomService.SetRoomsPublished(db, puljeID, store.RoomsPublished); err != nil {
+							logger.Error(fmt.Errorf("failed to update rooms published for pulje %s: %w", puljeID, err).Error())
+							http.Error(w, "Klarte ikke å oppdatere publiseringsstatus.", http.StatusInternalServerError)
+							return
+						}
+
+						if err := liveManager.Broadcast(r.Context(), live.BucketRooms, live.BucketEvents); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast rooms publishing update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+
+						w.WriteHeader(http.StatusNoContent)
 					})
 				})
 			})

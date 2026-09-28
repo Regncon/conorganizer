@@ -88,12 +88,20 @@ grafana.regncon.no {
 }
 
 program.regncon.no {
-	# Toggle exactly one of these imports.
-	# Normal mode:
-	# import conorganizer-main
-	#
-	# Maintenance mode:
-	import conorganizer-maintenance
+	# conorganizer-maintenance-mode on|off creates or removes this flag file.
+	# Caddy checks it on every request, so toggling needs no reload.
+	@maintenance file {
+		root /var/lib/conorganizer
+		try_files /maintenance.on
+	}
+
+	handle @maintenance {
+		import conorganizer-maintenance
+	}
+
+	handle {
+		import conorganizer-main
+	}
 }
 
 main.lekeplassen.regncon.no {

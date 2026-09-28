@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-     width="1200" height="1040" viewBox="0 0 1200 1040"
+     width="1200" height="970" viewBox="0 70 1200 970"
      role="img" aria-labelledby="map-title map-description" lang="nb">
   <title id="map-title">Grand Hotel Terminus – romkart for 7. etasje</title>
   <desc id="map-description">
@@ -26,39 +26,35 @@
   </metadata>
 
   <defs>
-    <g id="stair-symbol" fill="none" stroke="black" stroke-width="3">
-      <path d="M 0,32 H 12 V 24 H 24 V 16 H 36 V 8 H 48 V 0 H 60"/>
+    <g id="stair-symbol" fill="none" stroke="#ccd1e9" stroke-width="3">
+      <path d="M 0,0 H 12 V 8 H 24 V 16 H 36 V 24 H 48 V 32 H 60"/>
     </g>
-    <g id="lift-symbol" fill="none" stroke="black" stroke-width="2">
+    <g id="lift-symbol" fill="none" stroke="#ccd1e9" stroke-width="2">
       <rect width="38" height="38"/>
       <path d="M 12,28 V 10 M 6,16 L 12,10 L 18,16
                M 26,10 V 28 M 20,22 L 26,28 L 32,22"/>
     </g>
   </defs>
 
-  <rect width="1200" height="1040" fill="white"/>
+  <rect width="1200" height="1040" fill="#252735"/>
 
-  <g font-family="Arial, Helvetica, sans-serif" fill="black">
-    <text x="50" y="45" font-size="28">Grand Hotel Terminus</text>
-    <text x="50" y="78" font-size="22">Romkart · 7. etasje</text>
-
-
+  <g font-family="Arial, Helvetica, sans-serif" fill="#ccd1e9">
     <!-- Muted service rooms and emergency stairwells. -->
-    <g id="service-room-fills" fill="#dddddd">
+    <g id="service-room-fills" fill="#2B3045">
       <rect x="585" y="590" width="160" height="170"/>
       <rect x="320" y="475" width="175" height="60"/>
     </g>
-    <g id="emergency-stairwell-fills" fill="#eeeeee">
+    <g id="emergency-stairwell-fills" fill="#35394a">
       <rect x="320" y="110" width="175" height="80"/>
       <rect x="1000" y="590" width="150" height="170"/>
     </g>
 
     <!-- Outer walls. The orientation follows the supplied photograph. -->
     <path id="outer-walls" d="M 50,110 H 495 V 590 H 1150 V 970 H 50 Z"
-          fill="none" stroke="black" stroke-width="4"/>
+          fill="none" stroke="#ccd1e9" stroke-width="4"/>
 
     <!-- Room walls; door leaves and swing arcs are drawn separately below. -->
-    <g fill="none" stroke="black" stroke-width="3">
+    <g fill="none" stroke="#ccd1e9" stroke-width="3">
       <g id="room-707" data-room-number="707">
         <title>Torborg Nedraas – rom 707</title>
         <path d="M 240,110 V 268 M 240,310 V 460 H 50"/>
@@ -133,68 +129,68 @@
     <!-- Door swing directions are schematic, not surveyed. -->
     <g id="doors" fill="none">
       <g id="door-707" transform="translate(240 268) rotate(90)">
-        <path d="M 0,0 V 42" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-706" transform="translate(320 310) rotate(-90)">
-        <path d="M 0,0 V 42" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-705" transform="translate(320 430) rotate(-90)">
-        <path d="M 0,0 V 42" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-709-upper" transform="translate(240 662) rotate(90)">
-        <path d="M 0,0 V 42" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-wc" transform="translate(240 511) rotate(90)">
-        <path d="M 0,0 V 38" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,38 A 38,38 0 0 0 38,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 38" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,38 A 38,38 0 0 0 38,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-710" transform="translate(262 820) rotate(0)">
-        <path d="M 0,0 V 42" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-711" transform="translate(459 820) rotate(0)">
-        <path d="M 0,0 V 42" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-712" transform="translate(810 820) rotate(0)">
-        <path d="M 0,0 V 42" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-713" transform="translate(978 820) rotate(0)">
-        <path d="M 0,0 V 42" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-714-left" transform="translate(835 760) rotate(180)">
-        <path d="M 0,0 V 42" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-716" transform="translate(626 760) rotate(180)">
-        <path d="M 0,0 V 30" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,30 A 30,30 0 0 0 30,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 30" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,30 A 30,30 0 0 0 30,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-service-by-714" transform="translate(724 760) rotate(180)">
-        <path d="M 0,0 V 36" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,36 A 36,36 0 0 0 36,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 36" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,36 A 36,36 0 0 0 36,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-service-by-705" transform="translate(320 529) rotate(-90)">
-        <path d="M 0,0 V 30" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,30 A 30,30 0 0 0 30,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 30" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,30 A 30,30 0 0 0 30,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-upper-emergency" transform="translate(320 179) rotate(-90)">
-        <path d="M 0,0 V 34" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,34 A 34,34 0 0 0 34,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 34" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,34 A 34,34 0 0 0 34,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="door-right-emergency" transform="translate(1121 760) rotate(180)">
-        <path d="M 0,0 V 42" stroke="#444444" stroke-width="2"/>
-        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#999999" stroke-width="1"/>
+        <path d="M 0,0 V 42" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 0,42 A 42,42 0 0 0 42,0" stroke="#7f8198" stroke-width="1"/>
       </g>
       <g id="main-stairwell-double-door">
-        <path d="M 320,622 H 368.5 M 320,719 H 368.5" stroke="#444444" stroke-width="2"/>
-        <path d="M 368.5,622 A 48.5,48.5 0 0 1 320,670.5 M 368.5,719 A 48.5,48.5 0 0 0 320,670.5" stroke="#999999" stroke-width="1"/>
+        <path d="M 320,622 H 368.5 M 320,719 H 368.5" stroke="#ccd1e9" stroke-width="2"/>
+        <path d="M 368.5,622 A 48.5,48.5 0 0 1 320,670.5 M 368.5,719 A 48.5,48.5 0 0 0 320,670.5" stroke="#7f8198" stroke-width="1"/>
       </g>
     </g>
 
@@ -257,13 +253,8 @@
         </text>
         <text x="873" y="702" font-size="17">714</text>
       </g>
-      <text id="label-716" x="624" y="631" font-size="17" fill="#777777">716</text>
+      <text id="label-716" x="624" y="631" font-size="17" fill="#ccd1e9">716</text>
       <text id="label-wc" x="145" y="521" font-size="25" font-weight="bold">WC</text>
-    </g>
-
-    <g id="circulation-labels" font-size="20" text-anchor="middle">
-      <text x="280" y="462" transform="rotate(-90 280 462)">Korridor</text>
-      <text x="720" y="799">Korridor</text>
     </g>
 
     <g id="stairs-and-lifts" font-size="20" text-anchor="middle">
@@ -276,8 +267,8 @@
       <use xlink:href="#lift-symbol" x="386" y="543"/>
       <text x="461" y="571" font-size="17">Heis</text>
 
-      <use xlink:href="#stair-symbol" x="422" y="645"/>
-      <text x="452" y="711">Trapp</text>
+      <use xlink:href="#stair-symbol" x="448" y="645"/>
+      <text x="478" y="711">Trapp</text>
 
       <g id="right-emergency-exit" opacity="0.55">
         <use xlink:href="#stair-symbol" x="1045" y="625"/>

@@ -3,3 +3,4 @@
 
 # Explicit overrides
 *.sh text eol=lf
+scripts/download-environment text eol=lf

@@ -120,9 +120,6 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 							},
 						})
 					})
-					if err := formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger); err != nil {
-						logger.Error(fmt.Errorf("failed to set up inline validation: %w", err).Error())
-					}
 
 					newApiIdRouter.Route("/event-in-pulje", func(putEventInPuljeRouter chi.Router) {
 						formsubmission.UpdateEventInPulje(putEventInPuljeRouter, db, liveManager, logger)

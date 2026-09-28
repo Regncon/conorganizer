@@ -88,8 +88,9 @@ CREATE TABLE "rooms"(
   name TEXT NOT NULL,
   floor INTEGER NOT NULL,
   max_concurrent_games INTEGER NOT NULL,
-  notes TEXT NOT NULL DEFAULT '',
-  is_disabled INTEGER NOT NULL DEFAULT 0 CHECK(is_disabled IN(0, 1))
+  admin_notes TEXT NOT NULL DEFAULT '',
+  is_disabled INTEGER NOT NULL DEFAULT 0 CHECK(is_disabled IN(0, 1)),
+  public_notes TEXT NOT NULL DEFAULT ''
 ) STRICT;
 CREATE TABLE "events"(
   id TEXT PRIMARY KEY NOT NULL DEFAULT(lower(hex(randomblob(8)))),
@@ -190,6 +191,7 @@ CREATE TABLE "puljer"(
   start_at TEXT NOT NULL,
   end_at TEXT NOT NULL,
   closing_warning_active INTEGER NOT NULL DEFAULT 0 CHECK(closing_warning_active IN(0, 1)),
+  rooms_published INTEGER NOT NULL DEFAULT 0 CHECK(rooms_published IN(0, 1)),
   FOREIGN KEY(status) REFERENCES pulje_statuses(status) ON UPDATE CASCADE
 ) STRICT;
 CREATE TABLE "relation_events_players"(
@@ -232,7 +234,7 @@ SELECT
     r.name AS room_name,
     r.floor AS room_floor,
     r.max_concurrent_games AS room_max_concurrent_games,
-    r.notes AS room_notes,
+    r.admin_notes AS room_notes,
     r.is_disabled AS room_is_disabled,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
@@ -254,7 +256,7 @@ SELECT
     r.name AS room_name,
     r.floor AS room_floor,
     r.max_concurrent_games AS room_max_concurrent_games,
-    r.notes AS room_notes,
+    r.admin_notes AS room_notes,
     r.is_disabled AS room_is_disabled,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
@@ -266,3 +268,11 @@ JOIN puljer p ON p.id = ep.pulje_id
 LEFT JOIN rooms r ON r.id = ep.room_id
 WHERE ep.is_in_pulje = 1
 /* v_event_puljer_active(event_id,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at,is_in_pulje,is_published) */;
+CREATE TABLE feedback(
+  id INTEGER PRIMARY KEY,
+  category TEXT NOT NULL CHECK(category IN('website', 'convention', 'other')),
+  message TEXT NOT NULL CHECK(length(message) BETWEEN 1 AND 2000),
+  topics TEXT NOT NULL DEFAULT '[]' CHECK(json_valid(topics)),
+  created_at TEXT NOT NULL DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+) STRICT;
+CREATE INDEX idx_feedback_created_at ON feedback(created_at);
