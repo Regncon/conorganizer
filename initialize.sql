@@ -188,8 +188,9 @@ CREATE TABLE
         name TEXT NOT NULL,
         floor INTEGER NOT NULL,
         max_concurrent_games INTEGER NOT NULL,
-        notes TEXT NOT NULL DEFAULT '',
-        is_disabled INTEGER NOT NULL DEFAULT 0 CHECK (is_disabled IN (0, 1))
+        admin_notes TEXT NOT NULL DEFAULT '',
+        is_disabled INTEGER NOT NULL DEFAULT 0 CHECK (is_disabled IN (0, 1)),
+        public_notes TEXT NOT NULL DEFAULT ''
     ) STRICT;
 
 INSERT INTO
@@ -320,7 +321,7 @@ SELECT
     r.name AS room_name,
     r.floor AS room_floor,
     r.max_concurrent_games AS room_max_concurrent_games,
-    r.notes AS room_notes,
+    r.admin_notes AS room_notes,
     r.is_disabled AS room_is_disabled,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
@@ -385,7 +386,7 @@ SELECT
     r.name AS room_name,
     r.floor AS room_floor,
     r.max_concurrent_games AS room_max_concurrent_games,
-    r.notes AS room_notes,
+    r.admin_notes AS room_notes,
     r.is_disabled AS room_is_disabled,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,

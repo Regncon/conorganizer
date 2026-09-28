@@ -9,16 +9,20 @@ type Room struct {
 	Name       string `json:"name"`
 	RoomNumber string `json:"room_number"`
 	Floor      int    `json:"floor"`
-	Notes      string `json:"notes"`
+	// PublicNotes are shown to everyone who sees the room, such as a GM finding where to run their game.
+	PublicNotes string `json:"public_notes"`
+	// AdminNotes are only shown to admins.
+	AdminNotes string `json:"admin_notes"`
 }
 
 // Normalized version of `Room` type for use when updating a room, or quering for a specific room with optional params
 type RoomInput struct {
-	ID         int
-	Name       *string
-	RoomNumber *string
-	Floor      *int
-	Notes      *string
+	ID          int
+	Name        *string
+	RoomNumber  *string
+	Floor       *int
+	PublicNotes *string
+	AdminNotes  *string
 }
 
 /*
@@ -51,7 +55,8 @@ type RoomByPulje struct {
 	Name             string
 	RoomNumber       string
 	Floor            int
-	Notes            string
+	PublicNotes      string
+	AdminNotes       string
 	AssignedEventsID []RoomEventPuljeSummary
 }
 
@@ -60,12 +65,13 @@ type RoomByPulje struct {
 type RoomStatusByPulje = map[Pulje]map[int64]RoomByPulje
 
 type RoomStatusRow struct {
-	PuljeID    Pulje
-	RoomID     int64
-	RoomName   string
-	RoomNumber string
-	Floor      int
-	RoomNotes  string
+	PuljeID         Pulje
+	RoomID          int64
+	RoomName        string
+	RoomNumber      string
+	Floor           int
+	RoomPublicNotes string
+	RoomAdminNotes  string
 
 	EventID         sql.NullString
 	EventTitle      sql.NullString
@@ -75,11 +81,12 @@ type RoomStatusRow struct {
 
 // RoomFormSignals is used in data-star input form bindings for sending signals to users
 type RoomFormSignals struct {
-	ID         int    `json:"id"`
-	Name       string `json:"name"`
-	RoomNumber string `json:"room_number"`
-	Floor      int    `json:"floor"`
-	Notes      string `json:"notes"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	RoomNumber  string `json:"room_number"`
+	Floor       int    `json:"floor"`
+	PublicNotes string `json:"public_notes"`
+	AdminNotes  string `json:"admin_notes"`
 
 	Mode        string `json:"mode"`
 	FormTitle   string `json:"form_title"`
@@ -89,11 +96,12 @@ type RoomFormSignals struct {
 type RoomErrorKey string
 
 const (
-	RoomError           RoomErrorKey = "error"
-	RoomErrorFloor      RoomErrorKey = "floor"
-	RoomErrorName       RoomErrorKey = "name"
-	RoomErrorNotes      RoomErrorKey = "notes"
-	RoomErrorRoomNumber RoomErrorKey = "room_number"
+	RoomError            RoomErrorKey = "error"
+	RoomErrorFloor       RoomErrorKey = "floor"
+	RoomErrorName        RoomErrorKey = "name"
+	RoomErrorPublicNotes RoomErrorKey = "public_notes"
+	RoomErrorAdminNotes  RoomErrorKey = "admin_notes"
+	RoomErrorRoomNumber  RoomErrorKey = "room_number"
 )
 
 // RoomFormErrors is used in validation and error handling when creating and updating rooms
@@ -104,7 +112,8 @@ func (errors RoomFormErrors) ResetErrors() {
 	errors[RoomError] = ""
 	errors[RoomErrorFloor] = ""
 	errors[RoomErrorName] = ""
-	errors[RoomErrorNotes] = ""
+	errors[RoomErrorPublicNotes] = ""
+	errors[RoomErrorAdminNotes] = ""
 	errors[RoomErrorRoomNumber] = ""
 }
 

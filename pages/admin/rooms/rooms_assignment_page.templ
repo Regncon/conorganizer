@@ -238,6 +238,9 @@ templ roomPuljeContainer(room models.RoomByPulje, pulje models.Pulje, eventImage
 			if !mapped {
 				<h3 title={ room.Name }>{ room.RoomNumber }</h3>
 			}
+			if mapped {
+				@roomNotesPopover(room.ID, room.RoomNumber, room.PublicNotes, room.AdminNotes)
+			}
 			<span class="room-event-count" aria-label={ fmt.Sprintf("%d tildelte arrangementer", len(room.AssignedEventsID)) }>{ len(room.AssignedEventsID) }</span>
 			<button
 				type="button"
@@ -261,9 +264,8 @@ templ roomPuljeContainer(room models.RoomByPulje, pulje models.Pulje, eventImage
 				<p class="room-empty">Ingen tildelte spill</p>
 			}
 		</div>
-		if !mapped && room.Notes != "" {
-			<p style="border-bottom: 1px solid var(--bg-item-border);">Notater på rom</p>
-			<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
+		if !mapped {
+			@roomNotes(room.PublicNotes, room.AdminNotes)
 		}
 	</div>
 }
@@ -366,7 +368,8 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
                 pointer-events: none;
             }
             .room-heading .room-event-count,
-            .room-heading .room-add-event { pointer-events: auto; }
+            .room-heading .room-add-event,
+            .room-heading .room-notes-toggle { pointer-events: auto; }
             .room-event-container {
                 padding-block-start: 30px;
                 overflow-y: auto;

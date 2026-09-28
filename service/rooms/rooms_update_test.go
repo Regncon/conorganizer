@@ -18,11 +18,12 @@ func TestUpdateRoom_UpdatesAllFieldsWithoutChangingID(t *testing.T) {
 	db := createRoomsTestDB(t)
 	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
 	expectedRoom := models.Room{
-		ID:         existingRoom.ID,
-		Name:       "Tangerud",
-		RoomNumber: "209",
-		Floor:      2,
-		Notes:      "Dette er en oppdatert note",
+		ID:          existingRoom.ID,
+		Name:        "Tangerud",
+		RoomNumber:  "209",
+		Floor:       2,
+		PublicNotes: "Ta heisen til 7. etasje",
+		AdminNotes:  "Dette er en oppdatert note",
 	}
 
 	// When
