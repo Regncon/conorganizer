@@ -211,6 +211,156 @@ func TestRoomCard_ResolvesMapByRoomNumber(t *testing.T) {
 	}
 }
 
+func TestRoomCard_ShowsBothNoteKindsAndOmitsEmptyOne(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et rom med offentlige notater men uten admin-notater.",
+		When:  "Når romkortet rendres på redigeringsfanen.",
+		Then:  "Så skal offentlige notater vises med etikett, og admin-notater utelates.",
+	})
+
+	// Given
+	expectedPublicNotesText := "Inngang via kafeen"
+	db, _ := testutil.CreateTestDBAndLogger(t, "room_card_public_notes_only")
+	room := createRoomsPageRoom(t, db, "Tangerud", "201", 2)
+	setRoomsPageRoomNotes(t, db, room.ID, expectedPublicNotesText, "")
+	rooms, err := roomService.GetAllRooms(db)
+	if err != nil || len(rooms) != 1 {
+		t.Fatalf("failed to load room: %v", err)
+	}
+
+	// When
+	doc := templtest.Render(t, roomCard(rooms[0]))
+
+	// Then
+	notes := doc.Find(".room-notes .room-note")
+	if notes.Length() != 1 {
+		t.Fatalf("expected exactly one rendered note, got %d", notes.Length())
+	}
+	if !strings.Contains(notes.Find("dt").Text(), "Offentlige notater") {
+		t.Fatalf("expected public notes label, got %q", notes.Find("dt").Text())
+	}
+	if !strings.Contains(notes.Find("dd").Text(), expectedPublicNotesText) {
+		t.Fatalf("expected public notes text %q, got %q", expectedPublicNotesText, notes.Find("dd").Text())
+	}
+}
+
+func TestRoomCard_ShowsAdminNotesAlongsidePublicNotes(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et rom med både offentlige og admin-notater.",
+		When:  "Når romkortet rendres på redigeringsfanen.",
+		Then:  "Så skal begge notattypene vises med hver sin etikett.",
+	})
+
+	// Given
+	expectedPublicNotesText := "Inngang via kafeen"
+	expectedAdminNotesText := "Nøkkel hentes i resepsjonen"
+	db, _ := testutil.CreateTestDBAndLogger(t, "room_card_both_notes")
+	room := createRoomsPageRoom(t, db, "Tangerud", "201", 2)
+	setRoomsPageRoomNotes(t, db, room.ID, expectedPublicNotesText, expectedAdminNotesText)
+	rooms, err := roomService.GetAllRooms(db)
+	if err != nil || len(rooms) != 1 {
+		t.Fatalf("failed to load room: %v", err)
+	}
+
+	// When
+	doc := templtest.Render(t, roomCard(rooms[0]))
+
+	// Then
+	notes := doc.Find(".room-notes .room-note")
+	if notes.Length() != 2 {
+		t.Fatalf("expected both notes to render, got %d", notes.Length())
+	}
+	allText := strings.Join(templtest.CollectTexts(doc, ".room-notes"), " ")
+	if !strings.Contains(allText, expectedPublicNotesText) || !strings.Contains(allText, expectedAdminNotesText) {
+		t.Fatalf("expected both note texts in %q", allText)
+	}
+}
+
+func TestRoomPuljeContainer_MappedRoomWithNotesRendersPopoverToggle(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et kartlagt rom med notater.",
+		When:  "Når romfordelingskartet rendres.",
+		Then:  "Så skal rommet ha en notat-knapp med en popover som inneholder notatene.",
+	})
+
+	// Given
+	expectedAdminNotesText := "Nøkkel hentes i resepsjonen"
+	db, logger := testutil.CreateTestDBAndLogger(t, "assignment_map_notes_toggle")
+	seedRoomsPageLookups(t, db)
+	room := createRoomsPageRoom(t, db, "Amalie", "705", 7)
+	setRoomsPageRoomNotes(t, db, room.ID, "", expectedAdminNotesText)
+	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
+
+	// Then
+	toggle := doc.Find("room-map .room-notes-toggle")
+	if toggle.Length() != 1 {
+		t.Fatalf("expected exactly one notes toggle for the mapped room, got %d", toggle.Length())
+	}
+	popoverID, exists := toggle.Attr("popovertarget")
+	if !exists || popoverID == "" {
+		t.Fatal("expected the toggle to reference a popover target")
+	}
+	popover := doc.Find("#" + popoverID)
+	if popover.Length() != 1 {
+		t.Fatalf("expected a matching popover element with id %q", popoverID)
+	}
+	if !strings.Contains(popover.Text(), expectedAdminNotesText) {
+		t.Fatalf("expected popover to contain the admin notes, got %q", popover.Text())
+	}
+}
+
+func TestRoomPuljeContainer_MappedRoomWithoutNotesRendersNoPopoverToggle(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et kartlagt rom uten notater.",
+		When:  "Når romfordelingskartet rendres.",
+		Then:  "Så skal rommet ikke ha noen notat-knapp.",
+	})
+
+	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "assignment_map_no_notes_toggle")
+	seedRoomsPageLookups(t, db)
+	createRoomsPageRoom(t, db, "Amalie", "705", 7)
+	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
+
+	// Then
+	if doc.Find("room-map .room-notes-toggle").Length() != 0 {
+		t.Fatal("expected no notes toggle for a room without notes")
+	}
+}
+
+func TestFormModal_HasTextareasBoundToPublicAndAdminNotes(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt skjemaet for å opprette eller redigere et rom.",
+		When:  "Når skjemaet rendres.",
+		Then:  "Så skal det finnes egne felt bundet til public_notes og admin_notes.",
+	})
+
+	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "form_modal_notes_fields")
+
+	// When
+	doc := templtest.Render(t, RoomsPage(db, logger))
+
+	// Then
+	publicNotesField := doc.Find(`textarea[name="public_notes"]`)
+	if publicNotesField.Length() != 1 || publicNotesField.AttrOr("data-bind", "") != "public_notes" {
+		t.Fatalf("expected a public_notes textarea bound via data-bind, got %d matches with data-bind %q", publicNotesField.Length(), publicNotesField.AttrOr("data-bind", ""))
+	}
+	adminNotesField := doc.Find(`textarea[name="admin_notes"]`)
+	if adminNotesField.Length() != 1 || adminNotesField.AttrOr("data-bind", "") != "admin_notes" {
+		t.Fatalf("expected an admin_notes textarea bound via data-bind, got %d matches with data-bind %q", adminNotesField.Length(), adminNotesField.AttrOr("data-bind", ""))
+	}
+	if doc.Find(`textarea[name="notes"]`).Length() != 0 {
+		t.Fatal("expected the old combined notes textarea to be gone")
+	}
+}
+
 func roomPageFloorIDs(floorGroups []FloorGroup) []int {
 	floors := make([]int, 0, len(floorGroups))
 	for _, floorGroup := range floorGroups {
@@ -351,6 +501,67 @@ func TestRoomAssignmentPicker_IncludesApprovedEventsOutsidePulje(t *testing.T) {
 	}
 }
 
+func TestRoomsAssignmentLiveContent_RendersPublishSwitchAsCheckedWhenPublished(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en pulje med publisert romfordeling.",
+		When:  "Når romfordelingssiden rendres.",
+		Then:  "Så skal bryteren være avkrysset og vise at romfordelingen er synlig for alle.",
+	})
+
+	// Given
+	expectedChecked := true
+	db, logger := testutil.CreateTestDBAndLogger(t, "rooms_assignment_publish_switch_published")
+	seedRoomsPageLookups(t, db)
+	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
+	if err := roomService.SetRoomsPublished(db, models.PuljeFredagKveld, true); err != nil {
+		t.Fatalf("failed to publish rooms: %v", err)
+	}
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	toggle := doc.Find(`.rooms-publish-switch input[type="checkbox"]`)
+
+	// Then
+	if toggle.Length() != 1 {
+		t.Fatalf("expected exactly one publish switch, got %d", toggle.Length())
+	}
+	if _, actualChecked := toggle.Attr("checked"); actualChecked != expectedChecked {
+		t.Fatalf("checked mismatch\nexpected: %v\nactual:   %v", expectedChecked, actualChecked)
+	}
+	if !strings.Contains(doc.Find(".rooms-publish-control").Text(), "Synlig for alle") {
+		t.Fatal("expected the published state text to be rendered")
+	}
+}
+
+func TestRoomsAssignmentLiveContent_RendersPublishSwitchAsUncheckedWhenUnpublished(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en pulje uten publisert romfordeling.",
+		When:  "Når romfordelingssiden rendres.",
+		Then:  "Så skal bryteren være avkrysset av og vise at romfordelingen ikke er publisert.",
+	})
+
+	// Given
+	expectedChecked := false
+	db, logger := testutil.CreateTestDBAndLogger(t, "rooms_assignment_publish_switch_unpublished")
+	seedRoomsPageLookups(t, db)
+	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPageContent(db, logger, models.PuljeFredagKveld, nil))
+	toggle := doc.Find(`.rooms-publish-switch input[type="checkbox"]`)
+
+	// Then
+	if toggle.Length() != 1 {
+		t.Fatalf("expected exactly one publish switch, got %d", toggle.Length())
+	}
+	if _, actualChecked := toggle.Attr("checked"); actualChecked != expectedChecked {
+		t.Fatalf("checked mismatch\nexpected: %v\nactual:   %v", expectedChecked, actualChecked)
+	}
+	if !strings.Contains(doc.Find(".rooms-publish-control").Text(), "Ikke publisert") {
+		t.Fatal("expected the unpublished state text to be rendered")
+	}
+}
+
 func createRoomsPageRoom(t *testing.T, db *sql.DB, name string, roomNumber string, floor int) models.Room {
 	t.Helper()
 
@@ -363,6 +574,12 @@ func createRoomsPageRoom(t *testing.T, db *sql.DB, name string, roomNumber strin
 		t.Fatalf("failed to create room: %v", err)
 	}
 	return *room
+}
+
+func setRoomsPageRoomNotes(t *testing.T, db *sql.DB, roomID int, publicNotes, adminNotes string) {
+	t.Helper()
+
+	testutil.MustExec(t, db, `UPDATE rooms SET public_notes = ?, admin_notes = ? WHERE id = ?`, publicNotes, adminNotes, roomID)
 }
 
 func seedRoomsPageLookups(t *testing.T, db *sql.DB) {

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Caddy serves the maintenance page for program.regncon.no while this file exists.
+readonly flag_file="/var/lib/conorganizer/maintenance.on"
+
+log() {
+    printf 'conorganizer-maintenance-mode: %s\n' "$*" >&2
+}
+
+die() {
+    log "ERROR: $*"
+    exit 1
+}
+
+case "${1:-}" in
+    on)
+        mkdir -p "$(dirname "$flag_file")"
+        touch "$flag_file"
+        log "maintenance mode is on"
+        ;;
+    off)
+        rm -f "$flag_file"
+        log "maintenance mode is off"
+        ;;
+    "")
+        if [[ -f "$flag_file" ]]; then
+            log "maintenance mode is on"
+        else
+            log "maintenance mode is off"
+        fi
+        ;;
+    *)
+        die "usage: conorganizer-maintenance-mode [on|off]"
+        ;;
+esac

@@ -17,10 +17,11 @@ func createRoomsTestDB(t testing.TB) *sql.DB {
 
 func roomFixture(name string, roomNumber string, floor int) models.Room {
 	return models.Room{
-		Name:       name,
-		RoomNumber: roomNumber,
-		Floor:      floor,
-		Notes:      "Romnotat",
+		Name:        name,
+		RoomNumber:  roomNumber,
+		Floor:       floor,
+		PublicNotes: "Inngang fra bakgården",
+		AdminNotes:  "Romnotat",
 	}
 }
 
@@ -33,23 +34,26 @@ func insertRoom(t testing.TB, db *sql.DB, input models.Room) models.Room {
 			name,
 			room_number,
 			floor,
-			notes,
+			public_notes,
+			admin_notes,
 			max_concurrent_games,
 			is_disabled
 		)
-		VALUES (?, ?, ?, ?, 0, 0)
+		VALUES (?, ?, ?, ?, ?, 0, 0)
 		RETURNING
 			id,
 			name,
 			room_number,
 			floor,
-			notes
-	`, input.Name, input.RoomNumber, input.Floor, input.Notes).Scan(
+			public_notes,
+			admin_notes
+	`, input.Name, input.RoomNumber, input.Floor, input.PublicNotes, input.AdminNotes).Scan(
 		&room.ID,
 		&room.Name,
 		&room.RoomNumber,
 		&room.Floor,
-		&room.Notes,
+		&room.PublicNotes,
+		&room.AdminNotes,
 	)
 	if err != nil {
 		t.Fatalf("failed to insert room: %v", err)

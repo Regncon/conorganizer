@@ -35,6 +35,8 @@ The `scripts` Stow package installs the database maintenance commands in
 
 - `conorganizer-sqlite-backup` creates the scheduled compressed main-database backups.
 - `conorganizer-sqlite-restore events-YYYYMMDDTHHMMSSZ.db.zst` installs a selected backup into the public `restored` environment and refreshes its event images from main.
+- `conorganizer-sqlite-migrate` backs up the demo database, then runs the deployed Goose migrations against demo and main. See [documentation/migrations.md](../documentation/migrations.md).
+- `conorganizer-maintenance-mode on|off` shows or hides the maintenance page for `program.regncon.no`. Without an argument it prints the current state.
 
 ## Find all stowed files
 

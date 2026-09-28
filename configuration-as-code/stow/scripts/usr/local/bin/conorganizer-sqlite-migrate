@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Migrates the demo and main databases with the goose binary and migrations
+# that CI deploys next to each environment's binary. Demo runs first so a
+# failing migration stops before it reaches main.
+readonly data_root="/mnt/HC_Volume_103911252/environments"
+readonly app_root="/opt/conorganizer"
+readonly service_user="deploy"
+readonly environments=(demo main)
+
+log() {
+    printf 'conorganizer-sqlite-migrate: %s\n' "$*" >&2
+}
+
+die() {
+    log "ERROR: $*"
+    exit 1
+}
+
+# Goose and SQLite run as the service user: goose lives in a directory the
+# deploy user can write to, and any SQLite files created must stay writable by
+# the service.
+as_service_user() {
+    runuser -u "$service_user" -- "$@"
+}
+
+if [[ "$#" -ne 0 ]]; then
+    die "usage: conorganizer-sqlite-migrate"
+fi
+
+command -v sqlite3 >/dev/null 2>&1 || die "sqlite3 is required"
+
+for environment in "${environments[@]}"; do
+    db_path="${data_root}/${environment}/database/events.db"
+    goose_path="${app_root}/${environment}/goose"
+    migrations_directory="${app_root}/${environment}/migrations"
+
+    [[ -f "$db_path" ]] || die "database does not exist: ${db_path}"
+    [[ -x "$goose_path" ]] || die "goose is not deployed: ${goose_path}"
+    [[ -d "$migrations_directory" ]] || die "migrations are not deployed: ${migrations_directory}"
+done
+
+demo_db_path="${data_root}/demo/database/events.db"
+demo_backup_path="${demo_db_path}.pre-migrate-$(date -u +%Y%m%dT%H%M%SZ)"
+
+log "backing up demo database to ${demo_backup_path}"
+as_service_user sqlite3 "$demo_db_path" ".backup '${demo_backup_path}'"
+
+for environment in "${environments[@]}"; do
+    db_path="${data_root}/${environment}/database/events.db"
+
+    log "migrating ${environment}"
+    as_service_user "${app_root}/${environment}/goose" \
+        -env /dev/null \
+        -dir "${app_root}/${environment}/migrations" \
+        sqlite3 "$db_path" \
+        up -allow-missing
+
+    quick_check_result="$(as_service_user sqlite3 "$db_path" "PRAGMA quick_check;")"
+    if [[ "$quick_check_result" != "ok" ]]; then
+        log "$quick_check_result"
+        die "${environment} database failed quick_check"
+    fi
+done
+
+log "migrated demo and main successfully"

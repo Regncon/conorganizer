@@ -1,0 +1,181 @@
+package rooms
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/Regncon/conorganizer/components/icons"
+)
+
+func hasRoomNotes(publicNotes, adminNotes string) bool {
+	return strings.TrimSpace(publicNotes) != "" || strings.TrimSpace(adminNotes) != ""
+}
+
+// roomNotes renders a room's public and admin notes as escaped text, one <dt>/<dd>
+// pair per non-empty note. It never puts note text in an HTML-rendering attribute.
+templ roomNotes(publicNotes, adminNotes string) {
+	if hasRoomNotes(publicNotes, adminNotes) {
+		<dl class="room-notes">
+			if strings.TrimSpace(publicNotes) != "" {
+				<div class="room-note">
+					<dt><span aria-hidden="true">🌐</span> Offentlige notater</dt>
+					<dd>{ publicNotes }</dd>
+				</div>
+			}
+			if strings.TrimSpace(adminNotes) != "" {
+				<div class="room-note">
+					<dt>
+						<span class="room-note-icon" aria-hidden="true">
+							@icons.Icon(icons.Lock, icons.Size16)
+						</span>
+						Admin-notater
+					</dt>
+					<dd>{ adminNotes }</dd>
+				</div>
+			}
+		</dl>
+	}
+}
+
+// roomNotesPopover renders a small toggle button for rooms drawn on the floor map.
+// The popover uses the native top layer, so it escapes the map's shadow-DOM scroll
+// container.
+templ roomNotesPopover(roomID int64, roomNumber, publicNotes, adminNotes string) {
+	if hasRoomNotes(publicNotes, adminNotes) {
+		{{ popoverID := fmt.Sprintf("room-notes-%d", roomID) }}
+		<button
+			type="button"
+			class="room-notes-toggle"
+			popovertarget={ popoverID }
+			aria-label={ "Vis notater for rom " + roomNumber }
+			title="Notater"
+		>
+			if strings.TrimSpace(publicNotes) != "" {
+				<span aria-hidden="true">🌐</span>
+			}
+			if strings.TrimSpace(adminNotes) != "" {
+				<span class="room-note-icon" aria-hidden="true">
+					@icons.Icon(icons.Lock, icons.Size16)
+				</span>
+			}
+		</button>
+		<div id={ popoverID } popover class="room-notes-popover">
+			<header class="room-notes-popover-heading">
+				<p>Notater for rom { roomNumber }</p>
+				<button
+					type="button"
+					popovertarget={ popoverID }
+					popovertargetaction="hide"
+					aria-label="Lukk notater"
+				>
+					@icons.Icon(icons.Close, icons.Size20)
+				</button>
+			</header>
+			@roomNotes(publicNotes, adminNotes)
+		</div>
+	}
+}
+
+templ roomNotesStyles() {
+	<style>
+        .room-notes {
+            display: grid;
+            gap: var(--spacing-2x);
+            margin: 0;
+
+            dt {
+                display: flex;
+                place-items: center;
+                gap: var(--spacing-1x);
+                font-weight: 600;
+                font-size: var(--text-body-small);
+            }
+
+            dd {
+                margin: 0;
+                font-size: var(--text-body-small);
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+            }
+        }
+
+        .room-note-label {
+            display: flex;
+            place-items: center;
+            gap: var(--spacing-1x);
+        }
+
+        .room-note-icon {
+            display: inline-flex;
+            flex: 0 0 auto;
+        }
+
+        .room-notes-toggle {
+            display: flex;
+            place-content: center;
+            place-items: center;
+            gap: 2px;
+            flex: 0 0 auto;
+            min-inline-size: 28px;
+            min-block-size: 28px;
+            padding-inline: 4px;
+            border: 1px solid var(--bg-item-border);
+            border-radius: var(--border-radius-1x);
+            background: var(--bg-item);
+            font-size: var(--text-body-small);
+            cursor: pointer;
+            pointer-events: auto;
+
+            &:hover {
+                background: var(--bg-item-hover);
+            }
+
+            &:focus-visible {
+                outline: 2px solid var(--color-primary);
+                outline-offset: 2px;
+            }
+        }
+
+        .room-notes-popover {
+            inline-size: min(22rem, calc(100% - 32px));
+            padding: var(--responsive-pane-padding);
+            border: none;
+            border-radius: var(--border-radius-2x);
+            background: var(--bg-surface);
+            box-shadow: var(--shadow-dialog);
+            color: var(--color-text-strong);
+        }
+
+        .room-notes-popover-heading {
+            display: flex;
+            place-content: center space-between;
+            place-items: center;
+            gap: var(--spacing-1x);
+            margin-block-end: var(--spacing-2x);
+
+            p {
+                margin: 0;
+                font-weight: 600;
+            }
+
+            button {
+                display: grid;
+                place-items: center;
+                border: none;
+                background: transparent;
+                padding: 0;
+                cursor: pointer;
+                color: var(--color-text-soft);
+            }
+        }
+
+        @supports (position-area: bottom) {
+            .room-notes-popover {
+                position-area: bottom span-left;
+                margin: var(--spacing-1x);
+                inset: auto;
+                position-try-fallbacks: flip-block, flip-inline;
+            }
+        }
+    </style>
+}
