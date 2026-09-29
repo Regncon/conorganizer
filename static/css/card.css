@@ -1,5 +1,5 @@
 /*
-    style for clickable items
+    Clickable cards: .card-clickable--level-2 on the base color, .card-clickable--level-3 on Level 1
 */
 .card-clickable {
     display: grid;
@@ -29,7 +29,7 @@
     }
 }
 
-.card-clickable-surface {
+.card-clickable--level-2 {
     color: var(--color-text-strong);
     background-color: var(--bg-surface);
     border-color: var(--bg-surface-border);
@@ -52,7 +52,7 @@
     }
 }
 
-.card-clickable-item {
+.card-clickable--level-3 {
     background-color: var(--bg-item);
     border-color: var(--bg-item-border);
 

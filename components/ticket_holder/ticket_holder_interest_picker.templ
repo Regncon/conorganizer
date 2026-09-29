@@ -88,7 +88,7 @@ templ TicketHolderInterestPicker(eventId string) {
 		</div>
 		<div
 			role="button"
-			class="card-clickable card-clickable-item"
+			class="card-clickable card-clickable--level-3"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelHigh, models.InterestLevelHigh) }
 			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
 			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelHigh) }
@@ -98,7 +98,7 @@ templ TicketHolderInterestPicker(eventId string) {
 		</div>
 		<div
 			role="button"
-			class="card-clickable card-clickable-item"
+			class="card-clickable card-clickable--level-3"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelMedium, models.InterestLevelMedium) }
 			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
 			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelMedium) }
@@ -108,7 +108,7 @@ templ TicketHolderInterestPicker(eventId string) {
 		</div>
 		<div
 			role="button"
-			class="card-clickable card-clickable-item"
+			class="card-clickable card-clickable--level-3"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelLow, models.InterestLevelLow) }
 			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
 			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelLow) }
@@ -118,7 +118,7 @@ templ TicketHolderInterestPicker(eventId string) {
 		</div>
 		<div
 			role="button"
-			class="card-clickable card-clickable-item"
+			class="card-clickable card-clickable--level-3"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelNone, models.InterestLevelNone) }
 			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
 			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelNone) }
