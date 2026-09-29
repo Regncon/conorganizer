@@ -83,12 +83,7 @@
     /* call to action banner */
     --banner-glow: #4966e2;
 
-    /* surface & item  is replaced with level 2 and 3 respectively */
-    --bg-surface: #252735;
-    --bg-surface-border: var(--bg-item-border);
-    --bg-surface-border-hover: var(--bg-item-border-hover);
-    --bg-surface-hover: #353847;
-    --bg-surface-active: #474957;
+    /* item is being replaced by the level colors */
     --bg-item: #35394a;
     --bg-item-hover: #44485a;
     --bg-item-border-hover: #7f8198;
