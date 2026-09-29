@@ -43,6 +43,13 @@ Code lives in `service/checkIn`.
   `TicketFetchResult.UsedStaleCache`. Callers decide whether stale data is good
   enough; both the ticket fetch and admin conversion accept it.
 - `TicketTypeMiddag = 251934`. Middag tickets are never imported.
+- `billettholdere.is_over_18` comes from the ticket's birth date (`isOver18` in
+  `cache.go`): true when the billettholder is 18 or older on 2026-10-04. A
+  missing or unparseable birth date counts as under 18. The puljefordeling
+  solver does not use the flag, so it can seat a billettholder under 18 on an
+  18+ arrangement (`AgeGroupAdultsOnly`). The admin puljefordeling page uses it
+  to warn about such seats, and to ask for confirmation before a manual pin. See
+  [domeneordbok.md](../domeneordbok.md#aldersgrense-18).
 - `ConvertTicketToBillettholder(ctx, ticketId, db, logger)` fetches all tickets and
   calls the unexported `converTicketIdToNewBillettholder`, which:
   - refuses Middag tickets,

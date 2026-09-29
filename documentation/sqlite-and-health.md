@@ -21,7 +21,7 @@ After opening, `InitDB` reads the PRAGMAs back and fails if `foreign_keys` is no
 
 `DefaultSQLiteConfig` sets `MaxOpenConns` and `MaxIdleConns` to 1, and `normalizeSQLiteConfig` never lets idle exceed open. This is deliberate: the write load is small, and one connection means there is only one SQLite writer inside the process.
 
-Other processes can still use the database alongside the app, for example a `sqlite3` CLI session, the scheduled backup, `conorganizer-export-db` or `deploy.sh` cloning a preview. They are separate OS processes, not pool connections, and WAL mode plus `busy_timeout` let them work safely next to the app.
+Other processes can still use the database alongside the app, for example a `sqlite3` CLI session, the scheduled backup, `conorganizer-export-db`, `deploy.sh` cloning and migrating a preview, or Goose run by `conorganizer-sqlite-migrate`. They are separate OS processes, not pool connections, and WAL mode plus `busy_timeout` let them work safely next to the app.
 
 ## Startup checks
 
@@ -90,7 +90,7 @@ In WAL mode the live state can be split across `events.db`, `events.db-wal` and 
 sqlite3 /path/to/events.db ".backup '/path/to/snapshot.db'"
 ```
 
-Everything that copies a database already does this. The scheduled backups, `deploy.sh` when it clones main into a new PR preview, and `conorganizer-export-db` all use `.backup`, and they check the copy with `PRAGMA quick_check` (the scheduled backup uses `PRAGMA integrity_check`).
+Everything that copies a database already does this. The scheduled backups, `deploy.sh` when it clones main into a new PR preview, and `conorganizer-export-db` all use `.backup`, and they check the copy with `PRAGMA quick_check` (the scheduled backup uses `PRAGMA integrity_check`). `conorganizer-sqlite-migrate` also uses `.backup` for its pre-migration copy of demo, and runs `PRAGMA quick_check` on each database after migrating it.
 
 ## Downloading a database: `conorganizer-export-db`
 
@@ -121,5 +121,7 @@ Everything else is rewritten:
 - Billettholdere not linked to an admin get `first_name` `User` and a deterministic 6-digit `last_name`.
 - `host_name` on all events becomes `Host <6 digits>`, derived from the event's `user_id`, or `Host` when there is no user.
 - `phone_number` on all events becomes `00000000`.
+
+The `feedback` table is exported unchanged. It stores no user reference, and the feedback form rejects messages that contain `@` or a phone-number-like run of digits (`service/feedback/personal_info.go`).
 
 `users.external_id` is never changed, not even for non-admins. It is the auth identity, and changing it would break login and user lookup.

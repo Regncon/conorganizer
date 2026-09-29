@@ -38,6 +38,9 @@ key-only, and sudo is limited to `mv`, `chown`, `chmod`, `systemctl` and the
 `deploy.sh`/`cleanup.sh` scripts in `/opt/conorganizer/*/`. The script
 generates an SSH keypair and prints the values for the `HETZNER_HOST`,
 `HETZNER_USER`, `HETZNER_SSH_KEY` and `HETZNER_SSH_PORT` GitHub secrets.
+The workflow only reads the first three; it hard-codes `port: 22`
+(`.github/workflows/buildAndTest.yml`), so a custom SSH port also needs a
+workflow change.
 
 ## Environments on the server
 
@@ -48,8 +51,9 @@ generates an SSH keypair and prints the values for the `HETZNER_HOST`,
 | restored | `conorganizer-restored.service` | `19082` | `/mnt/HC_Volume_103911252/environments/restored/` |
 
 Each data directory holds `database/events.db` and `event-images/`. The
-binaries live in `/opt/conorganizer/<env>/`, and the services run as
-`deploy:www-data`. The systemd units and Caddy config are managed in
+binaries live in `/opt/conorganizer/<env>/`, next to the `goose` binary and
+`migrations/` that CI deploys for `conorganizer-sqlite-migrate`, and the
+services run as `deploy:www-data`. The systemd units and Caddy config are managed in
 `configuration-as-code/`.
 
 See [documentation/deployment.md](../documentation/deployment.md) for

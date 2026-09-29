@@ -98,7 +98,7 @@ The bucket list should stay small. `service/live` defines exactly four buckets. 
 | `events` | Event, program, pulje, publishing, and event-form data. | Event form updates, event creation and submission, approval status changes, program publishing, puljeoppsett changes, pulje status and closing-warning changes, puljefordeling seat changes. | Root page, event details, profile, profile event form, admin dashboard, admin approval, admin event edit, room assignment, puljeoppsett, puljefordeling. |
 | `interests` | Interest choices, first-choice data, player/GM assignment state, and views that show who is interested in an event. | User interest updates on the event page, admin interest changes in puljefordeling, tildelinger. | Event details, profile, admin approval, puljefordeling, admin billettholder overview. |
 | `billettholders` | Billettholder data and billettholder emails. | Add/remove billettholder emails (admin and profile), ticket conversion, ticket fetch on the profile tickets page. | Header menu, profile, profile tickets, admin approval, admin billettholder overview, add billettholder page. |
-| `rooms` | Room data and room assignment choices. | Create, update, delete room; assign or remove a room for an event in a pulje. | Event details, admin rooms, room assignment, profile event form, admin event edit. |
+| `rooms` | Room data and room assignment choices. | Create, update, delete room; assign or remove a room for an event in a pulje; publish or unpublish a pulje's room assignment. | Event details, admin rooms, room assignment, profile event form, admin event edit. |
 
 Dev hot reload does not use a live bucket. It is a separate in-process hub in `dev_reload.go` (build tag `dev`), with a `/reload` SSE endpoint and a `/hotreload` trigger.
 
@@ -108,6 +108,7 @@ Room assignment is cross-cutting: it affects event rendering and room-dependent 
 
 - Admin room assignment (`POST /admin/rooms/api/assignment/{pulje}/{event}/{room}`) and removal (`DELETE` on the same path) broadcast `rooms` and `events`.
 - Assigning a room from the event form (`PUT /profile/api/new/{id}/assign-room/{puljeId}`) broadcasts `events` and `rooms`.
+- Publishing or unpublishing a pulje's room assignment (`PUT /admin/rooms/api/assignment/{pulje}/publish`) broadcasts `rooms` and `events`.
 - Saving a puljefordeling (`POST /admin/api/puljefordeling/{pulje}/commit`) broadcasts `events` and `rooms`.
 - Saving tildelinger and removing a GM in puljefordeling broadcast `events`, `interests` and `rooms`.
 - Creating, updating or deleting a room broadcasts only `rooms`.
@@ -135,6 +136,8 @@ A pulje status or closing-warning change broadcasts `events`, so open event page
 | `/admin/billettholder/add/` | `/admin/billettholder/add/api/` | `billettholders` | Renders a placeholder first. Ticket search uses `EnsureConnection` with `billettholders`. |
 | `/auth` | None | None | No live updates. |
 | `/print` | None | None | Static render only. |
+| `/tilbakemelding` | None | None | Feedback form; submit and reset patch the form over SSE. |
+| `/admin/tilbakemeldinger/` | None | None | Feedback list; deleting patches the list in the same request. |
 
 ## Full content first
 

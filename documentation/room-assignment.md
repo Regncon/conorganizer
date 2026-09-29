@@ -9,7 +9,7 @@ The API routes live under `/admin/rooms/api` in `pages/admin/admin.go`. The manu
 
 ## Room model
 
-`models.Room` has only `ID`, `Name`, `RoomNumber`, `Floor` and `Notes`. The per-pulje snapshot used by the assignment page is `models.RoomByPulje`, which adds `AssignedEventsID []RoomEventPuljeSummary`.
+`models.Room` has only `ID`, `Name`, `RoomNumber`, `Floor`, `PublicNotes` and `AdminNotes` (see [Room notes](#room-notes)). The per-pulje snapshot used by the assignment page is `models.RoomByPulje`, which adds `AssignedEventsID []RoomEventPuljeSummary`.
 
 A room is linked to an event in a pulje through `relation_event_puljer.room_id`. An assignment only counts while the relation has `is_in_pulje = 1`.
 
@@ -38,7 +38,7 @@ Use the helpers, and never build a path from user input:
 - `MapPathForRoom(roomNumber string) (string, bool)`
 - `MapPathForFloor(floor int) (string, bool)`
 
-Both return `("", false)` for an unknown key. They are used by the admin room list, the assignment page, the event details page (`pages/event/event_rooms.go`) and the print-friendly page (`pages/print-friendly/print-friendly-page.templ`). On `/admin/rooms`, a room without a map shows "Kart er ikke tilgjengelig for dette rommet." instead of a broken image or link.
+Both return `("", false)` for an unknown key. They are used by the admin room list, the assignment page, the event details page (`pages/event/event_rooms.go`) and the print-friendly page (`pages/print-friendly/print-friendly-page.templ`). The last two look up a map only for puljer whose room assignment is published (see [Publishing the room assignment](#publishing-the-room-assignment)). On `/admin/rooms`, a room without a map shows "Kart er ikke tilgjengelig for dette rommet." instead of a broken image or link.
 
 `service/rooms/maps_test.go` checks that every allowlisted path points to an existing SVG in `static/rooms/`:
 
@@ -122,6 +122,19 @@ This sets `room_id = NULL` only when the relation is active and still points to 
 
 `#room-assignment-page` sets up `draggedEventId`, `dragOverRoom`, `room`, `_roomNumber`, `_roomSaving` (the request indicator that disables the buttons) and `_roomAssignmentStatus`. The `room-saved` window listener clears the drag state, resets `_roomSaving` and shows "Romtildelingen er lagret.".
 
+## Publishing the room assignment
+
+Each pulje has its own publish flag, `puljer.rooms_published` (`INTEGER NOT NULL DEFAULT 0`), so a new pulje, and every pulje that existed when the column was added, starts unpublished. It is separate from the global program flag `program_publishing_state.is_published` and from `puljer.status`, see [pulje-status-and-publishing.md](pulje-status-and-publishing.md).
+
+- The assignment page shows a "Publiser romfordeling" switch next to the "Romfordeling for …" heading (`roomsPublishControl` in `rooms_assignment_page.templ`). Its state reads "Synlig for alle" or "Ikke publisert". The switch binds the `roomsPublished` signal and has no confirmation step.
+- A change calls `PUT /admin/rooms/api/assignment/{pulje}/publish`, which reads `roomsPublished` and calls `rooms.SetRoomsPublished` (`service/rooms/publishing.go`). It returns 400 for an invalid pulje and 204 on success, and broadcasts the `rooms` and `events` buckets.
+- `rooms.RoomsPublished` and `SetRoomsPublished` return an error for an unknown pulje.
+
+The flag controls only what the event details page and the print-friendly page show. Assigning events to rooms on the admin page works the same whether it is set or not.
+
+- **Event details page:** `getEventRooms` (`pages/event/event_rooms.go`) still needs the program to be published. For a pulje whose room assignment is not published it clears the room to its zero value, so the pulje shows its time as an entry without a room: no room name, no public note and no map button. This applies to admins too.
+- **Print-friendly page:** `getPrintEventRows` shows no room and no map for an occurrence in an unpublished pulje, for admins too.
+
 ## Live updates and the dialog
 
 The live endpoint `GET /admin/rooms/api/assignment/{pulje}` streams `RoomsAssignmentPageContent`, which renders only the `#room-assignment` section. `#assignment-dialog` is rendered once by `RoomsAssignmentPage`, **outside** that live fragment, so a live patch can't replace an open modal. `TestRoomsAssignmentPage_DialogRendersOutsideLiveRegion` enforces this. See [live-update-lifecycle.md](live-update-lifecycle.md) for the general rules.
@@ -142,7 +155,25 @@ Event notes (`events.notes`) appear on every mini card on the assignment page: u
 - It keeps line breaks (`white-space: pre-wrap`), and long notes are capped at `max-block-size: 8rem` with vertical scroll.
 - `data-preserve-attr="open"` stops live Datastar morphs from collapsing an accordion an admin has opened.
 
-Room notes (`rooms.notes`) are separate. On the assignment page they are shown only on room cards that are not on a map.
+## Room notes
+
+Room notes are separate from event notes. A room has two kinds, each at most 1000 characters (`maxRoomNotesLength`, checked by `ValidateRooms` and `UpdateRoomPartial` in `service/rooms`):
+
+| Field | Column | Label and icon | Shown to |
+| --- | --- | --- | --- |
+| `PublicNotes` | `rooms.public_notes` | "Offentlige notater", globe | Admins, and everyone on the event details page once the pulje's room assignment is published, for example how to find the room |
+| `AdminNotes` | `rooms.admin_notes` | "Admin-notater", lock | Admins only |
+
+Notes from before the split were only shown to admins, so migration `20260926140000_split_room_notes.sql` renamed `rooms.notes` to `admin_notes` and added an empty `public_notes`. The views `v_events_by_pulje_active` and `v_event_puljer_active` still expose `room_notes`, which now maps to `admin_notes`. No application code reads it.
+
+Where they are shown (`pages/admin/rooms/room_notes.templ`):
+
+- The room form on `/admin/rooms` has one textarea for each, bound to `public_notes` and `admin_notes`.
+- Room cards on `/admin/rooms` and room cards outside a map on the assignment page show `roomNotes`, a list with one labelled entry for each note that is not blank after trimming.
+- A room on a map gets a small toggle button with the globe and/or lock icon instead. It opens a native popover, "Notater for rom <number>", with the same list. A room without notes has no button.
+- The event details page shows only the public note, with an info icon, in the room list and in the map dialog (`eventRoomNote` in `pages/event/event_rooms.templ`). `getEventRooms` never selects `admin_notes`.
+
+Note text is always rendered as escaped text, never in an attribute that renders HTML such as `data-tippy-content`.
 
 ## Data queries
 

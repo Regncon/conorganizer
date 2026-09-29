@@ -51,7 +51,7 @@ Launch-sjekklistene dekker disse aktive sidene og flytene:
 - `/profile/tickets` dekkes av [Billetter på Min Side](./profile-tickets.md).
 - `/profile/new/{id}` og tilhørende skjema- og bildeopplastingsflyt dekkes av [Arrangementsskjema](./event-form.md).
 - `/event/{id}` og interesseflyten under `/event/api/{id}` dekkes av [Arrangementsdetaljer](./event-details.md).
-- `/admin` dekkes av [Admin](./admin.md).
+- `/admin` (Adminverktøy) dekkes av [Admin](./admin.md).
 - `/admin/approval` og `/admin/approval/edit/{id}` dekkes av [Godkjenning av arrangementer](./admin-approval.md).
 - `/admin/billettholder` dekkes av [Billettholdere i admin](./admin-billettholders.md).
 - `/admin/billettholder/add` dekkes av [Legg til billettholder i admin](./admin-add-billettholder.md).
@@ -61,6 +61,9 @@ Disse aktive adminsidene lenkes fra adminforsiden, men har ennå ingen egen laun
 
 - `/admin/puljefordeling/` og `/admin/puljefordeling/{pulje}`.
 - `/admin/puljeoppsett/`.
+- `/admin/tilbakemeldinger/` og QR-kodesiden `/admin/tilbakemeldinger/qr`.
+
+Tilbakemeldinger har ennå ingen manuell sjekkliste. Det gjelder både skjemaet `/tilbakemelding`, som innloggede brukere når fra brukermenyen og Min Side, og adminlisten `/admin/tilbakemeldinger/` med filtrering på kategori, sletting etter bekreftelse og utskrift av QR-kode. Oppførselen dekkes foreløpig av Go-testene i `pages/feedback/`, `service/feedback/` og `pages/admin/feedback_admin*_test.go`. Lenkene fra brukermenyen og Min Side sjekkes i [Generelle tester](./general.md) og [Min Side](./profile.md).
 
 Disse rutene er bevisst ikke egne launch-sjekklister:
 

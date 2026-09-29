@@ -21,6 +21,11 @@ The global `.card` class (`bg-surface`, `border-radius-1x`, a shadow and `1rem` 
 
 Remove `.card` from `index.css` only after all of these have been migrated.
 
+### Shared form and choice classes
+
+- `.label`, `.label-small` and `.form-group` (the label + control + message stack) are global rules in `static/css/index.css`, so they work outside `components/formsubmission/` too.
+- `static/css/choice.css` (loaded by `layouts/base.templ` after `buttons.css`) holds controls that switch an option on or off. `.choice-toggle-group` with `.choice-toggle` buttons (used together with `.btn .btn--outline`) picks one of a few options. The buttons stack, and sit side by side in equal columns when the nearest container is wider than 25rem. `.choice-chip-group` with `.choice-chip` buttons gives wrapping pill-shaped chips for picking any number of options. The selected look follows `aria-pressed="true"`, so the markup only binds `aria-pressed`. The feedback form (`pages/feedback/feedback_page.templ`) uses both.
+
 ## Focus-visible and accessibility
 
 Every interactive element needs a visible `:focus-visible` state, not only a `:hover` state (GitHub issue Regncon/conorganizer#407). Use the secondary focus colour (`--color-secondary-focus-visible`, or `--btn-ghost-focus-shadow`, which points to it) for focus rings.
@@ -55,6 +60,8 @@ A global fallback comes right after it:
 | `.event-bar-container`, `.profile-event-bar` | `static/css/card.css` | `3px` `--color-secondary-focus-visible` outline. `.profile-event-bar` also gets `outline-offset: 2px` and the hover brightness. |
 | `a.inline-link` | global, `static/css/index.css` | `2px` `--color-secondary-focus-visible` outline with offset and radius. Used for example by the help link in `event_interest_panel.templ`. |
 | `.pulje-interests-summary` (`<summary>`) | `components/event_components/programpulje_interests.templ` | Same background as hover, plus a `3px` `--btn-ghost-focus-shadow` ring on the inner text span. |
+| `.choice-toggle`, `.choice-chip` | `static/css/choice.css` | `box-shadow: 0 0 0 3px var(--color-secondary-focus-visible)` on keyboard focus only (a mouse click gets no ring). Selected buttons (`aria-pressed="true"`) use `--color-primary-focus-visible` instead. |
+| `a.admin-tool-card` | `pages/admin/admin_card.templ` | Same background and border as hover, plus the global `2px` outline fallback (the card rule sets no outline of its own). |
 
 The logo image's `alt` is "Regncon forside", because the image is the link's only accessible name. Give an image-only link an `alt` that describes where the link goes.
 
@@ -66,7 +73,7 @@ A link that opens another site in a new tab uses `target="_blank" rel="noopener 
 
 ```templ
 <a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" rel="noopener noreferrer">
-	Vanlige Spørsmål
+	Vanlige spørsmål
 	@icons.Icon(icons.ExternalLink, icons.Size24)
 </a>
 ```
@@ -74,8 +81,9 @@ A link that opens another site in a new tab uses `target="_blank" rel="noopener 
 `icons.ExternalLink` maps to `components/icons/assets/icon-external-link.svg`. It is currently used by:
 
 - "Kjøp billetter" (the CheckIn link) on `/profile/tickets`,
-- both "Vanlige Spørsmål" links in the header menu (desktop and mobile),
-- "Hvordan fungerer interessevalget?" on the event page (`Size16`).
+- both "Vanlige spørsmål" links in the header menu (desktop and mobile),
+- "Hvordan fungerer interessevalget?" on the event page (`Size16`),
+- "Hent utskriftsvennlig versjon av programmet" on the Publiser program card on `/admin` (`Size16`). This is an exception: the link goes to the same-site `/print` and opens in the same tab, without `target` or `rel`.
 
 The room map link on `/admin/rooms` is same-site. It opens the map SVG in a new tab with `rel="noopener"` and no icon. The link text says "i ny fane" instead.
 

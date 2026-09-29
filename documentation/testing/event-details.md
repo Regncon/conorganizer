@@ -70,8 +70,18 @@ Denne sjekklisten dekker `/event/{id}`, altså detaljvisningen for et arrangemen
 
 - [ ] **Romkart vises først etter publisering**<br>
   **Gitt** at arrangementet har et tildelt rom.<br>
-  **Når** programmet er publisert og arrangementet har en aktiv romtildeling i puljen, uavhengig av puljens status og publiseringsflagg.<br>
-  **Så** vises romnavn og «Se rommet» for rom med kjent kart. Før publisering skal verken puljer, klokkeslett, romnavn eller kart rendres.
+  **Når** programmet er publisert, romfordelingen for puljen er publisert og arrangementet har en aktiv romtildeling i puljen, uavhengig av puljens status og det gamle publiseringsflagget per arrangement.<br>
+  **Så** vises romnavn og «Se rommet» for rom med kjent kart. Før programmet er publisert, skal verken puljer, klokkeslett, romnavn eller kart rendres.
+
+- [ ] **Upublisert romfordeling skjuler rommet**<br>
+  **Gitt** at programmet er publisert, men romfordelingen for puljen ikke er publisert.<br>
+  **Når** en bruker eller admin åpner arrangementet.<br>
+  **Så** vises puljen med klokkeslett som en tidsrad uten rom, men ikke romnavn, romnotat eller kartknapp. Admin ser det samme som alle andre.
+
+- [ ] **Offentlige romnotater vises, admin-notater aldri**<br>
+  **Gitt** at rommet har både offentlige notater og admin-notater, og romfordelingen for puljen er publisert.<br>
+  **Når** detaljsiden vises og brukeren åpner romkartet.<br>
+  **Så** vises de offentlige notatene under rommet i romlisten og i kartmodalen, som ren tekst også når de inneholder HTML. Admin-notatene vises ikke noe sted på siden. Rom uten offentlige notater har ingen notatlinje.
 
 - [ ] **Hver pulje viser sitt eget rom**<br>
   **Gitt** at arrangementet har ulike rom i to puljer og programmet er publisert.<br>
@@ -90,7 +100,7 @@ Denne sjekklisten dekker `/event/{id}`, altså detaljvisningen for et arrangemen
 
 - [ ] **Tilbaketrukket romkart lukkes**<br>
   **Gitt** at kartmodalen er åpen.<br>
-  **Når** romtildelingen fjernes eller programmet avpubliseres.<br>
+  **Når** romtildelingen fjernes, romfordelingen for puljen avpubliseres eller programmet avpubliseres.<br>
   **Så** forsvinner kartet. Ny publisering skal ikke åpne modalen automatisk. Rom uten kjent SVG viser rominformasjon uten kartknapp.
 
 - [ ] **Kartmodalen fungerer med tastatur og på mobil**<br>

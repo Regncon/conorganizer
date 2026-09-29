@@ -8,10 +8,11 @@ Flytene som Descope eier, som registrering, selve innloggingswidgeten, e-postbek
 
 Appens egen oppførsel rundt innlogging er automatisert i Go-tester:
 
-- `pages/login/login_form_test.go`: Descope-widgeten er konfigurert og sender vellykket innlogging til post-login.
+- `pages/login/login_form_test.go`: Descope-widgeten er konfigurert og sender vellykket innlogging til post-login sammen med returmålet `neste`.
 - `pages/login/post_login_user_test.go`: post-login oppretter lokal bruker første gang og oppdaterer adminstatus uten duplikat.
-- `pages/login/logout_test.go` og `pages/login/login_test.go`: utlogging sletter cookies, og `/auth/session` lagrer eller avviser sesjonen.
-- `service/userctx/unauthenticated_test.go`, `service/authctx/forbidden_test.go` og `service/authctx/require_admin_test.go`: avvist tilgang for ikke-innlogget bruker og for bruker uten adminrolle.
+- `pages/login/logout_test.go` og `pages/login/login_test.go`: utlogging sletter cookies, og `/auth/session` lagrer eller avviser sesjonen. `login_test.go` dekker også at post-login sender brukeren til et trygt `neste`-mål, og at utrygge mål, som adresser til andre nettsteder, faller tilbake til forsiden.
+- `service/userctx/unauthenticated_test.go`, `service/userctx/unauthenticated_route_test.go`, `service/authctx/forbidden_test.go` og `service/authctx/require_admin_test.go`: avvist tilgang for ikke-innlogget bruker og for bruker uten adminrolle, og at «Logg inn» på innloggingsfeilsiden peker tilbake til siden brukeren prøvde å åpne.
+- `components/header/menu_test.go`: menyen viser riktige lenker for ikke-innlogget bruker, innlogget bruker og admin, og «Gi tilbakemelding» vises bare i burgermenyen for innloggede brukere.
 
 ## Roller
 
@@ -70,6 +71,11 @@ Appens egen oppførsel rundt innlogging er automatisert i Go-tester:
   **Når** brukeren refresher eller åpner en tidligere beskyttet side.<br>
   **Så** skal appen fortsatt behandle brukeren som utlogget.
 
+- [ ] **Brukermenyen har lenke til tilbakemelding**<br>
+  **Gitt** at brukeren er innlogget.<br>
+  **Når** brukeren åpner burgermenyen på desktop og mobil.<br>
+  **Så** skal menyen ha lenken «Gi tilbakemelding» til `/tilbakemelding` mellom «Min profil» og «Vanlige spørsmål». Lenken skal ikke ligge i toppmenyen, og den skal ikke vises for ikke-innloggede brukere.
+
 - [ ] **Eksterne menylenker markeres tydelig**<br>
   **Gitt** at eksterne lenker vises i brukermenyen.<br>
   **Når** brukeren åpner dem.<br>
@@ -114,9 +120,19 @@ Appens egen oppførsel rundt innlogging er automatisert i Go-tester:
   **Så** skal widgeten laste lesbart og la brukeren endre passordet med forståelig tilbakemelding.
 
 - [ ] **Gyldig innlogging lander på forsiden**<br>
-  **Gitt** at en bruker logger inn med gyldig konto.<br>
+  **Gitt** at en bruker logger inn med gyldig konto fra «Logg inn» i hovednavigasjonen.<br>
   **Når** Descope sender brukeren videre til post-login.<br>
   **Så** skal appen lande på forsiden i en innlogget tilstand.
+
+- [ ] **Innlogging fra en avvist side sender brukeren tilbake dit**<br>
+  **Gitt** at en ikke-innlogget bruker åpner en beskyttet side direkte, for eksempel `/tilbakemelding?om=festivalen`, og får siden «Du må logge inn».<br>
+  **Når** brukeren trykker «Logg inn» og fullfører innloggingen.<br>
+  **Så** skal brukeren lande på den samme siden med samme spørrestreng i en innlogget tilstand, og ikke på forsiden.
+
+- [ ] **Utrygge returmål sender brukeren til forsiden**<br>
+  **Gitt** at innloggingssiden åpnes med et returmål som peker til et annet nettsted, for eksempel `/auth?neste=https://example.com` eller `/auth?neste=//example.com`.<br>
+  **Når** brukeren fullfører innloggingen.<br>
+  **Så** skal brukeren lande på forsiden i appen og ikke sendes videre til det andre nettstedet.
 
 - [ ] **Førstegangsinnlogging oppretter lokal bruker riktig**<br>
   **Gitt** at en bruker logger inn for første gang.<br>
@@ -126,7 +142,7 @@ Appens egen oppførsel rundt innlogging er automatisert i Go-tester:
 - [ ] **Innlogget bruker møter ingen uklar innloggingsstatus**<br>
   **Gitt** at en innlogget bruker åpner innloggingssiden på nytt.<br>
   **Når** siden vises.<br>
-  **Så** skal opplevelsen ikke skape tvil om brukerens faktiske innloggingsstatus.
+  **Så** skal siden vise «Velkommen tilbake!» og sende brukeren videre etter fem sekunder, til forsiden eller til returmålet i `neste` om det er et trygt mål, uten å skape tvil om brukerens faktiske innloggingsstatus.
 
 - [ ] **Descope-lastingsfeil gir forståelig feiltilstand**<br>
   **Gitt** at tredjepartsinnholdet på innloggingssiden svikter.<br>
@@ -155,7 +171,7 @@ Appens egen oppførsel rundt innlogging er automatisert i Go-tester:
 - [ ] **Beskyttede sider forklarer avvist tilgang**<br>
   **Gitt** at en ikke-innlogget bruker åpner en beskyttet side direkte.<br>
   **Når** tilgang avvises.<br>
-  **Så** skal brukeren få en tydelig forklaring og en forståelig vei videre til innlogging eller tilbake til appen.
+  **Så** skal brukeren få siden «Du må logge inn» med knappene «Logg inn» og «Gå til arrangementslisten». «Logg inn» skal føre til innlogging og deretter tilbake til siden brukeren prøvde å åpne.
 
 - [ ] **Ikke-admin avvises tydelig**<br>
   **Gitt** at en bruker uten adminrettigheter prøver å åpne adminforsiden direkte.<br>

@@ -1,6 +1,6 @@
 # Min Side
 
-Denne sjekklisten dekker `/profile`: innlogget oversikt, egne arrangementer, kort oppsummering av billetter, eget festivalprogram og lenke videre til billettadministrasjon.
+Denne sjekklisten dekker `/profile`: innlogget oversikt, egne arrangementer, kort oppsummering av billetter, eget festivalprogram, lenke videre til billettadministrasjon og invitasjonen til å gi tilbakemelding.
 
 ## Roller
 
@@ -14,6 +14,11 @@ Denne sjekklisten dekker `/profile`: innlogget oversikt, egne arrangementer, kor
   **Gitt** at en innlogget bruker åpner Min Side.<br>
   **Når** siden lastes.<br>
   **Så** skal siden vises som en helhetlig oversikt uten brutte seksjoner eller tydelig manglende innhold.
+
+- [ ] **Min Side inviterer til å gi tilbakemelding**<br>
+  **Gitt** at en innlogget bruker åpner Min Side.<br>
+  **Når** boksen «Har du en tilbakemelding?» vises over Kontoadministrasjon.<br>
+  **Så** skal boksen forklare at brukeren kan si hva hen synes om nettsiden eller festivalen, og knappen «Gi tilbakemelding» skal åpne `/tilbakemelding`.
 
 ### Mine arrangementer
 

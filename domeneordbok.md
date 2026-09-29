@@ -20,6 +20,9 @@ Godkjent
 Annonsert
 Forkastet
 Publisert
+Romfordeling
+Aldersgrense
+Aldersvarsel
 Fredag Kveld
 Lordag Morgen
 Lordag Kveld
@@ -58,6 +61,15 @@ Påmelding er ikke en egen funksjon i systemet. Langvarige arrangementer som all
 
 I tekster i løsningen brukes "påmelding" også om å melde interesse, for eksempel "Påmelding lukkes" i tidsplanen.
 
+## Aldersgrense (18+)
+Et arrangement med aldersgruppe `AdultsOnly` (`models.AgeGroupAdultsOnly`) har 18-årsgrense og vises som 18+. Om en billettholder er over 18, står i `billettholdere.is_over_18`, som settes fra fødselsdatoen i CheckIn.
+
+Aldersgrensen håndteres manuelt av styret. Puljefordelingen (`solver`) ser ikke på alder, så en billettholder under 18 kan bli satt opp som spiller på et 18+-arrangement. Admin får i stedet beskjed:
+
+* **Aldersvarsel**: puljefordelingssiden i admin viser "Under 18 på 18+-arrangement" under "Varsler om tildelinger", med én oppføring per arrangement og navnet på hver spiller under 18 (`FinnAldersvarsler` i `service/puljefordeling/aldersvarsler.go`). Varselet gjelder både plasser fra fordelingen og manuelle plasser. GM-er tas ikke med.
+* Spillere og GM-er under 18 på et 18+-arrangement får merket "Under 18" på arrangementskortet.
+* Før admin plasserer en billettholder under 18 manuelt på et 18+-arrangement, må hen bekrefte det i dialogen "Aldersgrense" ("Plasser likevel").
+
 ## Arrangementstatus
 Et arrangement har alltid nøyaktig én av fem statuser (`events.status`, `models.EventStatus` i `models/event-model.go`):
 
@@ -77,9 +89,10 @@ Se [documentation/pulje-status-and-publishing.md](documentation/pulje-status-and
 "Publisert" betyr flere forskjellige ting i koden. Hold dem fra hverandre:
 
 1. **Arrangementet er annonsert**: `events.status = 'Annonsert'` (`models.EventStatusAnnounced`). Arrangementet er offentlig synlig. Kall dette "annonsert", ikke "publisert".
-2. **Programmet er publisert**: `program_publishing_state.is_published`, én rad med `id = 1`, lest av `program.IsPublished`. Gjelder hele programmet: forsiden med dager og puljer, interessevalg, Mitt festivalprogram og romkart. Styres fra "Publiser program" på `/admin`.
+2. **Programmet er publisert**: `program_publishing_state.is_published`, én rad med `id = 1`, lest av `program.IsPublished`. Gjelder hele programmet: forsiden med dager og puljer, interessevalg, Mitt festivalprogram og puljer, tider og rom på arrangementssiden. Styres fra "Publiser program" på `/admin`.
 3. **Puljefordelingen er publisert**: `puljer.status = 'Completed'`, vist som "Puljefordeling publisert" i admin. Tildelingene i den puljen er publisert og kan ikke endres.
-4. **`relation_event_puljer.is_published`**: en gammel kolonne per arrangement og pulje. Ingen produksjonskode leser den lenger, og `SetEventInPulje` lar den bevisst være urørt. Ikke bygg ny oppførsel på den.
+4. **Romfordelingen er publisert**: `puljer.rooms_published`, per pulje, styrt av bryteren "Publiser romfordeling" på `/admin/rooms/assignment/{pulje}` ("Synlig for alle" / "Ikke publisert"). Først da vises rommet, de offentlige romnotatene og romkartet for den puljen på arrangementssiden og i utskriftsvennlig program, også for admin. Arrangementssiden krever i tillegg at programmet er publisert. Flagget henger ikke sammen med `puljer.status`.
+5. **`relation_event_puljer.is_published`**: en gammel kolonne per arrangement og pulje. Ingen produksjonskode leser den lenger, og `SetEventInPulje` lar den bevisst være urørt. Ikke bygg ny oppførsel på den.
 
 Disse feltene handler ikke om publisering, men blandes lett sammen med den:
 

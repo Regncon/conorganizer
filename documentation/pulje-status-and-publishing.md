@@ -1,17 +1,20 @@
 # Pulje status and program publishing
 
-This document describes how pulje status and program publishing control interest, the event page, puljefordeling and Mitt festivalprogram. For the meaning of domain words such as pulje, interesse, billettholder and "publisert", see [domeneordbok.md](../domeneordbok.md).
+This document describes how pulje status and program publishing control interest, the event page, puljefordeling and Mitt festivalprogram, and how the per-pulje publish switch for the room assignment fits in. For the meaning of domain words such as pulje, interesse, billettholder and "publisert", see [domeneordbok.md](../domeneordbok.md).
 
-## Two independent settings
+## Independent settings
 
-Two separate settings control pulje behavior. They are independent domain concepts and are kept apart on purpose.
+Three separate settings control pulje behavior. They are independent domain concepts and are kept apart on purpose.
 
 | Setting | Scope | Controls |
 | --- | --- | --- |
 | `puljer.status` (`Open` / `Locked` / `Completed`) | Per pulje | Whether billettholdere can add or change interest in that pulje, and whether solver assignments are shown as results in Mitt festivalprogram. |
-| `program_publishing_state.is_published` (0/1) | Global | Front page layout, whether interest controls are shown and interest updates are accepted on event pages, whether Mitt festivalprogram is shown, and whether room maps are shown on event pages. |
+| `program_publishing_state.is_published` (0/1) | Global | Front page layout, whether interest controls are shown and interest updates are accepted on event pages, whether Mitt festivalprogram is shown, and whether the schedule (puljer, times and rooms) is shown on event pages. |
+| `puljer.rooms_published` (0/1) | Per pulje | Whether that pulje's room name, public room note and room map are shown on event pages, and its room and map on the print-friendly page. It adds to the program flag: event pages show a room only when both are set. It is not tied to `puljer.status`. |
 
-Do not encode program publishing in `puljer.status`, and do not use the legacy `relation_event_puljer.is_published` column for any of the rules below. None of the code paths described here read it.
+`puljer.rooms_published` defaults to `0` and is toggled with the "Publiser romfordeling" switch on `/admin/rooms/assignment/{pulje}`. The event page and the print-friendly page hide an unpublished pulje's room from admins too. See [room-assignment.md](room-assignment.md#publishing-the-room-assignment).
+
+Do not encode program publishing or room publishing in `puljer.status`, and do not use the legacy `relation_event_puljer.is_published` column for any of the rules below. None of the code paths described here read it.
 
 ### `program_publishing_state`
 

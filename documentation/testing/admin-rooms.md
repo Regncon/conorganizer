@@ -20,6 +20,11 @@ Denne sjekklisten dekker `/admin/rooms` og `/admin/rooms/assignment/{pulje}`, de
   **Når** valideringen kjøres.<br>
   **Så** skal feilen være tydelig og rommet skal ikke lagres som gyldig data.
 
+- [ ] **Rom har offentlige notater og admin-notater**<br>
+  **Gitt** at admin fyller inn «Offentlige notater» og «Admin-notater» i romskjemaet.<br>
+  **Når** rommet lagres.<br>
+  **Så** vises begge på romkortet med hver sin etikett, offentlige notater med globusikon og admin-notater med hengelåsikon. Et notat som er tomt, vises ikke. Notater med mer enn 1000 tegn avvises med «Offentlige notater kan ikke være lengre enn 1000 tegn» eller «Admin-notater kan ikke være lengre enn 1000 tegn».
+
 - [ ] **Romendringer påvirker bare riktig rom**<br>
   **Gitt** at admin endrer et eksisterende rom.<br>
   **Når** handlingen lagres.<br>
@@ -61,6 +66,16 @@ Denne sjekklisten dekker `/admin/rooms` og `/admin/rooms/assignment/{pulje}`, de
   **Gitt** at et arrangement har notater.<br>
   **Når** arrangementet vises uten rom, i et rom eller i arrangementsvelgeren.<br>
   **Så** skal notatene ligge sammenfoldet under «Notater» og holde seg åpne ved liveoppdatering når admin har åpnet dem. Arrangementer uten notater har ingen tom notatboks.
+
+- [ ] **Romnotater vises i romfordelingen**<br>
+  **Gitt** at et rom på kartet og et rom utenfor kartet har notater.<br>
+  **Når** admin åpner romfordelingen.<br>
+  **Så** har rommet på kartet en notatknapp med globus- og/eller hengelåsikon som åpner «Notater for rom {nummer}», mens rommet utenfor kartet viser notatene direkte på romkortet. Rom uten notater har ingen notatknapp.
+
+- [ ] **Romfordelingen publiseres per pulje**<br>
+  **Gitt** at romfordelingen for en pulje ikke er publisert, og bryteren «Publiser romfordeling» viser «Ikke publisert».<br>
+  **Når** admin slår på bryteren, og senere slår den av igjen.<br>
+  **Så** viser bryteren «Synlig for alle», og rommene i den puljen vises på arrangementssidene (når programmet er publisert) og i utskriftsvennlig program. Når bryteren slås av, skjules rommene igjen, også for admin. Andre puljer påvirkes ikke, og admin kan tildele rom uansett om romfordelingen er publisert.
 
 - [ ] **Kartet fungerer med tastatur og på mobil**<br>
   **Gitt** at admin bruker tastatur eller mobil.<br>

@@ -23,15 +23,15 @@ The fixed ports are set in the checked-in units with `Environment=PORT=...`. The
 Each environment has the same layout:
 
 - The data dir holds `database/events.db` and `event-images/`.
-- The app dir holds the running binary `conorganizer-<name>`. On deploy the previous binary is kept as `conorganizer-<name>.old`.
+- The app dir holds the running binary `conorganizer-<name>`, plus the `goose` binary and `migrations/*.sql` that CI deploys with it. On deploy the previous binary is kept as `conorganizer-<name>.old`.
 - The unit starts the binary with `-dbp <data dir>/database/events.db`, `-image-path <data dir>/event-images` and `-nats-store-dir /run/conorganizer-<name>/nats`. `/run/conorganizer-<name>` is the unit's `RuntimeDirectory`, so the embedded NATS data is thrown away when the service stops.
 
 `restored` is special: `deploy.sh` installs its binary but does not start the service until a backup has been restored into it with `conorganizer-sqlite-restore` (see [Run a Restored Database Backup](../README.md#run-a-restored-database-backup)).
 
 ## CI/CD jobs
 
-- **`build`** runs on every push to `main` and on every PR event except `closed`. It runs `go tool templ generate`, then the tests with the behavior report (`go run ./cmd/testreport`), then builds the `conorganizer` binary and uploads it as an artifact.
-- **`deploy-fixed`** runs on pushes to `main`. It is a matrix over `[main, demo, restored]` with `fail-fast: false`, so the three environments deploy in parallel and a failure in one does not cancel the others. This is safe because each environment has its own app dir, binary, service and data dir, and fixed deploys install no generated Caddy or systemd files, so they share no files. Each matrix entry uploads the binary and `deploy.sh` to `/opt/conorganizer/<name>/` and runs `sudo deploy.sh <name>`.
+- **`build`** runs on every push to `main` and on every PR event except `closed`. It runs `go tool templ generate`, then the tests with the behavior report (`go run ./cmd/testreport`), then builds the `conorganizer` binary and a Goose v3.28.0 binary (`go install github.com/pressly/goose/v3/cmd/goose@v3.28.0`) and uploads both as an artifact.
+- **`deploy-fixed`** runs on pushes to `main`. It is a matrix over `[main, demo, restored]` with `fail-fast: false`, so the three environments deploy in parallel and a failure in one does not cancel the others. This is safe because each environment has its own app dir, binary, service and data dir, and fixed deploys install no generated Caddy or systemd files, so they share no files. Each matrix entry uploads the binary, `goose`, `migrations/*.sql` and `deploy.sh` to `/opt/conorganizer/<name>/` and runs `sudo deploy.sh <name>`. CI never runs Goose against a fixed environment; the deployed files are used by the manual `conorganizer-sqlite-migrate` (see [migrations.md](migrations.md)).
 - **`deploy`** builds a PR preview. It only runs for PRs that are open, not drafts, and come from this repository (fork PRs have no secrets). A draft gets a preview when it is marked ready for review.
 - **`cleanup-preview`** runs when a same-repo PR is closed, merged or not. See [Preview cleanup](#preview-cleanup).
 
@@ -56,12 +56,13 @@ CI computes the preview's name, port and host from `github.event.pull_request.nu
 - port: `20000 + PR_NUMBER`, for example `20482`
 - host: `https://<PR_NUMBER>-merge.lekeplassen.regncon.no`
 
-On each push to the PR, CI renders the unit and Caddy site into a bundle together with the binary and `deploy.sh`. `deploy.sh` then:
+On each push to the PR, CI renders the unit and Caddy site into a bundle together with the binary, `goose`, `migrations/*.sql` and `deploy.sh`. `deploy.sh` then:
 
 1. On the first deploy only, makes a SQLite `.backup` snapshot of main's database, checks it with `PRAGMA quick_check`, and copies main's `event-images/`. Later deploys keep the preview's existing data.
-2. Changes ownership of the preview's data dir to `deploy:www-data`.
-3. Installs the unit into `/etc/systemd/system/` and the Caddy site into `/etc/caddy/sites-enabled/conorganizer-<name>.caddy`, then reloads Caddy.
-4. Promotes the new binary, restarts the service and fails the job (printing the last 50 journal lines) if the service does not become active.
+2. Runs `goose up -allow-missing` with the deployed migrations against the preview database, on every deploy, so later pushes to the PR get their new migrations.
+3. Changes ownership of the preview's data dir to `deploy:www-data`.
+4. Installs the unit into `/etc/systemd/system/` and the Caddy site into `/etc/caddy/sites-enabled/conorganizer-<name>.caddy`, then reloads Caddy.
+5. Promotes the new binary, restarts the service and fails the job (printing the last 50 journal lines) if the service does not become active.
 
 After a successful deploy, CI adds a `Preview deployment` block with the URL to the PR description. It only does this once: the block starts with the HTML comment `<!-- preview-deployment-url:start -->`, and CI skips the step when the description already contains it.
 

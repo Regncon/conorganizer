@@ -40,7 +40,7 @@ Denne sjekklisten dekker forsiden på `/`. Forsiden er en sentral inngang til ap
 - [ ] **Ikke-innlogget bruker får en vei videre fra «Send inn arrangement»**<br>
   **Gitt** at en ikke-innlogget bruker trykker «Send inn arrangement» på forsiden.<br>
   **Når** Min Side avviser brukeren.<br>
-  **Så** skal brukeren få en tydelig beskjed om å logge inn og en vei videre til innlogging eller tilbake til arrangementslisten.
+  **Så** skal brukeren få en tydelig beskjed om å logge inn og en vei videre til innlogging eller tilbake til arrangementslisten. Etter innlogging via «Logg inn» skal brukeren lande på Min Side.
 
 ### Program og arrangementskort
 

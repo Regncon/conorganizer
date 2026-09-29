@@ -1,6 +1,6 @@
 # Access control and error pages
 
-This document covers who can see an arrangement, what the page shows when they cannot, and the shared 401, 403 and 404 pages. User-facing texts are quoted verbatim in Bokmål.
+This document covers who can see an arrangement, what the page shows when they cannot, the shared 401, 403 and 404 pages, and how login returns the user to the page they tried to open. User-facing texts are quoted verbatim in Bokmål.
 
 ## Event visibility
 
@@ -69,12 +69,14 @@ Both pages are in Bokmål and render inside `layouts.Base`.
 | | 401 Unauthorized | 403 Forbidden |
 | --- | --- | --- |
 | Meaning | Not logged in | Logged in, but without the `Admin` role |
-| Component | `userctx.Unauthenticated()` (`service/userctx/unauthenticated.templ`) | `authctx.Forbidden()` (`service/authctx/forbidden.templ`) |
+| Component | `userctx.Unauthenticated(loginHref)` (`service/userctx/unauthenticated.templ`) | `authctx.Forbidden()` (`service/authctx/forbidden.templ`) |
 | Rendered by | `userctx.UserMiddleware` | `userctx.AdminForbiddenHandler(db, logger)` |
 | Page title | `Logg inn` | `Ingen tilgang` |
 | Heading | `Du må logge inn` | `Du har ikke tilgang` |
 | Text | `Logg inn for å se denne siden.` | `Du er logget inn, men denne siden krever administratortilgang.` |
-| Links | Primary `Logg inn` to `/auth`, outline `Gå til arrangementslisten` to `/` | Primary `Gå til arrangementslisten` to `/` |
+| Links | Primary `Logg inn` to `/auth?neste=<requested path and query>` (plain `/auth` for `/`), outline `Gå til arrangementslisten` to `/` | Primary `Gå til arrangementslisten` to `/` |
+
+`userctx.UserMiddleware` builds the `Logg inn` link with `loginHrefWithNeste(r)` (`service/userctx/unauthenticated.go`). It takes the request's path and raw query and URL-encodes them into the `neste` parameter, so `/tilbakemelding?om=festivalen` gives `/auth?neste=%2Ftilbakemelding%3Fom%3Dfestivalen`. See [Login return target](#login-return-target-neste).
 
 ### Wiring and the import cycle
 
@@ -94,9 +96,23 @@ routerAdmin := isLoggedInRouter.With(
 )
 ```
 
-`admin.SetupAdminRoute` and `billettholderadmin.SetupBillettholderAdminRoute` are mounted on `routerAdmin`. An anonymous visitor therefore gets the 401 page first, and a logged-in non-admin gets the HTML 403 page.
+`admin.SetupAdminRoute` and `billettholderadmin.SetupBillettholderAdminRoute` are mounted on `routerAdmin`. An anonymous visitor therefore gets the 401 page first, and a logged-in non-admin gets the HTML 403 page. This includes the feedback admin routes under `/admin/tilbakemeldinger/`, which `admin.SetupAdminRoute` registers. `profilepage.SetupProfileRoute` and `feedbackpage.SetupFeedbackRoute` (`/tilbakemelding`) are mounted on `isLoggedInRouter`, so they only require login.
 
 Some nested routes call `authctx.RequireAdmin(baseLogger)` again without the option. Examples are the `/admin/billettholder/api/` and `/admin/billettholder/add/api/` streams in `pages/admin/billettholder_admin/billettholder_admin.go`. These inner checks would fall back to the plain-text 403, but the outer `routerAdmin` check stops non-admins before they get that far.
+
+## Login return target (`neste`)
+
+`neste` ("next") is the query parameter that carries where login should send the user afterwards. It is handled in `pages/login/login.go` and `pages/login/login.templ`:
+
+- `GET /auth` reads `neste` and validates it with `safeReturnPath`. The login form (`loginForm(neste)`) puts the value on `.descope-login-wrapper` as `data-login-neste`. After a successful Descope login, the script stores the session and goes to `/auth/post-login?neste=<encoded value>`.
+- `GET /auth/post-login` validates `neste` again and redirects there with 303 See Other. If the user token is missing or the local user sync fails, it redirects back to `/auth?neste=<encoded value>` (`authPathWithNeste`), so a retry keeps the return target. For `/` or an empty value it redirects to plain `/auth`.
+- A user who is already logged in and opens `/auth` gets `alreadyLogedIn(neste)`: `Velkommen tilbake!`, a five-second countdown and then `window.location.replace` to the return target. The fallback link `denne lenken` points to the same target.
+
+`safeReturnPath` only accepts a same-site relative path. It returns `/` for an empty value, anything with a control character or whitespace, a value that does not start with `/`, a scheme-relative `//host` path (backslashes are treated as `/` first, as browsers do), and anything that parses with a scheme or host. The query string of an accepted path is kept.
+
+Only the 401 page adds `neste`. The `Logg inn` button in the header links to plain `/auth`, so logging in from there lands on the front page.
+
+Tests: `pages/login/login_test.go` (`TestPostLogin_ValidNesteRedirectsThereAfterLogin`, `TestPostLogin_UnsafeNesteFallsBackToFrontPage`, `TestSafeReturnPath_*`), `pages/login/login_form_test.go` (`TestLoginForm_CarriesNesteReturnTargetToPostLogin`), `service/userctx/unauthenticated_route_test.go` (`loginHrefWithNeste`) and `service/userctx/unauthenticated_test.go` (`TestUnauthenticated_LoginLinkCarriesGivenHref`).
 
 ## 404 page
 
@@ -123,7 +139,7 @@ These full-page routes call `notfound.RenderEvent` when the arrangement does not
 - `/admin/approval/edit/{id}` (`pages/admin/approval/editForm/edit_form_index.templ`)
 - `/profile/new/{id}` (`pages/profile/newevent/new_index.templ`). This route also returns 404 when the arrangement exists but belongs to a different user.
 
-API, SSE and admin action endpoints still return plain `http.Error` text with 404, so Datastar and other client callers do not get HTML. Examples are `pages/admin/puljefordeling.go` (`Pulje not found`) and `pages/admin/tildelinger.go` (`Fant ikke billettholder, arrangement eller pulje`).
+API, SSE and admin action endpoints still return plain `http.Error` text with 404, so Datastar and other client callers do not get HTML. Examples are `pages/admin/puljefordeling.go` (`Pulje not found`), `pages/admin/tildelinger.go` (`Fant ikke billettholder, arrangement eller pulje`) and `DELETE /admin/tilbakemeldinger/{id}` in `pages/admin/feedback_admin.templ` (`Fant ikke tilbakemeldingen.`).
 
 ### Content
 
