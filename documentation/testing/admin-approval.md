@@ -1,6 +1,6 @@
 # Godkjenning av arrangementer
 
-Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, altså oversikten over arrangementer til godkjenning og adminredigering av enkeltarrangementer med interesse- og tildelingsarbeid.
+Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, altså oversikten over alle arrangementer gruppert etter status og adminredigering av enkeltarrangementer med status, puljer og rom. Spillertildeling gjøres i puljefordelingen og ikke på redigeringssiden.
 
 ## Roller
 
@@ -10,15 +10,20 @@ Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, alts�
 
 ### Oversikt og redigering
 
+- [ ] **Arrangementer grupperes etter status i fast rekkefølge**<br>
+  **Gitt** at det finnes arrangementer med ulike statuser.<br>
+  **Når** admin åpner godkjenningssiden.<br>
+  **Så** skal alle arrangementer vises, hvert under sin status i rekkefølgen Innsendt, Godkjent, Annonsert, Kladd, Forkastet, og hvert arrangement skal vise tittel og system.
+
 - [ ] **Tom seksjon bryter ikke adminvisningen**<br>
-  **Gitt** at det ikke finnes arrangementer i en av seksjonene.<br>
+  **Gitt** at det ikke finnes arrangementer med en av statusene.<br>
   **Når** siden vises.<br>
-  **Så** skal resten av siden fortsatt fremstå korrekt og ikke som om hele adminvisningen feiler.
+  **Så** skal seksjonen for den statusen ikke vises, og resten av siden skal fortsatt fremstå korrekt.
 
 - [ ] **Riktig arrangement åpnes i redigeringsflyten**<br>
   **Gitt** at en admin åpner et arrangement fra godkjenningslisten.<br>
   **Når** redigeringssiden lastes.<br>
-  **Så** skal riktig arrangement vises i skjema, forhåndsvisning og tilhørende interesse-/tildelingsvisning.
+  **Så** skal riktig arrangement vises i skjema, forhåndsvisning og puljefordelingskortet.
 
 - [ ] **Skjema og forhåndsvisning oppdateres sammen**<br>
   **Gitt** at admin redigerer felt i arrangementskjemaet fra godkjenningsflyten.<br>
@@ -26,35 +31,35 @@ Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, alts�
   **Så** skal skjema og forhåndsvisning oppdatere seg konsistent.
 
 - [ ] **Statusendring gir tydelig ny tilstand**<br>
-  **Gitt** at admin endrer status på arrangementet.<br>
+  **Gitt** at admin endrer status på arrangementet til Kladd, Innsendt, Godkjent, Annonsert eller Forkastet.<br>
   **Når** endringen lagres.<br>
-  **Så** skal statusendringen oppføre seg tydelig og ikke etterlate tvil om arrangementets nye tilstand.
+  **Så** skal statusendringen oppføre seg tydelig, og arrangementet skal vises under den nye statusen på godkjenningssiden.
 
 - [ ] **Manglende arrangement gir forståelig feil**<br>
   **Gitt** at et arrangement ikke finnes eller ikke kan lastes.<br>
   **Når** admin forsøker å åpne det i redigeringsflyten.<br>
   **Så** skal admin møte en forståelig feiltilstand og ikke en halvferdig redigeringsvisning.
 
-### Tildeling
+### Puljer og rom
 
-- [ ] **Spillertildeling lagres på riktig arrangement**<br>
-  **Gitt** at admin legger til en deltaker som spiller via godkjenningsflyten.<br>
-  **Når** handlingen lykkes.<br>
-  **Så** skal tildelingen vises riktig og ikke havne på feil arrangement eller feil pulje.
+- [ ] **Med i puljefordeling lagres**<br>
+  **Gitt** at admin endrer «Med i puljefordeling» på et arrangement.<br>
+  **Når** endringen lagres.<br>
+  **Så** skal valget være det samme etter refresh og ikke påvirke andre arrangementer.
 
-- [ ] **GM-tildeling vises som GM**<br>
-  **Gitt** at admin legger til en deltaker som GM via godkjenningsflyten.<br>
-  **Når** handlingen lykkes.<br>
-  **Så** skal GM-rollen vises riktig og ikke forveksles med vanlig spiller.
+- [ ] **Puljevalg lagres på riktig pulje**<br>
+  **Gitt** at admin krysser av eller fjerner «Legg til i pulje» for én pulje.<br>
+  **Når** endringen lagres.<br>
+  **Så** skal bare den puljen endres, og romvalget for puljen skal bare være mulig når arrangementet er med i puljen.
 
-- [ ] **Rolleendring oppdateres konsistent**<br>
-  **Gitt** at admin endrer status for en allerede tildelt person mellom spiller, GM og fjernet.<br>
-  **Når** handlingen utføres.<br>
-  **Så** skal resultatet oppdateres tydelig og konsistent.
+- [ ] **Romvalg lagres per pulje**<br>
+  **Gitt** at arrangementet er med i flere puljer.<br>
+  **Når** admin velger rom under «Legg til rom» i én pulje.<br>
+  **Så** skal rommet bare lagres for den puljen og vises i romfordelingen for samme pulje.
 
-- [ ] **Tildelingsfeil er tydelig**<br>
-  **Gitt** at en tildelingshandling feiler.<br>
-  **Når** admin forsøker å oppdatere spiller- eller GM-status.<br>
+- [ ] **Feil ved puljer og rom er tydelig**<br>
+  **Gitt** at lagring av puljevalg eller romvalg feiler.<br>
+  **Når** admin gjør endringen.<br>
   **Så** skal feilen være tydelig nok til at admin forstår at endringen ikke ble fullført.
 
 ### Stabilitet og layout
@@ -66,10 +71,10 @@ Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, alts�
 
 - [ ] **Godkjenningsflyten er brukbar på ulike skjermer**<br>
   **Gitt** at admin bruker godkjenningsflyten på større og mindre skjermer.<br>
-  **Når** skjema, forhåndsvisning og interesseoversikt vises samtidig.<br>
+  **Når** skjema, puljefordelingskort og forhåndsvisning vises samtidig.<br>
   **Så** skal siden fortsatt være lesbar og brukbar.
 
-- [ ] **Refresh viser korrekt data og tildelingsstatus**<br>
+- [ ] **Refresh viser korrekt data, puljer og rom**<br>
   **Gitt** at admin refresher siden midt i redigeringsarbeidet.<br>
   **Når** siden lastes inn igjen.<br>
-  **Så** skal korrekt arrangementsdata og korrekt tildelingsstatus vises.
+  **Så** skal korrekt arrangementsdata, status, puljevalg og romvalg vises.
