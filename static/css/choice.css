@@ -1,7 +1,7 @@
 /*
  * Choice controls: buttons that switch an option on or off.
  *
- * - .choice-toggle-group holding .choice-toggle buttons (use with .btn .btn--outline)
+ * - .choice-toggle-group holding .choice-toggle buttons (use with .btn .btn--secondary)
  *   for picking one option from a few. The buttons stack, and sit side by side
  *   in equal columns once the nearest container is wider than 25rem.
  * - .choice-chip-group holding .choice-chip buttons: wrapping pill-shaped chips
@@ -9,7 +9,7 @@
  *
  * The selected look follows aria-pressed="true", so the markup only binds
  * aria-pressed. Loaded after buttons.css so the selected look wins over the
- * .btn--outline hover and focus rules.
+ * .btn--secondary hover and focus rules.
  */
 :root {
     --choice-selected-bg: color-mix(in srgb, var(--color-primary) 14%, var(--bg-item));
