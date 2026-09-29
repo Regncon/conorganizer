@@ -513,7 +513,7 @@ input {
 }
 
 .card {
-    background: var(--bg-surface);
+    background: var(--level-1-background);
     border-radius: var(--border-radius-1x);
     box-shadow: 0 0 10px hsl(0deg 0% 0% / 10%);
     padding: 1rem;
@@ -523,7 +523,7 @@ input {
 /* deprecate form-card, use surface-pane instead */
 .surface-pane {
     border-radius: var(--border-radius-2x);
-    background-color: var(--bg-surface);
+    background-color: var(--level-1-background);
     padding: var(--responsive-pane-padding);
 }
 
