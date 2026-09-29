@@ -53,24 +53,24 @@
 }
 
 .card-clickable--level-3 {
-    background-color: var(--bg-item);
-    border-color: var(--bg-item-border);
+    background-color: var(--level-3-background);
+    border-color: var(--level-3-border);
 
     &:not(.selected):hover,
     &:not(.selected):focus-visible {
-        background-color: var(--bg-item-hover);
-        border-color: var(--bg-item-border-hover);
+        background-color: var(--level-3-background-hover);
+        border-color: var(--level-3-border-hover);
         outline-color: var(--color-text-soft-50);
     }
 
     &:not(.selected):active {
-        background-color: var(--bg-surface-active);
-        border-color: var(--bg-item-border-hover);
+        background-color: var(--level-3-background-active);
+        border-color: var(--level-3-border-hover);
     }
 
     &[disabled]:not(.selected) {
         background-color: unset;
-        border-color: var(--bg-item-border);
+        border-color: var(--level-3-border);
     }
 }
 
