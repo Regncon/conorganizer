@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
@@ -45,8 +46,9 @@ func TestPuljefordeling_AldersvarselForUnder18SattPaaVoksenarrangementAvSolveren
 	if got := merke.Find("svg").Length(); got != 1 {
 		t.Errorf("under 18-merket skal vise ett ikon, fikk %d", got)
 	}
-	if !merke.HasClass("under-18-merke") || merke.Find("svg path").Length() != 2 {
-		t.Errorf("under 18-merket skal bruke barneikonet (to stier), fikk %d stier", merke.Find("svg path").Length())
+	expectedIcon := templtest.Render(t, icons.Icon(icons.EventChildFriendly, icons.Size24)).Find("svg path").First().AttrOr("d", "")
+	if got := merke.Find("svg path").First().AttrOr("d", ""); expectedIcon == "" || got != expectedIcon {
+		t.Errorf("under 18-merket skal bruke det samme barnevennlig-ikonet som resten av appen")
 	}
 	if preserve, _ := warning.Attr("data-preserve-attr"); preserve != "open" {
 		t.Error("åpnet aldersvarsel må beholdes under oppdatering")

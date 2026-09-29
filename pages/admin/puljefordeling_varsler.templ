@@ -156,9 +156,10 @@ templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordel
 	}
 }
 
-// under18Merke marks someone under 18 on an 18+ event with a red child icon.
+// under18Merke marks someone under 18 on an 18+ event with the child-friendly
+// icon in red.
 templ under18Merke() {
 	<span class="under-18-merke" role="img" aria-label="Under 18 år på 18+-arrangement" title="Under 18 år på 18+-arrangement">
-		@icons.Icon(icons.Child, icons.Size24)
+		@icons.Icon(icons.EventChildFriendly, icons.Size24)
 	</span>
 }
