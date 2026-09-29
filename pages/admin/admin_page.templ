@@ -23,14 +23,6 @@ templ adminPage(db *sql.DB) {
 				flex-direction: column;
 				gap: var(--responsive-page-section-spacing);
 			}
-			.admin-panel-card {
-				width: 100%;
-				background-color: var(--bg-surface);
-				border-radius: var(--border-radius-2x);
-				color: white;
-				box-sizing: border-box;
-				padding: var(--spacing-5x);
-			}
 		</style>
 		@adminCardStyles()
 		<div class="page-content-container">
