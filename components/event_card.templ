@@ -42,7 +42,7 @@ templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, p
 	</a>
 }
 
-templ EventCard(eventCard models.EventCardModel, eventImageDir *string, pulje string, date string) {
+templ EventCard(eventCard models.EventCardModel, eventImageDir *string, pulje string, date string, interests []BillettholderInterest) {
 	{{ imageUrl := eventimage.GetEventImageUrl(eventCard.Id, "card", eventImageDir) }}
 	<a
 		href={ templ.URL(program.EventURL(eventCard.Id, pulje, date)) }
@@ -55,13 +55,18 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, pulje st
 		/>
 		<div class="event-card-main-body">
 			<div>
-				<h2 class="event-card-title">
-					if eventCard.Title != "" {
-						{ eventCard.Title }
-					} else {
-						Nytt arrangement
+				<div class="event-card-title-row">
+					<h2 class="event-card-title">
+						if eventCard.Title != "" {
+							{ eventCard.Title }
+						} else {
+							Nytt arrangement
+						}
+					</h2>
+					if len(interests) > 0 {
+						@InterestIndicator(interests)
 					}
-				</h2>
+				</div>
 				<h3 class="event-card-subtitle">
 					if eventCard.System != "" {
 						{ eventCard.System }

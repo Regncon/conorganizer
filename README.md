@@ -6,9 +6,25 @@ The main purpose of this project is to help the Regncon festival achieve its goa
 
 ## Quick Start
 
+Task, templ and Air are tool dependencies in `go.mod`, so you do not install
+them separately. Run every Taskfile command as `go tool task <name>`, and the
+other tools as `go tool templ` and `go tool air`.
+
+The app needs no `.env` file to start, but it does need a database and a
+writable image directory. `go tool task start` opens `database/events.db` and
+refuses to create it when it is missing. If `local-event-images/` (present in
+the checkout) is missing or not writable, the app starts in degraded mode. A
+fresh checkout has no database, so download data first:
+
+1. Set `DB_SSH_USER` in `.env` (see [`.env`](#env)).
+2. `go tool task download:main` (see
+   [Get the Latest Database Backup and Images](#get-the-latest-database-backup-and-images)).
+3. `go tool task start` (see [Run Locally](#run-locally)).
+
 Choose your preferred method to run the project:
 ### Mac/Linux Setup
-Just install Go.
+Install Go. Downloads also need `ssh`, `sqlite3` and `tar`, and
+`go tool task test` needs `sqlite3`.
 
 ### Docker Setup (Recommended for Windows)
 
@@ -84,6 +100,26 @@ itself: connections to an IP address carry no hostname, so Caddy answers
 `127.0.0.1` with the LAN address certificate. If the phone cannot connect,
 check that the firewall allows inbound connections on the HTTPS port.
 
+### `.env`
+
+`.env` is gitignored and holds only local, per-developer values and secrets.
+Task loads it (`dotenv: .env` in `Taskfile.yml`), and the app loads it on a
+best-effort basis with godotenv. Known keys:
+
+| Key | Used by |
+| --- | --- |
+| `DB_SSH_USER` | Required by `go tool task download:*` |
+| `HTTPS_PORT`, `DEV_LAN_IP` | Docker Compose and Caddy dev setup |
+| `CHECKIN_KEY`, `CHECKIN_SECRET` | Optional. Checkin API credentials, read by `service/checkIn` |
+| `GOOSE_DRIVER`, `GOOSE_MIGRATION_DIR` | Optional Goose CLI convenience |
+| `PORT` | Optional. HTTP port, defaults to `8080` |
+| `LOG_LEVEL` | Optional. `DEBUG`, `INFO`, `WARN` or `ERROR`, defaults to `INFO` |
+
+The Descope project ID is not configuration: it is the hardcoded constant
+`authctx.DescopeProjectID` in `service/authctx/authctx.go`. It is not a secret,
+since the login page shows it to every browser. Any `DESCOPE_PROJECT_ID` left
+in an old `.env` is ignored.
+
 ## Get the Latest Database Backup and Images
 
 > [!NOTE]
@@ -95,7 +131,33 @@ go tool task download:demo
 ```
 
 Add `:db` or `:images` to download only one part, for example
-`go tool task download:main:images`.
+`go tool task download:main:images`. Plain `go tool task download` only prints
+usage and exits with status 1, so nothing is downloaded without naming an
+environment.
+
+Each task runs `bash scripts/download-environment <main|demo> <all|db|images>`:
+
+- It opens one SSH ControlMaster connection to the production server as
+  `DB_SSH_USER`, so you authenticate once per run.
+- The database is exported on the server by `conorganizer-export-db <env>`
+  and streamed back as a tar. The main export is anonymized. See
+  [documentation/sqlite-and-health.md](documentation/sqlite-and-health.md) for
+  how the export works.
+- The export is extracted into a fresh temporary directory and checked with
+  `PRAGMA quick_check`. Only when the check passes is the local database (and
+  its `-wal`/`-shm` files) replaced: `database/events.db` for main,
+  `database/events-demo.db` for demo. A failed or interrupted download leaves
+  your working database alone.
+- Images are streamed as a tar from the environment's `event-images`
+  directory into the shared `local-event-images/` directory. Existing files are
+  never pruned. Image files are named after the random event id, so main and
+  demo images do not collide; an event present in both gets the same file
+  name, and the last download wins.
+
+`DB_SSH_USER` must be allowed to run `conorganizer-export-db` and to read
+`/mnt/HC_Volume_103911252/environments/{main,demo}/database/events.db` and the
+matching `event-images` directories. The export only writes to the user's
+default temporary directory, not to the backup area.
 
 - **Mac/Linux:** the download runs on your machine and needs `ssh`, `sqlite3`
   and `tar`.
@@ -121,14 +183,20 @@ On the production server, choose one of the backup files in
 sudo conorganizer-sqlite-restore events-20260920T120007Z.db.zst
 ```
 
-The command verifies the compressed SQLite backup before replacing the restored
-environment, then starts `conorganizer-restored.service`. Verify the result at
+The command decompresses the backup and runs `PRAGMA integrity_check` and a
+core-table check before replacing the database and event images in
+`/mnt/HC_Volume_103911252/environments/restored/`, then starts
+`conorganizer-restored.service` (port `19082`, running as `deploy:www-data`).
+Verify the result at
 [https://restored.lekeplassen.regncon.no/](https://restored.lekeplassen.regncon.no/).
 
 For the first rollout, add the DNS record, let the first application deployment
 install the restored binary, apply the configuration-as-code changes, then run
 the restore command. The first application deployment only installs its binary
 until a backup has been selected.
+
+See [documentation/deployment.md](documentation/deployment.md) for the
+environments, ports and CI/CD.
 
 ## Run Locally
 
@@ -139,21 +207,79 @@ go tool task start:demo
 
 Then open your browser and navigate to: [http://localhost:8080](http://localhost:8080)
 
-## Run tests
+Main and demo data use separate local SQLite files, so there is no command for
+switching environments:
 
-The fist time you run tests you need to create a new schema.sql
+| Command | Database | Written by |
+| --- | --- | --- |
+| `go tool task start` | `database/events.db` | `go tool task download:main` |
+| `go tool task start:demo` | `database/events-demo.db` | `go tool task download:demo` |
+
+Both use the shared `local-event-images/` directory. Air passes the paths to
+the app as `-dbp <path> -image-path local-event-images`.
+
+## Run tests
 
 ```bash
 go tool task test
 ```
 
-> [!TIP]
-> Format the `schema.sql` using the Prettier plugin in your IDE to make it look nice.
+`go tool task test` first regenerates `schema.sql` from your local
+`database/events.db` (`sqlite3 database/events.db ".schema --indent --nosys"`)
+and then runs `go test ./...`. Test databases are built from `schema.sql`
+(`service/testdb.go`).
 
-After that, you can choose run the tests with go tool task or directly with go test:
+`schema.sql` is committed, so the task overwrites the committed file with your
+local database's schema. If your local database is missing a migration,
+`schema.sql` loses those tables or constraints, and tests that use them fail.
+To fix it:
+
+- Never edit `schema.sql` by hand.
+- Apply the pending migrations to the local database, for example
+  `goose -dir migrations sqlite3 database/events.db up`, or download a fresh
+  database with `go tool task download:main:db`. Then run
+  `go tool task test` again.
+- Check the `schema.sql` diff before committing.
+
+Plain `go test ./...` uses the committed `schema.sql` as it is:
 
 ```bash
 go test ./...
+```
+
+`go tool task test:report` runs the tests and prints the BDD behavior report
+used in CI. See [documentation/automated-tests.md](documentation/automated-tests.md)
+for how the automated tests are written.
+
+## Templ
+
+Generated `*_templ.go` and `*_templ.txt` files are gitignored; commit only the
+`.templ` sources. They never show up in `git status`, which is expected. They
+are generated by the Taskfile (`build:templ`, and `start:templ` while
+`go tool task start` runs), during Docker startup (which runs
+`go tool task start`), and in CI before tests, build and lint. golangci-lint
+also excludes `_templ.go` files.
+
+After editing `.templ` files outside `go tool task start`, run:
+
+```bash
+go tool task build
+```
+
+Its `build:templ` dependency runs `go tool templ generate` for `components`,
+`pages`, `layouts` and `service` before `go build`. Compile errors in the
+generated code, such as unused variables or a shadowed `err` in `{{ }}` Go
+blocks, only show up after generation.
+
+A bare `return` line in template markup is rendered as text, not as a Go early
+exit, so rendering continues. For guard and early-exit logic inside a
+component, use a Go code block, as `pages/event/event_page.templ` does:
+
+```templ
+if event == nil {
+	<p>Event not found</p>
+	{{ return nil }}
+}
 ```
 
 ## IDE Setup
@@ -169,12 +295,19 @@ Common issues and solutions:
 - **Manual templ generation**: If you encounter issues with Templ, run:
 
 ```bash
-go tool templ build
+go tool templ generate
 ```
 
 - **Docker HTTPS port in use**: Check if another service is using the port set
   by `HTTPS_PORT` in `.env` (or port `7331` when it is unset)
 - **Build errors**: Run `go mod tidy` to fix dependencies
+- **Admin route returns 404**: every admin route is registered in
+  `SetupAdminRoute` in `pages/admin/admin.go`. Feature handlers such as
+  `programPublishingRoute` (`pages/admin/publiser_program.templ`) and
+  `puljefordelingStatusRoute` (`pages/admin/puljefordeling.go`) live next to
+  their feature and are only reachable when `SetupAdminRoute` calls them. A
+  handler and a frontend `@put` call are not enough. Merges can drop these
+  calls, so check that every `*Route(adminRouter, ...)` call is still there.
 
 ## Migrations
 
@@ -203,25 +336,28 @@ go tool task --version
 go tool air -v
 ```
 
-If `templ` was updated, make sure workflow pins match the new version where relevant, especially:
+templ, Task and Air are tool dependencies in `go.mod`, so updating `go.mod`
+updates them everywhere: CI and the Dockerfile use the `go.mod` versions.
 
-```text
-.github/workflows/golangci-lint.yml
-```
+When changing the Go version in `go.mod`, also update `go-version` in
+`.github/workflows/buildAndTest.yml` and `.github/workflows/golangci-lint.yml`,
+and the `golang:` image in `Dockerfile`.
 
-Look for hardcoded commands like:
-
-```bash
-go install github.com/a-h/templ/cmd/templ@v0.3.1020
-```
-
-and update the version to match `go.mod`.
+If golangci-lint fails in CI with "the Go language version ... used to build
+golangci-lint is lower than the targeted Go version", bump the golangci-lint
+`version:` pin (and `go-version` if needed) in
+`.github/workflows/golangci-lint.yml`. Do not downgrade the project's Go
+version.
 
 ## Agent Skills Path Compatibility
 
 Some agents do not discover skills directly from `.agents/skills`.
 
-If that happens, link each skill into that agent's own skills folder (create the folder first if needed).
+For Claude Code, run `go tool task setup:skills` once per clone. It links
+`.claude/skills` to `.agents/skills` (a junction on Windows, so no admin rights
+are needed).
+
+For other agents, link the skills into that agent's own skills folder (create the folder first if needed).
 
 If you need a true symlink instead (may require admin/dev mode):
 
@@ -232,6 +368,25 @@ New-Item -ItemType SymbolicLink -Path "$agentSkillsFolder" -Target ".agents\skil
 ```
 
 ## Additional Resources
+
+Project documentation in `documentation/`:
+
+- [Deployment and environments](documentation/deployment.md)
+- [SQLite and health checks](documentation/sqlite-and-health.md)
+- [Migrations](documentation/migrations.md)
+- [Live update lifecycle](documentation/live-update-lifecycle.md)
+- [Datastar signals](documentation/datastar-signals.md)
+- [Pulje status and publishing](documentation/pulje-status-and-publishing.md)
+- [Billettholdere](documentation/billettholdere.md)
+- [Room assignment](documentation/room-assignment.md)
+- [Access control and error pages](documentation/access-control-and-error-pages.md)
+- [UI conventions](documentation/ui-conventions.md)
+- [Automated tests](documentation/automated-tests.md)
+- [Manual tests](documentation/testing/index.md)
+- [Neovim setup](documentation/neovim-setup.md)
+- [Hetzner admin](hetzner/hetzner-admin.md)
+
+External:
 
 - [Northstar Template Documentation](https://github.com/zangster300/northstar)
 - [Go Documentation](https://go.dev/doc/)

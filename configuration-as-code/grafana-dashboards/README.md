@@ -7,6 +7,8 @@ This directory contains importable Grafana dashboard JSON for manual review:
 
 The files are intentionally outside `configuration-as-code/stow/`. They are not server-side Grafana provisioning and should not be treated as provisioned dashboards until that is explicitly added later.
 
+For the server layout, Stow packages, backups and Caddy hostnames, see [configuration-as-code/README.md](../README.md). For environments, deployment and CI, see [documentation/deployment.md](../../documentation/deployment.md).
+
 ## Manual Import
 
 1. Open Grafana.
@@ -45,45 +47,104 @@ The JSON defaults datasource variable values to `Prometheus` and `Loki` for norm
 - `DS_LOKI`: Loki datasource selected at import time.
 - `node_instance`: Prometheus query variable using `label_values(node_uname_info, instance)`.
 - `loki_job`: Loki query variable using `label_values(job)`. The all value is broad by design; narrow it after import if exact labels exist.
-- `main_host`: defaults to `main.lekeplassen.regncon.no`.
-- `grafana_host`: defaults to `grafana.regncon.no`.
-- `main_service`: defaults to `conorganizer-main.service`.
-- `caddy_service`: defaults to `caddy.service`.
-- `volume_mountpoint`: defaults to `/mnt/HC_Volume_103911252`.
 
-## Repo Observations
+Constants, edited in the dashboard settings:
 
-- `configuration-as-code/stow/prometheus/etc/prometheus/prometheus.yml` exists and scrapes local `prometheus`, `node`, `alloy`, and `blackbox_https` jobs.
-- The Prometheus blackbox job probes `https://main.lekeplassen.regncon.no/` and `https://grafana.regncon.no/` through `127.0.0.1:9115`.
+- `main_host`: `main.lekeplassen.regncon.no`.
+- `grafana_host`: `grafana.regncon.no`.
+- `main_service`: `conorganizer-main.service`.
+- `caddy_service`: `caddy.service`.
+- `volume_mountpoint`: `/mnt/HC_Volume_103911252`.
+
+## Dashboard Design
+
+There are two dashboards, each with one job:
+
+- `Conorganizer Production Health` follows **USE** (utilization, saturation, errors) for the infrastructure. Read it top to bottom: current status -> backups -> filesystem -> VPS resources -> SQLite -> HTTP/TLS -> system errors.
+- `Conorganizer Main Service Debugging` follows **RED / Golden Signals** (rate, errors, duration, saturation proxies) for `conorganizer-main.service`.
+
+Both go from overview to detail: stat panels at the top, time series for trends, then logs for investigation. Keep to these two dashboards and do not duplicate panels across them.
+
+### Units
+
+- `percent` for usage: disk, inodes, CPU, memory.
+- `bytes` for disk, DB, WAL and backup sizes.
+- `Bps` for network.
+- `ms` for log-derived request latency, `s` for probe duration.
+- `reqps` for log-derived request rates.
+- `d` (days) for TLS expiry, `h` (hours) for the optional backup-age panels.
+
+### Thresholds
+
+- Filesystem and inode usage: green below 70, yellow at 70, orange at 80, red at 90.
+- TLS days remaining: red below 14, yellow from 14, green from 30.
+- Up, active, probe and backup-success stats: red at 0, green at 1 or more.
+- Error and failure counts: green at 0, red at 1 or more.
+- HTTP status stat: green at 200, yellow at 300, red at 500.
+
+### Backup Status Panels
+
+The top-row backup stats in Production Health read Loki success logs, so they work without custom metrics:
+
+- `SQLite backups, 2h` counts `conorganizer-sqlite-backup: completed successfully` over the last 2 hours.
+- `Image backups, 26h` counts `conorganizer-images-backup: completed successfully` over the last 26 hours.
+
+Both are green when the count is 1 or more. The precise `SQLite backup age`, `Image backup age` and backup size panels need the [optional future metrics](#optional-future-metrics), which nothing exports yet.
+
+### PromQL Rules
+
+- `node_filesystem_*` metrics are gauges. Never apply `rate()` or `increase()` to them. Volume growth is shown as a used-bytes trend: `node_filesystem_size_bytes - node_filesystem_avail_bytes`.
+- Use `rate()` and `increase()` only on counters, such as `node_cpu_seconds_total` and `node_network_*_bytes_total`.
+- Use `histogram_quantile()` only when a matching `_bucket` histogram exists. None exists today; request latency percentiles come from Loki with `quantile_over_time`.
+
+## Metrics and Logs Pipeline
+
+See the [production stack overview](../README.md#production-stack-overview) for services, ports and hostnames.
+
+- `configuration-as-code/stow/prometheus/etc/prometheus/prometheus.yml` scrapes the local `prometheus` (`127.0.0.1:9090`), `node` (`127.0.0.1:9100`), `alloy` (`127.0.0.1:12345`) and `blackbox_https` jobs. All targets use `127.0.0.1`.
+- The `blackbox_https` job probes `https://main.lekeplassen.regncon.no/` and `https://grafana.regncon.no/` through `127.0.0.1:9115`, and relabels `instance` to the probed URL.
 - `configuration-as-code/stow/prometheus/etc/prometheus/blackbox.yml` defines an `http_2xx` module with `fail_if_not_ssl: true`, redirects enabled, IPv4 preferred, and a 5 second timeout.
-- `configuration-as-code/stow/prometheus/etc/default/prometheus-node-exporter` enables `--collector.systemd` and keeps `/mnt` from being excluded by the filesystem collector.
-- `configuration-as-code/stow/loki/etc/loki/config.yml` configures Loki on `127.0.0.1:3500` with filesystem storage and `retention_period: 120d`.
-- `configuration-as-code/stow/promtail/etc/promtail/config.yml` pushes to `http://localhost:3500/loki/api/v1/push`, labels logs with `job=varlogs`, and scrapes `/var/log/messages`.
-- The repo contains Loki and Promtail systemd unit files. It does not contain an Alloy config file, although Prometheus is configured to scrape Alloy self-metrics on `127.0.0.1:12345` if Alloy exists on the server.
-- The Caddyfile routes `grafana.regncon.no` to `127.0.0.1:3400`, includes `meetup-january-2026.lekeplassen.regncon.no`, and imports `/etc/caddy/sites-enabled/*.caddy`. The main host config is not visible in the checked-in root Caddyfile and may be in an imported server-local file.
+- `configuration-as-code/stow/prometheus/etc/default/prometheus-node-exporter` binds node_exporter to `127.0.0.1:9100`, enables `--collector.systemd`, and keeps `/mnt` from being excluded by the filesystem collector.
+- `configuration-as-code/stow/loki/etc/loki/config.yml` configures Loki on `127.0.0.1:3500` (not the default `3100`) with filesystem storage and `retention_period: 120d`.
+- `configuration-as-code/stow/promtail/etc/promtail/config.yml` pushes to `http://localhost:3500/loki/api/v1/push`, labels logs with `job=varlogs`, and tails `/var/log/messages`.
+- The repo contains Loki and Promtail systemd unit files. It does not contain an Alloy config file.
 - No Caddy native metrics endpoint or Caddy access-log format is configured in the checked-in Caddyfile.
-- `conorganizer-main.service` runs `/opt/conorganizer/main/conorganizer-main` on `PORT=18856`, with the SQLite DB at `/mnt/HC_Volume_103911252/environments/main/database/events.db` and images at `/mnt/HC_Volume_103911252/environments/main/event-images`.
-- The app uses JSON `slog` logs to stdout. `LOG_LEVEL` supports `DEBUG`, `INFO`, `WARN`/`WARNING`, and `ERROR`.
-- Request logs are emitted with `msg="http request completed"`, `component="http"`, `method`, `path`, `status_code`, `duration_ms`, and optional `request_id`.
-- No app Prometheus instrumentation or `/metrics` route exists. The app now exposes `/healthz` and `/readyz`; existing public health panels still use blackbox probes for outside-in symptoms.
-- SQLite backups run every 15 minutes from `conorganizer-sqlite-backup.timer`.
-- Image backups run daily at `03:30:00` from `conorganizer-images-backup.timer`; systemd calendar times use the server's local timezone unless configured otherwise.
-- Backup scripts emit stable prefixes:
-  - `conorganizer-sqlite-backup:`
-  - `conorganizer-images-backup:`
-- SQLite backup success logs include `conorganizer-sqlite-backup: completed successfully`.
-- Image backup success logs include `conorganizer-images-backup: completed successfully`.
-- Backup failure strings include `database does not exist`, `image directory does not exist`, `integrity check failed`, and `sanity check failed`.
-- Grafana config exists under `configuration-as-code/stow/grafana/etc/grafana/grafana.ini`, but no Grafana datasource or dashboard provisioning is added for these JSON files.
-- `configuration-as-code/install.sh` stows `scripts`, `conorganizer` if present, `caddy`, `grafana`, and `prometheus`. It does not import these dashboard JSON files.
+- No app Prometheus instrumentation or `/metrics` route exists. The app exposes `/healthz` and `/readyz`; the public health panels still use blackbox probes for outside-in symptoms.
+- Grafana config exists under `configuration-as-code/stow/grafana/etc/grafana/grafana.ini` (`http_port = 3400`, `root_url = https://grafana.regncon.no/`), but no Grafana datasource or dashboard provisioning is added for these JSON files.
+- `configuration-as-code/install.sh` stows `scripts`, `caddy`, `grafana`, `loki`, `prometheus`, `promtail` and `systemd`. It does not import these dashboard JSON files.
+
+### Why a Local Prometheus
+
+Grafana Alloy can replace Prometheus as the scraper and collector (`prometheus.scrape`, `prometheus.remote_write`, `prometheus.exporter.unix`, `prometheus.exporter.blackbox`), but it does not store metrics or answer PromQL queries. The PromQL panels need a Prometheus-compatible datasource such as Prometheus, Mimir or Grafana Cloud Metrics. The repo therefore ships a local Prometheus config that scrapes node_exporter, blackbox_exporter, Prometheus itself, and Alloy's self-metrics.
+
+## Logs
+
+The app writes JSON `slog` logs to stdout. `LOG_LEVEL` (read in `service/applog/logger.go`) accepts `DEBUG`, `INFO`, `WARN`/`WARNING` and `ERROR`; empty or unknown values mean `INFO`.
+
+`RequestLoggingMiddleware` in `http_logging_middleware.go` logs one line per request with `msg="http request completed"`, `component="http"`, `method`, `path`, `status_code`, `duration_ms`, and `request_id` when chi's `RequestID` middleware set one.
+
+The level of a request log is chosen by `requestLogLevel(statusCode)`:
+
+| Status | Level |
+| --- | --- |
+| 5xx | `ERROR` |
+| 401, 403, 404 | `INFO` |
+| Other 4xx | `WARN` |
+| Below 400 | `INFO` |
+
+401, 403 and 404 are normal web control flow (logged-out users, forbidden pages, stale links, missing assets, crawlers), not operational warnings. The mapping is hard-coded on purpose. `LOG_LEVEL` only sets overall verbosity: with `WARN` or `ERROR`, the `INFO` request logs are dropped, and the request rate, route and latency panels lose most of their data.
+
+`User is not logged in` in `service/userctx/userctx.go` is logged at `DEBUG`. The resulting 401 is already logged at `INFO` by the request middleware.
+
+For long-lived SSE endpoints, such as the Datastar live views, `duration_ms` covers the whole stream lifetime, not the time to the first patch. These lines show up as slow requests, and they cannot be used to find slow first live loads.
 
 ## Historical Server Notes
 
-The previous README contained manual server notes dated 2026-05-28. Preserve them as historical context only; verify current state on the server before relying on them:
+Manual server notes dated 2026-05-28. Keep them as historical context only; verify current state on the server before relying on them:
 
 - Loki was ready on `http://127.0.0.1:3500`.
 - Promtail was active and tailed `/var/log/messages` with `job=varlogs`.
-- Alloy v1.16.1 was active on `127.0.0.1:12345` with Loki journal collection.
+- Alloy v1.16.1 was active on `127.0.0.1:12345`. Its `/etc/alloy/config.alloy` only had `loki.write` and `loki.source.journal` (journald logs), with no `prometheus.scrape`, `remote_write` or exporter components, so Alloy was not a metrics backend.
 - Prometheus, node_exporter, and blackbox_exporter were initially absent and later installed.
 - The mounted volume was hidden by package-default node_exporter filesystem excludes until the repo's `/etc/default/prometheus-node-exporter` override was applied.
 
@@ -93,7 +154,7 @@ The previous README contained manual server notes dated 2026-05-28. Preserve the
 - The dashboards assume blackbox `instance` labels contain the full probed URL, matching the checked-in Prometheus relabeling.
 - Loki JSON parsing panels require request logs to arrive as parseable JSON lines. If Promtail scrapes syslog-prefixed lines, text-only log panels may work while `| json` panels show no data.
 - Current Loki labels are server-dependent. Start broad with `loki_job=All`, then narrow the variable or edit selectors after inspecting labels.
-- The actual Caddy site file for `main.lekeplassen.regncon.no` is not visible in the repo if it lives under server-local `sites-enabled`.
+- The main host is in the checked-in Caddyfile. The Caddyfile also imports server-local `/etc/caddy/sites-enabled/*.caddy`, which `deploy/deploy.sh` uses for PR previews; those hosts are not visible in the repo.
 - Server runtime state, installed packages, open ports, and active services require manual server verification.
 
 ## Panel Dependencies
@@ -138,7 +199,7 @@ Caddy native metrics:
 
 Application metrics:
 
-- No current app Prometheus metrics were found in the repo.
+- The app exposes no Prometheus metrics.
 - The debugging dashboard intentionally uses Loki request logs for request rate, status-code mix, route usage, and latency.
 - Do not add common HTTP metric names such as `http_requests_total` unless the app actually exposes them later.
 
@@ -191,6 +252,32 @@ In Grafana Explore:
 - Prometheus: try `up`, `node_uname_info`, `node_filesystem_avail_bytes`, `probe_success`, and `node_systemd_unit_state`.
 
 If JSON parsing panels are empty but text log panels work, inspect whether Loki lines begin with raw JSON or include a syslog prefix before the JSON payload.
+
+## Troubleshooting
+
+### Duplicate Prometheus targets
+
+The repo's `prometheus.yml` only defines `127.0.0.1` targets. If `up` shows duplicate `prometheus` or `node` targets, such as `localhost:9090` next to `127.0.0.1:9090`, the package-default `/etc/prometheus` config is still active instead of the stowed one. Remove the non-symlinked files in `/etc/prometheus`, restow, and restart Prometheus:
+
+```bash
+sudo stow --dir=configuration-as-code/stow --target=/ --restow prometheus
+sudo systemctl restart prometheus.service
+```
+
+`./configuration-as-code/install.sh` restows all packages instead of only `prometheus`.
+
+### "Prometheus data source was not found"
+
+The dashboards use the datasource variables `DS_PROMETHEUS` and `DS_LOKI`, and panels reference them as `${DS_PROMETHEUS}` and `${DS_LOKI}`. The saved values are `Prometheus` and `Loki`. A "data source was not found" warning with "No data" panels means no datasource matches that value:
+
+1. Check that the datasource exists in Grafana.
+2. Pick it in the variable dropdown, or at import.
+
+To hard-wire the JSON to one Grafana instance, use the datasource UID rather than the display name. List UIDs on the server with:
+
+```bash
+sudo sqlite3 /var/lib/grafana/grafana.db 'select uid, name, type, url from data_source order by name;'
+```
 
 ## Alert Candidates
 

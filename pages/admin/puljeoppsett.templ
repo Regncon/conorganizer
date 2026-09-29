@@ -44,7 +44,10 @@ templ ScheduleBoardContent(db *sql.DB, logger *slog.Logger, eventImageDir *strin
 		} else {
 			if board.CollisionCount > 0 {
 				<p class="board-collision-summary">
-					⚠ { fmt.Sprintf("%d spilleder-kollisjon(er)", board.CollisionCount) }
+					<span aria-hidden="true">
+						@icons.Icon(icons.Warning, icons.Size20)
+					</span>
+					{ fmt.Sprintf("%d spilleder-kollisjon(er)", board.CollisionCount) }
 				</p>
 			}
 			<div class="board-columns">
@@ -87,7 +90,12 @@ templ slotColumn(col SlotColumn, eventImageDir *string) {
 		if len(col.Collisions) > 0 {
 			<div class="board-collision">
 				for _, c := range col.Collisions {
-					<p>⚠ Spilleder-kollisjon — { c.HostName } har { fmt.Sprintf("%d", c.Count) } spill i denne puljen</p>
+					<p>
+						<span aria-hidden="true">
+							@icons.Icon(icons.Warning, icons.Size20)
+						</span>
+						<span>Spilleder-kollisjon — { c.HostName } har { fmt.Sprintf("%d", c.Count) } spill i denne puljen</span>
+					</p>
 				}
 			</div>
 		}
@@ -274,6 +282,11 @@ templ scheduleBoardStyles() {
 			border: 2px solid var(--color-error);
 			border-radius: var(--border-radius-1x);
 			padding: var(--spacing-1x);
+		}
+		:is(.board-collision p, .board-collision-summary) {
+			display: flex;
+			place-items: center;
+			gap: var(--spacing-1x);
 		}
 		.board-card {
 			position: relative;

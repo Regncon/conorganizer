@@ -21,7 +21,7 @@ func TestEventCard_RendersTheFullOrdinaryCardInAPuljeContext(t *testing.T) {
 		CanBeRunInEnglish: true,
 	}
 
-	doc := templtest.Render(t, EventCard(event, nil, "LordagMorgen", "2026-10-10"))
+	doc := templtest.Render(t, EventCard(event, nil, "LordagMorgen", "2026-10-10", nil))
 	card := doc.Find(".event-card-container")
 
 	if got := card.Length(); got != 1 {
