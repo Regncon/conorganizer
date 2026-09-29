@@ -17,11 +17,12 @@ func TestCreateRoom_CreatesRoomWithGeneratedID(t *testing.T) {
 
 	// Given
 	expectedRoom := models.Room{
-		ID:         1,
-		Name:       "Hakkebakken",
-		RoomNumber: "101",
-		Floor:      1,
-		Notes:      "Dette er et gyldig rom",
+		ID:          1,
+		Name:        "Hakkebakken",
+		RoomNumber:  "101",
+		Floor:       1,
+		PublicNotes: "Rommet ligger ved kafeen",
+		AdminNotes:  "Dette er et gyldig rom",
 	}
 	inputRoom := expectedRoom
 	inputRoom.ID = 0

@@ -7,10 +7,12 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/descope/go-sdk/descope"
 	"github.com/go-chi/chi/v5"
@@ -274,6 +276,113 @@ func TestPostLogin_AnonymousRequestStillRedirectsToLogin(t *testing.T) {
 	}
 }
 
+func TestPostLogin_ValidNesteRedirectsThereAfterLogin(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "The post-login request carries a safe 'neste' return target from the login page.",
+		When:  "Login succeeds.",
+		Then:  "The user is redirected to that return target instead of the front page.",
+	})
+
+	// Given
+	expectedLocation := "/tilbakemelding?om=festivalen"
+	validator := &fakeSessionValidator{
+		sessionOK:    true,
+		sessionToken: &descope.Token{ID: "user-neste", JWT: "session-jwt", Claims: map[string]any{"email": "neste@example.com"}},
+	}
+	router := authTestRouterWithDB(t, validator, "post_login_neste_redirect")
+	request := httptest.NewRequest(http.MethodGet, "/auth/post-login?neste="+url.QueryEscape(expectedLocation), nil)
+	request.AddCookie(&http.Cookie{Name: authctx.SessionCookieName, Value: "session"})
+	request.AddCookie(&http.Cookie{Name: authctx.RefreshCookieName, Value: "refresh"})
+	recorder := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(recorder, request)
+
+	// Then
+	if recorder.Code != http.StatusSeeOther || recorder.Header().Get("Location") != expectedLocation {
+		t.Fatalf("expected redirect to %q, got status=%d location=%q", expectedLocation, recorder.Code, recorder.Header().Get("Location"))
+	}
+}
+
+func TestPostLogin_UnsafeNesteFallsBackToFrontPage(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "The post-login request carries an unsafe 'neste' value, such as an off-site URL.",
+		When:  "Login succeeds.",
+		Then:  "The user is redirected to the front page instead of following the unsafe target.",
+	})
+
+	// Given
+	expectedLocation := "/"
+	validator := &fakeSessionValidator{
+		sessionOK:    true,
+		sessionToken: &descope.Token{ID: "user-unsafe-neste", JWT: "session-jwt", Claims: map[string]any{"email": "unsafe@example.com"}},
+	}
+	router := authTestRouterWithDB(t, validator, "post_login_unsafe_neste")
+	request := httptest.NewRequest(http.MethodGet, "/auth/post-login?neste="+url.QueryEscape("https://evil.com"), nil)
+	request.AddCookie(&http.Cookie{Name: authctx.SessionCookieName, Value: "session"})
+	request.AddCookie(&http.Cookie{Name: authctx.RefreshCookieName, Value: "refresh"})
+	recorder := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(recorder, request)
+
+	// Then
+	if recorder.Code != http.StatusSeeOther || recorder.Header().Get("Location") != expectedLocation {
+		t.Fatalf("expected redirect to %q, got status=%d location=%q", expectedLocation, recorder.Code, recorder.Header().Get("Location"))
+	}
+}
+
+func TestSafeReturnPath_AcceptsSafeRelativePath(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en trygg, relativ retur-sti med spørrestreng.",
+		When:  "Når stien valideres.",
+		Then:  "Så skal stien godtas uendret.",
+	})
+
+	// Given
+	expected := "/tilbakemelding?om=festivalen"
+
+	// When
+	actual := safeReturnPath(expected)
+
+	// Then
+	if actual != expected {
+		t.Fatalf("expected safe path %q to be accepted unchanged, got %q", expected, actual)
+	}
+}
+
+func TestSafeReturnPath_RejectsUnsafeValues(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt retur-verdier som kan sende brukeren til et annet nettsted.",
+		When:  "Når stiene valideres.",
+		Then:  "Så skal alle falle tilbake til forsiden.",
+	})
+
+	// Given
+	unsafeValues := []string{
+		"",
+		"//evil.com",
+		"https://evil.com",
+		"/\\evil.com",
+		"/\t/evil.com",
+		"/\n/evil.com",
+		"/\r/evil.com",
+		"/\t\\evil.com",
+		"/ /evil.com",
+		"/\x7f/evil.com",
+	}
+
+	for _, unsafe := range unsafeValues {
+		// When
+		actual := safeReturnPath(unsafe)
+
+		// Then
+		if actual != "/" {
+			t.Fatalf("expected unsafe value %q to fall back to \"/\", got %q", unsafe, actual)
+		}
+	}
+}
+
 func TestAuthTest_AnonymousRequestStillReturnsUnauthorized(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "The auth test endpoint receives no authentication cookies.",
@@ -330,6 +439,19 @@ func authTestRouter(t *testing.T, validator authctx.SessionValidator) chi.Router
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	authenticatedRouter := router.With(authctx.AuthMiddleware(validator, logger))
 	if err := SetupAuthRoute(router, authenticatedRouter, nil, logger, validator); err != nil {
+		t.Fatalf("expected auth route setup to succeed: %v", err)
+	}
+	return router
+}
+
+// authTestRouterWithDB is authTestRouter with a real test database, for tests
+// whose post-login flow reaches syncPostLoginUser.
+func authTestRouterWithDB(t *testing.T, validator authctx.SessionValidator, dbName string) chi.Router {
+	t.Helper()
+	db, logger := testutil.CreateTestDBAndLogger(t, dbName)
+	router := chi.NewRouter()
+	authenticatedRouter := router.With(authctx.AuthMiddleware(validator, logger))
+	if err := SetupAuthRoute(router, authenticatedRouter, db, logger, validator); err != nil {
 		t.Fatalf("expected auth route setup to succeed: %v", err)
 	}
 	return router

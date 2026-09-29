@@ -1,0 +1,75 @@
+/*
+ * Choice controls: buttons that switch an option on or off.
+ *
+ * - .choice-toggle-group holding .choice-toggle buttons (use with .btn .btn--outline)
+ *   for picking one option from a few. The buttons stack, and sit side by side
+ *   in equal columns once the nearest container is wider than 25rem.
+ * - .choice-chip-group holding .choice-chip buttons: wrapping pill-shaped chips
+ *   for picking any number of options.
+ *
+ * The selected look follows aria-pressed="true", so the markup only binds
+ * aria-pressed. Loaded after buttons.css so the selected look wins over the
+ * .btn--outline hover and focus rules.
+ */
+:root {
+    --choice-selected-bg: color-mix(in srgb, var(--color-primary) 14%, var(--bg-item));
+}
+
+.choice-toggle-group {
+    display: grid;
+    gap: var(--spacing-2x);
+    white-space: nowrap;
+}
+
+@container (width > 25rem) {
+    .choice-toggle-group {
+        grid-auto-columns: 1fr;
+        grid-auto-flow: column;
+    }
+}
+
+.choice-chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2x);
+}
+
+.choice-chip {
+    padding-block: var(--spacing-2x);
+    padding-inline: var(--btn-padding-x);
+    border: 1px solid var(--bg-item-border);
+    border-radius: 999px;
+    background: var(--bg-item);
+    color: var(--color-text-soft);
+    font: inherit;
+    font-size: var(--btn-font-size);
+    cursor: pointer;
+    transition: var(--btn-transition);
+
+    &:hover {
+        border-color: var(--bg-item-border-hover);
+        color: var(--color-text-strong);
+    }
+}
+
+:is(.choice-toggle, .choice-chip) {
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--color-secondary-focus-visible);
+    }
+
+    /* A mouse click focuses the button too; only keyboard focus gets a ring. */
+    &:focus:not(:focus-visible) {
+        box-shadow: none;
+    }
+}
+
+:is(.choice-toggle, .choice-chip)[aria-pressed="true"] {
+    border-color: var(--color-primary);
+    background: var(--choice-selected-bg);
+    color: var(--color-text-strong);
+
+    &:focus-visible {
+        box-shadow: 0 0 0 3px var(--color-primary-focus-visible);
+    }
+}

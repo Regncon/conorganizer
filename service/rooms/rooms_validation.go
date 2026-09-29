@@ -7,6 +7,9 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
+// maxRoomNotesLength is the maximum number of characters allowed in public and admin notes.
+const maxRoomNotesLength = 1000
+
 // ValidateRooms validates that required entries in `room` is valid and returns all encutered errors
 func ValidateRooms(room models.Room) models.RoomFormErrors {
 	errors := models.RoomFormErrors{}
@@ -31,6 +34,20 @@ func ValidateRooms(room models.Room) models.RoomFormErrors {
 		errors.AddError(
 			models.RoomErrorRoomNumber,
 			"Romnummer kan ikke være lengre enn 10 tegn",
+		)
+	}
+
+	if utf8.RuneCountInString(room.PublicNotes) > maxRoomNotesLength {
+		errors.AddError(
+			models.RoomErrorPublicNotes,
+			"Offentlige notater kan ikke være lengre enn 1000 tegn",
+		)
+	}
+
+	if utf8.RuneCountInString(room.AdminNotes) > maxRoomNotesLength {
+		errors.AddError(
+			models.RoomErrorAdminNotes,
+			"Admin-notater kan ikke være lengre enn 1000 tegn",
 		)
 	}
 

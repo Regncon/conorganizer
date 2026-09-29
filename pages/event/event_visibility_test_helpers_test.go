@@ -45,12 +45,15 @@ func seedEventVisibilityEvent(t *testing.T, db *sql.DB, eventID string, title st
 	`, eventID, title, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, userID, status)
 }
 
+// seedEventVisibilityPulje seeds a pulje with its room assignment already published,
+// since most tests using this helper assert on visible room information.
+// Tests covering the unpublished state override it with an explicit UPDATE.
 func seedEventVisibilityPulje(t *testing.T, db *sql.DB, puljeID models.Pulje) {
 	t.Helper()
 
 	mustExecEventVisibilityTest(t, db, `
-		INSERT INTO puljer (id, name, status, start_at, end_at)
-		VALUES (?, 'Fredag kveld', ?, '2026-10-09T18:30:00+02:00', '2026-10-09T23:00:00+02:00')
+		INSERT INTO puljer (id, name, status, start_at, end_at, rooms_published)
+		VALUES (?, 'Fredag kveld', ?, '2026-10-09T18:30:00+02:00', '2026-10-09T23:00:00+02:00', 1)
 	`, puljeID, models.PuljeStatusOpen)
 }
 

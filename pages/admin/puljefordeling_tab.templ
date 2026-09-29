@@ -298,8 +298,10 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		}
 		var fordelingsvarsler []puljefordeling.Fordelingsvarsel
 		var kapasitetsvarsler []puljefordeling.Kapasitetsvarsel
+		var aldersvarsler []puljefordeling.Aldersvarsel
 		var varslerErr error
 		if emErr == nil && hasResult {
+			aldersvarsler = puljefordeling.FinnAldersvarsler(result)
 			fordelingsvarsler, varslerErr = puljefordeling.FinnFordelingsvarsler(db, result)
 			if varslerErr == nil {
 				kapasitetsvarsler, varslerErr = puljefordeling.FinnKapasitetsvarsler(db, result)
@@ -923,7 +925,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			if varslerErr != nil {
 				<p class="pulje-error">Kunne ikke kontrollere tildelinger og kapasitet.</p>
 			} else {
-				@puljeFordelingsvarsler(pulje, fordelingsvarsler, kapasitetsvarsler)
+				@puljeFordelingsvarsler(pulje, fordelingsvarsler, kapasitetsvarsler, aldersvarsler)
 			}
 			if len(result.Unassigned) > 0 {
 				<div class="pulje-unassigned">

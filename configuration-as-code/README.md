@@ -85,6 +85,8 @@ The `scripts` Stow package installs the database maintenance commands in
 - `conorganizer-images-backup` creates the scheduled main event-images archive.
 - `conorganizer-sqlite-restore events-YYYYMMDDTHHMMSSZ.db.zst` installs a selected backup into the public `restored` environment and refreshes its event images from main.
 - `conorganizer-export-db main|demo` streams a tar with a SQLite copy of that environment's database to stdout. The main export is anonymized with `/usr/local/share/conorganizer/anonymize-export.sql`. It is used by `scripts/download-environment` (`go tool task download:main` / `download:demo`).
+- `conorganizer-sqlite-migrate` backs up the demo database, then runs the deployed Goose migrations against demo and main. See [documentation/migrations.md](../documentation/migrations.md).
+- `conorganizer-maintenance-mode on|off` shows or hides the maintenance page for `program.regncon.no`. Without an argument it prints the current state.
 
 ## Backups
 
@@ -108,7 +110,7 @@ Hostnames in the checked-in Caddyfile:
 | Hostname | Target |
 | --- | --- |
 | `main.lekeplassen.regncon.no` | `import conorganizer-main` (`127.0.0.1:19080`) |
-| `program.regncon.no` | Toggles between `import conorganizer-main` and `import conorganizer-maintenance`, see [Maintenance mode](#maintenance-mode) |
+| `program.regncon.no` | `import conorganizer-main`, or `import conorganizer-maintenance` while the maintenance flag file exists, see [Maintenance mode](#maintenance-mode) |
 | `demo.lekeplassen.regncon.no` | `127.0.0.1:19081` |
 | `restored.lekeplassen.regncon.no` | `127.0.0.1:19082` |
 | `grafana.regncon.no` | `127.0.0.1:3400` |
@@ -125,31 +127,15 @@ The maintenance page is defined entirely in the Caddyfile as the snippet `(conor
 - HTTP `503`, which tells browsers and crawlers that the outage is temporary.
 - `Cache-Control: no-store`, so the maintenance page is not cached and still shown after the site is back.
 
-To switch, edit the `program.regncon.no` block and keep exactly one of the two imports active:
-
-```caddyfile
-program.regncon.no {
-	# Normal mode:
-	# import conorganizer-main
-	#
-	# Maintenance mode:
-	import conorganizer-maintenance
-}
-```
-
-Edit the file the Stow symlink points to, because `sudoedit /etc/caddy/Caddyfile` refuses to follow the symlink:
+The `program.regncon.no` block serves that snippet while the flag file `/var/lib/conorganizer/maintenance.on` exists, and `import conorganizer-main` otherwise. Caddy checks the file on every request, so switching needs no Caddy reload or restart and no edit to the Caddyfile:
 
 ```bash
-sudo vi /srv/configuration-as-code-repo/conorganizer/configuration-as-code/stow/caddy/etc/caddy/Caddyfile
+sudo conorganizer-maintenance-mode on    # create the flag file
+sudo conorganizer-maintenance-mode off   # remove it
+conorganizer-maintenance-mode            # print the current state
 ```
 
-Then restart Caddy:
-
-```bash
-sudo systemctl restart caddy
-```
-
-`/etc/caddy/Caddyfile` resolves through Stow into the server checkout, so the edit changes the checked-in file. Keep the repository in sync with it. Nothing switches maintenance mode automatically. [documentation/migrations.md](../documentation/migrations.md) uses it for the migration procedure.
+Only `program.regncon.no` is affected. `main.lekeplassen.regncon.no` and `demo.lekeplassen.regncon.no` keep serving the app. Nothing switches maintenance mode automatically. [documentation/migrations.md](../documentation/migrations.md) uses it for the migration procedure.
 
 ## Find all stowed files
 

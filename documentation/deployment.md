@@ -77,7 +77,7 @@ import /etc/caddy/sites-enabled/*.caddy
 
 ### Maintenance page
 
-The Caddyfile defines two snippets: `conorganizer-main` (a reverse proxy to `127.0.0.1:19080`) and `conorganizer-maintenance` (a bilingual English/Norwegian maintenance page served with status 503 and `Cache-Control: no-store`). The `program.regncon.no` block must import exactly one of them. To switch, comment out one import, uncomment the other and reload or restart Caddy. `main.lekeplassen.regncon.no` always imports `conorganizer-main`, so main can still be reached there while `program.regncon.no` shows the maintenance page. The migration procedure in [migrations.md](migrations.md) uses this toggle. See [configuration-as-code/README.md](../configuration-as-code/README.md#maintenance-mode) for the snippet details and the exact edit.
+The Caddyfile defines two snippets: `conorganizer-main` (a reverse proxy to `127.0.0.1:19080`) and `conorganizer-maintenance` (a bilingual English/Norwegian maintenance page served with status 503 and `Cache-Control: no-store`). The `program.regncon.no` block serves the maintenance snippet while `/var/lib/conorganizer/maintenance.on` exists and `conorganizer-main` otherwise. Switch with `sudo conorganizer-maintenance-mode on|off`; Caddy checks the flag file on every request, so no reload is needed. `main.lekeplassen.regncon.no` always imports `conorganizer-main`, so main can still be reached there while `program.regncon.no` shows the maintenance page. The migration procedure in [migrations.md](migrations.md) uses this toggle. See [configuration-as-code/README.md](../configuration-as-code/README.md#maintenance-mode) for details.
 
 ## Service user and ownership
 

@@ -371,6 +371,23 @@ hr {
     box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l /25%);
 }
 
+/* Form field labels and the label + control + message stack they wrap. */
+.label {
+    font-weight: 600;
+    font-size: var(--text-body-small);
+}
+
+.label-small {
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
 .slider {
     accent-color: var(--color-primary);
 }

@@ -2,7 +2,9 @@ package admin
 
 import (
 	"database/sql"
+
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/icons"
 )
 
 templ adminPage(db *sql.DB) {
@@ -11,89 +13,88 @@ templ adminPage(db *sql.DB) {
 			{Name: "Hjem", Url: "/"},
 			{Name: "Admin", Url: ""},
 		})
+		@adminCardStyles()
 		<style>
-			.admin-grid {
-				display: flex;
-				flex-direction: column;
-				gap: 1rem;
-				justify-content: start;
-			}
 			.admin-page-layout {
 				display: flex;
 				flex-direction: column;
 				gap: var(--responsive-page-section-spacing);
 			}
-			.admin-panel-card {
-				width: 100%;
-				background-color: var(--bg-surface);
-				border-radius: var(--border-radius-2x);
-				color: white;
-				box-sizing: border-box;
-				padding: var(--spacing-5x);
-			}
 		</style>
-		@adminCardStyles()
 		<div class="page-content-container">
-			<h1 class="page-heading">Administrasjon</h1>
+			<h1 class="page-heading">Adminverktøy</h1>
 			<div class="admin-page-layout">
-				<div class="admin-grid">
-					@adminCard(
-						"Publiser program",
-						"Publiser programmet og åpne for ønsker og påmeldinger.",
-						"/static/publiser-program.webp",
-						"Program publishing",
-					) {
-						@publiserProgram(db)
-					}
-					@adminCard(
-						"Arrangementer til godkjenning",
-						"Her kan du godkjenne arrangementer som er sendt inn av brukere.",
-						"/static/approve.webp",
-						"Events awaiting approval",
-					) {
-						<a role="button" href="/admin/approval/" class="btn btn--outline">Gå til arrangementer</a>
-					}
-					@adminCard(
-						"Billettholderoversikt",
-						"Se oversikt over alle billettholdere.",
-						"/static/participants-small.webp",
-						"Participants",
-					) {
-						<a role="button" href="/admin/billettholder/" class="btn btn--outline">Gå til billettholdere</a>
-					}
-					@adminCard(
-						"Puljefordeling",
-						"Se hvordan deltakere fordeles på arrangementer i hver pulje, og lås eller publiser fordelingen.",
-						"/static/puljefordeling.webp",
-						"Pulje distribution",
-					) {
-						<a role="button" href="/admin/puljefordeling/" class="btn btn--outline">Gå til puljefordeling</a>
-					}
-					@adminCard(
-						"Puljeoppsett",
-						"Dra spill inn i puljene og se hvor mange spill, 18+ og nybegynnervennlige hver pulje har. Advarer om en spilleder har to spill i samme pulje.",
-						"/static/puljeoppsett.webp",
-						"En trollmann planlegger på et blått kart under et skilt med teksten Puljeoppsett",
-					) {
-						<a role="button" href="/admin/puljeoppsett/" class="btn btn--outline">Gå til puljeoppsett</a>
-					}
-					@adminCard(
-						"Administrer rom",
-						"Her kan du legge til, modifisere og få en oversikt over tilgjengelige rom",
-						"static/rooms-thumbnail.webp",
-						"Administrate rooms",
-					) {
-						<a role="button" href="/admin/rooms/" class="btn btn--outline">Gå til rom-oversikt</a>
-					}
-					@adminCard(
-						"Utskriftsvennlig program",
-						"Skriv ut programmet med arrangementsdetaljer og romkart.",
-						"/static/printer.webp",
-						"Skriver",
-					) {
-						<a role="button" href="/print" class="btn btn--outline">Gå til utskrift</a>
-					}
-				</div>
+				<section class="admin-section" data-admin-section="puljefordeling" aria-labelledby="puljefordeling-heading">
+					<h2 id="puljefordeling-heading">Puljefordeling</h2>
+					<div class="admin-section-cards">
+						@adminToolCard(
+							"fordeling",
+							"Fordeling av deltakere",
+							"/admin/puljefordeling/",
+							"/static/admin/algorithm.svg",
+							"Fordel festivaldeltakerne til arrangementene som skjer i løpet av festivalen.",
+						)
+						@adminToolCard(
+							"puljeoppsett",
+							"Sett arrangementer i puljer",
+							"/admin/puljeoppsett/",
+							"/static/admin/blueprint.svg",
+							"Organiser spill inn i puljene som finner sted under festivalen.",
+						)
+					</div>
+				</section>
+				<section class="admin-section" data-admin-section="programoppsett" aria-labelledby="programoppsett-heading">
+					<h2 id="programoppsett-heading">Programoppsett</h2>
+					<div class="admin-section-cards">
+						<div class="admin-tool-card admin-tool-card--wide" data-admin-tool="publiser">
+							@adminToolGraphic("/static/admin/launch.svg")
+							<div class="admin-tool-card-body">
+								<strong class="admin-tool-title">Publiser program</strong>
+								<p class="admin-tool-description">Publiser programmet for festivalen, og åpne for ønsker og påmeldinger.</p>
+								<a class="admin-tool-print-link" href="/print">
+									Hent utskriftsvennlig versjon av programmet
+									<span aria-hidden="true">
+										@icons.Icon(icons.ExternalLink, icons.Size16)
+									</span>
+								</a>
+							</div>
+							@publiserProgram(db)
+						</div>
+						@adminToolCard(
+							"rom",
+							"Administrer rom",
+							"/admin/rooms/",
+							"/static/admin/blueprint.svg",
+							"Legg til, rediger og få en oversikt over alle tilgjengelige rom under festivalen.",
+						)
+						@adminToolCard(
+							"godkjenn",
+							"Godkjenn arrangementer",
+							"/admin/approval/",
+							"/static/admin/checklist.svg",
+							"Se alle arrangementer som er sendt inn av deltakerne og som venter på godkjenning.",
+						)
+					</div>
+				</section>
+				<section class="admin-section" data-admin-section="ovrige" aria-labelledby="ovrige-heading">
+					<h2 id="ovrige-heading">Øvrige verktøy</h2>
+					<div class="admin-section-cards">
+						@adminToolCard(
+							"billettholdere",
+							"Administrer billettholdere",
+							"/admin/billettholder/",
+							"/static/admin/access-badge.svg",
+							"Se en oversikt over alle billettholdere som kommer til festivalen.",
+						)
+						@adminToolCard(
+							"tilbakemeldinger",
+							"Tilbakemeldinger",
+							"/admin/tilbakemeldinger/",
+							"/static/admin/inbox.svg",
+							"Les tilbakemeldinger fra deltakerne om nettsiden og festivalen.",
+						)
+					</div>
+				</section>
 			</div>
 		</div>
 	</div>

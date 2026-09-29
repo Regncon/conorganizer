@@ -18,18 +18,20 @@ func TestUpdateRoomPartial_UpdatesProvidedFields(t *testing.T) {
 	db := createRoomsTestDB(t)
 	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
 	expectedRoom := models.Room{
-		ID:         existingRoom.ID,
-		Name:       "Tangerud",
-		RoomNumber: "303",
-		Floor:      3,
-		Notes:      "",
+		ID:          existingRoom.ID,
+		Name:        "Tangerud",
+		RoomNumber:  "303",
+		Floor:       3,
+		PublicNotes: "Inngang fra bakgården",
+		AdminNotes:  "",
 	}
 	input := models.RoomInput{
-		ID:         existingRoom.ID,
-		Name:       ptr(expectedRoom.Name),
-		RoomNumber: ptr(expectedRoom.RoomNumber),
-		Floor:      ptr(expectedRoom.Floor),
-		Notes:      ptr(expectedRoom.Notes),
+		ID:          existingRoom.ID,
+		Name:        ptr(expectedRoom.Name),
+		RoomNumber:  ptr(expectedRoom.RoomNumber),
+		Floor:       ptr(expectedRoom.Floor),
+		PublicNotes: ptr(expectedRoom.PublicNotes),
+		AdminNotes:  ptr(expectedRoom.AdminNotes),
 	}
 
 	// When

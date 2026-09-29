@@ -32,9 +32,12 @@ func createPrintPageTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
+// insertPrintPulje seeds a pulje with its room assignment already published,
+// since most tests using this helper assert on visible room information.
+// Tests covering the unpublished state override it with an explicit UPDATE.
 func insertPrintPulje(t *testing.T, db *sql.DB, id models.Pulje, name, start, end string) {
 	t.Helper()
-	testutil.MustExec(t, db, `INSERT INTO puljer(id, name, status, start_at, end_at) VALUES (?, ?, ?, ?, ?)`, id, name, models.PuljeStatusOpen, start, end)
+	testutil.MustExec(t, db, `INSERT INTO puljer(id, name, status, start_at, end_at, rooms_published) VALUES (?, ?, ?, ?, ?, 1)`, id, name, models.PuljeStatusOpen, start, end)
 }
 
 func insertPrintEvent(t *testing.T, db *sql.DB, id, title string, inPuljefordeling bool) {
@@ -144,6 +147,37 @@ func TestPrintFriendlyPage_ShowsOneMapForAProgramEventUsingTheSameRoomTwice(t *t
 	}
 	if !strings.Contains(actualTimes, "Lørdag morgen · 10:00 - 15:00") || !strings.Contains(actualTimes, "Lørdag kveld · 18:00 - 23:00") {
 		t.Fatalf("printed times = %q, want both puljer", actualTimes)
+	}
+}
+
+func TestPrintFriendlyPage_ShowsNoRoomForUnpublishedPulje(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A print event assigned to a room in a pulje whose rooms are not published.",
+		When:  "Anyone, admins included, renders the printable program.",
+		Then:  "The sheet shows no room information for that occurrence.",
+	})
+
+	// Given
+	db := createPrintPageTestDB(t)
+	insertPrintPulje(t, db, models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
+	testutil.MustExec(t, db, `UPDATE puljer SET rooms_published = 0 WHERE id = ?`, models.PuljeLordagMorgen)
+	insertPrintRoom(t, db, 705, "Morning room", "705")
+	insertPrintEvent(t, db, "shared-program", "Shared Program", false)
+	assignPrintEvent(t, db, "shared-program", models.PuljeLordagMorgen, 705)
+
+	// When
+	doc := templtest.Render(t, printFriendlyPage(db, nil, testutil.NewTestLogger()))
+	sheet := doc.Find("article.print-event-sheet")
+
+	// Then
+	if strings.Contains(sheet.Text(), "Morning room") {
+		t.Fatal("room name should be hidden for an unpublished pulje")
+	}
+	if !strings.Contains(sheet.Find(".print-room").Text(), "Rom ikke tildelt") {
+		t.Fatal("expected the occurrence to render as having no room assigned")
+	}
+	if sheet.Find(".print-room-map").Length() != 0 {
+		t.Fatal("map should be hidden for an unpublished pulje")
 	}
 }
 

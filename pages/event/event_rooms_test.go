@@ -19,9 +19,183 @@ func createEventRoomTestDB(t *testing.T) *sql.DB {
 	seedEventVisibilityPulje(t, db, models.PuljeFredagKveld)
 	seedEventVisibilityEventPulje(t, db, "room-event", models.PuljeFredagKveld, true)
 	testutil.MustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?), (?)`, models.PuljeStatusCompleted, models.PuljeStatusLocked)
-	testutil.MustExec(t, db, `INSERT INTO rooms(id, name, room_number, floor, max_concurrent_games) VALUES (42, 'Amalie Hansen', '705', 7, 1)`)
+	testutil.MustExec(t, db, `INSERT INTO rooms(id, name, room_number, floor, max_concurrent_games, public_notes, admin_notes) VALUES (42, 'Amalie Hansen', '705', 7, 1, '', '')`)
 	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 42 WHERE event_id = 'room-event'`)
 	return db
+}
+
+func TestEventRoomList_ShowsPublicNoteInListAndDialog(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A published room assignment whose room has a public note.",
+		When:  "The event page displays the room.",
+		Then:  "The public note is shown both in the room list and in the room's map dialog.",
+	})
+
+	// Given
+	expectedNote := "Ta av deg skoene før du går inn."
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE rooms SET public_notes = ?, admin_notes = 'Kun for admin' WHERE id = 42`, expectedNote)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if got := doc.Find(".event-room-list .event-room-note").Text(); !strings.Contains(got, expectedNote) {
+		t.Fatalf("list note = %q, want it to contain %q", got, expectedNote)
+	}
+	if got := doc.Find(".event-room-dialog .event-room-note").Text(); !strings.Contains(got, expectedNote) {
+		t.Fatalf("dialog note = %q, want it to contain %q", got, expectedNote)
+	}
+}
+
+func TestEventRoomList_NeverRendersAdminNotes(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A published room assignment whose room has an admin-only note.",
+		When:  "The event page displays the room.",
+		Then:  "The admin note text never appears anywhere on the page.",
+	})
+
+	// Given
+	adminOnlyNote := "Hemmelig admin-notat"
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE rooms SET public_notes = '', admin_notes = ? WHERE id = 42`, adminOnlyNote)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if strings.Contains(doc.Text(), adminOnlyNote) {
+		t.Fatal("admin note leaked onto the event page")
+	}
+}
+
+func TestEventRoomList_RendersPublicNoteMarkupAsText(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A published room assignment whose public note contains HTML markup.",
+		When:  "The event page displays the room.",
+		Then:  "The markup is shown as plain text and never becomes an element.",
+	})
+
+	// Given
+	expectedNote := `<img src=x onerror="alert(1)">`
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE rooms SET public_notes = ? WHERE id = 42`, expectedNote)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if got := doc.Find(".event-room-list .event-room-note").Text(); !strings.Contains(got, expectedNote) {
+		t.Fatalf("list note = %q, want it to contain %q as text", got, expectedNote)
+	}
+	if doc.Find(".event-room-note img").Length() != 0 {
+		t.Fatal("public note markup was rendered as HTML")
+	}
+}
+
+func TestEventRoomList_NoNoteElementWhenRoomHasNoPublicNotes(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A published room assignment whose room has no public notes.",
+		When:  "The event page displays the room.",
+		Then:  "No note element is rendered for that room.",
+	})
+
+	// Given
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE rooms SET public_notes = '' WHERE id = 42`)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if doc.Find(".event-room-note").Length() != 0 {
+		t.Fatal("note element rendered for a room without public notes")
+	}
+}
+
+func TestEventRoomVisibility_NonAdminSeesTimeOnlyWhenPuljeRoomsUnpublished(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A room assignment for a pulje whose rooms are not published.",
+		When:  "A non-admin views the event page.",
+		Then:  "The schedule shows the time but hides the room name and map.",
+	})
+
+	// Given
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE puljer SET rooms_published = 0 WHERE id = ?`, models.PuljeFredagKveld)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if doc.Find(".event-room-name").Length() != 0 {
+		t.Fatal("room name should be hidden from non-admins for an unpublished pulje")
+	}
+	if doc.Find(".event-room-button, .event-room-dialog img").Length() != 0 {
+		t.Fatal("map should be hidden from non-admins for an unpublished pulje")
+	}
+	if strings.Contains(doc.Text(), "Amalie Hansen") {
+		t.Fatal("hidden room name leaked into markup")
+	}
+	if got := doc.Find(".event-schedule-unassigned").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
+		t.Fatalf("expected the time to remain visible, got %q", got)
+	}
+}
+
+func TestEventRoomVisibility_NonAdminSeesRoomWhenPuljeRoomsPublished(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A room assignment for a pulje whose rooms are published.",
+		When:  "A non-admin views the event page.",
+		Then:  "The schedule shows the room name and map.",
+	})
+
+	// Given
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE puljer SET rooms_published = 1 WHERE id = ?`, models.PuljeFredagKveld)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if got := doc.Find(".event-room-name").Text(); got != "Amalie Hansen" {
+		t.Fatalf("expected the room name to be visible, got %q", got)
+	}
+	if doc.Find(".event-room-button").Length() != 1 {
+		t.Fatal("expected the map button to be visible")
+	}
+}
+
+func TestEventRoomVisibility_AdminSeesTimeOnlyWhenPuljeRoomsUnpublished(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A room assignment for a pulje whose rooms are not published.",
+		When:  "An admin views the event page.",
+		Then:  "The admin, like everyone else, sees the time but not the room name or map.",
+	})
+
+	// Given
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE puljer SET rooms_published = 0 WHERE id = ?`, models.PuljeFredagKveld)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", true, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if strings.Contains(doc.Text(), "Amalie Hansen") {
+		t.Fatal("unpublished room name should be hidden from admins too")
+	}
+	if doc.Find(".event-room-button, .event-room-dialog img").Length() != 0 {
+		t.Fatal("unpublished room map should be hidden from admins too")
+	}
+	if got := doc.Find(".event-schedule-unassigned").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
+		t.Fatalf("expected the time to remain visible, got %q", got)
+	}
 }
 
 func TestEventRoomMap_InfoDeskShowsGroundFloorRoutes(t *testing.T) {

@@ -1,0 +1,63 @@
+package profilecomponent
+
+import "github.com/Regncon/conorganizer/components/icons"
+
+// FeedbackPrompt invites the player to give feedback on the website or the
+// convention.
+templ FeedbackPrompt() {
+	<style>
+    .feedback-prompt {
+        border: 1px solid var(--color-primary);
+        background-color: color-mix(in srgb, var(--color-primary) 8%, var(--bg-surface));
+    }
+
+    .feedback-prompt-layout {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: var(--spacing-3x) var(--spacing-4x);
+
+        .btn {
+            grid-column: 1 / -1;
+            place-self: end;
+        }
+    }
+
+    .feedback-prompt-icon {
+        display: inline-grid;
+        place-content: center;
+        inline-size: 2.5rem;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+        color: var(--color-primary);
+    }
+
+    .feedback-prompt-text {
+        display: grid;
+        gap: var(--spacing-1x);
+        color: var(--color-text-strong);
+
+        h2,
+        p {
+            margin: 0;
+        }
+        h2 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--color-text-strong);
+        }
+    }
+	</style>
+	<section class="surface-pane feedback-prompt" aria-labelledby="feedback-prompt-title">
+		<div class="feedback-prompt-layout">
+			<span class="feedback-prompt-icon" aria-hidden="true">
+				@icons.Icon(icons.Comment, icons.Size20)
+			</span>
+			<div class="feedback-prompt-text">
+				<h2 id="feedback-prompt-title" class="surface-pane-title">Har du en tilbakemelding?</h2>
+				<p>Fortell oss hva du synes om nettsiden eller festivalen. Det tar bare et minutt.</p>
+			</div>
+			<a href="/tilbakemelding" class="btn btn--primary">Gi tilbakemelding</a>
+		</div>
+	</section>
+}

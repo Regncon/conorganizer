@@ -7,6 +7,7 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func seedPulje(t *testing.T, db *sql.DB, id models.Pulje, name, startAt string) {
@@ -238,40 +239,46 @@ func findAssigned(aps []AssignedPlayer, bhID int) (AssignedPlayer, bool) {
 	return AssignedPlayer{}, false
 }
 
-func TestEmulateSeatings_MinorNotSeatedInAdultsOnlyEvent(t *testing.T) {
-	db, _ := testutil.CreateTestDBAndLogger(t, "test_emulate_adults_only")
+func TestEmulateSeatings_SeatsMinorInAdultsOnlyEvent(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an 18+ game with room for an adult and a minor who both want it most.",
+		When:  "When the solver emulates the seatings.",
+		Then:  "Then both are seated, and the minor keeps IsOver18=false so the UI can warn about it.",
+	})
 
+	// Given
+	expectedSeated := []string{"Ungdom Ungsdal", "Voksen Voksdal"}
+	db, _ := testutil.CreateTestDBAndLogger(t, "test_emulate_adults_only")
 	const fredag = models.PuljeFredagKveld
 	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
-
-	// Room for both, but the game is 18+.
 	seedEvent(t, db, "ev18", "Attende", 2, fredag)
 	markEventAdultsOnly(t, db, "ev18")
-
 	seedParticipant(t, db, 1, "Voksen", "Voksdal")
 	markParticipantOver18(t, db, 1)
 	seedParticipant(t, db, 2, "Ungdom", "Ungsdal")
-
 	seedInterest(t, db, 1, "ev18", fredag, models.InterestLevelHigh)
 	seedInterest(t, db, 2, "ev18", fredag, models.InterestLevelHigh)
 
+	// When
 	em, err := EmulateSeatings(db)
+
+	// Then
 	if err != nil {
 		t.Fatalf("EmulateSeatings: %v", err)
-	}
-	if len(em.Puljer) != 1 {
-		t.Fatalf("want 1 pulje, got %d", len(em.Puljer))
 	}
 	ev, ok := findEvent(em.Puljer[0], "ev18")
 	if !ok {
 		t.Fatal("ev18 missing from emulation")
 	}
-
-	if got := playerNames(ev.AssignedPlayers); !slices.Equal(got, []string{"Voksen Voksdal"}) {
-		t.Errorf("only the adult should be seated in an AdultsOnly event, got %v", got)
+	if got := playerNames(ev.AssignedPlayers); !slices.Equal(got, expectedSeated) {
+		t.Errorf("the age rule is handled manually, so both should be seated: want %v, got %v", expectedSeated, got)
 	}
-	if !slices.Contains(em.Puljer[0].Unassigned, "Ungdom Ungsdal") {
-		t.Errorf("the minor should be unassigned, got %v", em.Puljer[0].Unassigned)
+	kid, ok := findAssigned(ev.AssignedPlayers, 2)
+	if !ok {
+		t.Fatal("the minor is missing from the assigned players")
+	}
+	if kid.IsOver18 {
+		t.Error("the seated minor must not be flagged IsOver18")
 	}
 	adult, ok := findAssigned(ev.AssignedPlayers, 1)
 	if !ok {
