@@ -284,6 +284,10 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
             }
         }
 
+        #room-dialog {
+            background-color: var(--level-1-background);
+        }
+
         #room-delete-dialog:open {
             display: flex;
             flex-flow: column nowrap;
