@@ -117,8 +117,8 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 	</div>
 }
 
-templ puljeAlerts(blocks []program.PuljeBlock) {
-	{{ alerts := collectPuljeAlerts(blocks) }}
+templ puljeAlerts(blocks []program.PuljeBlock, now time.Time) {
+	{{ alerts := collectPuljeAlerts(blocks, now) }}
 	<style>
 		.pulje-alerts {
 			display: grid;

@@ -3,6 +3,7 @@ package root
 import (
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/components/icons"
@@ -36,7 +37,7 @@ func TestRootPageContent_WhenPuljeHasAlert_ShowsItAtTopOfPage(t *testing.T) {
 	insertRootPageEventPulje(t, db, "friday-raffle", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09"))
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09", rootPageTestNow))
 	actualFirstElementIsAlert := doc.Find("body").Children().Not("style").First().Is(".pulje-alerts")
 
 	// Then
@@ -81,7 +82,7 @@ func TestRootPageContent_WhenDayHasSeveralPuljer_ShowsOneNamedAlertPerPulje(t *t
 	}
 
 	// When
-	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-10"))
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-10", rootPageTestNow))
 	actualAlerts := templtest.CollectTexts(doc, ".pulje-alert")
 
 	// Then
@@ -112,7 +113,7 @@ func TestRootPageContent_WhenDayHasOnePulje_ShowsAlertWithoutPuljeName(t *testin
 	insertRootPageEventPulje(t, db, "friday-raffle-beta", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09"))
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09", rootPageTestNow))
 	actualAlerts := templtest.CollectTexts(doc, ".pulje-alert")
 
 	// Then
@@ -140,7 +141,7 @@ func TestRootPageContent_WhenPuljeIsClosingSoon_LinksAlertToPuljeHeading(t *test
 	insertRootPageEventPulje(t, db, "friday-raffle", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09"))
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09", rootPageTestNow))
 	actualHref := doc.Find(".pulje-alert a").AttrOr("href", "")
 	actualHeadingText := templtest.CollectTexts(doc, expectedHref)
 
@@ -172,7 +173,7 @@ func TestRootPageContent_WhenClosingPuljeHasNoRaffleEvents_ShowsAlertWithoutLink
 	insertRootPageEventPulje(t, db, "friday-program", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09"))
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09", rootPageTestNow))
 	actualAlerts := templtest.CollectTexts(doc, ".pulje-alert")
 	actualLinkCount := doc.Find(".pulje-alert a").Length()
 
@@ -207,7 +208,7 @@ func TestRootPageContent_WhenPuljerHaveDifferentStatuses_MarksEachAlertWithItsSt
 	insertRootPageEventPulje(t, db, "evening-raffle", models.PuljeLordagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-10"))
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-10", rootPageTestNow))
 	actualClasses := make([]string, 0, len(expectedClasses))
 	doc.Find(".pulje-alert").Each(func(_ int, alert *goquery.Selection) {
 		actualClasses = append(actualClasses, alert.AttrOr("class", ""))
@@ -236,12 +237,84 @@ func TestRootPageContent_WhenPuljerAreOpenWithoutWarning_ShowsNoPuljeAlerts(t *t
 	insertRootPageEventPulje(t, db, "friday-raffle", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09"))
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09", rootPageTestNow))
 	actualAlertsVisible := templtest.HasSelector(doc, ".pulje-alert")
 
 	// Then
 	if actualAlertsVisible != expectedAlertsVisible {
 		t.Fatalf("pulje alerts visibility mismatch\nexpected: %v\nactual:   %v", expectedAlertsVisible, actualAlertsVisible)
+	}
+}
+
+func TestRootPageContent_WhenPuljeStartedMoreThanAnHourAgo_HidesItsAlert(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at fredagens pulje har et varsel (stenger snart, låst eller klar) og startet for mer enn én time siden.",
+		When:  "Når forsiden vises for fredag.",
+		Then:  "Så skal puljevarselet ikke lenger vises.",
+	})
+
+	// Given
+	expectedAlertsVisible := false
+	puljeStart := time.Date(2026, 10, 9, 20, 0, 0, 0, osloLocation(t))
+	now := puljeStart.Add(puljeAlertHideAfterStart + time.Minute)
+	cases := []struct {
+		name                 string
+		status               models.PuljeStatus
+		closingWarningActive bool
+	}{
+		{name: "closing soon", status: models.PuljeStatusOpen, closingWarningActive: true},
+		{name: "locked", status: models.PuljeStatusLocked},
+		{name: "completed", status: models.PuljeStatusCompleted},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			db := createRootPageTestDB(t)
+			seedRootPageLookups(t, db)
+			setProgramPublishing(t, db, true)
+			insertFridayPuljeStartingAt(t, db, puljeStart)
+			setRootPagePuljeStatus(t, db, models.PuljeFredagKveld, tc.status, tc.closingWarningActive)
+			insertRootPageEvent(t, db, "friday-raffle", "Friday Raffle", models.EventStatusAnnounced, true)
+			insertRootPageEventPulje(t, db, "friday-raffle", models.PuljeFredagKveld, true)
+
+			// When
+			doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09", now))
+			actualAlertsVisible := templtest.HasSelector(doc, ".pulje-alert")
+
+			// Then
+			if actualAlertsVisible != expectedAlertsVisible {
+				t.Fatalf("pulje alerts visibility mismatch\nexpected: %v\nactual:   %v", expectedAlertsVisible, actualAlertsVisible)
+			}
+		})
+	}
+}
+
+func TestRootPageContent_WhenPuljeStartedLessThanAnHourAgo_StillShowsItsAlert(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at fredagens pulje er låst og startet for mindre enn én time siden.",
+		When:  "Når forsiden vises for fredag.",
+		Then:  "Så skal puljevarselet fortsatt vises.",
+	})
+
+	// Given
+	expectedAlerts := []string{lockedAlertText}
+	puljeStart := time.Date(2026, 10, 9, 20, 0, 0, 0, osloLocation(t))
+	now := puljeStart.Add(puljeAlertHideAfterStart - time.Minute)
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, true)
+	insertFridayPuljeStartingAt(t, db, puljeStart)
+	setRootPagePuljeStatus(t, db, models.PuljeFredagKveld, models.PuljeStatusLocked, false)
+	insertRootPageEvent(t, db, "friday-raffle", "Friday Raffle", models.EventStatusAnnounced, true)
+	insertRootPageEventPulje(t, db, "friday-raffle", models.PuljeFredagKveld, true)
+
+	// When
+	doc := templtest.Render(t, rootPageContentForDate(db, nil, "2026-10-09", now))
+	actualAlerts := templtest.CollectTexts(doc, ".pulje-alert")
+
+	// Then
+	if !slices.Equal(expectedAlerts, actualAlerts) {
+		t.Fatalf("pulje alerts mismatch\nexpected: %v\nactual:   %v", expectedAlerts, actualAlerts)
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
@@ -29,6 +30,6 @@ func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventIm
 
 templ rootIndex(db *sql.DB, eventImageDir *string, requestedDate string) {
 	<div id="root-page-wrapper" data-init={ live.DatastarInit(rootAPIURL(requestedDate)) }>
-		@rootPageContentForDate(db, eventImageDir, requestedDate)
+		@rootPageContentForDate(db, eventImageDir, requestedDate, time.Now())
 	</div>
 }

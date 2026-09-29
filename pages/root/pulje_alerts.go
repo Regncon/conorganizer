@@ -1,10 +1,14 @@
 package root
 
 import (
+	"time"
+
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/program"
 )
+
+const puljeAlertHideAfterStart = time.Hour
 
 type puljeAlert struct {
 	PuljeName string
@@ -14,10 +18,13 @@ type puljeAlert struct {
 	LinkHref  string
 }
 
-func collectPuljeAlerts(blocks []program.PuljeBlock) []puljeAlert {
+func collectPuljeAlerts(blocks []program.PuljeBlock, now time.Time) []puljeAlert {
 	showPuljeName := len(blocks) > 1
 	alerts := make([]puljeAlert, 0, len(blocks))
 	for _, block := range blocks {
+		if now.After(block.Pulje.StartAt.TimeOrZero().Add(puljeAlertHideAfterStart)) {
+			continue
+		}
 		alert, ok := puljeAlertFor(block.Pulje)
 		if !ok {
 			continue

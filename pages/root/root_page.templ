@@ -10,15 +10,15 @@ import (
 
 templ rootPage(db *sql.DB, eventImageDir *string, requestedDate string) {
 	<div id="root-page-wrapper">
-		@rootPageContentForDate(db, eventImageDir, requestedDate)
+		@rootPageContentForDate(db, eventImageDir, requestedDate, time.Now())
 	</div>
 }
 
 templ rootPageContent(db *sql.DB, eventImageDir *string) {
-	@rootPageContentForDate(db, eventImageDir, "")
+	@rootPageContentForDate(db, eventImageDir, "", time.Now())
 }
 
-templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string) {
+templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string, now time.Time) {
 	{{
 		programPublished, err := program.IsPublished(db)
 		var programDays []program.Day
@@ -26,10 +26,10 @@ templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate st
 		if err == nil && programPublished {
 			programDays, programDaysErr = program.GetDays(db)
 		}
-		selectedDayIndex := program.SelectDayIndex(programDays, requestedDate, time.Now())
+		selectedDayIndex := program.SelectDayIndex(programDays, requestedDate, now)
 	}}
 	if selectedDayIndex >= 0 {
-		@puljeAlerts(programDays[selectedDayIndex].Blocks)
+		@puljeAlerts(programDays[selectedDayIndex].Blocks, now)
 	}
 	if err != nil {
 		<div class="page-content-container">
