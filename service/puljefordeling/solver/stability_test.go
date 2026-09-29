@@ -28,7 +28,7 @@ func randomSlot(rng *rand.Rand) (model.Slot, []model.Player) {
 		if len(prefs) == 0 {
 			continue
 		}
-		players = append(players, model.Player{ID: fmt.Sprintf("p%02d", p), Name: fmt.Sprintf("p%02d", p), Prefs: map[string]map[string]model.Score{"s1": prefs}, IsOver18: true})
+		players = append(players, model.Player{ID: fmt.Sprintf("p%02d", p), Name: fmt.Sprintf("p%02d", p), Prefs: map[string]map[string]model.Score{"s1": prefs}})
 	}
 	return s, players
 }
