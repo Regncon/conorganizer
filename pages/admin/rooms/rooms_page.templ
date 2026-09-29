@@ -229,9 +229,14 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
             flex-flow: column nowrap;
             gap: var(--spacing-1x);
             padding: var(--spacing-2x);
-            border: 1px solid var(--bg-item-border);
+            border: 1px solid var(--level-2-border);
             border-radius: var(--border-radius-1x);
-            background-color: var(--bg-item);
+            background-color: var(--level-2-background);
+
+            &:hover {
+                background-color: var(--level-2-background-hover);
+                border-color: var(--level-2-border-hover);
+            }
 
             h3 {
                 text-align: center;
@@ -248,10 +253,6 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
             }
         }
 
-        .room:hover {
-            background-color: var(--bg-item-hover);
-            border-color: var(--bg-item-border-hover);
-        }
         .room-map {
             display: block;
 
