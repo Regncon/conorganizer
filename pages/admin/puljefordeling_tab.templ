@@ -241,7 +241,7 @@ templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, 
 				}
 
 				a:hover {
-					border-color: var(--bg-item-border-hover);
+					border-color: var(--level-3-border-hover);
 					color: var(--color-text-strong);
 				}
 
@@ -480,7 +480,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             transition: border-color 300ms ease-in-out;
 
             &:hover {
-                border-color: var(--bg-item-border-hover);
+                border-color: var(--level-3-border-hover);
             }
             &.is-drag-over {
                 border-color: var(--color-primary);
