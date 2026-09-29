@@ -32,7 +32,27 @@ Denne sjekklisten dekker forsiden på `/`. Forsiden er en sentral inngang til ap
   **Når** seksjonen for å sende inn arrangement vises.<br>
   **Så** skal tekst, knapp og illustrasjon være balansert og uten tomrom eller skjevheter som får innholdet til å se ødelagt ut.
 
+- [ ] **«Send inn arrangement» leder til opprettelse via Min Side**<br>
+  **Gitt** at en innlogget bruker trykker «Send inn arrangement» på forsiden.<br>
+  **Når** brukeren kommer til Min Side og trykker «Send inn arrangement» under Mine arrangementer.<br>
+  **Så** skal et nytt arrangement opprettes som kladd, og brukeren sendes til skjemaet for det nye arrangementet.
+
+- [ ] **Ikke-innlogget bruker får en vei videre fra «Send inn arrangement»**<br>
+  **Gitt** at en ikke-innlogget bruker trykker «Send inn arrangement» på forsiden.<br>
+  **Når** Min Side avviser brukeren.<br>
+  **Så** skal brukeren få en tydelig beskjed om å logge inn og en vei videre til innlogging eller tilbake til arrangementslisten. Etter innlogging via «Logg inn» skal brukeren lande på Min Side.
+
 ### Program og arrangementskort
+
+- [ ] **Upublisert program viser bare annonserte arrangementer**<br>
+  **Gitt** at programmet ikke er publisert.<br>
+  **Når** brukeren åpner forsiden.<br>
+  **Så** skal forsiden vise en flat liste med annonserte arrangementer uten dagvelger og uten puljeinndeling.
+
+- [ ] **Publisert program viser valgt dag**<br>
+  **Gitt** at programmet er publisert.<br>
+  **Når** brukeren åpner forsiden.<br>
+  **Så** skal dagvelgeren vises med aktiv dag markert, og dagens tittel og tidsskjema vises før programoversikten og puljene.
 
 - [ ] **Puljer vises med riktig navn og tidspunkt**<br>
   **Gitt** at det finnes publiserte arrangementer i én eller flere puljer.<br>
@@ -47,19 +67,19 @@ Denne sjekklisten dekker forsiden på `/`. Forsiden er en sentral inngang til ap
 - [ ] **Arrangementskort viser riktig lesbar informasjon**<br>
   **Gitt** at forsiden viser arrangementskort.<br>
   **Når** brukeren leser kortene.<br>
-  **Så** skal tittel, ingress, arrangør, system og ikoner fremstå lesbare og høre til riktig arrangement.
+  **Så** skal tittel, ingress og ikoner, og der kortet viser dem, system og arrangør, fremstå lesbare og høre til riktig arrangement.
 
 - [ ] **Arrangementskort åpner riktig detaljside**<br>
   **Gitt** at et arrangementskort vises på forsiden.<br>
   **Når** brukeren trykker på kortet.<br>
-  **Så** skal brukeren sendes til riktig arrangementside og beholde riktig kontekst for valgt pulje.
+  **Så** skal brukeren sendes til riktig arrangementside. Når programmet er publisert, skal valgt dag og pulje følge med som kontekst.
 
 ### Navigasjon og robusthet
 
-- [ ] **Snarveier scroller til riktig pulje**<br>
-  **Gitt** at brukeren navigerer mellom puljene via snarveinavigasjonen på forsiden.<br>
-  **Når** brukeren trykker på en pulje.<br>
-  **Så** skal siden scrolle til riktig seksjon uten å havne merkbart feil, skjule seksjonsoverskriften bak sticky navigasjon, eller gjemme viktig informasjon.
+- [ ] **Dagvelgeren bytter til riktig dag**<br>
+  **Gitt** at programmet er publisert og har flere dager.<br>
+  **Når** brukeren velger en annen dag i dagvelgeren.<br>
+  **Så** skal forsiden vise program og puljer for valgt dag, dagen skal være markert som aktiv, og den sticky dagvelgeren skal ikke skjule overskrifter eller viktig informasjon.
 
 - [ ] **Tilbakeknapp bevarer brukbar forside**<br>
   **Gitt** at brukeren bruker tilbakeknappen etter å ha åpnet et arrangement fra forsiden.<br>

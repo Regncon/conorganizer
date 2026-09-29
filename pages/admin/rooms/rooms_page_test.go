@@ -239,6 +239,9 @@ func TestRoomCard_ShowsBothNoteKindsAndOmitsEmptyOne(t *testing.T) {
 	if !strings.Contains(notes.Find("dt").Text(), "Offentlige notater") {
 		t.Fatalf("expected public notes label, got %q", notes.Find("dt").Text())
 	}
+	if notes.Find("dt .room-note-icon svg").Length() != 1 || strings.Contains(notes.Find("dt").Text(), "🌐") {
+		t.Fatalf("expected the public notes label to use the globe icon instead of an emoji, got %q", notes.Find("dt").Text())
+	}
 	if !strings.Contains(notes.Find("dd").Text(), expectedPublicNotesText) {
 		t.Fatalf("expected public notes text %q, got %q", expectedPublicNotesText, notes.Find("dd").Text())
 	}
@@ -288,7 +291,7 @@ func TestRoomPuljeContainer_MappedRoomWithNotesRendersPopoverToggle(t *testing.T
 	db, logger := testutil.CreateTestDBAndLogger(t, "assignment_map_notes_toggle")
 	seedRoomsPageLookups(t, db)
 	room := createRoomsPageRoom(t, db, "Amalie", "705", 7)
-	setRoomsPageRoomNotes(t, db, room.ID, "", expectedAdminNotesText)
+	setRoomsPageRoomNotes(t, db, room.ID, "Inngang via kafeen", expectedAdminNotesText)
 	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
 
 	// When
@@ -298,6 +301,9 @@ func TestRoomPuljeContainer_MappedRoomWithNotesRendersPopoverToggle(t *testing.T
 	toggle := doc.Find("room-map .room-notes-toggle")
 	if toggle.Length() != 1 {
 		t.Fatalf("expected exactly one notes toggle for the mapped room, got %d", toggle.Length())
+	}
+	if toggle.Find(".room-note-icon svg").Length() != 2 || strings.Contains(toggle.Text(), "🌐") {
+		t.Fatalf("expected the toggle to show the globe and lock icons without emoji, got %d icons and text %q", toggle.Find(".room-note-icon svg").Length(), toggle.Text())
 	}
 	popoverID, exists := toggle.Attr("popovertarget")
 	if !exists || popoverID == "" {
@@ -358,6 +364,10 @@ func TestFormModal_HasTextareasBoundToPublicAndAdminNotes(t *testing.T) {
 	}
 	if doc.Find(`textarea[name="notes"]`).Length() != 0 {
 		t.Fatal("expected the old combined notes textarea to be gone")
+	}
+	publicNotesLabel := publicNotesField.Parent().Find("p").First()
+	if publicNotesLabel.Find(".room-note-icon svg").Length() != 1 || strings.Contains(publicNotesLabel.Text(), "🌐") {
+		t.Fatalf("expected the public notes field label to use the globe icon instead of an emoji, got %q", publicNotesLabel.Text())
 	}
 }
 

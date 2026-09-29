@@ -158,9 +158,7 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player) model.SlotRes
 //
 // A pinned player is reserved into their event (consuming a seat and reducing the
 // event's effective capacity) and is removed from the free assignment pool. Pins
-// are honored even when the player expressed no interest in that event, and also
-// when the player is not over 18 and the event is AdultsOnly — a pin is the
-// admin's deliberate override of the age rule the free pool obeys (see runMCMF).
+// are honored even when the player expressed no interest in that event.
 // Players DMing any event in this slot are excluded from automatic allocation.
 // An explicit pin is still retained and reserves its destination's capacity.
 func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed map[string][]string) model.SlotResult {
@@ -272,7 +270,7 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 	}
 
 	// Update fairness/totals/misses/unassigned; returns the seated set.
-	assigned := s.applyResult(&result, slot.ID, interested, playerByID, assignments, adultsOnlyEvents(slot.Events))
+	assigned := s.applyResult(&result, slot.ID, interested, playerByID, assignments)
 
 	// Players bumped down to a strictly lower-interest event (see runMCMF) and
 	// still holding a seat.
@@ -290,15 +288,12 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 // assignment, fills the result's per-assignment fields (TotalScore, NewlySatisfied,
 // Unassigned), and returns the set of seated player IDs. assignments is
 // eventID → []playerID. Scores for players absent from playerByID are treated as 0.
-// adultsOnly is the set of 18+ event IDs in this slot, needed to tell a genuinely
-// missed top choice apart from one the player was never eligible for.
 func (s *State) applyResult(
 	result *model.SlotResult,
 	slotID string,
 	interested []model.Player,
 	playerByID map[string]model.Player,
 	assignments map[string][]string,
-	adultsOnly map[string]struct{},
 ) map[string]struct{} {
 	assigned := make(map[string]struct{})
 	for evID, playerIDs := range assignments {
@@ -320,7 +315,7 @@ func (s *State) applyResult(
 		if _, ok := s.satisfied[p.ID]; ok {
 			continue
 		}
-		if wantedTopChoice(p, slotID, adultsOnly) {
+		if wantedTopChoice(p, slotID) {
 			s.misses[p.ID]++
 		}
 	}
@@ -347,32 +342,14 @@ func sortSlotResult(result *model.SlotResult) {
 }
 
 // wantedTopChoice reports whether the player rated any event in this slot as a
-// top choice (score 5) they could actually have been seated in. An 18+ game is
-// not a seatable choice for a minor, so wanting it is not a miss — otherwise the
-// player would collect a scarcity bonus for a seat the solver was never allowed
-// to give them.
-func wantedTopChoice(p model.Player, slotID string, adultsOnly map[string]struct{}) bool {
-	for evID, score := range p.Prefs[slotID] {
-		if score != model.MaxScore {
-			continue
+// top choice (score 5).
+func wantedTopChoice(p model.Player, slotID string) bool {
+	for _, score := range p.Prefs[slotID] {
+		if score == model.MaxScore {
+			return true
 		}
-		if _, ok := adultsOnly[evID]; ok && !p.IsOver18 {
-			continue
-		}
-		return true
 	}
 	return false
-}
-
-// adultsOnlyEvents returns the IDs of the 18+ events among events.
-func adultsOnlyEvents(events []model.Event) map[string]struct{} {
-	out := make(map[string]struct{})
-	for _, ev := range events {
-		if ev.AdultsOnly {
-			out[ev.ID] = struct{}{}
-		}
-	}
-	return out
 }
 
 // runMCMF builds and solves the flow network for the given events and players,
@@ -420,12 +397,6 @@ func (s *State) runMCMF(
 		for j, ev := range events {
 			score, ok := p.Prefs[slotID][ev.ID]
 			if !ok {
-				continue
-			}
-			// An 18+ game is not a seatable choice for a minor: no edge, so the
-			// free pool can never land there. Admin pins bypass this entirely —
-			// they never enter the free pool (see SolveSlotFixed).
-			if ev.AdultsOnly && !p.IsOver18 {
 				continue
 			}
 			w := s.playerScore(p.ID, score).Total
@@ -596,7 +567,7 @@ func (s *State) ApplyActual(slot model.Slot, players []model.Player, assignments
 		playerByID[p.ID] = p
 	}
 
-	s.applyResult(&result, slot.ID, interested, playerByID, result.Assignments, adultsOnlyEvents(slot.Events))
+	s.applyResult(&result, slot.ID, interested, playerByID, result.Assignments)
 
 	for _, ev := range slot.Events {
 		if len(result.Assignments[ev.ID]) < minViablePlayers {

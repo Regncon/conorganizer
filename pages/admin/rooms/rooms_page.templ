@@ -67,7 +67,12 @@ templ formModal() {
 				@errorfeedback.RenderMessage("floor")
 			</label>
 			<label class="label color-strong form-group">
-				<p>🌐 Offentlige notater</p>
+				<p class="room-note-label">
+					<span class="room-note-icon" aria-hidden="true">
+						@icons.Icon(icons.Globe, icons.Size16)
+					</span>
+					Offentlige notater
+				</p>
 				<small>Vises for spilledere og deltakere på arrangementssiden, f.eks. hvordan man finner rommet.</small>
 				<textarea
 					name="public_notes"

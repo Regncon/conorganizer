@@ -70,7 +70,8 @@ templ publiserProgram(db *sql.DB) {
 			display: flex;
 			flex-direction: column;
 			gap: var(--spacing-5x);
-			width: 100%;
+			flex: 0 0 auto;
+			max-inline-size: 22rem;
 		}
 		.publiser-program-control {
 			padding: var(--spacing-4x);
@@ -146,6 +147,10 @@ templ publiserProgram(db *sql.DB) {
 			.publiser-program-control-body {
 				align-items: flex-start;
 				flex-direction: column;
+			}
+			.publiser-program {
+				inline-size: 100%;
+				max-inline-size: 100%;
 			}
 		}
 	</style>

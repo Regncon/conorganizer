@@ -35,6 +35,9 @@ const (
 // ErrInvalidFeedback is wrapped by Submit when the input is rejected.
 var ErrInvalidFeedback = errors.New("invalid feedback")
 
+// ErrNotFound is returned when deleting feedback that does not exist.
+var ErrNotFound = errors.New("feedback not found")
+
 // Submission is feedback as sent by a user.
 type Submission struct {
 	Category Category
@@ -155,4 +158,21 @@ func List(db *sql.DB, category Category) ([]Entry, error) {
 		return nil, fmt.Errorf("iterate feedback: %w", err)
 	}
 	return entries, nil
+}
+
+// Delete removes one feedback entry. It returns ErrNotFound when no entry has
+// that id.
+func Delete(db *sql.DB, id int) error {
+	result, err := db.Exec(`DELETE FROM feedback WHERE id = ?`, id)
+	if err != nil {
+		return fmt.Errorf("delete feedback %d: %w", id, err)
+	}
+	deleted, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("count deleted feedback %d: %w", id, err)
+	}
+	if deleted == 0 {
+		return ErrNotFound
+	}
+	return nil
 }

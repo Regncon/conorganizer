@@ -18,7 +18,12 @@ templ roomNotes(publicNotes, adminNotes string) {
 		<dl class="room-notes">
 			if strings.TrimSpace(publicNotes) != "" {
 				<div class="room-note">
-					<dt><span aria-hidden="true">🌐</span> Offentlige notater</dt>
+					<dt>
+						<span class="room-note-icon" aria-hidden="true">
+							@icons.Icon(icons.Globe, icons.Size16)
+						</span>
+						Offentlige notater
+					</dt>
 					<dd>{ publicNotes }</dd>
 				</div>
 			}
@@ -51,7 +56,9 @@ templ roomNotesPopover(roomID int64, roomNumber, publicNotes, adminNotes string)
 			title="Notater"
 		>
 			if strings.TrimSpace(publicNotes) != "" {
-				<span aria-hidden="true">🌐</span>
+				<span class="room-note-icon" aria-hidden="true">
+					@icons.Icon(icons.Globe, icons.Size16)
+				</span>
 			}
 			if strings.TrimSpace(adminNotes) != "" {
 				<span class="room-note-icon" aria-hidden="true">

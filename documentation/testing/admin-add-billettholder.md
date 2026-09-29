@@ -1,6 +1,6 @@
 # Legg til billettholder i admin
 
-Denne sjekklisten dekker `/admin/billettholder/add`, der admin kan se billetter fra check-in og konvertere relevante billetter til billettholdere.
+Denne sjekklisten dekker `/admin/billettholder/add`, der admin kan se billetter fra CheckIn og konvertere relevante billetter til billettholdere.
 
 ## Roller
 
@@ -13,12 +13,17 @@ Denne sjekklisten dekker `/admin/billettholder/add`, der admin kan se billetter 
 - [ ] **Billettoversikten laster uten brutte kort**<br>
   **Gitt** at en admin åpner siden for å legge til billettholder.<br>
   **Når** siden lastes.<br>
-  **Så** skal oversikten over billetter vises uten brutte kort eller uforståelige feilmeldinger.
+  **Så** skal hvert billettkort vise bestilling, type, navn, e-post og alder uten brutte kort eller uforståelige feilmeldinger.
 
 - [ ] **Konvertering oppretter riktig billettholder**<br>
   **Gitt** at en billett kan konverteres.<br>
-  **Når** admin velger å konvertere den.<br>
-  **Så** skal billetten bli til riktig billettholder uten at admin må gjette om handlingen faktisk lyktes.
+  **Når** admin velger «Konverter billett til deltager».<br>
+  **Så** skal billetten bli til riktig billettholder, og kortet skal deretter vise at billetten allerede er konvertert, uten at admin må gjette om handlingen faktisk lyktes.
+
+- [ ] **Middagsbilletter og konverterte billetter kan ikke konverteres**<br>
+  **Gitt** at en billett er en middagsbillett eller allerede er konvertert til billettholder.<br>
+  **Når** kortet vises.<br>
+  **Så** skal kortet vise en merknad om dette og ikke tilby knappen for å konvertere.
 
 - [ ] **Konverteringsfeil forklares tydelig**<br>
   **Gitt** at konvertering av billett feiler.<br>
@@ -30,17 +35,12 @@ Denne sjekklisten dekker `/admin/billettholder/add`, der admin kan se billetter 
   **Når** siden oppdateres fortløpende.<br>
   **Så** skal riktig status vises på riktige kort og ikke blandes mellom billetter.
 
-### Søk og datamengder
+### CheckIn og datamengder
 
-- [ ] **Søk viser forståelige resultater**<br>
-  **Gitt** at admin bruker søk eller filtrering på siden.<br>
-  **Når** relevante treff vises.<br>
-  **Så** skal resultatene være forståelige og markeringen av søket ikke gjøre innholdet uleselig.
-
-- [ ] **Tomt søk gir stabil opplevelse**<br>
-  **Gitt** at admin bruker søk eller filtrering med tomt eller lite nyttig søk.<br>
-  **Når** siden oppdateres.<br>
-  **Så** skal brukeropplevelsen fortsatt være stabil og ikke gi inntrykk av at data har forsvunnet.
+- [ ] **Utilgjengelig CheckIn gir forståelig melding**<br>
+  **Gitt** at CheckIn ikke svarer.<br>
+  **Når** admin åpner siden.<br>
+  **Så** skal siden si at den ikke får kontakt med CheckIn, eller at den viser sist lagrede informasjon når den har det, og ikke gi inntrykk av at billettene har forsvunnet.
 
 - [ ] **Mange billetter forblir lesbare**<br>
   **Gitt** at admin bruker siden med mange billetter og varierende data.<br>
@@ -60,6 +60,6 @@ Denne sjekklisten dekker `/admin/billettholder/add`, der admin kan se billetter 
   **Så** skal siden fortsatt være brukbar og ikke falle visuelt sammen.
 
 - [ ] **Refresh viser lagret tilstand**<br>
-  **Gitt** at admin refresher siden etter konvertering eller søk.<br>
+  **Gitt** at admin refresher siden etter konvertering.<br>
   **Når** siden lastes inn igjen.<br>
   **Så** skal innholdet samsvare med faktisk lagret tilstand og ikke med en foreldet mellomtilstand.

@@ -18,10 +18,6 @@ type Event struct {
 	Name     string
 	Capacity int
 	DMIDs    []string
-
-	// AdultsOnly marks an 18+ game: a player who is not over 18 is never
-	// seated here by the solver. Only an admin pin can place a minor here.
-	AdultsOnly bool
 }
 
 // Slot is a time block containing one or more events.
@@ -37,9 +33,6 @@ type Player struct {
 	ID    string
 	Name  string
 	Prefs map[string]map[string]Score
-
-	// IsOver18 gates access to AdultsOnly events.
-	IsOver18 bool
 }
 
 // Weekend holds all slots and players for a convention.
