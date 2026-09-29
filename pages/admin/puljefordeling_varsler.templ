@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
 )
@@ -16,10 +17,31 @@ func fordelingsvarselOppsummering(varsel puljefordeling.Fordelingsvarsel) string
 	return fmt.Sprintf("%d spillederoppdrag · %d %s", varsel.AntallGMOppdrag, varsel.AntallSpillerplasser, plasser)
 }
 
-templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordelingsvarsel, kapasitetsvarsler []puljefordeling.Kapasitetsvarsel) {
-	if len(varsler) > 0 || len(kapasitetsvarsler) > 0 {
+templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordelingsvarsel, kapasitetsvarsler []puljefordeling.Kapasitetsvarsel, aldersvarsler []puljefordeling.Aldersvarsel) {
+	if len(varsler) > 0 || len(kapasitetsvarsler) > 0 || len(aldersvarsler) > 0 {
 		<section class="fordelingsvarsler" aria-labelledby={ "fordelingsvarsler-" + string(pulje) }>
 			<h3 id={ "fordelingsvarsler-" + string(pulje) }><span aria-hidden="true">⚠</span> Varsler om tildelinger</h3>
+			if len(aldersvarsler) > 0 {
+				<h4>Under 18 på 18+-arrangement</h4>
+				<p>Disse spillerne er under 18 år og er satt opp på et arrangement med 18-årsgrense. Aldersgrensen håndteres manuelt, så sjekk dem før puljen publiseres.</p>
+				for _, varsel := range aldersvarsler {
+					<details
+						id={ fmt.Sprintf("aldersvarsel-%s-%s", pulje, varsel.EventID) }
+						data-aldersvarsel={ varsel.EventID }
+						data-preserve-attr="open"
+					>
+						<summary><strong>{ varsel.EventTitle }</strong><span>{ fmt.Sprintf("%d under 18", len(varsel.Spillere)) }</span></summary>
+						<ul>
+							for _, spiller := range varsel.Spillere {
+								<li class="aldersvarsel-deltaker">
+									@under18Merke()
+									<span class="aldersvarsel-navn">{ spiller.Navn }</span>
+								</li>
+							}
+						</ul>
+					</details>
+				}
+			}
 			if len(kapasitetsvarsler) > 0 {
 				<h4>Over kapasitet</h4>
 				<p>Disse arrangementene har flere spillere enn oppgitt kapasitet. Manuelle spillerplasser beholdes. Åpne arrangementet for å se spillerne.</p>
@@ -99,6 +121,29 @@ templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordel
 					padding-inline-start: 1.5rem;
 					margin-block-end: 0;
 				}
+
+				ul:has(.aldersvarsel-deltaker) {
+					padding-inline-start: 0;
+					list-style: none;
+				}
+
+				.aldersvarsel-deltaker {
+					display: flex;
+					flex-wrap: wrap;
+					place-items: center;
+					gap: 0.5rem;
+				}
+
+				.aldersvarsel-navn {
+					font-weight: 600;
+					color: var(--color-warning);
+				}
+			}
+
+			.under-18-merke {
+				display: inline-flex;
+				flex-shrink: 0;
+				color: var(--color-error);
 			}
 
 			@container fordelingsvarsler (width > 36rem) {
@@ -109,4 +154,12 @@ templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordel
 			}
 		</style>
 	}
+}
+
+// under18Merke marks someone under 18 on an 18+ event with the child-friendly
+// icon in red.
+templ under18Merke() {
+	<span class="under-18-merke" role="img" aria-label="Under 18 år på 18+-arrangement" title="Under 18 år på 18+-arrangement">
+		@icons.Icon(icons.EventChildFriendly, icons.Size24)
+	</span>
 }
