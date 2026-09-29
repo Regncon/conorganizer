@@ -20,9 +20,6 @@ templ rootPageContent(db *sql.DB, eventImageDir *string) {
 
 templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string) {
 	{{ programPublished, err := program.IsPublished(db) }}
-	@components.Breadcrumbs([]components.BreadcrumbPath{
-		{Name: "Hjem", Url: ""},
-	})
 	if err != nil {
 		<div class="page-content-container">
 			<p class="root-page-error">{ rootPageLoadErrorMessage }</p>
