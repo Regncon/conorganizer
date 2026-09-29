@@ -224,9 +224,9 @@
 .event-bar-container {
     color: var(--color-primary-text);
     border: solid;
-    background-color: var(--bg-surface);
+    background-color: var(--level-2-background);
     border-radius: var(--border-radius-2x);
-    border-color: var(--bg-item-border);
+    border-color: var(--level-2-border);
     border-width: 1px;
     display: block;
     text-decoration: none;
@@ -234,16 +234,22 @@
     min-height: 65px;
     padding: var(--spacing-3x) var(--spacing-4x);
     box-sizing: border-box;
-    transition: border-color 120ms ease-in-out;
+    transition: border-color 120ms ease-in-out, background-color 120ms ease-in-out;
 }
 
-.event-bar-container:hover {
-    border-color: var(--color-primary);
+.event-bar-container:hover,
+.event-bar-container:focus-visible {
+    background-color: var(--level-2-background-hover);
+    border-color: var(--level-2-border-hover);
 }
 
 .event-bar-container:focus-visible {
-    border-color: var(--color-text-soft);
     outline: 3px solid var(--color-text-soft-50);
+}
+
+.event-bar-container:active {
+    background-color: var(--level-2-background-active);
+    border-color: var(--level-2-border-hover);
 }
 
 .event-bar-title {
