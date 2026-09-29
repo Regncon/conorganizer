@@ -121,6 +121,7 @@ templ InterestIndicator(interests []BillettholderInterest) {
 		data-tippy-content={ interestTooltipText(interests) }
 		data-tippy-allowHTML="false"
 		data-tippy-theme="interest-indicator"
+		data-attr:data-tippy-trigger="matchMedia('(hover: none)').matches ? 'click' : 'mouseenter focus'"
 		data-on:click="matchMedia('(hover: none)').matches && evt.preventDefault()"
 	>
 		<span class="interest-indicator-hearts" aria-hidden="true">
