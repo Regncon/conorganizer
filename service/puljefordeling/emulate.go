@@ -26,7 +26,7 @@ type AssignedPlayer struct {
 	Level           models.InterestLevel   // their interest in the game they got
 	Moved           bool                   // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
 	Manual          bool                   // manually pinned into this event by an admin (source='manual'), not placed by the solver
-	IsOver18        bool                   // participant is over 18; a seated minor in an AdultsOnly game is always an admin pin
+	IsOver18        bool                   // participant is over 18, so the UI can flag a minor seated in an 18+ game
 	Score           *smodel.ScoreBreakdown // how the solver valued this seat; nil for a pin without interest and for replayed (published) puljer
 }
 
@@ -155,14 +155,7 @@ func emulateSeatings(db emulationQuerier) (Emulation, error) {
 		slot := smodel.Slot{ID: string(p.ID), Name: p.Name}
 		for _, eid := range sortedEventIDs(events[p.ID]) {
 			e := events[p.ID][eid]
-			ev := smodel.Event{
-				ID:       eid,
-				Name:     e.title,
-				Capacity: e.capacity,
-				// 18+ games are closed to minors in the free pool; only an
-				// admin pin can put one there.
-				AdultsOnly: e.ageGroup == models.AgeGroupAdultsOnly,
-			}
+			ev := smodel.Event{ID: eid, Name: e.title, Capacity: e.capacity}
 			for _, gmID := range gms[eventPuljeKey(eid, p.ID)] {
 				ev.DMIDs = append(ev.DMIDs, strconv.Itoa(gmID))
 			}
@@ -175,10 +168,9 @@ func emulateSeatings(db emulationQuerier) (Emulation, error) {
 	players := make([]smodel.Player, 0, len(prefs))
 	for _, bhID := range sortedIntKeys(prefs) {
 		players = append(players, smodel.Player{
-			ID:       strconv.Itoa(bhID),
-			Name:     names[bhID],
-			Prefs:    prefs[bhID],
-			IsOver18: over18[bhID],
+			ID:    strconv.Itoa(bhID),
+			Name:  names[bhID],
+			Prefs: prefs[bhID],
 		})
 	}
 
@@ -339,13 +331,9 @@ func forstevalgLists(
 }
 
 // wantedForstevalg reports whether the player gave Veldig interessert on an
-// event in this slot that they could be seated in (an 18+ game does not count
-// for a minor).
+// event in this slot.
 func wantedForstevalg(p smodel.Player, slot smodel.Slot) bool {
 	for _, ev := range slot.Events {
-		if ev.AdultsOnly && !p.IsOver18 {
-			continue
-		}
 		if p.Prefs[slot.ID][ev.ID] == smodel.MaxScore {
 			return true
 		}
@@ -570,8 +558,8 @@ func loadGMs(db emulationQuerier) (map[string][]int, map[models.Pulje][]int, err
 }
 
 // loadParticipants returns the display name and the over-18 flag for every
-// billettholder. The age flag gates AdultsOnly events in the solver, so it is
-// read in the same pass as the names.
+// billettholder. The age flag lets the UI flag minors seated in 18+ games, so it
+// is read in the same pass as the names.
 func loadParticipants(db emulationQuerier) (map[int]string, map[int]bool, error) {
 	const query = `SELECT id, first_name, last_name, is_over_18 FROM billettholdere`
 	rows, err := db.Query(query)

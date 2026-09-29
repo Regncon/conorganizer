@@ -92,6 +92,13 @@ func seedEventInterestUpdateFixture(
 	return fixture
 }
 
+func setEventInterestTestAdultsOnly(t *testing.T, db *sql.DB, eventID string) {
+	t.Helper()
+
+	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupAdultsOnly)
+	mustExecEventInterestTest(t, db, `UPDATE events SET age_group = ? WHERE id = ?`, models.AgeGroupAdultsOnly, eventID)
+}
+
 func getEventInterestTestInterest(t *testing.T, db *sql.DB, eventID string, billettholderID int, puljeID models.Pulje) models.InterestLevel {
 	t.Helper()
 

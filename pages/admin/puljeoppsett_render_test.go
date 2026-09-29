@@ -91,4 +91,10 @@ func TestScheduleBoardContent_ShowsDMCollisionWarning(t *testing.T) {
 			t.Fatalf("collision warning missing %q\ngot: %s", want, text)
 		}
 	}
+	for _, selector := range []string{".board-collision-summary", ".board-collision p"} {
+		warning := doc.Find(selector)
+		if warning.Find("svg").Length() != 1 || strings.Contains(warning.Text(), "⚠") {
+			t.Fatalf("%s should show the warning icon instead of an emoji, got %q", selector, warning.Text())
+		}
+	}
 }

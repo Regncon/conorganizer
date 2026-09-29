@@ -329,22 +329,27 @@ templ interestUnder18(title string) {
             color: var(--color-text-soft);
 
             p:first-of-type {
-                margin-block: var(--spacing-3x);
+                margin-block-start: var(--spacing-3x);
             }
+        }
+        .interest-under-18 ~ .interest-buttons {
+            margin-block-start: var(--spacing-3x);
         }
         @container interest-dialog (width > 375px) {
             .interest-under-18 {
                 padding: var(--spacing-5x);
                 p:first-of-type {
-                    margin-block: var(--spacing-5x);
+                    margin-block-start: var(--spacing-5x);
                 }
+            }
+            .interest-under-18 ~ .interest-buttons {
+                margin-block-start: var(--spacing-5x);
             }
         }
     </style>
 	<section class="interest-under-18">
-		<h3>Dette er et 18-års arrangement!</h3>
-		<p>Arrangementet <i>{ title }</i> er satt opp med 18-års aldersgrense.</p>
-		<p>Billettholdere under 18 år kan ikke melde seg på.</p>
+		<h3>Anbefalt for voksne (18+)</h3>
+		<p>Arrangementet <i>{ title }</i> er anbefalt for deltakere som er 18 år eller eldre.</p>
 	</section>
 }
 
@@ -486,11 +491,11 @@ func LoadInterestNoticeState(billettholderID int, puljeID string, ageGroup model
 		}
 	}
 
-	showUnder18 := !isOver18 && ageGroup == models.AgeGroupAdultsOnly
+	assigned := assignedEvent.EventID != ""
 	return InterestNoticeState{
-		ShowAssignedEvent: !showUnder18 && assignedEvent.EventID != "",
-		ShowUnder18:       showUnder18,
-		CanChooseInterest: !showUnder18 && assignedEvent.EventID == "",
+		ShowAssignedEvent: assigned,
+		ShowUnder18:       !assigned && !isOver18 && ageGroup == models.AgeGroupAdultsOnly,
+		CanChooseInterest: !assigned,
 		AssignedEvent:     assignedEvent,
 	}, nil
 }
