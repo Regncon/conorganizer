@@ -94,6 +94,7 @@
     --shadow-dialog: 0 19px 38px hsl(0deg 0% 0% / 30%), 0 15px 12px hsl(0deg 0% 0% / 22%);
 
     /* content width */
+    --page-content-narrow-max-width: 1280px;
     --page-content-max-width: 1440px;
     --page-content-wide-max-width: 1920px;
     --page-content-ultrawide-max-width: 2240px;
