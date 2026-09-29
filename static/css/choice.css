@@ -13,6 +13,10 @@
  */
 :root {
     --choice-selected-bg: color-mix(in srgb, var(--color-primary) 14%, var(--bg-item));
+    --choice-focus-shadow: var(--color-text-soft-50);
+    --choice-shadow: var(--shadow-focus-size) var(--choice-focus-shadow);
+    --choice-selected-focus-shadow: var(--color-primary-focus-visible);
+    --choice-selected-shadow: var(--shadow-focus-size) var(--choice-selected-focus-shadow);
 }
 
 .choice-toggle-group {
@@ -55,7 +59,7 @@
 :is(.choice-toggle, .choice-chip) {
     &:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px var(--color-secondary-focus-visible);
+        box-shadow: var(--choice-shadow);
     }
 
     /* A mouse click focuses the button too; only keyboard focus gets a ring. */
@@ -70,6 +74,6 @@
     color: var(--color-text-strong);
 
     &:focus-visible {
-        box-shadow: 0 0 0 3px var(--color-primary-focus-visible);
+        box-shadow: var(--choice-selected-shadow);
     }
 }
