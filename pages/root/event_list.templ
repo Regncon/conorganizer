@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"time"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/program"
 )
@@ -20,7 +21,7 @@ templ eventPuljeBlock(block program.PuljeBlock, eventImageDir *string, date stri
 	{{ events := block.RaffleEvents() }}
 	if len(events) > 0 {
 		<section class="container-inner-padding raffle-pulje-section">
-			<h2 class="pulje-heading">
+			<h2 class="pulje-heading" id={ puljeAnchorID(block.Pulje.ID) }>
 				{ block.Pulje.Name }
 				<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
 			</h2>
@@ -62,8 +63,11 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 		}
 
 		.pulje-heading {
+			--program-day-selector-height: calc(var(--btn-height) + 2 * var(--spacing-2x));
+
 			color: var(--color-text-strong);
 			margin: 0 0 var(--spacing-3x);
+			scroll-margin-block-start: calc(var(--program-day-selector-height) + var(--spacing-4x));
 			text-transform: capitalize;
 		}
 		.pulje-heading-time {
@@ -76,36 +80,14 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 		@container main (width > 600px) {
 			.pulje-heading {
 				margin: 0 0 var(--spacing-5x);
+				scroll-margin-block-start: calc(var(--nav-height) + var(--program-day-selector-height) + var(--spacing-4x));
 			}
-		}
-
-		.pulje-alerts {
-			display: grid;
-			gap: var(--spacing-2x);
-		}
-		.pulje-alert {
-			--pulje-alert-color: var(--color-accent-orange);
-
-			margin: 0;
-			padding-block: var(--spacing-3x);
-			padding-inline: var(--spacing-4x);
-			border-inline-start: var(--spacing-1x) solid var(--pulje-alert-color);
-			border-radius: var(--border-radius-1x);
-			background: color-mix(in srgb, var(--pulje-alert-color) 12%, var(--bg-base));
-			color: var(--color-text-strong);
-		}
-		.pulje-alert.is-locked {
-			--pulje-alert-color: var(--color-accent-blue);
-		}
-		.pulje-alert.is-completed {
-			--pulje-alert-color: var(--color-accent-green);
 		}
 	</style>
 	<div class="page-content-container event-pulje-overview">
 		if programPublished {
 			if publishedDay != nil {
 				@programDaySchedule(*publishedDay)
-				@puljeAlerts(publishedDay.Blocks)
 				if len(publishedDay.ProgramEvents) > 0 {
 					<section class="container-inner-padding program-section">
 						<h2 class="pulje-heading">Programoversikt</h2>
@@ -137,17 +119,81 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 
 templ puljeAlerts(blocks []program.PuljeBlock) {
 	{{ alerts := collectPuljeAlerts(blocks) }}
-	if len(alerts) > 0 {
-		<div class="pulje-alerts container-inner-padding" role="status">
-			for _, alert := range alerts {
-				<p class={ "pulje-alert", alert.Class }>
+	<style>
+		.pulje-alerts {
+			display: grid;
+			grid-template-columns: min(100%, var(--page-content-narrow-max-width));
+			gap: var(--spacing-2x);
+			place-content: center;
+		}
+		.pulje-alert {
+			--pulje-alert-color: var(--color-warning);
+			--pulje-alert-border-width: 2px;
+			--pulje-alert-icon-size: 24px;
+			--pulje-alert-tint-start: 26%;
+			--pulje-alert-tint-end: 21%;
+
+			display: flex;
+			gap: var(--spacing-2x);
+			place-items: start;
+			margin: 0;
+			padding: var(--spacing-3x);
+			border-block: var(--pulje-alert-border-width) solid var(--pulje-alert-color);
+			background: linear-gradient(
+				to right,
+				color-mix(in srgb, var(--pulje-alert-color) var(--pulje-alert-tint-start), var(--bg-surface)),
+				color-mix(in srgb, var(--pulje-alert-color) var(--pulje-alert-tint-end), var(--bg-surface))
+			);
+			color: var(--color-text-strong);
+			font-size: var(--text-body-small);
+			font-weight: 700;
+
+			.inline-icon {
+				inline-size: var(--pulje-alert-icon-size);
+				block-size: var(--pulje-alert-icon-size);
+				margin-block-start: calc((1lh - var(--pulje-alert-icon-size)) / 2);
+				color: var(--pulje-alert-color);
+			}
+
+			a {
+				color: inherit;
+				text-decoration: none;
+
+				&:hover,
+				&:focus-visible {
+					text-decoration: underline;
+				}
+			}
+		}
+		.pulje-alert.is-completed {
+			--pulje-alert-color: var(--color-success);
+		}
+
+		@container main (width > 600px) {
+			.pulje-alerts:has(.pulje-alert) {
+				margin-block-start: var(--spacing-1x);
+			}
+			.pulje-alert {
+				border: var(--pulje-alert-border-width) solid var(--pulje-alert-color);
+				border-radius: var(--border-radius-2x);
+			}
+		}
+	</style>
+	<div class="pulje-alerts container-inner-padding" role="status">
+		for _, alert := range alerts {
+			<p class={ "pulje-alert", alert.Class }>
+				@icons.Icon(alert.Icon, icons.Size24)
+				<span>
 					if alert.PuljeName != "" {
 						<strong>{ alert.PuljeName }:</strong> { alert.Message }
 					} else {
 						{ alert.Message }
 					}
-				</p>
-			}
-		</div>
-	}
+					if alert.LinkHref != "" {
+						<a href={ templ.URL(alert.LinkHref) }>Klikk her for å gå til puljen.</a>
+					}
+				</span>
+			</p>
+		}
+	</div>
 }

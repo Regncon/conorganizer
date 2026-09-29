@@ -1,6 +1,7 @@
 package root
 
 import (
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/program"
 )
@@ -9,6 +10,8 @@ type puljeAlert struct {
 	PuljeName string
 	Message   string
 	Class     string
+	Icon      icons.IconType
+	LinkHref  string
 }
 
 func collectPuljeAlerts(blocks []program.PuljeBlock) []puljeAlert {
@@ -22,6 +25,9 @@ func collectPuljeAlerts(blocks []program.PuljeBlock) []puljeAlert {
 		if showPuljeName {
 			alert.PuljeName = block.Pulje.Name
 		}
+		if len(block.RaffleEvents()) == 0 {
+			alert.LinkHref = ""
+		}
 		alerts = append(alerts, alert)
 	}
 	return alerts
@@ -31,12 +37,29 @@ func puljeAlertFor(pulje models.PuljeRow) (puljeAlert, bool) {
 	switch pulje.Status {
 	case models.PuljeStatusOpen:
 		if pulje.ClosingWarningActive {
-			return puljeAlert{Message: "puljen er i ferd med å bli låst", Class: "is-closing"}, true
+			return puljeAlert{
+				Message:  "Interessevalget stenger snart! Hvis du vil endre valgene dine for kommende pulje, gjør det nå.",
+				Class:    "is-closing",
+				Icon:     icons.WarningOutline,
+				LinkHref: "#" + puljeAnchorID(pulje.ID),
+			}, true
 		}
 	case models.PuljeStatusLocked:
-		return puljeAlert{Message: "puljen er låst", Class: "is-locked"}, true
+		return puljeAlert{
+			Message: "Interessevalg for kommende pulje er nå låst og kan ikke endres. Vi jobber med å fordele spillere og publiserer resultatet snart!",
+			Class:   "is-locked",
+			Icon:    icons.ClockLock,
+		}, true
 	case models.PuljeStatusCompleted:
-		return puljeAlert{Message: "puljen er lukket", Class: "is-completed"}, true
+		return puljeAlert{
+			Message: "Puljefordelingen er klar! Se hva du fikk på profilen din.",
+			Class:   "is-completed",
+			Icon:    icons.ProgressComplete,
+		}, true
 	}
 	return puljeAlert{}, false
+}
+
+func puljeAnchorID(puljeID models.Pulje) string {
+	return "pulje-" + string(puljeID)
 }

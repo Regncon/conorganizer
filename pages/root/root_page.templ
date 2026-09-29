@@ -19,21 +19,30 @@ templ rootPageContent(db *sql.DB, eventImageDir *string) {
 }
 
 templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate string) {
-	{{ programPublished, err := program.IsPublished(db) }}
+	{{
+		programPublished, err := program.IsPublished(db)
+		var programDays []program.Day
+		var programDaysErr error
+		if err == nil && programPublished {
+			programDays, programDaysErr = program.GetDays(db)
+		}
+		selectedDayIndex := program.SelectDayIndex(programDays, requestedDate, time.Now())
+	}}
+	if selectedDayIndex >= 0 {
+		@puljeAlerts(programDays[selectedDayIndex].Blocks)
+	}
 	if err != nil {
 		<div class="page-content-container">
 			<p class="root-page-error">{ rootPageLoadErrorMessage }</p>
 		</div>
 	} else {
 		if programPublished {
-			{{ programDays, programDaysErr := program.GetDays(db) }}
 			if programDaysErr != nil {
 				@components.CallToAction()
 				<div class="page-content-container">
 					<p class="root-page-error">{ rootEventsLoadErrorMessage }</p>
 				</div>
 			} else if len(programDays) > 0 {
-				{{ selectedDayIndex := program.SelectDayIndex(programDays, requestedDate, time.Now()) }}
 				@programDaySelector(programDays, selectedDayIndex)
 				@components.CallToAction()
 				{{ selectedDay := programDays[selectedDayIndex] }}
