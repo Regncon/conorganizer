@@ -83,13 +83,6 @@
     /* call to action banner */
     --banner-glow: #4966e2;
 
-    /* item is being replaced by the level colors */
-    --bg-item: #35394a;
-    --bg-item-hover: #44485a;
-    --bg-item-border-hover: #7f8198;
-    --bg-item-border: #494d62;
-    --item-flat-active: hsl(230deg 40% 86% / 20%);
-
     /* font sizes */
     --text-heading-1-xl: 52px;
     --text-heading-1-xl-lh: 1.2;
