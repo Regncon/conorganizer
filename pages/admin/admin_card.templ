@@ -2,72 +2,123 @@ package admin
 
 templ adminCardStyles() {
 	<style>
-		.admin-card {
+		.admin-section {
 			display: flex;
 			flex-direction: column;
-			width: 100%;
-			background-color: var(--bg-surface);
-			border-radius: var(--border-radius-2x);
-			text-decoration: none;
-			color: white;
+			gap: var(--spacing-4x);
+		}
+
+		.admin-section-cards {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: var(--spacing-4x);
+		}
+
+		@container main (width > 40rem) {
+			.admin-section-cards {
+				grid-template-columns: repeat(2, 1fr);
+			}
+		}
+
+		.admin-tool-card {
+			display: flex;
+			place-items: center;
+			gap: var(--spacing-4x);
+			inline-size: 100%;
 			box-sizing: border-box;
-		}
-		.admin-card-image {
-			width: 100%;
-			height: 160px;
-			object-fit: cover;
+			background-color: var(--bg-surface);
+			border: 1px solid var(--bg-item-border);
 			border-radius: var(--border-radius-2x);
+			padding: var(--spacing-4x);
+			text-decoration: none;
+			color: inherit;
 		}
-		.admin-card-content {
-			padding: var(--spacing-5x);
+
+		a.admin-tool-card:hover,
+		a.admin-tool-card:focus-visible {
+			background-color: var(--bg-item-hover);
+			border-color: var(--bg-item-border-hover);
 		}
-		.admin-card-header h2,
-		.admin-card-header p {
-			margin-top: 0;
-			margin-bottom: var(--spacing-4x);
+
+		.admin-tool-card--wide {
+			grid-column: 1 / -1;
+			flex-wrap: wrap;
+			row-gap: var(--spacing-4x);
 		}
-		.admin-card-content .btn {
-			width: 100%;
+
+		.admin-tool-graphic {
+			flex: 0 0 auto;
+			display: flex;
+			place-content: center;
+			place-items: center;
+			inline-size: 4.25rem;
+			block-size: 4.25rem;
+			background-image: url("/static/admin/frame.svg");
+			background-repeat: no-repeat;
+			background-position: center;
+			background-size: contain;
 		}
-		@container main (width > 600px) {
-			.admin-card {
-				flex-direction: row;
-				gap: var(--spacing-5x);
-				padding: var(--spacing-5x);
+
+		.admin-tool-graphic img {
+			inline-size: 2.75rem;
+			block-size: auto;
+		}
+
+		.admin-tool-card-body {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-1x);
+			min-inline-size: 0;
+			flex: 1 1 12rem;
+		}
+
+		.admin-tool-title {
+			color: var(--color-text-strong);
+		}
+
+		.admin-tool-description {
+			margin: 0;
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+		}
+
+		.admin-tool-print-link {
+			color: var(--color-primary);
+			font-size: var(--text-body-small);
+			text-decoration: underline;
+
+			.inline-icon {
+				display: inline-block;
+				vertical-align: middle;
+				margin-inline-start: var(--spacing-1x);
 			}
-			.admin-card-image {
-				width: 200px;
-				height: 120px;
-			}
-			.admin-card-content {
-				padding: 0;
-			}
-			.admin-card-content .btn {
-				width: initial;
-			}
 		}
-		@container main (width > 800px) {
-			.admin-card-image {
-				width: 300px;
-				height: 180px;
+
+		.admin-tool-print-link:hover,
+		.admin-tool-print-link:focus-visible {
+			color: var(--color-primary-hover);
+		}
+
+		@container main (width > 40rem) {
+			.admin-tool-card--wide {
+				flex-wrap: nowrap;
 			}
 		}
 	</style>
 }
 
-templ adminCard(title string, description string, imageSrc string, imageAlt string) {
-	<section class="admin-card">
-		<img
-			src={ imageSrc }
-			alt={ imageAlt }
-			class="admin-card-image"
-		/>
-		<div class="admin-card-content">
-			<div class="admin-card-header">
-				<h2>{ title }</h2>
-				<p>{ description }</p>
-			</div>
-			{ children... }
+templ adminToolGraphic(graphic string) {
+	<span class="admin-tool-graphic" aria-hidden="true">
+		<img src={ graphic } alt=""/>
+	</span>
+}
+
+templ adminToolCard(slug string, title string, href string, graphic string, description string) {
+	<a class="admin-tool-card" href={ templ.URL(href) } data-admin-tool={ slug }>
+		@adminToolGraphic(graphic)
+		<div class="admin-tool-card-body">
+			<strong class="admin-tool-title">{ title }</strong>
+			<p class="admin-tool-description">{ description }</p>
 		</div>
-	</section>
+	</a>
 }
