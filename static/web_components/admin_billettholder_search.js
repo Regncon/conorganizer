@@ -33,11 +33,11 @@ if (!customElements.get("admin-billettholder-search")) {
         }
 
         .input {
-            background-color: var(--bg-item);
+            background-color: var(--level-3-background);
             color: var(--color-text-soft);
             border-radius: var(--border-radius-2x);
             min-height: 2.6rem;
-            border: 1px solid var(--bg-item-border);
+            border: 1px solid var(--level-3-border);
             font-size: 1rem;
             padding-inline: 1rem;
             margin: 0;
