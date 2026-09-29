@@ -120,3 +120,103 @@ that owns such a region can explicitly replace its wrapper with a
 `datastar-patch-elements` event using `mode replace`. Keep selection controls and
 the request listener outside the replaced region, and include any required initial
 values in the replacement HTML.
+
+## Keep browser-owned state through morphs
+
+Live bucket broadcasts re-render whole fragments, and the server never knows
+which `<details>` or `<dialog>` the user has open. To keep such attribute state
+through Datastar morphs, list the attribute in `data-preserve-attr`:
+
+```html
+<details class="pulje-interests-collapse" data-preserve-attr="open">
+```
+
+List several attributes separated by spaces, as the header menu does with
+`data-preserve-attr="class aria-busy"`. This protects state only through
+morphs. A full page reload resets it; state that must survive a reload needs
+the URL, `sessionStorage` or server state.
+
+Current users include `components/event_components/programpulje_interests.templ`,
+`pages/admin/billettholder_admin/billettholder_interest_dialog.templ`,
+`pages/admin/tildelingsdialog.templ`, the puljefordeling templates,
+`pages/admin/rooms/rooms_assignment_page.templ`, `pages/event/event_rooms.templ`
+and `components/header/menu.templ`.
+
+Declare browser-owned selections with `data-signals__ifmissing` so a morph does
+not reset them. For example, the billettholder interest dialog keeps the
+selected pulje tab in `billettholderInterestActivePulje` while it stays open.
+The open button sets it explicitly to that billettholder's first pulje.
+
+## Native modal dialogs in live fragments
+
+A Datastar morph that removes the browser-managed `open` attribute from a
+`<dialog>` opened with `showModal()` does not call `close()`. The dialog can be
+left in a broken top-layer state, and the page stays unclickable until a
+reload. Server-rendered HTML never contains `open`, so any live patch would
+strip it.
+
+Prefer rendering a modal dialog outside the live fragment (see
+[Native dialogs and live fragments](live-update-lifecycle.md#native-dialogs-and-live-fragments)).
+When the dialog must be inside a live fragment, use this pattern:
+
+1. Keep a page-level signal for the open dialog, declared with `ifmissing` on a
+   container, so a morph does not reset it.
+2. Open buttons only set the signal. They do not call `showModal()`.
+3. The dialog's `data-effect` calls `el.showModal()` when the signal matches and
+   `el.close()` when it does not.
+4. `data-on:close` clears the signal when the dialog closes natively (Escape,
+   `form method="dialog"`, `closedby`).
+5. `data-preserve-attr="open"` keeps morphs from stripping `open`.
+
+```html
+<div data-signals__ifmissing:billettholder-interest-open-dialog-id="''">
+    <button data-on:click="$billettholderInterestOpenDialogId = 'billettholder-interests-42'">
+        Interesser
+    </button>
+    <dialog
+        id="billettholder-interests-42"
+        data-preserve-attr="open"
+        data-effect="if ($billettholderInterestOpenDialogId == 'billettholder-interests-42' && !el.open) { el.showModal(); } if ($billettholderInterestOpenDialogId != 'billettholder-interests-42' && el.open) { el.close(); }"
+        data-on:close="if ($billettholderInterestOpenDialogId == 'billettholder-interests-42') { $billettholderInterestOpenDialogId = ''; }"
+    >
+        ...
+    </dialog>
+</div>
+```
+
+This also avoids close/reopen flicker on every patch. The billettholder interest
+dialog additionally closes open dialogs on `pageshow` (bfcache restore), and its
+row links call `close()` before navigating. The same pattern is used in
+`pages/event/event_rooms.templ`, the billettholder switcher in
+`components/header/menu.templ`, and the puljefordeling dialogs.
+`TestBillettholderCard_UsesDatastarStateForInterestDialogOpenState` checks the
+billettholder dialog attributes.
+
+### Exception: the Meld interesse dialog
+
+The "Meld interesse" dialog in `components/event_components/event_interests.templ`
+is opened by `$_interestIsOpen` from `pages/event/event_interest_panel.templ`. It
+does not use `showModal()`. It binds `data-attr:open="$_interestIsOpen ? true : false"`
+and relies on CSS to look modal, so it has no native backdrop, inert background or
+focus trapping, and no `data-preserve-attr`. If morph problems appear there, add
+`data-preserve-attr="open"` or move it to the pattern above.
+
+## Datastar DOM events
+
+The bundled client (`static/datastar.js`, Datastar v1.0.4) dispatches these DOM
+events:
+
+- `datastar-fetch` on `document`. `evt.detail` has `type`, `el` and `argsRaw`.
+  `type` is `started`, `finished`, `error`, `retrying` or `retries-failed`, or the
+  SSE event name `datastar-patch-elements` or `datastar-patch-signals`.
+- `datastar-signal-patch`, `datastar-ready`, `datastar-prop-change` and
+  `datastar-scope-children`.
+
+There is no before-morph hook. Protect browser-owned DOM state with
+`data-preserve-attr` and signal-driven state instead of intercepting morphs. To
+react after a patch, listen for `datastar-fetch` with type
+`datastar-patch-elements`, as the Meld interesse dialog does:
+
+```html
+data-on:datastar-fetch__document="if (el.isConnected && evt.detail.type === 'datastar-patch-elements' && evt.detail.el?.id === 'event-container') { ... }"
+```

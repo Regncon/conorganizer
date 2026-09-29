@@ -22,16 +22,32 @@ Denne mappen inneholder launch-sjekklistene for manuell testing av Conorganizer.
 
 ## Automatisert testoversikt
 
-- Kjør `task test:report` lokalt for å se hvilke Go-tester som kjøres og hvilken BDD-kommentar hver test dekker.
-- GitHub Actions skriver samme rapport til CI-loggen. Rapporten lagres ikke som artefakt og skal ikke committes.
+- Se [Automatiserte tester](../automated-tests.md) for hvordan Go-testene skrives, og hvordan BDD-rapporten lages med `go tool task test:report` lokalt og i CI.
+
+## Relatert dokumentasjon
+
+Disse dokumentene beskriver forventet oppførsel som sjekklistene tester:
+
+- [Tilgangskontroll og feilsider](../access-control-and-error-pages.md)
+- [Puljestatus og publisering](../pulje-status-and-publishing.md)
+- [Billettholdere](../billettholdere.md)
+- [Romfordeling](../room-assignment.md)
+- [UI-konvensjoner](../ui-conventions.md)
+
+## Bygge PDF-er
+
+- Kjør `./build-pdfs.sh` for å lage én PDF per `*.md` i denne mappen. Skriptet bytter selv til mappen sin, så det kan kjøres fra hvor som helst. Det krever `pandoc` og `xelatex`.
+- Pandoc dropper rå `<br>` når det lager LaTeX, og da ville Gitt/Når/Så slått seg sammen til ett avsnitt. Skriptet bruker derfor et midlertidig Lua-filter som gjør `<br>` om til ekte linjeskift.
+- PDF-er uten tilhørende `.md`-fil, som `auth.pdf`, `report.pdf` og `PR-558-manual-test-checklist.pdf`, er rester og lages ikke av skriptet.
 
 ## Dekningsinventar
 
 Launch-sjekklistene dekker disse aktive sidene og flytene:
 
 - `/` og oppdatert forsidestruktur fra `/root/api/` dekkes av [Forside](./root.md).
-- `/auth`, `/auth/post-login` og `/auth/logout` dekkes av [Autentisering](./auth.md).
+- `/auth`, `/auth/post-login` og `/auth/logout` dekkes av seksjonene Authentisering og Autorisering i [Generelle tester](./general.md).
 - `/profile` dekkes av [Min Side](./profile.md).
+- `/profile/descope-profile` (Descope-profilwidgeten bak «Reset passord» på Min Side) dekkes av seksjonen Authentisering i [Generelle tester](./general.md).
 - `/profile/tickets` dekkes av [Billetter på Min Side](./profile-tickets.md).
 - `/profile/new/{id}` og tilhørende skjema- og bildeopplastingsflyt dekkes av [Arrangementsskjema](./event-form.md).
 - `/event/{id}` og interesseflyten under `/event/api/{id}` dekkes av [Arrangementsdetaljer](./event-details.md).
@@ -40,6 +56,11 @@ Launch-sjekklistene dekker disse aktive sidene og flytene:
 - `/admin/billettholder` dekkes av [Billettholdere i admin](./admin-billettholders.md).
 - `/admin/billettholder/add` dekkes av [Legg til billettholder i admin](./admin-add-billettholder.md).
 - `/admin/rooms` og `/admin/rooms/assignment/{pulje}` dekkes av [Romadministrasjon i admin](./admin-rooms.md).
+
+Disse aktive adminsidene lenkes fra adminforsiden, men har ennå ingen egen launch-sjekkliste:
+
+- `/admin/puljefordeling/` og `/admin/puljefordeling/{pulje}`.
+- `/admin/puljeoppsett/`.
 
 Disse rutene er bevisst ikke egne launch-sjekklister:
 
@@ -51,4 +72,4 @@ Disse rutene er bevisst ikke egne launch-sjekklister:
 
 - Start med [Generelle tester](./general.md) og [Forside](./root.md) for å verifisere grunnleggende navigasjon og synlig innhold.
 - Kjør deretter rollebaserte og funksjonelle tester i de relevante filene.
-- Bruk `task test:report` for å sammenligne manuelle sjekkpunkter med automatiserte tester.
+- Bruk `go tool task test:report` for å sammenligne manuelle sjekkpunkter med automatiserte tester, se [Automatiserte tester](../automated-tests.md).

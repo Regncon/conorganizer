@@ -1,6 +1,17 @@
 # Generelle tester
 
-Denne sjekklisten dekker felles navigasjon, rolleopplevelse og tilgang på tvers av appen. Den dekker også `/auth`, `/auth/post-login`, `/auth/logout` og tilgangsfeil for beskyttede sider. Descope-flytene er med fordi konfigurasjonen eies av oss og må verifiseres før release.
+Denne sjekklisten dekker det som er felles på tvers av appen: hovednavigasjonen og brukermenyen (også responsiv layout, fokus og raske sidebytter), rolleopplevelsen, innlogging, registrering og utlogging via Descope (`/auth`, `/auth/post-login`, `/auth/logout`), Descope-profilwidgeten på `/profile/descope-profile` og tilgangsfeil for beskyttede sider. Funksjonalitet, edge cases, feilhåndtering, kosmetikk, refresh og tilbakeknapp for en enkelt side hører hjemme i filen for den siden.
+
+## Manuelt og automatisert
+
+Flytene som Descope eier, som registrering, selve innloggingswidgeten, e-postbekreftelse, passordtilbakestilling og avvisninger fra Descope, testes manuelt her. Descope-konfigurasjonen eies av oss og må verifiseres for hånd før release.
+
+Appens egen oppførsel rundt innlogging er automatisert i Go-tester:
+
+- `pages/login/login_form_test.go`: Descope-widgeten er konfigurert og sender vellykket innlogging til post-login.
+- `pages/login/post_login_user_test.go`: post-login oppretter lokal bruker første gang og oppdaterer adminstatus uten duplikat.
+- `pages/login/logout_test.go` og `pages/login/login_test.go`: utlogging sletter cookies, og `/auth/session` lagrer eller avviser sesjonen.
+- `service/userctx/unauthenticated_test.go`, `service/authctx/forbidden_test.go` og `service/authctx/require_admin_test.go`: avvist tilgang for ikke-innlogget bruker og for bruker uten adminrolle.
 
 ## Roller
 
@@ -96,6 +107,11 @@ Denne sjekklisten dekker felles navigasjon, rolleopplevelse og tilgang på tvers
   **Gitt** at en registrert bruker ønsker å tilbakestille passordet sitt.<br>
   **Når** brukeren oppgir et nytt passord.<br>
   **Så** skal tilbakemeldingen være forståelig og brukeren blir sendt til rett side.
+
+- [ ] **Profilwidgeten på Min Side lar brukeren endre passord**<br>
+  **Gitt** at en innlogget bruker velger «Reset passord» på Min Side.<br>
+  **Når** Descope-profilwidgeten vises.<br>
+  **Så** skal widgeten laste lesbart og la brukeren endre passordet med forståelig tilbakemelding.
 
 - [ ] **Gyldig innlogging lander på forsiden**<br>
   **Gitt** at en bruker logger inn med gyldig konto.<br>

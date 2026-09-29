@@ -1,6 +1,6 @@
 # Romadministrasjon i admin
 
-Denne sjekklisten dekker `/admin/rooms` og `/admin/rooms/assignment/{pulje}`, der admin kan administrere rom og se romfordeling per pulje.
+Denne sjekklisten dekker `/admin/rooms` og `/admin/rooms/assignment/{pulje}`, der admin kan administrere rom og fordele arrangementer på rom per pulje.
 
 ## Roller
 
@@ -39,33 +39,53 @@ Denne sjekklisten dekker `/admin/rooms` og `/admin/rooms/assignment/{pulje}`, de
 
 - [ ] **Kartet tildeler rom i valgt pulje**<br>
   **Gitt** at rom på Terminus, 7. etasje, og arrangementer i flere puljer er registrert.<br>
-  **Når** admin drar et arrangement til et rom på kartet, eller velger et arrangement og klikker på rommet.<br>
+  **Når** admin drar et arrangement til et rom på kartet, eller trykker «+» på rommet og velger et arrangement.<br>
   **Så** lagres tildelingen bare i valgt pulje, antallet i rommet oppdateres, og arrangementet flyttes i romlisten. Romnummeret kobles til riktig rom-ID.
 
+- [ ] **Arrangementsvelgeren viser alle godkjente arrangementer**<br>
+  **Gitt** at det finnes arrangementer med status Godkjent eller Annonsert, både i og utenfor valgt pulje.<br>
+  **Når** admin trykker «+» på et rom.<br>
+  **Så** skal alle disse arrangementene vises med merket «Ikke i denne puljen», «Mangler rom» eller «Har rom – flyttes ved valg», og arrangementet som allerede er i rommet kan ikke velges på nytt. Uten slike arrangementer vises «Ingen godkjente arrangementer.».
+
+- [ ] **Arrangement fra en annen pulje legges til i puljen**<br>
+  **Gitt** at et godkjent arrangement ikke er med i valgt pulje.<br>
+  **Når** admin velger det i arrangementsvelgeren for et rom.<br>
+  **Så** skal arrangementet bli med i puljen med det valgte rommet, uten at tildelingene i andre puljer endres.
+
+- [ ] **Romtildeling kan fjernes**<br>
+  **Gitt** at et arrangement er tildelt et rom i valgt pulje.<br>
+  **Når** admin trykker «×» på arrangementskortet.<br>
+  **Så** skal arrangementet fortsatt være med i puljen, men vises som arrangement uten tildelt rom.
+
+- [ ] **Notater vises sammenfoldet på arrangementskort**<br>
+  **Gitt** at et arrangement har notater.<br>
+  **Når** arrangementet vises uten rom, i et rom eller i arrangementsvelgeren.<br>
+  **Så** skal notatene ligge sammenfoldet under «Notater» og holde seg åpne ved liveoppdatering når admin har åpnet dem. Arrangementer uten notater har ingen tom notatboks.
+
 - [ ] **Kartet fungerer med tastatur og på mobil**<br>
-  **Gitt** at admin har valgt et arrangement i nedtrekkslisten.<br>
-  **Når** admin aktiverer et rom med Enter/mellomrom eller trykker på rommet på mobil.<br>
-  **Så** tildeles arrangementet rommet uten at dra-og-slipp er nødvendig.
+  **Gitt** at admin bruker tastatur eller mobil.<br>
+  **Når** admin aktiverer «+» på et rom og deretter «+» på et arrangement i velgeren.<br>
+  **Så** tildeles arrangementet rommet uten at dra-og-slipp er nødvendig, og kartet kan rulles sidelengs på smal skjerm.
 
 - [ ] **Manglende og utdaterte romtildelinger håndteres**<br>
-  **Gitt** et rom som ikke er registrert, et arrangement som fjernes fra puljen, eller et kart som ikke lastes.<br>
+  **Gitt** et rom som ikke er registrert, et arrangement som ikke lenger er godkjent, en romtildeling som en annen admin allerede har endret, eller et kart som ikke lastes.<br>
   **Når** admin bruker romfordelingen.<br>
-  **Så** kan uregistrerte rom ikke velges på kartet, fjernede arrangementer avvises med en feil, og romlisten er fortsatt tilgjengelig hvis kartet ikke lastes. Endringer fra en annen admin oppdaterer kartets antall og hendelsesvelgeren.
+  **Så** kan uregistrerte rom ikke velges på kartet, arrangementer som ikke er godkjent avvises med en feil, utdatert fjerning av rom avvises med beskjed om å laste siden på nytt, og romlisten er fortsatt tilgjengelig hvis kartet ikke lastes. Endringer fra en annen admin oppdaterer romkortene og antallet i rommene.
 
 - [ ] **Romfordeling viser riktig pulje**<br>
-  **Gitt** at admin åpner romfordeling for en pulje.<br>
+  **Gitt** at admin åpner romfordeling for en pulje via fanene.<br>
   **Når** siden lastes.<br>
-  **Så** skal rom og tildelte arrangementer høre til riktig pulje.
+  **Så** skal rom og tildelte arrangementer høre til riktig pulje. `/admin/rooms/assignment/` og en ukjent pulje sender admin til Fredag kveld.
 
 - [ ] **Manglende romtildelinger er tydelige**<br>
   **Gitt** at arrangementer mangler rom i en pulje.<br>
   **Når** romfordelingen vises.<br>
-  **Så** skal de være tydelige som manglende tildelinger.
+  **Så** skal de listes med antall som arrangementer i puljen uten tildelt rom.
 
 - [ ] **Romtildeling flytter arrangementet riktig**<br>
   **Gitt** at admin tildeler et arrangement til et rom.<br>
   **Når** handlingen lykkes.<br>
-  **Så** skal arrangementet vises under riktig rom og ikke fortsatt som manglende rom.
+  **Så** skal arrangementet vises under riktig rom, ikke fortsatt som manglende rom, og siden skal bekrefte at romtildelingen er lagret.
 
 ### Mobil
 
