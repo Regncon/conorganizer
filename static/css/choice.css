@@ -12,7 +12,7 @@
  * .btn--secondary hover and focus rules.
  */
 :root {
-    --choice-selected-bg: color-mix(in srgb, var(--color-primary) 14%, var(--bg-item));
+    --choice-selected-bg: var(--chip-primary-bg);
     --choice-focus-shadow: var(--color-text-soft-50);
     --choice-shadow: var(--shadow-focus-size) var(--choice-focus-shadow);
     --choice-selected-focus-shadow: var(--color-primary-focus-visible);
@@ -41,18 +41,24 @@
 .choice-chip {
     padding-block: var(--spacing-2x);
     padding-inline: var(--btn-padding-x);
-    border: 1px solid var(--bg-item-border);
-    border-radius: 999px;
-    background: var(--bg-item);
+    border: 1px solid var(--level-3-border);
+    border-radius: 100vw;
+    background: var(--level-3-background);
     color: var(--color-text-soft);
     font: inherit;
     font-size: var(--btn-font-size);
     cursor: pointer;
     transition: var(--btn-transition);
 
-    &:hover {
-        border-color: var(--bg-item-border-hover);
+    &:is(:hover, :focus-visible) {
+        background: var(--level-3-background-hover);
+        border-color: var(--level-3-border-hover);
         color: var(--color-text-strong);
+    }
+
+    &:active {
+        background: var(--level-3-background-active);
+        border-color: var(--level-3-border-hover);
     }
 }
 
