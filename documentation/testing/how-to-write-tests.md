@@ -15,11 +15,19 @@ Målet er å skrive tester som:
 - Skriv alle tester på bokmål.
 - Skriv testene som avkrysningspunkter med kort tittel.
 - Skriv `Gitt / Når / Så` på tre egne linjer.
+- Ikke merk punktene med prioritet. Alt i sjekklistene skal fungere før launch.
 - Test oppførsel, ikke implementasjon.
 - Test fra brukerens perspektiv.
-- Inkluder både normal oppførsel, edge cases, feilhåndtering og kosmetiske forhold.
+- Inkluder både normal oppførsel, edge cases, feilhåndtering og kosmetiske forhold for siden eller flyten filen gjelder.
 - Anta at testeren kan tenke selv. Ikke skriv oppskrifter med detaljert testdata eller trinn-for-trinn-instruksjoner.
 - Vær konkret nok til at det er tydelig hva som skal observeres.
+
+## Språk
+
+- Manuelle sjekklister skrives på bokmål, som resten av brukerrettet tekst i appen (for eksempel «Mine billetter», «Hent billetter» og «Kjøp billetter»).
+- `Gitt / Når / Så` er bokmål og brukes som faste nøkkelord.
+- Bruk domeneordene fra `domeneordbok.md`, for eksempel billettholder og pulje, i stedet for å oversette dem.
+- BDD-metadata i Go-testene (`bdd.Behavior` med `Given` / `When` / `Then`) er i dag blandet: noen tester har engelsk tekst, andre bokmål med «Gitt at …», «Når …», «Så …». Det finnes ingen regel som velger det ene.
 
 ## Hva en god test skal beskrive
 
@@ -69,8 +77,16 @@ Hver testfil skal normalt inneholde:
 1. En kort tittel.
 2. En kort beskrivelse av hva siden eller flyten dekker.
 3. En tydelig angivelse av hvilken rolle som skal teste der det er relevant.
-4. En sjekkliste gruppert i korte `###`-seksjoner når filen har flere typer oppførsel.
+4. En sjekkliste gruppert i korte `###`-seksjoner etter type oppførsel når filen har flere typer oppførsel.
 5. Avkrysningspunkter med kort tittel og tre egne `Gitt / Når / Så`-linjer.
+
+Hvert punkt har nøyaktig dette formatet:
+
+- `- [ ]` etterfulgt av en kort tittel i fet skrift, avsluttet med `<br>`.
+- Tre innrykkede linjer som starter med **Gitt**, **Når** og **Så**.
+- Alle linjer unntatt den siste avsluttes med en eksplisitt `<br>`.
+
+Bruk `<br>` og ikke to mellomrom på slutten av linjen for linjeskift. Mellomrom på slutten av linjen gir feil i `git diff --check` og er ikke pålitelige i PDF-byggingen. `build-pdfs.sh` gjør `<br>` om til ekte linjeskift, se [Bygge PDF-er](./index.md#bygge-pdf-er).
 
 ## Roller
 
@@ -126,7 +142,7 @@ Mindre bra:
 
 ## Feilhåndtering og edge cases
 
-Hver fil skal inneholde egne punkter for edge cases og feilhåndtering. Disse skal ikke skyves over i en egen generell restliste hvis de hører naturlig hjemme i den konkrete siden eller flyten.
+Hver fil skal inneholde egne punkter for edge cases og feilhåndtering. Disse hører hjemme i filen for den konkrete siden eller flyten, og skal ikke skyves over i en egen generell restliste. Felles navigasjon, rolleopplevelse, innlogging og tilgangsfeil ligger i [Generelle tester](./general.md).
 
 Vi skal blant annet tenke på:
 
@@ -160,7 +176,7 @@ Mindre bra:
 
 Automatiseringskandidater skal ikke lagres som egne seksjoner i de manuelle testfilene. Slike lister blir raskt utdaterte.
 
-Når et manuelt punkt automatiseres, skal den automatiserte testen ha tydelig BDD-metadata øverst i testen. Bruk helst `bdd.Behavior(t, bdd.BDD{Given: "...", When: "...", Then: "..."})`; eldre BDD-kommentarer støttes fortsatt mens testene migreres. Kjør `task test:report` for å se hvilke automatiserte tester som finnes, hvilken BDD-metadata de har, og hvilke tester som mangler BDD-metadata.
+Når et manuelt punkt automatiseres, skal den automatiserte testen ha tydelig BDD-metadata øverst i testen. Kjør `go tool task test:report` for å se hvilke automatiserte tester som finnes og hvilke som mangler BDD-metadata. Se [Automatiserte tester](../automated-tests.md) for hvordan Go-testene skrives og hvordan rapporten fungerer.
 
 ## For utviklere
 
