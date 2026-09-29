@@ -11,6 +11,7 @@ when adding names check domeneordbok.md instead of translating to english
   - custom properties
   - logical properties
   - `:has()`
+  - `:is()` and `:where()` to group selectors, like `&:is(:hover, :focus-visible)` instead of separate `&:hover` and `&:focus-visible` rules
   - `clamp()`
   - `min()`
   - `max()`
@@ -18,10 +19,11 @@ when adding names check domeneordbok.md instead of translating to english
   - container query units like `cqw`, `cqh`, `cqi`, `cqb`
   - Use Range Syntax: Use modern comparison operators like @container (width > 500px)
   - place-content, place-items, place-self instead of align and justify
-- Do not use `&` in nesting unless a pseudo-class is targeting the parent.
+- Use `&` to attach to the parent selector, like `&:hover`, `&::after`, `&.selected` or `&[data-open]`, or to add context around it, like `.card:focus-visible &`.
+- Do not use `&` for Sass-style name joining, like `&-title` or `&__item`. It does not work in native CSS.
 - Keep selectors shallow and readable.
 - Avoid Sass-style CSS that does not work natively in browsers.
-- Avoid viewport media queries for components. Use `@container` instead.
+- Avoid viewport media queries for components. Use `@container` instead. Media queries about the device, like `(hover: hover)`, are fine.
 - Avoid min-width and max-with in range syntax
 - Use viewport media queries only for page-level/global layout concerns.
 
