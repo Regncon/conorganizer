@@ -92,7 +92,7 @@ templ roomsIndex(children templ.Component, puljeQuery models.Pulje) {
             }
 
             .tabs a.active {
-                background: var(--bg-surface);
+                background: var(--level-1-background);
                 border-color: var(--color-primary);
                 border-bottom: none;
                 color: var(--color-primary);
@@ -105,7 +105,7 @@ templ roomsIndex(children templ.Component, puljeQuery models.Pulje) {
                 border: 2px solid var(--color-primary);
                 border-radius: 0 0 var(--border-radius-2x) var(--border-radius-2x);
                 padding: var(--responsive-pane-padding);
-                background-color: var(--bg-surface);
+                background-color: var(--level-1-background);
             }
 
             dialog:open {
@@ -114,7 +114,7 @@ templ roomsIndex(children templ.Component, puljeQuery models.Pulje) {
                 --dialog-width: min(32.5rem, calc(100% - 16px));
                 visibility: visible;
                 width: var(--dialog-width);
-                background-color: var(--bg-surface);
+                background-color: var(--level-1-background);
                 border: none;
                 border-radius: var(--border-radius-2x);
                 padding: var(--responsive-pane-padding);
@@ -168,7 +168,7 @@ templ roomsIndex(children templ.Component, puljeQuery models.Pulje) {
                 padding: 0;
             }
             .modal-close-button:hover {
-                background: var(--bg-surface-hover);
+                background: var(--btn-ghost-hover-bg);
             }
         </style>
 		@roomNotesStyles()
