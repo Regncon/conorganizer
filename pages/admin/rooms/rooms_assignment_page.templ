@@ -549,7 +549,7 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             background-color: var(--color-primary);
         }
         .rooms-publish-switch input:focus-visible + .rooms-publish-switch-track {
-            box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
+            box-shadow: var(--btn-primary-shadow);
         }
 	</style>
 	{{ allEvents := getApprovedEventsForPulje(db, logger, pulje) }}
