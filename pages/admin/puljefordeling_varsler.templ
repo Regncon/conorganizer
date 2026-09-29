@@ -20,7 +20,12 @@ func fordelingsvarselOppsummering(varsel puljefordeling.Fordelingsvarsel) string
 templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordelingsvarsel, kapasitetsvarsler []puljefordeling.Kapasitetsvarsel, aldersvarsler []puljefordeling.Aldersvarsel) {
 	if len(varsler) > 0 || len(kapasitetsvarsler) > 0 || len(aldersvarsler) > 0 {
 		<section class="fordelingsvarsler" aria-labelledby={ "fordelingsvarsler-" + string(pulje) }>
-			<h3 id={ "fordelingsvarsler-" + string(pulje) }><span aria-hidden="true">⚠</span> Varsler om tildelinger</h3>
+			<h3 id={ "fordelingsvarsler-" + string(pulje) }>
+				<span aria-hidden="true">
+					@icons.Icon(icons.Warning, icons.Size20)
+				</span>
+				Varsler om tildelinger
+			</h3>
 			if len(aldersvarsler) > 0 {
 				<h4>Under 18 på 18+-arrangement</h4>
 				<p>Disse spillerne er under 18 år og er satt opp på et arrangement med 18-årsgrense. Aldersgrensen håndteres manuelt, så sjekk dem før puljen publiseres.</p>
@@ -96,6 +101,9 @@ templ puljeFordelingsvarsler(pulje models.Pulje, varsler []puljefordeling.Fordel
 				background: color-mix(in srgb, var(--varsel-farge) 10%, var(--bg-item));
 
 				h3 {
+					display: flex;
+					place-items: center;
+					gap: var(--spacing-2x);
 					margin-block-start: 0;
 					color: var(--varsel-farge);
 				}
