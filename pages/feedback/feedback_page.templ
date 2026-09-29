@@ -227,7 +227,7 @@ templ feedbackFormWrapper(preselected feedback.Category) {
 					for _, category := range feedback.Categories {
 						<button
 							type="button"
-							class="btn btn--outline choice-toggle"
+							class="btn btn--secondary choice-toggle"
 							aria-pressed={ fmt.Sprintf("%t", category == preselected) }
 							data-attr:aria-pressed={ fmt.Sprintf("$%s === '%s' ? 'true' : 'false'", feedbackCategorySignal, category) }
 							data-on:click={ feedbackCategoryClickExpr(category) }
@@ -316,7 +316,7 @@ templ feedbackThankYou(category feedback.Category) {
 	<div id={ feedbackFormElementID } class="feedback-thank-you">
 		<h2>Takk for tilbakemeldingen!</h2>
 		<p>Vi setter pris på at du tar deg tid til å hjelpe oss å gjøre Regncon bedre.</p>
-		<button type="button" class="btn btn--outline" data-on:click={ feedbackResetExpr(category) }>
+		<button type="button" class="btn btn--secondary" data-on:click={ feedbackResetExpr(category) }>
 			Send en tilbakemelding til
 		</button>
 	</div>

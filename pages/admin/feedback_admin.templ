@@ -183,9 +183,9 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 	<div class="page-content-container feedback-admin">
 		<h1 class="page-heading">Tilbakemeldinger</h1>
 		<nav class="feedback-filter-tabs" aria-label="Filtrer tilbakemeldinger">
-			<a href="/admin/tilbakemeldinger/" class="btn btn--outline" if activeCategory == "" { aria-current="page" }>Alle</a>
+			<a href="/admin/tilbakemeldinger/" class="btn btn--secondary" if activeCategory == "" { aria-current="page" }>Alle</a>
 			for _, category := range feedback.Categories {
-				<a href={ feedbackFilterHref(category) } class="btn btn--outline" if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
+				<a href={ feedbackFilterHref(category) } class="btn btn--secondary" if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
 			}
 		</nav>
 		<p class="feedback-count">{ feedbackCountLabel(len(entries)) }</p>
