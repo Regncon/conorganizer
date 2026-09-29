@@ -21,7 +21,7 @@
     --btn-primary-active-bg: var(--color-primary-active);
     --btn-primary-active-text: var(--color-text-strong);
     --btn-primary-focus-shadow: var(--color-primary-focus-visible);
-    --btn-primary-shadow: var(--btn-shadow-size) var(--btn-primary-focus-shadow);
+    --btn-primary-shadow: var(--shadow-focus-size) var(--btn-primary-focus-shadow);
 
     /* secondary */
     --btn-secondary-bg: transparent;
@@ -30,21 +30,18 @@
     --btn-secondary-active-bg: var(--btn-flat-active);
     --btn-secondary-active-text: var(--color-text-strong);
     --btn-secondary-focus-shadow: var(--color-text-soft-50);
-    --btn-secondary-shadow: var(--btn-shadow-size) var(--btn-secondary-focus-shadow);
+    --btn-secondary-shadow: var(--shadow-focus-size) var(--btn-secondary-focus-shadow);
 
     /* ghost */
     --btn-ghost-hover-bg: var(--btn-flat-hover);
     --btn-ghost-active-bg: var(--btn-flat-active);
     --btn-ghost-focus-shadow: var(--color-text-soft-50);
-    --btn-ghost-shadow: var(--btn-shadow-size) var(--btn-ghost-focus-shadow);
+    --btn-ghost-shadow: var(--shadow-focus-size) var(--btn-ghost-focus-shadow);
 
     /* disabled */
     --btn-disabled-bg: transparent;
     --btn-disabled-border: var(--color-text-soft);
     --btn-disabled-text: var(--color-text-soft);
-
-    /* shadow */
-    --btn-shadow-size: 0 0 0 3px;
 }
 
 /* Base */

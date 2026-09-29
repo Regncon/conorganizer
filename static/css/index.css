@@ -133,6 +133,7 @@
 
     /* shadow */
     --shadow-dialog: 0 19px 38px hsl(0deg 0% 0% / 30%), 0 15px 12px hsl(0deg 0% 0% / 22%);
+    --shadow-focus-size: 0 0 0 3px;
 
     /* content width */
     --page-content-max-width: 1440px;
