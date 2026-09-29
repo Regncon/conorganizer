@@ -73,7 +73,7 @@ func ConvertTicketToBillettholderRoute(
 }
 
 templ ticketCard(ticket checkIn.CheckInTicket, isBllettholder bool, searchTerm string) {
-	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
+	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; color: var(--color-text-strong);">
 		<p style="margin:0;">
 			<strong>Bestilling:</strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(ticket.OrderID), searchTerm))
 		</p>
