@@ -302,9 +302,20 @@
     text-decoration: none;
     padding: var(--spacing-3x) var(--spacing-4x);
     border-radius: var(--border-radius-1x);
-    border: 1px solid var(--bg-item-border);
+    background-color: var(--level-3-background);
+    border: 1px solid var(--level-3-border);
     cursor: pointer;
     font-size: var(--text-body-small);
+
+    &:is(:hover, :focus-visible) {
+        background-color: var(--level-3-background-hover);
+        border-color: var(--level-3-border-hover);
+    }
+
+    &:focus-visible {
+        outline: 3px solid var(--color-text-soft-50);
+        outline-offset: 2px;
+    }
 
     .profile-event-bar-title {
         font-weight: normal;
@@ -313,14 +324,4 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-}
-
-.profile-event-bar:hover,
-.profile-event-bar:focus-visible {
-    filter: brightness(110%);
-}
-
-.profile-event-bar:focus-visible {
-    outline: 3px solid var(--color-text-soft-50);
-    outline-offset: 2px;
 }

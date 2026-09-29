@@ -383,11 +383,11 @@ hr {
 }
 
 .input {
-    background-color: var(--bg-item);
+    background-color: var(--level-3-background);
     color: var(--color-text-soft);
     border-radius: var(--border-radius-2x);
     min-height: 2.6rem;
-    border: 1px solid var(--bg-item-border);
+    border: 1px solid var(--level-3-border);
     font-size: 1rem;
     padding-inline-start: 1rem;
     margin: 0;
@@ -443,7 +443,7 @@ hr {
 }
 
 .slider::-moz-range-track {
-    background: var(--bg-item-border);
+    background: var(--level-3-background);
 }
 
 /* WebKit (Chrome/Edge/Safari): thumb only; track fill can’t be styled separately with pure CSS */
@@ -452,7 +452,7 @@ hr {
 }
 
 .slider::-webkit-slider-runnable-track {
-    background: var(--bg-item-border);
+    background: var(--level-3-background);
 }
 
 input {
@@ -535,7 +535,7 @@ input {
 
 .item-card {
     padding: 1rem;
-    background-color: var(--bg-item);
+    background-color: var(--level-2-background);
     border-radius: var(--border-radius-2x);
 }
 
