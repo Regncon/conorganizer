@@ -31,24 +31,24 @@
 
 .card-clickable--level-2 {
     color: var(--color-text-strong);
-    background-color: var(--bg-surface);
-    border-color: var(--bg-surface-border);
+    background-color: var(--level-2-background);
+    border-color: var(--level-2-border);
 
     &:not(.selected):hover,
     &:not(.selected):focus-visible {
-        background-color: var(--bg-surface-hover);
-        border-color: var(--bg-surface-border-hover);
+        background-color: var(--level-2-background-hover);
+        border-color: var(--level-2-border-hover);
         outline-color: var(--color-text-soft-50);
     }
 
     &:not(.selected):active {
-        background-color: var(--bg-surface-active);
-        border-color: var(--bg-surface-border-hover);
+        background-color: var(--level-2-background-active);
+        border-color: var(--level-2-border-hover);
     }
 
     &[disabled]:not(.selected) {
-        background-color: var(--bg-surface);
-        border-color: var(--bg-surface-border);
+        background-color: var(--level-1-background);
+        border-color: var(--level-2-border);
     }
 }
 
