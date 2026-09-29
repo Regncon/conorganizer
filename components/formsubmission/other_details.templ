@@ -244,7 +244,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 	<article class="form-card">
 		<h4 class="form-card-title">Andre detaljer</h4>
 		<section class="details-section">
-			<label class="label-small color-strong form-group age-group">
+			<label class="label-bold color-strong form-group age-group">
 				Aldersgruppe
 				<select
 					id="age-group"
@@ -266,7 +266,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				<p class="label">Hvilken alder er arrangementet anbefalt for?</p>
 				<p data-text={ ageGroupDescriptionExpression() }>{ ageGroupDescription(ageGroup) }</p>
 			</article>
-			<label for="runtime" class="label-small color-strong form-group runtime">
+			<label for="runtime" class="label-bold color-strong form-group runtime">
 				Varighet
 				<select
 					id="runtime"
@@ -290,10 +290,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 			</article>
 			<section class="form-group beginner-friendly">
 				<div class="checkbox-label">
-					<span class="label-small color-strong">
+					<span class="label-bold color-strong">
 						Nybegynnervennlig arrangement
 					</span>
-					<span class="label-small" style="text-align:end; font-weight: 400;">Valgfritt</span>
+					<span class="label-bold" style="text-align:end; font-weight: 400;">Valgfritt</span>
 				</div>
 				<label class="checkbox-background form-group-checkbox">
 					<input
@@ -321,8 +321,8 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 			</section>
 			<section class="form-group english">
 				<div class="checkbox-label">
-					<span class="label-small color-strong">Kan holdes på engelsk</span>
-					<span class="label-small" style="text-align:end; font-weight:400;">Valgfritt</span>
+					<span class="label-bold color-strong">Kan holdes på engelsk</span>
+					<span class="label-bold" style="text-align:end; font-weight:400;">Valgfritt</span>
 				</div>
 				<label class="checkbox-background form-group-checkbox">
 					<input
@@ -348,7 +348,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					(så finner du eventuelt ut av det med deltakerne når arrangementet starter)
 				</p>
 			</article>
-			<label class="label-small color-strong form-group player-count">
+			<label class="label-bold color-strong form-group player-count">
 				Maks antall spillere (utenom arrangør)
 				<input
 					name="max-players"
@@ -373,7 +373,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					Har du mulighet til å ha litt flere spillere enn du opprinnelig tenkte?
 				</p>
 			</article>
-			<label class="label-small color-strong form-group other-notes">
+			<label class="label-bold color-strong form-group other-notes">
 				Andre merknader – er det for eksempel noen tidspunkt det ikke passer å holde arrangementet?
 				<textarea
 					name="other-notes"

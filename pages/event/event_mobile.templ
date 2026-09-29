@@ -162,7 +162,7 @@ templ Event_mobile(
 						margin: 0;
 					}
 
-					.label-small {
+					.label-bold {
 						font-size: 12px;
 						font-weight: bold;
 						/* lmao hack to make the icon overflow the label */
@@ -364,12 +364,12 @@ templ Event_mobile(
 				<div class="event-details">
 					<div class="event-details-section event-details-top">
 						<div class="event-detail-group">
-							<span class="label-small color-strong">Arrangør</span>
+							<span class="label-bold color-strong">Arrangør</span>
 							<p title={ event.HostName }>{ event.HostName } </p>
 						</div>
 						<div class="event-detail-group">
 							<div class="event-details-type">
-								<span class="label-small color-strong">
+								<span class="label-bold color-strong">
 									if event.EventType == models.EventTypeRoleplay {
 										<span>{ event.EventType.Label() }</span>
 										@icons.Icon(icons.EventRoleplay, icons.Size16)

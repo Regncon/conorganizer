@@ -182,7 +182,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 	<article class="form-card">
 		<h4 class="form-card-title">Om arrangementet</h4>
 		<section class="about-section">
-			<label class="label-small color-strong form-group title">
+			<label class="label-bold color-strong form-group title">
 				Tittel
 				<div
 					data-signals={ components.DataSignals(map[string]string{"title": title}) }
@@ -203,7 +203,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 				/>
 				@errorfeedback.RenderMessage("title")
 			</label>
-			<label class="label-small color-strong form-group intro">
+			<label class="label-bold color-strong form-group intro">
 				Kjapp introduksjon
 				<textarea
 					name="intro"
@@ -222,7 +222,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 				</textarea>
 				@errorfeedback.RenderMessage("intro")
 			</label>
-			<label class="label-small color-strong form-group type">
+			<label class="label-bold color-strong form-group type">
 				Type arrangement
 				<select
 					data-signals={ components.DataSignals(map[string]models.EventType{"type": eventType}) }
@@ -245,7 +245,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 				style={ templ.KV(templ.SafeCSS(fmt.Sprintf("--image-upload-background-image-banner: url(%s);", imgUrlBanner)), hasUploadedImage),
                     templ.KV(templ.SafeCSS(fmt.Sprintf("--image-upload-background-image-card: url(%s);", imgUrlCard)), hasUploadedImage) }
 			>
-				<p class="label-small color-strong">Arrangementsbilde</p>
+				<p class="label-bold color-strong">Arrangementsbilde</p>
 				<div
 					class={ "image-upload__panel", templ.KV("image-upload__panel--has-image", hasUploadedImage) }
 				>
@@ -278,7 +278,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 					</a>
 				</div>
 			</section>
-			<label class="label-small color-strong form-group system">
+			<label class="label-bold color-strong form-group system">
 				<p
 					data-signals={ components.DataSignals(map[string]string{"system": system}) }
 				>
@@ -299,7 +299,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 				/>
 				@errorfeedback.RenderMessage("system")
 			</label>
-			<label class="label-small color-strong form-group description">
+			<label class="label-bold color-strong form-group description">
 				Beskrivelse av arrangementet
 				<textarea
 					name="description"

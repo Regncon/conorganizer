@@ -426,9 +426,9 @@ hr {
     font-size: var(--text-body-small);
 }
 
-.label-small {
+.label-bold {
+    font-size: var(--text-label);
     font-weight: 600;
-    font-size: 12px;
 }
 
 .form-group {
