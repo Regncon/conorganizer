@@ -169,6 +169,9 @@ templ puljeAlerts(blocks []program.PuljeBlock, now time.Time) {
 		.pulje-alert.is-completed {
 			--pulje-alert-color: var(--color-success);
 		}
+		.pulje-alert.is-closing {
+			--pulje-alert-icon-size: 20px;
+		}
 
 		@container main (width > 600px) {
 			.pulje-alerts:has(.pulje-alert) {

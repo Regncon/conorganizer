@@ -47,7 +47,7 @@ func puljeAlertFor(pulje models.PuljeRow) (puljeAlert, bool) {
 			return puljeAlert{
 				Message:  "Interessevalget stenger snart! Hvis du vil endre valgene dine for kommende pulje, gjør det nå.",
 				Class:    "is-closing",
-				Icon:     icons.WarningOutline,
+				Icon:     icons.Warning,
 				LinkHref: "#" + puljeAnchorID(pulje.ID),
 			}, true
 		}

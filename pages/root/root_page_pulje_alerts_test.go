@@ -326,7 +326,7 @@ func TestPuljeAlertFor_DescribesEachPuljeState(t *testing.T) {
 	})
 
 	// Given
-	closingAlert := puljeAlert{Message: closingAlertText, Class: "is-closing", Icon: icons.WarningOutline, LinkHref: "#pulje-FredagKveld"}
+	closingAlert := puljeAlert{Message: closingAlertText, Class: "is-closing", Icon: icons.Warning, LinkHref: "#pulje-FredagKveld"}
 	lockedAlert := puljeAlert{Message: lockedAlertText, Class: "is-locked", Icon: icons.ClockLock}
 	completedAlert := puljeAlert{Message: completedAlertText, Class: "is-completed", Icon: icons.ProgressComplete}
 	cases := []struct {
