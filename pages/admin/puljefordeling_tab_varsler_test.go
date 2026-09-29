@@ -31,6 +31,10 @@ func TestPuljefordeling_CapacityWarningListsEveryPlayer(t *testing.T) {
 	if warning.Length() != 1 {
 		t.Fatalf("forventet ett kapasitetsvarsel, fikk %d", warning.Length())
 	}
+	heading := doc.Find(".fordelingsvarsler h3")
+	if heading.Find("svg").Length() != 1 || strings.Contains(heading.Text(), "⚠") {
+		t.Errorf("overskriften skal vise varselikonet i stedet for emoji, fikk %q", heading.Text())
+	}
 	for _, text := range []string{"Arrangement X", "5 / 4 spillerplasser"} {
 		if !strings.Contains(warning.Find("summary").Text(), text) {
 			t.Errorf("kapasitetsvarselet mangler %q", text)
