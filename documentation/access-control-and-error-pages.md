@@ -74,7 +74,7 @@ Both pages are in Bokmål and render inside `layouts.Base`.
 | Page title | `Logg inn` | `Ingen tilgang` |
 | Heading | `Du må logge inn` | `Du har ikke tilgang` |
 | Text | `Logg inn for å se denne siden.` | `Du er logget inn, men denne siden krever administratortilgang.` |
-| Links | Primary `Logg inn` to `/auth?neste=<requested path and query>` (plain `/auth` for `/`), outline `Gå til arrangementslisten` to `/` | Primary `Gå til arrangementslisten` to `/` |
+| Links | Primary `Logg inn` to `/auth?neste=<requested path and query>` (plain `/auth` for `/`), secondary `Gå til arrangementslisten` to `/` | Primary `Gå til arrangementslisten` to `/` |
 
 `userctx.UserMiddleware` builds the `Logg inn` link with `loginHrefWithNeste(r)` (`service/userctx/unauthenticated.go`). It takes the request's path and raw query and URL-encodes them into the `neste` parameter, so `/tilbakemelding?om=festivalen` gives `/auth?neste=%2Ftilbakemelding%3Fom%3Dfestivalen`. See [Login return target](#login-return-target-neste).
 
