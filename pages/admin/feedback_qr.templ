@@ -1,0 +1,202 @@
+package admin
+
+import (
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"strings"
+
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/qrcode"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/feedback"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
+)
+
+// feedbackQRRoute registers the printable QR code page for the feedback form.
+func feedbackQRRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+	router.Get("/tilbakemeldinger/qr", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		userInfo := userctx.GetUserRequestInfo(ctx)
+
+		category := resolveFeedbackCategoryFilter(r.URL.Query().Get("om"))
+		formURL := feedbackFormURL(r, category)
+		svg, err := qrcode.SVG(formURL)
+		if err != nil {
+			logger.Error(fmt.Errorf("failed to draw feedback qr code: %w", err).Error(), "user_id", userInfo.Id)
+			http.Error(w, "Klarte ikke å lage QR-koden.", http.StatusInternalServerError)
+			return
+		}
+
+		if err := layouts.Base(
+			"QR-kode for tilbakemeldinger",
+			userInfo,
+			db,
+			logger,
+			feedbackQRPage(formURL, svg, category),
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render feedback qr page: %w", err).Error(), "user_id", userInfo.Id)
+		}
+	})
+}
+
+// feedbackFormURL is the absolute URL of the public feedback form, on the host
+// the admin is using, optionally opening with a category chosen.
+func feedbackFormURL(r *http.Request, category feedback.Category) string {
+	url := requestScheme(r) + "://" + r.Host + "/tilbakemelding"
+	if category != "" {
+		url += "?om=" + category.Slug()
+	}
+	return url
+}
+
+// requestScheme is https when the request arrived over TLS or through a proxy
+// that says so, and http otherwise.
+func requestScheme(r *http.Request) string {
+	if r.TLS != nil {
+		return "https"
+	}
+	for proto := range strings.SplitSeq(r.Header.Get("X-Forwarded-Proto"), ",") {
+		if strings.EqualFold(strings.TrimSpace(proto), "https") {
+			return "https"
+		}
+	}
+	if strings.Contains(strings.ToLower(r.Header.Get("Forwarded")), "proto=https") {
+		return "https"
+	}
+	return "http"
+}
+
+func feedbackQRHref(category feedback.Category) string {
+	if category == "" {
+		return "/admin/tilbakemeldinger/qr"
+	}
+	return "/admin/tilbakemeldinger/qr?om=" + category.Slug()
+}
+
+func feedbackQRLead(category feedback.Category) string {
+	if category == "" {
+		return "Skann koden med mobilkameraet og fortell oss hva du synes."
+	}
+	return "Skann koden med mobilkameraet og fortell oss hva du synes om " + strings.ToLower(category.Label()) + "."
+}
+
+templ feedbackQRPage(formURL string, svg string, activeCategory feedback.Category) {
+	<div class="no-print">
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Admin", Url: "/admin/"},
+			{Name: "Tilbakemeldinger", Url: "/admin/tilbakemeldinger/"},
+			{Name: "QR-kode", Url: ""},
+		})
+	</div>
+	<style>
+		.feedback-qr {
+			container: feedback-qr / inline-size;
+			display: grid;
+			gap: var(--responsive-page-section-spacing);
+		}
+
+		.feedback-qr-controls {
+			display: grid;
+			gap: var(--spacing-3x);
+
+			p {
+				margin: 0;
+				color: var(--color-text-soft);
+			}
+		}
+
+		.feedback-qr-choices {
+			display: flex;
+			flex-wrap: wrap;
+			gap: var(--spacing-2x);
+
+			a[aria-current="page"] {
+				border-color: var(--color-primary);
+				color: var(--color-primary);
+			}
+		}
+
+		.feedback-qr-sheet {
+			display: grid;
+			place-items: center;
+			gap: var(--spacing-4x);
+			padding: var(--spacing-8x, 2rem) var(--spacing-5x);
+			border-radius: var(--border-radius-2x);
+			background: #fff;
+			color: #000;
+			text-align: center;
+
+			h2 {
+				margin: 0;
+				font-size: clamp(1.75rem, 6cqi, 3rem);
+				color: #000;
+			}
+
+			p {
+				margin: 0;
+				max-inline-size: 40ch;
+				font-size: clamp(1rem, 2.5cqi, 1.35rem);
+			}
+		}
+
+		.feedback-qr-code {
+			inline-size: min(100%, 22rem);
+
+			svg {
+				display: block;
+				inline-size: 100%;
+				block-size: auto;
+			}
+		}
+
+		.feedback-qr-url {
+			font-family: var(--font-mono, monospace);
+			font-size: 1rem;
+			overflow-wrap: anywhere;
+		}
+
+		@media print {
+			@page { size: A4; margin: 15mm; }
+			html { color-scheme: light; background: #fff; }
+			body { background: #fff; color: #000; }
+			main { padding: 0; }
+			.feedback-qr-sheet {
+				min-block-size: 250mm;
+				place-content: center;
+				padding: 0;
+				border-radius: 0;
+			}
+			.feedback-qr-sheet h2 { font-size: 34pt; }
+			.feedback-qr-sheet p { font-size: 16pt; }
+			.feedback-qr-code { inline-size: 130mm; }
+			.feedback-qr-url { font-size: 13pt; }
+		}
+	</style>
+	<div class="page-content-container feedback-qr">
+		<div class="feedback-qr-controls no-print">
+			<h1 class="page-heading">QR-kode for tilbakemeldinger</h1>
+			<p>Velg hva skjemaet skal åpne med, og skriv ut arket. Koden peker til tilbakemeldingsskjemaet på denne nettsiden.</p>
+			<nav class="feedback-qr-choices" aria-label="Velg kategori for QR-koden">
+				<a href={ feedbackQRHref("") } class="btn btn--outline" if activeCategory == "" { aria-current="page" }>Alle</a>
+				for _, category := range feedback.Categories {
+					<a href={ feedbackQRHref(category) } class="btn btn--outline" if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
+				}
+			</nav>
+			<div>
+				<button type="button" class="btn btn--primary" onclick="window.print()">Skriv ut</button>
+			</div>
+		</div>
+		<section class="feedback-qr-sheet" aria-labelledby="feedback-qr-title">
+			<h2 id="feedback-qr-title">Gi oss tilbakemelding!</h2>
+			<p>{ feedbackQRLead(activeCategory) }</p>
+			<div class="feedback-qr-code" role="img" aria-label={ "QR-kode til " + formURL }>
+				@templ.Raw(svg)
+			</div>
+			<p class="feedback-qr-url">{ formURL }</p>
+		</section>
+	</div>
+}

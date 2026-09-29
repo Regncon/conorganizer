@@ -80,6 +80,8 @@ func feedbackAdminRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 			logger.Error(fmt.Errorf("failed to patch feedback list: %w", err).Error(), "user_id", userInfo.Id)
 		}
 	})
+
+	feedbackQRRoute(router, db, logger)
 }
 
 // resolveFeedbackCategoryFilter maps the ?om= query slug to a category.
@@ -294,6 +296,9 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 	</style>
 	<div class="page-content-container feedback-admin">
 		<h1 class="page-heading">Tilbakemeldinger</h1>
+		<div>
+			<a href="/admin/tilbakemeldinger/qr" class="btn btn--outline">Skriv ut QR-kode</a>
+		</div>
 		<nav class="feedback-filter-tabs" aria-label="Filtrer tilbakemeldinger">
 			<a href="/admin/tilbakemeldinger/" class="btn btn--outline" if activeCategory == "" { aria-current="page" }>Alle</a>
 			for _, category := range feedback.Categories {
