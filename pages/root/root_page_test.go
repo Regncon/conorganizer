@@ -1,7 +1,6 @@
 package root
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -12,26 +11,26 @@ import (
 
 var userInfo = requestctx.UserRequestInfo{}
 
-func TestRootPageContent_RendersHomeBreadcrumb(t *testing.T) {
+func TestRootPageContent_DoesNotRenderBreadcrumb(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren åpner forsiden.",
 		When:  "Når forsiden vises.",
-		Then:  "Så skal brødsmulestien vise Hjem som gjeldende side.",
+		Then:  "Så skal det ikke vises noen brødsmulesti.",
 	})
 
 	// Given
-	expectedBreadcrumb := []string{"Hjem"}
+	expectedBreadcrumbVisible := false
 
 	db := createRootPageTestDB(t)
 	setProgramPublishing(t, db, false)
 
 	// When
 	doc := templtest.Render(t, rootPageContent(db, nil))
-	actualBreadcrumb := templtest.CollectTexts(doc, ".breadcrumb-end")
+	actualBreadcrumbVisible := templtest.HasSelector(doc, ".breadcrumb-container")
 
 	// Then
-	if !slices.Equal(expectedBreadcrumb, actualBreadcrumb) {
-		t.Fatalf("breadcrumb mismatch\nexpected: %v\nactual:   %v", expectedBreadcrumb, actualBreadcrumb)
+	if actualBreadcrumbVisible != expectedBreadcrumbVisible {
+		t.Fatalf("breadcrumb visibility mismatch\nexpected: %v\nactual:   %v", expectedBreadcrumbVisible, actualBreadcrumbVisible)
 	}
 }
 

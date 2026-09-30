@@ -163,7 +163,7 @@ func renderRootPageAs(t *testing.T, db *sql.DB, email string) *goquery.Document 
 
 	ctx := authctx.WithUserToken(context.Background(), "interest-test-user", email)
 	var html bytes.Buffer
-	if err := rootPageContentForDate(db, nil, "2026-10-09").Render(ctx, &html); err != nil {
+	if err := rootPageContentForDate(db, nil, "2026-10-09", rootPageTestNow).Render(ctx, &html); err != nil {
 		t.Fatalf("render root page: %v", err)
 	}
 	doc, err := goquery.NewDocumentFromReader(&html)

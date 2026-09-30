@@ -5,11 +5,26 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/program"
 	"github.com/Regncon/conorganizer/testutil"
 )
+
+// Must stay before every fixture pulje starts, or their alerts are hidden as expired.
+var rootPageTestNow = time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC)
+
+func programLocation(t *testing.T) *time.Location {
+	t.Helper()
+
+	location, err := program.Location()
+	if err != nil {
+		t.Fatalf("failed to load program time zone: %v", err)
+	}
+	return location
+}
 
 func createRootPageTestDB(t *testing.T) *sql.DB {
 	t.Helper()
@@ -71,6 +86,19 @@ func insertRootPagePuljeWithDetails(t *testing.T, db *sql.DB, puljeID models.Pul
 		INSERT INTO puljer(id, name, status, start_at, end_at)
 		VALUES(?, ?, ?, ?, ?)
 	`, puljeID, name, models.PuljeStatusOpen, startAt, endAt)
+}
+
+func insertFridayPuljeStartingAt(t *testing.T, db *sql.DB, startAt time.Time) {
+	t.Helper()
+
+	endAt := startAt.Add(5 * time.Hour)
+	insertRootPagePuljeWithDetails(t, db, models.PuljeFredagKveld, "Fredag kveld", startAt.Format(time.RFC3339), endAt.Format(time.RFC3339))
+}
+
+func setRootPagePuljeStatus(t *testing.T, db *sql.DB, puljeID models.Pulje, status models.PuljeStatus, closingWarningActive bool) {
+	t.Helper()
+
+	mustExec(t, db, `UPDATE puljer SET status = ?, closing_warning_active = ? WHERE id = ?`, status, closingWarningActive, puljeID)
 }
 
 func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus, isInPuljefordeling bool) {
