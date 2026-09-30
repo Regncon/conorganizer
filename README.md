@@ -45,21 +45,19 @@ for templates to generate and the server to compile.
 
 The first time Caddy starts, trust its local certificate authority for your
 user account. Keep Docker Compose running, open another terminal, and run the
-command for your operating system. 
+command for your operating system.
 
 Windows PowerShell:
 
-If you get this error message:
-\scripts\trust-docker-ca.ps1 cannot be
-loaded because running scripts is disabled on this system.
-
-Run this command
-```powershell
-Set-ExecutionPolicy Unrestricted
-```
-
 ```powershell
 .\scripts\trust-docker-ca.ps1
+```
+
+If PowerShell refuses with `running scripts is disabled on this system`, run
+the script with a bypass that only applies to that one process:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\trust-docker-ca.ps1
 ```
 
 Linux or macOS:
