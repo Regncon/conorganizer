@@ -132,8 +132,6 @@ templ puljeAlerts(blocks []program.PuljeBlock, now time.Time) {
 			--pulje-alert-color: var(--color-warning);
 			--pulje-alert-border-width: 2px;
 			--pulje-alert-icon-size: 24px;
-			--pulje-alert-tint-start: 26%;
-			--pulje-alert-tint-end: 21%;
 
 			display: flex;
 			gap: var(--spacing-2x);
@@ -141,11 +139,7 @@ templ puljeAlerts(blocks []program.PuljeBlock, now time.Time) {
 			margin: 0;
 			padding: var(--spacing-3x);
 			border-block: var(--pulje-alert-border-width) solid var(--pulje-alert-color);
-			background: linear-gradient(
-				to right,
-				color-mix(in srgb, var(--pulje-alert-color) var(--pulje-alert-tint-start), var(--bg-surface)),
-				color-mix(in srgb, var(--pulje-alert-color) var(--pulje-alert-tint-end), var(--bg-surface))
-			);
+			background: var(--color-yellow-background-gradient);
 			color: var(--color-text-strong);
 			font-size: var(--text-body-small);
 			font-weight: 700;
@@ -168,6 +162,7 @@ templ puljeAlerts(blocks []program.PuljeBlock, now time.Time) {
 		}
 		.pulje-alert.is-completed {
 			--pulje-alert-color: var(--color-success);
+			background: var(--color-green-background-gradient);
 		}
 		.pulje-alert.is-closing {
 			--pulje-alert-icon-size: 20px;
