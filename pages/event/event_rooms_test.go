@@ -3,6 +3,7 @@ package event
 import (
 	"database/sql"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -401,5 +402,45 @@ func TestUnassignedEventKeepsItsPublishedSchedule(t *testing.T) {
 	}
 	if doc.Find(".event-room-button").Length() != 0 {
 		t.Fatal("unassigned event has a map button")
+	}
+}
+
+func TestEventSchedule_ProgramEventShowsItsTimePerDayInsteadOfPuljeTimes(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et programarrangement fredag kveld, og hele lørdagen i samme rom med tidspunktet «Hele dagen» i begge lørdagspuljene.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så viser tidsplanen tidspunktet per dag, én gang for lørdag, og ikke puljetidene.",
+	})
+
+	// Given
+	expectedSchedule := []string{"Fredag 9.10 · 18:00–20:00", "Lørdag 10.10 · Hele dagen"}
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE events SET is_in_puljefordeling = 0 WHERE id = 'room-event'`)
+	for _, pulje := range []struct {
+		id      models.Pulje
+		name    string
+		startAt string
+	}{
+		{models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-10T10:00:00+02:00"},
+		{models.PuljeLordagKveld, "Lørdag kveld", "2026-10-10T18:00:00+02:00"},
+	} {
+		seedEventVisibilityPulje(t, db, pulje.id)
+		testutil.MustExec(t, db, `UPDATE puljer SET name = ?, start_at = ? WHERE id = ?`, pulje.name, pulje.startAt, pulje.id)
+		seedEventVisibilityEventPulje(t, db, "room-event", pulje.id, true)
+	}
+	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = 42, program_time = 'Hele dagen' WHERE event_id = 'room-event'`)
+	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET program_time = '18:00–20:00' WHERE event_id = 'room-event' AND pulje_id = ?`, models.PuljeFredagKveld)
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+
+	// When
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	schedule := templtest.CollectTexts(doc, ".event-room-button .event-room-schedule > span")
+	if !slices.Equal(schedule, expectedSchedule) {
+		t.Fatalf("program event schedule = %q, want %q", schedule, expectedSchedule)
+	}
+	if strings.Contains(doc.Find(".event-room-list").Text(), "18:30 - 23:00") {
+		t.Fatal("program event schedule still shows the pulje time")
 	}
 }

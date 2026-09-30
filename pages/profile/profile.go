@@ -130,6 +130,9 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 					newApiIdRouter.Route("/assign-room", func(putAssignedRoomRouter chi.Router) {
 						formsubmission.UpdateRoomInPulje(putAssignedRoomRouter, db, liveManager, logger)
 					})
+					newApiIdRouter.Route("/program-time", func(putProgramTimeRouter chi.Router) {
+						formsubmission.UpdateProgramTimeInPulje(putProgramTimeRouter, db, liveManager, logger)
+					})
 
 					newApiIdRouter.Route("/status", func(putStatusRouter chi.Router) {
 						formsubmission.UpdateStatus(putStatusRouter, db, liveManager, logger)

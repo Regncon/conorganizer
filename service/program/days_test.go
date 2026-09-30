@@ -138,9 +138,9 @@ func TestBuildDays_PreservesEmptyDaysAndDeduplicatesProgramWithinEachLocalDay(t 
 		{ID: models.PuljeLordagKveld, StartAt: models.NewDBDateTime(time.Date(2026, 10, 3, 18, 0, 0, 0, time.UTC))},
 		{ID: models.PuljeSondagMorgen, StartAt: models.NewDBDateTime(time.Date(2026, 10, 4, 8, 0, 0, 0, time.UTC))},
 	}
-	programEvent := models.EventCardModel{Id: "shared-program"}
-	raffleEvent := models.EventCardModel{Id: "shared-raffle", IsInPuljefordeling: true}
-	events := map[models.Pulje][]models.EventCardModel{
+	programEvent := puljeEvent{Event: models.EventCardModel{Id: "shared-program"}}
+	raffleEvent := puljeEvent{Event: models.EventCardModel{Id: "shared-raffle", IsInPuljefordeling: true}}
+	events := map[models.Pulje][]puljeEvent{
 		models.PuljeLordagMorgen: {programEvent, raffleEvent},
 		models.PuljeLordagKveld:  {programEvent, raffleEvent},
 		models.PuljeSondagMorgen: {programEvent},
@@ -159,7 +159,7 @@ func TestBuildDays_PreservesEmptyDaysAndDeduplicatesProgramWithinEachLocalDay(t 
 		t.Fatal("empty Friday contains events")
 	}
 	for _, index := range []int{1, 2} {
-		if len(days[index].ProgramEvents) != 1 || days[index].ProgramEvents[0].Event.Id != programEvent.Id {
+		if len(days[index].ProgramEvents) != 1 || days[index].ProgramEvents[0].Event.Id != programEvent.Event.Id {
 			t.Fatalf("program events on %s = %v, want one shared program event", days[index].QueryValue(), days[index].ProgramEvents)
 		}
 	}
@@ -174,7 +174,7 @@ func TestBuildDays_PreservesEmptyDaysAndDeduplicatesProgramWithinEachLocalDay(t 
 	}
 	for _, block := range days[1].Blocks {
 		raffleEvents := block.RaffleEvents()
-		if len(raffleEvents) != 1 || raffleEvents[0].Id != raffleEvent.Id {
+		if len(raffleEvents) != 1 || raffleEvents[0].Id != raffleEvent.Event.Id {
 			t.Fatalf("raffle events in %s = %v, want shared raffle event", block.Pulje.ID, raffleEvents)
 		}
 	}

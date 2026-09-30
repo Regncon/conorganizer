@@ -92,7 +92,7 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 							for _, row := range programEventRows(publishedDay.ProgramEvents) {
 								<div class={ "program-event-row", templ.KV("reversed", row.Reversed) }>
 									for _, programEvent := range row.Events {
-										@components.ProgramEventCard(programEvent.Event, eventImageDir, string(programEvent.PuljeID), publishedDay.QueryValue())
+										@components.ProgramEventCard(programEvent.Event, eventImageDir, string(programEvent.PuljeID), publishedDay.QueryValue(), programEvent.Times)
 									}
 								</div>
 							}

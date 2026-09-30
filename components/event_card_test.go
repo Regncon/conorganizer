@@ -1,9 +1,11 @@
 package components
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
@@ -64,7 +66,7 @@ func TestProgramEventCard_RendersTheReducedProgramPresentation(t *testing.T) {
 		CanBeRunInEnglish: true,
 	}
 
-	doc := templtest.Render(t, ProgramEventCard(event, nil, "LordagKveld", "2026-10-10"))
+	doc := templtest.Render(t, ProgramEventCard(event, nil, "LordagKveld", "2026-10-10", nil))
 	card := doc.Find(".program-event-card")
 
 	if got := card.Length(); got != 1 {
@@ -87,5 +89,46 @@ func TestProgramEventCard_RendersTheReducedProgramPresentation(t *testing.T) {
 	}
 	if got := card.Find(".event-card-tagicon-container").Length(); got != 5 {
 		t.Fatalf("program card tag icon count = %d, want 5", got)
+	}
+}
+
+func TestProgramEventCard_ShowsEachTimeOnItsOwnLine(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et programarrangement med to tidspunkter samme dag.",
+		When:  "Når programkortet vises.",
+		Then:  "Så står hvert tidspunkt på egen linje.",
+	})
+
+	// Given
+	expectedTimes := []string{"10:00–12:00", "19:00–21:00"}
+	event := models.EventCardModel{Id: "program-event", Title: "Program Event"}
+
+	// When
+	doc := templtest.Render(t, ProgramEventCard(event, nil, "LordagMorgen", "2026-10-03", expectedTimes))
+
+	// Then
+	got := templtest.CollectTexts(doc, ".program-event-card-times li")
+	if !slices.Equal(got, expectedTimes) {
+		t.Fatalf("program card times = %q, want %q", got, expectedTimes)
+	}
+}
+
+func TestProgramEventCard_ShowsNoTimeWhenNoneIsWritten(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et programarrangement uten tidspunkt.",
+		When:  "Når programkortet vises.",
+		Then:  "Så vises ingen tid på kortet.",
+	})
+
+	// Given
+	expectedTimeLists := 0
+	event := models.EventCardModel{Id: "program-event", Title: "Program Event"}
+
+	// When
+	doc := templtest.Render(t, ProgramEventCard(event, nil, "LordagMorgen", "2026-10-03", nil))
+
+	// Then
+	if got := doc.Find(".program-event-card-times").Length(); got != expectedTimeLists {
+		t.Fatalf("program card time lists = %d, want %d", got, expectedTimeLists)
 	}
 }

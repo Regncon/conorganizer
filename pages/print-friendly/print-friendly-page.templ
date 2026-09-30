@@ -32,7 +32,8 @@ func PrintFriendlyRoute(router chi.Router, db *sql.DB, eventImageDir *string, lo
 }
 
 type printOccurrence struct {
-	Pulje      models.PuljeRow
+	Pulje       models.PuljeRow
+	ProgramTime string
 	RoomID     int
 	RoomName   string
 	RoomNumber string
@@ -47,11 +48,13 @@ type printEvent struct {
 }
 
 type printRoomGroup struct {
-	Room       printOccurrence
-	Puljer     []models.PuljeRow
+	Room   printOccurrence
+	Puljer []program.PuljeTime
+	// Schedule is when the event is in this room, one line each.
+	Schedule []string
 }
 
-func groupPrintRooms(occurrences []printOccurrence) []printRoomGroup {
+func groupPrintRooms(occurrences []printOccurrence, isProgramEvent bool) ([]printRoomGroup, error) {
 	groups := make([]printRoomGroup, 0, len(occurrences))
 	for _, occurrence := range occurrences {
 		index := -1
@@ -65,9 +68,16 @@ func groupPrintRooms(occurrences []printOccurrence) []printRoomGroup {
 			groups = append(groups, printRoomGroup{Room: occurrence})
 			index = len(groups) - 1
 		}
-		groups[index].Puljer = append(groups[index].Puljer, occurrence.Pulje)
+		groups[index].Puljer = append(groups[index].Puljer, program.PuljeTime{Pulje: occurrence.Pulje, ProgramTime: occurrence.ProgramTime})
 	}
-	return groups
+	for index := range groups {
+		schedule, err := program.EventSchedule(groups[index].Puljer, isProgramEvent)
+		if err != nil {
+			return nil, err
+		}
+		groups[index].Schedule = schedule
+	}
+	return groups, nil
 }
 
 type printPuljeBlock struct {
@@ -145,8 +155,8 @@ func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
 		SELECT e.id, e.title, e.intro, e.description, e.system, e.event_type,
 			e.age_group, e.event_runtime, e.host_name, e.user_id, e.email,
 			e.phone_number, e.max_players, e.beginner_friendly,
-			e.can_be_run_in_english, e.notes, e.status,
-			e.pulje_id, e.pulje_name, e.pulje_start_at, e.pulje_end_at,
+			e.can_be_run_in_english, e.notes, e.status, e.is_in_puljefordeling,
+			e.pulje_id, e.program_time, e.pulje_name, e.pulje_start_at, e.pulje_end_at,
 			p.rooms_published,
 			COALESCE(e.room_id, 0), COALESCE(e.room_name, ''),
 			COALESCE(e.room_number, ''), COALESCE(e.room_floor, 0)
@@ -173,8 +183,8 @@ func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
 			&row.Event.AgeGroup, &row.Event.Runtime, &row.Event.HostName,
 			&row.Event.UserID, &row.Event.Email, &row.Event.PhoneNumber,
 			&row.Event.MaxPlayers, &row.Event.BeginnerFriendly,
-			&row.Event.CanBeRunInEnglish, &row.Event.Notes, &row.Event.Status,
-			&puljeID, &puljeName, &startAt, &endAt,
+			&row.Event.CanBeRunInEnglish, &row.Event.Notes, &row.Event.Status, &row.Event.IsInPuljefordeling,
+			&puljeID, &row.Occurrence.ProgramTime, &puljeName, &startAt, &endAt,
 			&roomsPublished,
 			&roomID, &row.Occurrence.RoomName,
 			&row.Occurrence.RoomNumber, &row.Occurrence.RoomFloor,
@@ -205,11 +215,15 @@ templ printEventSheet(dayLabel string, groupLabel string, item printEvent, event
 			<span class="print-sheet-group">{ groupLabel }</span>
 		</div>
 		@event.Event_mobile(&item.Event, components.PreviousNext{}, nil, eventImageDir) {
+			{{ groups, err := groupPrintRooms(item.Occurrences, !item.Event.IsInPuljefordeling) }}
+			if err != nil {
+				{{ return err }}
+			}
 			<div class="print-room-list">
-				for _, group := range groupPrintRooms(item.Occurrences) {
+				for _, group := range groups {
 					<div class="print-room">
-						for _, pulje := range group.Puljer {
-							<p>{ pulje.Name } · { pulje.TimeRange() }</p>
+						for _, line := range group.Schedule {
+							<p class="print-room-time">{ line }</p>
 						}
 						if group.Room.HasRoom {
 							<p>{ group.Room.RoomName } (rom { group.Room.RoomNumber }, { fmt.Sprintf("%d. etasje", group.Room.RoomFloor) })</p>

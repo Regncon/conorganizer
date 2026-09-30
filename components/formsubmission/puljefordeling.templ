@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
@@ -159,13 +160,54 @@ func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, liveManager *live.Mana
 	})
 }
 
+func UpdateProgramTimeInPulje(programTimeRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
+	programTimeRouter.Put("/{puljeId}", func(w http.ResponseWriter, r *http.Request) {
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Arrangement-ID mangler", http.StatusBadRequest)
+			return
+		}
+		puljeID := models.Pulje(chi.URLParam(r, "puljeId"))
+
+		var store struct {
+			ProgramTime map[models.Pulje]string `json:"programTime"`
+		}
+		if err := datastar.ReadSignals(r, &store); err != nil {
+			logger.Error(fmt.Errorf("failed to read program time signal: %w", err).Error())
+			http.Error(w, "Klarte ikke å lese skjemadata", http.StatusBadRequest)
+			return
+		}
+		// A missing signal must not be saved as an empty time, which would hide the time.
+		programTime, ok := store.ProgramTime[puljeID]
+		if !ok {
+			http.Error(w, "Tidspunkt mangler for puljen", http.StatusBadRequest)
+			return
+		}
+
+		if err := updateProgramTimeInRelationEventPuljeWithAudit(r.Context(), db, logger, eventID, string(puljeID), programTime); err != nil {
+			logger.Error(fmt.Errorf("failed to update program time for event %s and pulje %s: %w", eventID, puljeID, err).Error())
+			http.Error(w, "Klarte ikke å oppdatere tidspunktet for puljen", http.StatusInternalServerError)
+			return
+		}
+
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast program time update for event %s and pulje %s: %w", eventID, puljeID, err).Error())
+			http.Error(w, "Klarte ikke å sende oppdatering", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	})
+}
+
 func getEventPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventPulje, error) {
 	query := `
             SELECT
                 event_id,
                 pulje_id,
                 is_in_pulje,
-                room_id
+                room_id,
+                program_time
             FROM relation_event_puljer
             WHERE event_id = ? AND pulje_id = ?
             `
@@ -182,6 +224,7 @@ func getEventPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.Event
 			&event.PuljeID,
 			&event.IsInPulje,
 			&event.RoomID,
+			&event.ProgramTime,
 		); err != nil {
 			return models.EventPulje{}, err
 		}
@@ -225,11 +268,12 @@ func getRoomsPuljeByFloor(db *sql.DB, pulje models.Pulje) []FloorGroupPulje {
 	return result
 }
 
-templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
+templ puljeRow(eventId string, pulje models.PuljeRow, isInPuljefordeling bool, db *sql.DB) {
 	{{
 		eventPulje, err := getEventPulje(eventId, pulje.ID, db)
 		membershipErrorKey := fmt.Sprintf("puljeMembership%s", pulje.ID)
 		roomErrorKey := fmt.Sprintf("puljeRoom%s", pulje.ID)
+		programTimeErrorKey := fmt.Sprintf("puljeProgramTime%s", pulje.ID)
 	}}
 	if err != nil {
 		<p>Klarte ikke å hente arrangementspulje: { err.Error() }</p>
@@ -300,6 +344,32 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 					</label>
 					@errorfeedback.RenderMessage(roomErrorKey)
 				</div>
+				// Only program events show this time. Pulje events follow the pulje times.
+				<div
+					class="feedback-control-group"
+					data-show="!$isInPuljefordeling"
+					style={ templ.KV("display: none;", isInPuljefordeling) }
+				>
+					<label
+						class="form-group"
+						style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
+						data-signals={ components.DataSignals(map[string]map[models.Pulje]string{"programTime": {pulje.ID: eventPulje.ProgramTime}}) }
+					>
+						<span class="label-small color-strong">Tidspunkt</span>
+						<input
+							type="text"
+							class="input"
+							data-bind={ fmt.Sprintf("programTime.%s", pulje.ID) }
+							{ errorfeedback.Attrs(programTimeErrorKey)... }
+							data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/program-time/%s')", eventId, pulje.ID) }
+							placeholder="F.eks. Hele dagen"
+							if !eventPulje.IsInPulje {
+								disabled
+							}
+						/>
+					</label>
+					@errorfeedback.RenderMessage(programTimeErrorKey)
+				</div>
 			</div>
 		</div>
 	</div>
@@ -327,7 +397,7 @@ templ puljefordeling(eventId string, isInPuljefordeling bool, db *sql.DB) {
 				return
 			}
 			for _, pulje := range puljer {
-				@puljeRow(eventId, pulje, db)
+				@puljeRow(eventId, pulje, isInPuljefordeling, db)
 			}
 		</section>
 	</article>

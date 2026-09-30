@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -84,6 +85,38 @@ func SetEventInPulje(ctx context.Context, db *sql.DB, logger *slog.Logger, event
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit pulje update for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	return nil
+}
+
+// updateProgramTimeInRelationEventPuljeWithAudit stores the "Tidspunkt" a
+// program event shows for one pulje. It is free text, since admins also use it
+// for time related notes like "Hele dagen", and an empty text shows no time.
+func updateProgramTimeInRelationEventPuljeWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, programTime string) error {
+	updatedByID, err := currentUserDBID(ctx, db, logger)
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("start program time update transaction for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	defer tx.Rollback()
+
+	const update = `
+		UPDATE relation_event_puljer
+		SET program_time = ?
+		WHERE event_id = ? AND pulje_id = ?
+	`
+	if _, err := tx.ExecContext(ctx, update, strings.TrimSpace(programTime), eventID, puljeID); err != nil {
+		return fmt.Errorf("update program time for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	if err := touchEventUpdatedAtWithUserID(ctx, tx, eventID, updatedByID); err != nil {
+		return fmt.Errorf("touch event after program time update for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit program time update for event %q and pulje %q: %w", eventID, puljeID, err)
 	}
 	return nil
 }

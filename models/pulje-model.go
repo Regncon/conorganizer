@@ -98,4 +98,5 @@ type EventPulje struct {
 	PuljeID     Pulje         `json:"pulje_id"`
 	IsInPulje   bool          `json:"isInPulje"`
 	RoomID      sql.NullInt64 `json:"room_id"`
+	ProgramTime string        `json:"program_time"`
 }

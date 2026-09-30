@@ -56,6 +56,18 @@ I puljefordelingen går billettholdere som ikke har fått førstevalg ennå, for
 
 I koden heter dette `first_choice` og `Forstevalg`, og i fordelingen (`solver`) `satisfied` og `top choice`.
 
+## Tidspunkt for programarrangement
+Som admin vil jeg skrive når et programarrangement skjer, slik at billettholderne ser riktig tid i stedet for puljetiden.
+
+Et [programarrangement](#interesse) følger ikke puljetidene. Det ligger likevel i puljer, fordi puljen bestemmer hvilken dag det vises på og hvilket rom det har. Tiden skrives i feltet "Tidspunkt" for hver pulje i kortet "Puljefordeling" i arrangementsskjemaet (`relation_event_puljer.program_time`). Feltet vises bare når arrangementet ikke er med i puljefordelingen.
+
+* Tidspunktet er fritekst, for eksempel "19:00–21:00" eller "Hele dagen". Det brukes bare til visning, så det valideres ikke.
+* Tomt tidspunkt betyr at ingen tid vises. Da vises heller ikke puljetiden.
+* Et arrangement som varer hele dagen, legges i begge puljene den dagen for å ha rommet hele dagen. Hvert tidspunkt vises bare én gang per dag, så "Hele dagen" i begge puljene vises én gang.
+* Programkortet på forsiden viser dagens tidspunkter, ett per linje. Arrangementssiden og utskriftsvennlig program viser dag og tidspunkt, for eksempel "Lørdag 3.10 · Hele dagen", eller bare dagen når tidspunktet er tomt.
+
+Regelen ligger i `service/program/program_times.go`. Arrangementer i puljefordelingen viser fortsatt puljenavn og puljetid.
+
 ## Påmelding
 Påmelding er ikke en egen funksjon i systemet. Langvarige arrangementer som alle som vil kan være med på, for eksempel "Blood on the clock tower" eller "Cosplay", legges inn som [programarrangementer](#interesse) uten puljefordeling. Der trenger man ikke melde seg på eller reservere plass.
 

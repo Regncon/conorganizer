@@ -56,6 +56,11 @@ func assignPrintEvent(t *testing.T, db *sql.DB, eventID string, puljeID models.P
 	`, eventID, puljeID, roomID)
 }
 
+func setPrintProgramTime(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, programTime string) {
+	t.Helper()
+	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET program_time = ? WHERE event_id = ? AND pulje_id = ?`, programTime, eventID, puljeID)
+}
+
 func insertPrintRoom(t *testing.T, db *sql.DB, id int, name, number string) {
 	t.Helper()
 	testutil.MustExec(t, db, `INSERT INTO rooms(id, name, room_number, floor, max_concurrent_games) VALUES (?, ?, ?, 7, 1)`, id, name, number)
@@ -119,11 +124,12 @@ func TestPrintFriendlyPage_ShowsOneMapForAProgramEventUsingTheSameRoomTwice(t *t
 	bdd.Behavior(t, bdd.BDD{
 		Given: "A program event runs in two puljer on the same day in one room.",
 		When:  "The printable program is rendered.",
-		Then:  "Its single sheet lists both times and prints the room map once.",
+		Then:  "Its single sheet lists both of its program times and prints the room map once.",
 	})
 
 	// Given
 	expectedMap := "/static/rooms/terminus-7-etasje-710.svg"
+	expectedTimes := []string{"Lørdag 10.10 · 10:00–12:00", "Lørdag 10.10 · 19:00–21:00"}
 	db := createPrintPageTestDB(t)
 	insertPrintPulje(t, db, models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
 	insertPrintPulje(t, db, models.PuljeLordagKveld, "Lørdag kveld", "2026-10-10T18:00:00Z", "2026-10-10T23:00:00Z")
@@ -131,12 +137,14 @@ func TestPrintFriendlyPage_ShowsOneMapForAProgramEventUsingTheSameRoomTwice(t *t
 	insertPrintEvent(t, db, "shared-program", "Shared Program", false)
 	assignPrintEvent(t, db, "shared-program", models.PuljeLordagMorgen, 710)
 	assignPrintEvent(t, db, "shared-program", models.PuljeLordagKveld, 710)
+	setPrintProgramTime(t, db, "shared-program", models.PuljeLordagMorgen, "10:00–12:00")
+	setPrintProgramTime(t, db, "shared-program", models.PuljeLordagKveld, "19:00–21:00")
 
 	// When
 	doc := templtest.Render(t, printFriendlyPage(db, nil, testutil.NewTestLogger()))
 	sheet := doc.Find("article.print-event-sheet")
 	actualMaps := printSheetMapSources(sheet)
-	actualTimes := strings.Join(strings.Fields(sheet.Find(".print-room").Text()), " ")
+	actualTimes := templtest.CollectTexts(doc, "article.print-event-sheet .print-room-time")
 
 	// Then
 	if sheet.Length() != 1 {
@@ -145,8 +153,8 @@ func TestPrintFriendlyPage_ShowsOneMapForAProgramEventUsingTheSameRoomTwice(t *t
 	if !slices.Equal(actualMaps, []string{expectedMap}) {
 		t.Fatalf("room maps = %v, want one %q", actualMaps, expectedMap)
 	}
-	if !strings.Contains(actualTimes, "Lørdag morgen · 10:00 - 15:00") || !strings.Contains(actualTimes, "Lørdag kveld · 18:00 - 23:00") {
-		t.Fatalf("printed times = %q, want both puljer", actualTimes)
+	if !slices.Equal(actualTimes, expectedTimes) {
+		t.Fatalf("printed times = %q, want %q", actualTimes, expectedTimes)
 	}
 }
 

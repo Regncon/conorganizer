@@ -98,6 +98,7 @@ Code locations:
 - `DBDateTime` parses them and keeps the stored offset. `PuljeRow.TimeRange()` formats the stored clock time as is (`Format("15:04")`, no timezone conversion). The stored value must therefore hold Oslo wall-clock time.
 - Test fixtures use explicit Oslo offsets, for example `2026-10-09T18:30:00+02:00`. The `initialize.sql` seed uses `Z` timestamps, but their clock time is meant as Oslo time.
 - The front page decides which day a pulje belongs to by converting `start_at` to `Europe/Oslo` (`service/program/days.go`).
+- Program events (`events.is_in_puljefordeling = 0`) do not show pulje times. They show the free-text time written for each pulje instead; see [Tidspunkt for programarrangement](../domeneordbok.md#tidspunkt-for-programarrangement).
 - No time-based logic uses these timestamps for warnings or locking.
 
 ## Interest messages and states

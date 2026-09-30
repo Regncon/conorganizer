@@ -140,7 +140,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		{{ logger.Error(roomsErr.Error(), "event_id", eventId) }}
 	}
 	@Event_mobile(event, previousNextData, interestPanel, eventImageDir) {
-		@eventRoomLocations(eventId, roomAssignments)
+		@eventRoomLocations(eventId, !event.IsInPuljefordeling, roomAssignments)
 	}
 	if showInterestControls {
 		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, event.Title, event.AgeGroup, eventImageDir, associatedTicketHolders, db, r, logger)

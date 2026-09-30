@@ -103,6 +103,24 @@
         padding-top: 0;
         padding-bottom: 0;
     }
+
+    /* The program times sit above the tag icons. */
+    .program-event-card-aside {
+        display: flex;
+        flex-direction: column;
+        place-content: center;
+        place-items: end;
+        gap: var(--spacing-1x);
+    }
+
+    .program-event-card-times {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        text-align: end;
+        color: var(--color-primary);
+        font-size: var(--text-body-small);
+    }
 }
 
 .event-card-container:hover,

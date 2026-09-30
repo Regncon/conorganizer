@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"strings"
 	"github.com/Regncon/conorganizer/components/icons"
-	"github.com/Regncon/conorganizer/models"
 )
 
-templ eventRoomLocations(eventID string, assignments []eventRoom) {
+templ eventRoomLocations(eventID string, isProgramEvent bool, assignments []eventRoom) {
 	{{
-		groups := groupEventRooms(assignments)
+		groups, err := groupEventRooms(assignments, isProgramEvent)
+		if err != nil {
+			return err
+		}
 		// Clear a withdrawn map selection so publishing it again does not reopen it.
 		availableDialogIDs := []string{}
 		for _, assignment := range assignments {
@@ -31,7 +33,7 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 			@eventRoomStyles()
 			<div class="event-room-list">
 				for _, group := range groups {
-					{{ dialogID := eventRoomDialogID(eventID, group.Puljer[0].ID) }}
+					{{ dialogID := eventRoomDialogID(eventID, group.Puljer[0].Pulje.ID) }}
 					<div class="event-room-entry">
 						if group.MapPath != "" {
 							<button
@@ -42,7 +44,7 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 								aria-controls={ dialogID }
 								data-on:click={ fmt.Sprintf("$_eventRoomMapDialog = %q", dialogID) }
 							>
-								@eventRoomTimes(group.Puljer)
+								@eventRoomTimes(group.Schedule)
 								<span class="event-room-name">{ group.Room.Name }</span>
 								<span class="event-room-action">
 									Se rommet
@@ -53,12 +55,12 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 							</button>
 						} else if group.Room.ID != 0 {
 							<div class="event-room-unmapped">
-								@eventRoomTimes(group.Puljer)
+								@eventRoomTimes(group.Schedule)
 								<span class="event-room-name">{ group.Room.Name }</span>
 							</div>
 						} else {
 							<div class="event-schedule-unassigned">
-								@eventRoomTimes(group.Puljer)
+								@eventRoomTimes(group.Schedule)
 							</div>
 						}
 						@eventRoomNote(group.Room.PublicNotes)
@@ -79,10 +81,10 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 	</div>
 }
 
-templ eventRoomTimes(puljer []models.PuljeRow) {
+templ eventRoomTimes(schedule []string) {
 	<span class="event-room-schedule">
-		for _, pulje := range puljer {
-			<span>{ fmt.Sprintf("%s · %s", pulje.Name, pulje.TimeRange()) }</span>
+		for _, line := range schedule {
+			<span>{ line }</span>
 		}
 	</span>
 }
@@ -119,7 +121,7 @@ templ eventRoomDialog(dialogID string, group eventRoomGroup) {
 			</header>
 			<p class="event-room-floor">{ fmt.Sprintf("%d. etasje", group.Room.Floor) }</p>
 			<h2 id={ dialogID + "-title" }>{ group.Room.Name }</h2>
-			@eventRoomTimes(group.Puljer)
+			@eventRoomTimes(group.Schedule)
 			@eventRoomNote(group.Room.PublicNotes)
 			<img
 				src={ group.MapPath }

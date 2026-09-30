@@ -62,7 +62,14 @@ func GetAnnouncedEvents(db *sql.DB) ([]models.EventCardModel, error) {
 	return events, nil
 }
 
-func getEventsByPulje(db *sql.DB) (map[models.Pulje][]models.EventCardModel, error) {
+// puljeEvent is an announced event in one pulje, with the time it shows there
+// if it is a program event.
+type puljeEvent struct {
+	Event       models.EventCardModel
+	ProgramTime string
+}
+
+func getEventsByPulje(db *sql.DB) (map[models.Pulje][]puljeEvent, error) {
 	const q = `
 		SELECT
 			e.id,
@@ -78,7 +85,8 @@ func getEventsByPulje(db *sql.DB) (map[models.Pulje][]models.EventCardModel, err
 			e.can_be_run_in_english,
 			e.is_in_puljefordeling,
 
-			e.pulje_id
+			e.pulje_id,
+			e.program_time
 		FROM v_events_by_pulje_active e
 		ORDER BY e.pulje_start_at ASC, e.title COLLATE NOCASE ASC, e.id ASC
 	`
@@ -89,11 +97,12 @@ func getEventsByPulje(db *sql.DB) (map[models.Pulje][]models.EventCardModel, err
 	}
 	defer rows.Close()
 
-	out := make(map[models.Pulje][]models.EventCardModel)
+	out := make(map[models.Pulje][]puljeEvent)
 
 	for rows.Next() {
 		var ev models.EventCardModel
 		var puljeID models.Pulje
+		var programTime string
 
 		if err := rows.Scan(
 			&ev.Id,
@@ -110,11 +119,12 @@ func getEventsByPulje(db *sql.DB) (map[models.Pulje][]models.EventCardModel, err
 			&ev.IsInPuljefordeling,
 
 			&puljeID,
+			&programTime,
 		); err != nil {
 			return nil, fmt.Errorf("scan event by pulje: %w", err)
 		}
 
-		out[puljeID] = append(out[puljeID], ev)
+		out[puljeID] = append(out[puljeID], puljeEvent{Event: ev, ProgramTime: programTime})
 	}
 
 	if err := rows.Err(); err != nil {

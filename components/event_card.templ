@@ -7,7 +7,9 @@ import (
 	"github.com/Regncon/conorganizer/service/program"
 )
 
-templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, pulje string, date string) {
+// ProgramEventCard shows a program event on one day. times are what an admin
+// wrote as "Tidspunkt" for the event's puljer that day, one line each.
+templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, pulje string, date string, times []string) {
 	{{ imageUrl := eventimage.GetEventImageUrl(eventCard.Id, "card", eventImageDir) }}
 	<a
 		href={ templ.URL(program.EventURL(eventCard.Id, pulje, date)) }
@@ -35,8 +37,17 @@ templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, p
 					Legg til en kort beskrivelse
 				}
 			</p>
-			<div class="event-card-footer-tagicons">
-				@eventCardTagIcons(eventCard)
+			<div class="program-event-card-aside">
+				if len(times) > 0 {
+					<ul class="program-event-card-times">
+						for _, programTime := range times {
+							<li>{ programTime }</li>
+						}
+					</ul>
+				}
+				<div class="event-card-footer-tagicons">
+					@eventCardTagIcons(eventCard)
+				</div>
 			</div>
 		</div>
 	</a>

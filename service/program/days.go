@@ -34,6 +34,8 @@ type Day struct {
 type EventOccurrence struct {
 	Event   models.EventCardModel
 	PuljeID models.Pulje
+	// Times is what the program event card shows for the day, one line each.
+	Times []string
 }
 
 func (day Day) QueryValue() string {
@@ -78,34 +80,39 @@ func GetDays(db *sql.DB) ([]Day, error) {
 }
 
 // buildDays keeps puljer in their query order (start time ascending).
-func buildDays(puljer []models.PuljeRow, eventsByPulje map[models.Pulje][]models.EventCardModel, location *time.Location) []Day {
+func buildDays(puljer []models.PuljeRow, eventsByPulje map[models.Pulje][]puljeEvent, location *time.Location) []Day {
 	days := make([]Day, 0)
-	var seenProgramEvents map[string]struct{}
+	var programEventIndex map[string]int
 	for _, pulje := range puljer {
 		date := programDate(pulje.StartAt.TimeOrZero(), location)
 		if len(days) == 0 || !days[len(days)-1].Date.Equal(date) {
 			days = append(days, Day{Date: date})
-			seenProgramEvents = make(map[string]struct{})
+			programEventIndex = make(map[string]int)
 		}
 
 		// Keep the day available even when this pulje has no announced events.
-		events := eventsByPulje[pulje.ID]
-		if len(events) == 0 {
+		puljeEvents := eventsByPulje[pulje.ID]
+		if len(puljeEvents) == 0 {
 			continue
 		}
 		day := &days[len(days)-1]
-		day.Blocks = append(day.Blocks, PuljeBlock{Pulje: pulje, Events: events})
-		for _, event := range events {
-			if event.IsInPuljefordeling {
+		block := PuljeBlock{Pulje: pulje, Events: make([]models.EventCardModel, 0, len(puljeEvents))}
+		for _, puljeEvent := range puljeEvents {
+			block.Events = append(block.Events, puljeEvent.Event)
+			if puljeEvent.Event.IsInPuljefordeling {
 				continue
 			}
-			if _, seen := seenProgramEvents[event.Id]; seen {
-				continue
+			index, seen := programEventIndex[puljeEvent.Event.Id]
+			if !seen {
+				// A program event links to its first occurrence on this day.
+				index = len(day.ProgramEvents)
+				programEventIndex[puljeEvent.Event.Id] = index
+				day.ProgramEvents = append(day.ProgramEvents, EventOccurrence{Event: puljeEvent.Event, PuljeID: pulje.ID})
 			}
-			// A program event links to its first occurrence on this day.
-			day.ProgramEvents = append(day.ProgramEvents, EventOccurrence{Event: event, PuljeID: pulje.ID})
-			seenProgramEvents[event.Id] = struct{}{}
+			occurrence := &day.ProgramEvents[index]
+			occurrence.Times = appendProgramTime(occurrence.Times, puljeEvent.ProgramTime)
 		}
+		day.Blocks = append(day.Blocks, block)
 	}
 	return days
 }

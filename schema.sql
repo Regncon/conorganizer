@@ -60,6 +60,7 @@ CREATE TABLE relation_event_puljer(
   is_in_pulje INTEGER NOT NULL DEFAULT 1 CHECK(is_in_pulje IN(0, 1)),
   is_published INTEGER NOT NULL DEFAULT 0 CHECK(is_published IN(0, 1)),
   room_id INTEGER,
+  program_time TEXT NOT NULL DEFAULT '',
   PRIMARY KEY(event_id, pulje_id),
   FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE,
   FOREIGN KEY(pulje_id) REFERENCES puljer(id) ON UPDATE CASCADE,
@@ -89,7 +90,8 @@ CREATE TABLE "rooms"(
   floor INTEGER NOT NULL,
   max_concurrent_games INTEGER NOT NULL,
   admin_notes TEXT NOT NULL DEFAULT '',
-  is_disabled INTEGER NOT NULL DEFAULT 0 CHECK(is_disabled IN(0, 1)),
+  is_disabled INTEGER NOT NULL DEFAULT 0 CHECK(is_disabled IN(0, 1))
+  ,
   public_notes TEXT NOT NULL DEFAULT ''
 ) STRICT;
 CREATE TABLE "events"(
@@ -206,47 +208,6 @@ CREATE TABLE "relation_events_players"(
   FOREIGN KEY(event_id) REFERENCES events(id),
   FOREIGN KEY(pulje_id) REFERENCES puljer(id)
 ) STRICT;
-CREATE VIEW v_events_by_pulje_active AS
-SELECT
-    e.id AS id,
-    e.title,
-    e.intro,
-    e.description,
-    e.system,
-    e.event_type,
-    e.age_group,
-    e.event_runtime,
-    e.host_name,
-    e.user_id,
-    e.email,
-    e.phone_number,
-    e.max_players,
-    e.beginner_friendly,
-    e.can_be_run_in_english,
-    e.notes,
-    e.status,
-    e.created_at,
-    e.is_in_puljefordeling AS is_in_puljefordeling,
-    ep.is_published AS is_published,
-    ep.pulje_id,
-    ep.room_id,
-    r.room_number,
-    r.name AS room_name,
-    r.floor AS room_floor,
-    r.max_concurrent_games AS room_max_concurrent_games,
-    r.admin_notes AS room_notes,
-    r.is_disabled AS room_is_disabled,
-    p.name AS pulje_name,
-    p.start_at AS pulje_start_at,
-    p.end_at AS pulje_end_at
-FROM events e
-INNER JOIN relation_event_puljer ep ON ep.event_id = e.id
-INNER JOIN puljer p ON p.id = ep.pulje_id
-LEFT JOIN rooms r ON r.id = ep.room_id
-WHERE
-    e.status = 'Annonsert'
-    AND ep.is_in_pulje = 1
-/* v_events_by_pulje_active(id,title,intro,description,system,event_type,age_group,event_runtime,host_name,user_id,email,phone_number,max_players,beginner_friendly,can_be_run_in_english,notes,status,created_at,is_in_puljefordeling,is_published,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at) */;
 CREATE VIEW v_event_puljer_active AS
 SELECT
     ep.event_id,
@@ -276,3 +237,45 @@ CREATE TABLE feedback(
   created_at TEXT NOT NULL DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 ) STRICT;
 CREATE INDEX idx_feedback_created_at ON feedback(created_at);
+CREATE VIEW v_events_by_pulje_active AS
+SELECT
+    e.id AS id,
+    e.title,
+    e.intro,
+    e.description,
+    e.system,
+    e.event_type,
+    e.age_group,
+    e.event_runtime,
+    e.host_name,
+    e.user_id,
+    e.email,
+    e.phone_number,
+    e.max_players,
+    e.beginner_friendly,
+    e.can_be_run_in_english,
+    e.notes,
+    e.status,
+    e.created_at,
+    e.is_in_puljefordeling AS is_in_puljefordeling,
+    ep.is_published AS is_published,
+    ep.pulje_id,
+    ep.room_id,
+    ep.program_time,
+    r.room_number,
+    r.name AS room_name,
+    r.floor AS room_floor,
+    r.max_concurrent_games AS room_max_concurrent_games,
+    r.admin_notes AS room_notes,
+    r.is_disabled AS room_is_disabled,
+    p.name AS pulje_name,
+    p.start_at AS pulje_start_at,
+    p.end_at AS pulje_end_at
+FROM events e
+INNER JOIN relation_event_puljer ep ON ep.event_id = e.id
+INNER JOIN puljer p ON p.id = ep.pulje_id
+LEFT JOIN rooms r ON r.id = ep.room_id
+WHERE
+    e.status = 'Annonsert'
+    AND ep.is_in_pulje = 1
+/* v_events_by_pulje_active(id,title,intro,description,system,event_type,age_group,event_runtime,host_name,user_id,email,phone_number,max_players,beginner_friendly,can_be_run_in_english,notes,status,created_at,is_in_puljefordeling,is_published,pulje_id,room_id,program_time,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at) */;
