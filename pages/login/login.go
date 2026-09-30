@@ -15,6 +15,7 @@ import (
 	"github.com/Regncon/conorganizer/components/redirect"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
@@ -237,6 +238,20 @@ func syncPostLoginUser(db *sql.DB, userID string, email string, isAdmin bool, lo
 		insertUser(db, userID, email, isAdmin, logger)
 	}
 	updateUserAdmin(db, userID, isAdmin, logger)
+
+	// A billettholder's secondary/manual email can be added before the person
+	// it belongs to has ever logged in (service/checkIn.
+	// AssociateUsersWithBillettholderEmail only links users that already
+	// exist at that moment). Backfill relation_billettholdere_users here, on
+	// every login, so the access check in pages/event.updateInterest never
+	// falls behind what the "Meld interesse" picker
+	// (components/ticket_holder.GetTicketHolders) already shows the user.
+	// This is a no-op (INSERT OR IGNORE) once the two are in sync, so it is
+	// safe to run unconditionally rather than only on first login.
+	if _, associateErr := checkIn.AssociateUserWithBillettholder(userID, db, logger); associateErr != nil {
+		logger.Error(fmt.Errorf("failed to associate user with billettholdere after login: %w", associateErr).Error(), "external_id", userID)
+	}
+
 	return nil
 }
 
