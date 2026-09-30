@@ -255,7 +255,7 @@ func TestRootPageContent_WhenPuljeStartedMoreThanAnHourAgo_HidesItsAlert(t *test
 
 	// Given
 	expectedAlertsVisible := false
-	puljeStart := time.Date(2026, 10, 9, 20, 0, 0, 0, osloLocation(t))
+	puljeStart := time.Date(2026, 10, 9, 20, 0, 0, 0, programLocation(t))
 	now := puljeStart.Add(puljeAlertHideAfterStart + time.Minute)
 	cases := []struct {
 		name                 string
@@ -298,7 +298,7 @@ func TestRootPageContent_WhenPuljeStartedLessThanAnHourAgo_StillShowsItsAlert(t 
 
 	// Given
 	expectedAlerts := []string{lockedAlertText}
-	puljeStart := time.Date(2026, 10, 9, 20, 0, 0, 0, osloLocation(t))
+	puljeStart := time.Date(2026, 10, 9, 20, 0, 0, 0, programLocation(t))
 	now := puljeStart.Add(puljeAlertHideAfterStart - time.Minute)
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)

@@ -9,18 +9,19 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/program"
 	"github.com/Regncon/conorganizer/testutil"
 )
 
 // Must stay before every fixture pulje starts, or their alerts are hidden as expired.
 var rootPageTestNow = time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC)
 
-func osloLocation(t *testing.T) *time.Location {
+func programLocation(t *testing.T) *time.Location {
 	t.Helper()
 
-	location, err := time.LoadLocation("Europe/Oslo")
+	location, err := program.Location()
 	if err != nil {
-		t.Fatalf("failed to load Oslo time zone: %v", err)
+		t.Fatalf("failed to load program time zone: %v", err)
 	}
 	return location
 }
