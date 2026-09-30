@@ -63,7 +63,11 @@
         ),
         var(--level-2-state-base);
     --color-yellow-background-gradient:
-        linear-gradient(to right, hsl(from #ffe8a3 h s l / 25%), hsl(from #ffe8a3 h s l / 20%)),
+        linear-gradient(
+            to right,
+            hsl(from var(--color-accent-yellow) h s l / 25%),
+            hsl(from var(--color-accent-yellow) h s l / 20%)
+        ),
         var(--level-2-state-base);
     --color-green-background-gradient:
         linear-gradient(
