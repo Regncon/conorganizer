@@ -3,6 +3,7 @@ package puljerService
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/Regncon/conorganizer/models"
 )
 
