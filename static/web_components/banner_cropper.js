@@ -136,7 +136,7 @@ class BannerCropper extends HTMLElement {
                             var(--range-progress-background-chromium) 0 var(--range-progress),
                             var(--range-track-background) var(--range-progress) 100%
                         );
-                        outline: 1px solid var(--range-track-border);
+                        outline: var(--range-track-border-size) solid var(--range-track-border);
                         outline-offset: -1px;
                         border-bottom-right-radius: var(--border-radius-2x);
                         border-bottom-left-radius: var(--border-radius-2x);
@@ -173,7 +173,7 @@ class BannerCropper extends HTMLElement {
                         block-size: var(--range-track-size);
                         box-sizing: border-box;
                         background: var(--range-track-background);
-                        border: 1px solid var(--range-track-border);
+                        border: var(--range-track-border-size) solid var(--range-track-border);
                         border-bottom-right-radius: var(--border-radius-2x);
                         border-bottom-left-radius: var(--border-radius-2x);
                     }
