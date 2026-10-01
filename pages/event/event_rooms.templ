@@ -3,11 +3,12 @@ package event
 import (
 	"fmt"
 	"strings"
+	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 )
 
-templ eventRoomLocations(eventID string, assignments []eventRoom) {
+templ eventRoomLocations(eventID string, isInPuljefordeling bool, assignments []eventRoom) {
 	{{
 		groups := groupEventRooms(assignments)
 		// Clear a withdrawn map selection so publishing it again does not reopen it.
@@ -37,7 +38,7 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 			@eventRoomStyles()
 			<div class="event-room-list">
 				<h3 class="event-room-heading label-bold">Sted og tidspunkt</h3>
-				@eventRoomTimes(puljer)
+				@eventRoomTimes(puljer, isInPuljefordeling)
 				for _, group := range groups {
 					if group.Room.ID != 0 {
 						@eventRoomRow(eventID, group)
@@ -52,7 +53,7 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 				if assignment.MapPath != "" {
 					for _, group := range groups {
 						if group.Room.ID == assignment.Room.ID {
-							@eventRoomDialog(eventRoomDialogID(eventID, assignment.Pulje.ID), group)
+							@eventRoomDialog(eventRoomDialogID(eventID, assignment.Pulje.ID), group, isInPuljefordeling)
 						}
 					}
 				}
@@ -91,10 +92,15 @@ templ eventRoomPendingRow() {
 	</div>
 }
 
-templ eventRoomTimes(puljer []models.PuljeRow) {
+// Programarrangementer run on their own schedule, so they point to the description instead of the pulje times.
+templ eventRoomTimes(puljer []models.PuljeRow, isInPuljefordeling bool) {
 	<span class="event-room-schedule">
-		for _, pulje := range puljer {
-			<span class="chip chip--primary"><span>{ pulje.Name }</span>{ " " }<span>·</span>{ " " }<span>{ pulje.TimeRange() }</span></span>
+		if isInPuljefordeling {
+			for _, pulje := range puljer {
+				<span class="chip chip--primary"><span>{ pulje.Name }</span>{ " " }<span>·</span>{ " " }<span>{ pulje.TimeRange() }</span></span>
+			}
+		} else {
+			<span class="event-room-time-hint">{ event_components.ProgramEventTimeHint }</span>
 		}
 	</span>
 }
@@ -112,7 +118,7 @@ templ eventRoomNote(publicNotes string) {
 	}
 }
 
-templ eventRoomDialog(dialogID string, group eventRoomGroup) {
+templ eventRoomDialog(dialogID string, group eventRoomGroup, isInPuljefordeling bool) {
 	<dialog
 		id={ dialogID }
 		class="event-room-dialog"
@@ -131,7 +137,7 @@ templ eventRoomDialog(dialogID string, group eventRoomGroup) {
 			</header>
 			<p class="event-room-floor">{ fmt.Sprintf("%d. etasje", group.Room.Floor) }</p>
 			<h2 id={ dialogID + "-title" }>{ group.Room.Name }</h2>
-			@eventRoomTimes(group.Puljer)
+			@eventRoomTimes(group.Puljer, isInPuljefordeling)
 			@eventRoomNote(group.Room.PublicNotes)
 			<img
 				src={ group.MapPath }

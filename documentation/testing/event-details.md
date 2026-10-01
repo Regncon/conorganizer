@@ -89,9 +89,14 @@ Denne sjekklisten dekker `/event/{id}`, altså detaljvisningen for et arrangemen
   **Så** vises riktig pulje, romnavn, etasje og SVG-kart, også uten innlogging.
 
 - [ ] **Én boks med alle tidspunktene**<br>
-  **Gitt** at arrangementet har samme rom i flere puljer og programmet er publisert.<br>
+  **Gitt** at et arrangement i puljefordelingen har samme rom i flere puljer og programmet er publisert.<br>
   **Når** detaljsiden vises.<br>
   **Så** vises én «Sted og tidspunkt»-boks med alle puljene og klokkeslettene i kronologisk rekkefølge, og én rad per rom med romnavn og «Se rommet» når rommet har kart. Har arrangementet ikke noe kjent rom ennå, vises «Stedet for arrangementet kommer!» i stedet for romnavn og knapp. Det finnes ingen separat «Pulje(r)»-liste.
+
+- [ ] **Programarrangement viser til beskrivelsen for tidspunkt**<br>
+  **Gitt** at et programarrangement (ikke med i puljefordelingen) er satt opp i en eller flere puljer og programmet er publisert.<br>
+  **Når** detaljsiden vises og brukeren åpner romkartet.<br>
+  **Så** viser «Sted og tidspunkt»-boksen og kartmodalen teksten «Se beskrivelse for tidspunkt» i stedet for puljenavn og klokkeslett. Rommet og «Se rommet» vises som før.
 
 - [ ] **Kartet forblir åpent ved liveoppdateringer**<br>
   **Gitt** at kartmodalen er åpen.<br>
