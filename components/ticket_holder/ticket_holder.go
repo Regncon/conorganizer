@@ -222,30 +222,31 @@ func selectedStartTime(puljer []models.PuljeRow, puljeID models.Pulje) time.Time
 	return time.Time{}
 }
 
+// GetTicketHolders returns the billettholdere linked to the logged-in user in
+// relation_billettholdere_users. Email is the ticket's own email, for display.
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]BillettHolder, error) {
-	// todo: use the correct way to get billettholders (billettholderservice.GetBillettholdere has a fallback to get all billettholders)
 	query := `
     SELECT
-        [be].email,
-        [be].billettholder_id,
+        COALESCE((
+            SELECT [be].email
+            FROM relation_billettholder_emails [be]
+            WHERE [be].billettholder_id = [bh].id AND [be].kind = ?
+            ORDER BY [be].id
+            LIMIT 1
+        ), ''),
+        [bh].id,
         [bh].first_name,
-		[bh].last_name,
-		[bh].ticket_type
+        [bh].last_name,
+        [bh].ticket_type
     FROM
-        relation_billettholder_emails [be]
-        LEFT JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
-	    WHERE
-	        [be].kind = ?
-	        AND [be].billettholder_id IN (
-            SELECT
-                billettholder_id
-            FROM
-                relation_billettholder_emails
-            WHERE
-                email = ?
-        )
+        relation_billettholdere_users [bu]
+        JOIN users [u] ON [u].id = [bu].user_id
+        JOIN billettholdere [bh] ON [bh].id = [bu].billettholder_id
+    WHERE
+        [u].external_id = ?
+    ORDER BY [bh].id
 `
-	rows, ticketHolderQueryErr := db.Query(query, models.BillettholderEmailKindTicket, userInfo.Email)
+	rows, ticketHolderQueryErr := db.Query(query, models.BillettholderEmailKindTicket, userInfo.Id)
 	if ticketHolderQueryErr != nil {
 		return nil, fmt.Errorf("failed to query ticket holders: %w", ticketHolderQueryErr)
 	}

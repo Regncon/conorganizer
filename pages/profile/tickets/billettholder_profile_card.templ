@@ -118,7 +118,7 @@ func addEmailToBilettholderRoute(
 					return
 				}
 				if id == billettholderIDInt {
-					newEmailAddress = v
+					newEmailAddress = strings.TrimSpace(v)
 					break
 				}
 			}

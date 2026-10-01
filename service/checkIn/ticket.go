@@ -3,6 +3,7 @@ package checkIn
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 )
@@ -38,8 +39,27 @@ func ConvertTicketToBillettholder(ctx context.Context, ticketId int, db *sql.DB,
 		return fmt.Errorf("failed to fetch tickets from check-in: %w", err)
 	}
 
-	if _, err := converTicketIdToNewBillettholder(ticketId, tickets, db, logger); err != nil {
+	conversionResult, err := converTicketIdToNewBillettholder(ticketId, tickets, db, logger)
+	if err != nil {
 		return fmt.Errorf("failed to convert ticket %d to billettholder: %w", ticketId, err)
 	}
+	if _, err := LinkUsersToBillettholdere([]int{conversionResult.BillettholderID}, db, logger); err != nil {
+		return fmt.Errorf("failed to link users to converted ticket %d: %w", ticketId, err)
+	}
 	return nil
+}
+
+// SyncUserTicketsFromCheckIn runs "Hent billetter" for a user without a request
+// to report back to, such as right after login. When CheckIn is unavailable the
+// user is still linked to billettholdere that already carry their email.
+func SyncUserTicketsFromCheckIn(ctx context.Context, userID string, email string, db *sql.DB, logger *slog.Logger) (UserTicketImportResult, error) {
+	fetchResult, fetchErr := GetTicketsFromCheckIn(ctx, logger, "")
+	if fetchErr != nil && !fetchResult.UsedStaleCache {
+		fetchErr = fmt.Errorf("failed to fetch tickets from check-in: %w", fetchErr)
+	} else {
+		fetchErr = nil
+	}
+
+	result, importErr := ImportUserTickets(fetchResult.Tickets, userID, email, db, logger)
+	return result, errors.Join(fetchErr, importErr)
 }

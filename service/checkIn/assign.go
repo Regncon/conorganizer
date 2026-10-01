@@ -10,6 +10,7 @@ import (
 )
 
 type TicketAssociationResult struct {
+	BillettholderIDs      []int
 	CreatedBillettholders int
 }
 
@@ -60,6 +61,7 @@ func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db
 		if err != nil {
 			return result, fmt.Errorf("unable to convert ticket %d to billettholder for email %q: %w", ticket.ID, email, err)
 		}
+		result.BillettholderIDs = append(result.BillettholderIDs, conversionResult.BillettholderID)
 		result.CreatedBillettholders += conversionResult.CreatedBillettholders
 	}
 
@@ -174,6 +176,79 @@ func AssociateUsersWithBillettholderEmail(billettholderID int, email string, db 
 	}
 
 	return nil
+}
+
+// LinkUsersToBillettholdere links every existing user whose email is on one of
+// the billettholdere, whatever the email kind. It returns the number of new links.
+func LinkUsersToBillettholdere(billettholderIDs []int, db *sql.DB, logger *slog.Logger) (int, error) {
+	if len(billettholderIDs) == 0 {
+		return 0, nil
+	}
+	logger = logger.With("component", "checkin_assign")
+
+	placeholders := make([]string, 0, len(billettholderIDs))
+	args := make([]any, 0, len(billettholderIDs))
+	for _, billettholderID := range billettholderIDs {
+		placeholders = append(placeholders, "?")
+		args = append(args, billettholderID)
+	}
+
+	result, err := db.Exec(fmt.Sprintf(`
+		INSERT OR IGNORE INTO relation_billettholdere_users (
+			billettholder_id, user_id
+		)
+		SELECT DISTINCT e.billettholder_id, u.id
+		FROM relation_billettholder_emails AS e
+		JOIN users AS u ON u.email = e.email COLLATE NOCASE
+		WHERE e.billettholder_id IN (%s)
+	`, strings.Join(placeholders, ", ")), args...)
+	if err != nil {
+		return 0, fmt.Errorf("unable to link users to billettholdere %v by email: %w", billettholderIDs, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("unable to read created billettholder user association count: %w", err)
+	}
+	if rowsAffected > 0 {
+		logger.Info("Created billettholder user associations",
+			"billettholder_ids", billettholderIDs,
+			"association_flow", "billettholder_emails",
+			"created_associations", rowsAffected,
+		)
+	}
+
+	return int(rowsAffected), nil
+}
+
+type UserTicketImportResult struct {
+	CreatedBillettholders   int
+	CreatedUserAssociations int
+}
+
+// ImportUserTickets is the "Hent billetter" flow for one user. It imports every
+// order with a ticket registered to email, links the user to every billettholder
+// carrying their email, and links any other existing users whose email is on the
+// imported billettholdere. CreatedUserAssociations only counts the user's own links.
+func ImportUserTickets(tickets []CheckInTicket, userID string, email string, db *sql.DB, logger *slog.Logger) (UserTicketImportResult, error) {
+	var result UserTicketImportResult
+
+	ticketResult, err := AssociateTicketsWithBillettholder(tickets, email, db, logger)
+	if err != nil {
+		return result, err
+	}
+	result.CreatedBillettholders = ticketResult.CreatedBillettholders
+
+	result.CreatedUserAssociations, err = AssociateUserWithBillettholder(userID, db, logger)
+	if err != nil {
+		return result, err
+	}
+
+	if _, err := LinkUsersToBillettholdere(ticketResult.BillettholderIDs, db, logger); err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
 
 // DisassociateUsersFromBillettholderEmail removes user links for a removed

@@ -14,14 +14,25 @@ through e-post, and how the admin billettholder page reads them.
 | `relation_billettholdere_users` | Ownership link between a user and a billettholder. `PRIMARY KEY (billettholder_id, user_id)`, `user_id` references `users.id`. |
 
 - `relation_billettholdere_users` is the durable link. All user-scoped reads use
-  it. Do not use `relation_billettholder_emails` for ownership or access; it is
-  only used to discover and reconcile links.
+  it. Do not use `relation_billettholder_emails` for ownership or access. An
+  e-post is a string anyone can type, not a key; it is only used to create links
+  in the [association paths](#association-paths-and-helpers), because CheckIn
+  identifies tickets by e-post.
 - User-scoped reads go through `billettholderService.GetBillettholdere(userId, db)`
   (`service/billettholder/billettholder.go`). `userId` is the auth provider id
   stored in `users.external_id`. When it is non-empty the query joins
   `relation_billettholdere_users` and `users`; when it is empty all
   billettholdere are returned. `GetBillettholdereWithFilters` and
   `GetBillettholderByUserId` use the same join.
+- The billettholder picker (menu, event page and front-page interest hearts)
+  reads `ticketholder.GetTicketHolders(userInfo, db)`
+  (`components/ticket_holder/ticket_holder.go`), which joins the same link on
+  `users.external_id`. Choosing a billettholder for an event
+  (`selectedInterestHandler`) and saving interest (`updateInterest`) in
+  `pages/event/event.go` check the same link, so the picker never offers a
+  billettholder the user cannot save interest for. `BillettHolder.Email` is the
+  ticket's own e-post; it is only used to show the user's own ticket first and
+  as "Du", never for access.
 
 E-post kinds (`models.BillettholderEmailKind*`):
 
@@ -73,18 +84,28 @@ convention year.
 ## "Hent billetter" flow
 
 `/profile/tickets` only reads `GetBillettholdere(userId, db)`; loading the page does
-not import or link anything. Reconciliation starts when the user presses
-"Hent billetter" (`POST /profile/tickets/api/get-tickets`):
+not import or link anything. Reconciliation runs when the user presses
+"Hent billetter" (`POST /profile/tickets/api/get-tickets`) and in the background
+after every login (see [After login](#after-login)). Both call
+`checkIn.ImportUserTickets(tickets, userID, email, db, logger)`:
 
-1. `checkIn.GetTicketsFromCheckIn(ctx, logger, "")` fetches all tickets once.
-2. `AssociateTicketsWithBillettholder(tickets, user.Email, db, logger)` imports the
-   user's orders.
-3. `AssociateUserWithBillettholder(user.Id, db, logger)` looks up the user by
+1. `checkIn.GetTicketsFromCheckIn(ctx, logger, "")` fetches all tickets once
+   (the caller does this).
+2. `AssociateTicketsWithBillettholder(tickets, email, db, logger)` imports the
+   user's orders and reports every billettholder it touched.
+3. `AssociateUserWithBillettholder(userID, db, logger)` looks up the user by
    `users.external_id`, finds every `relation_billettholder_emails` row matching
    the user's e-post (`COLLATE NOCASE`, any kind), and inserts the pairs with
    `INSERT OR IGNORE` into `relation_billettholdere_users`. It returns the number
    of new links (`RowsAffected()`), `0` when nothing matches, and is idempotent.
    It never imports tickets on its own.
+4. `LinkUsersToBillettholdere(billettholderIDs, db, logger)` links every other
+   existing user whose e-post is on the touched billettholdere. Without this, a
+   teen who had already logged in would see nothing until they pressed
+   "Hent billetter" themselves after their parent fetched the order.
+
+`ImportUserTickets` returns `CreatedUserAssociations` from step 3 only, so the
+feedback below counts the user's own new links.
 
 The route patches `getTicketsSuccessMessage`, `getTicketsInfoMessage` and
 `getTicketsErrorMessage`:
@@ -113,26 +134,43 @@ The `/profile/tickets` empty state offers both "Hent billetter" and
 ("Hent billetter"), because no tickets usually means they have not been fetched
 or linked yet, not that none were bought.
 
+## After login
+
+`GET /auth/post-login` (`pages/login/login.go`) first syncs the `users` row in
+`syncPostLoginUser`. Users are matched on `users.external_id` (the Descope id),
+never on e-post; a known user's `users.email` is updated when it changed in
+Descope, because the association paths match on it.
+
+After the redirect has been written, the handler starts
+`checkIn.SyncUserTicketsFromCheckIn` in a goroutine (`syncTicketsAfterLogin`), so
+login never waits for CheckIn. The goroutine uses `context.WithoutCancel` on the
+request context with a one-minute timeout, recovers from panics and only logs
+errors. When CheckIn is unavailable and nothing is cached it still links the user
+to billettholdere that already carry their e-post, such as a manual e-post a
+parent added before the teen's first login. The CheckIn cache keeps this to at
+most one upstream request per TTL however many users log in.
+
 ## Association paths and helpers
 
 The only ways a user gets linked to, or unlinked from, a billettholder:
 
 | Path | Route | Helper |
 | --- | --- | --- |
-| Self-service ticket fetch | `POST /profile/tickets/api/get-tickets` | `AssociateTicketsWithBillettholder`, then `AssociateUserWithBillettholder` |
+| Self-service ticket fetch | `POST /profile/tickets/api/get-tickets` | `ImportUserTickets` |
+| Login (background) | `GET /auth/post-login` | `SyncUserTicketsFromCheckIn` → `ImportUserTickets` |
+| Admin ticket conversion | `GET /admin/billettholder/add/api/convert/{ticketID}/` | `ConvertTicketToBillettholder` → `LinkUsersToBillettholdere` |
 | Add manual e-post (admin) | `POST /admin/billettholder/api/new-email/{id}/` | `AssociateUsersWithBillettholderEmail` |
 | Add manual e-post (Min Side) | `POST /profile/tickets/api/new-email/{id}/` | `AssociateUsersWithBillettholderEmail` |
 | Delete manual e-post (admin) | `POST /admin/billettholder/api/delete-email/{id}/{emailID}/` | `DisassociateUsersFromBillettholderEmail` |
 | Delete manual e-post (Min Side) | `POST /profile/tickets/api/delete-email/{id}/{emailID}/` | `DisassociateUsersFromBillettholderEmail` |
 
-Admin ticket conversion (`GET /admin/billettholder/add/api/convert/{ticketID}/`
-→ `checkIn.ConvertTicketToBillettholder`) creates no user links. A billettholder
-converted by an admin shows up for the user only after the user presses
-"Hent billetter" or an admin adds a matching manual e-post.
+Admin ticket conversion links every existing user whose e-post is on the new
+billettholder, including the other e-post addresses on the same order
+(`Associated`). Users who log in later are linked by the login sync.
 
 Add manual e-post:
 
-- The handler reads the card-scoped signal `newEmail-{id}`, rejects an empty value
+- The handler reads the card-scoped signal `newEmail-{id}`, trims spaces, rejects an empty value
   ("Tomt felt for epostadresse") and an address already on that billettholder,
   then inserts the row with kind `Manual`.
 - `AssociateUsersWithBillettholderEmail(billettholderID, email, db, logger)` runs
@@ -252,6 +290,14 @@ currently commented out, so each filter request also resets `searchTerm` to "".)
 - `service/checkIn/assign_users_test.go`: `AssociateUserWithBillettholder`,
   `AssociateUsersWithBillettholderEmail` and
   `DisassociateUsersFromBillettholderEmail`.
+- `service/checkIn/import_user_tickets_test.go`: `ImportUserTickets` linking other
+  users on the order and a manual e-post added before first login,
+  `ConvertTicketToBillettholder` linking users, and `LinkUsersToBillettholdere`.
+- `components/ticket_holder/get_ticket_holders_test.go`: the picker lists linked
+  billettholdere only, not ones that merely carry the user's e-post.
+- `pages/login/post_login_user_test.go` and `post_login_ticket_sync_test.go`:
+  users matched on Descope id, e-post kept current, and the redirect not waiting
+  for the ticket sync.
 - `service/checkIn/assign_billettholder_test.go` and `assign_ticket_test.go`:
   ticket import and e-post matching, including whole-order import.
 - `service/checkIn/cache_test.go`: CheckIn cache, stale fallback and cooldown.

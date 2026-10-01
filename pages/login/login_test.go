@@ -2,6 +2,7 @@ package login
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"io"
 	"log/slog"
@@ -12,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/descope/go-sdk/descope"
@@ -449,6 +451,9 @@ func authTestRouter(t *testing.T, validator authctx.SessionValidator) chi.Router
 func authTestRouterWithDB(t *testing.T, validator authctx.SessionValidator, dbName string) chi.Router {
 	t.Helper()
 	db, logger := testutil.CreateTestDBAndLogger(t, dbName)
+	replacePostLoginTicketSync(t, func(context.Context, string, string, *sql.DB, *slog.Logger) (checkIn.UserTicketImportResult, error) {
+		return checkIn.UserTicketImportResult{}, nil
+	})
 	router := chi.NewRouter()
 	authenticatedRouter := router.With(authctx.AuthMiddleware(validator, logger))
 	if err := SetupAuthRoute(router, authenticatedRouter, db, logger, validator); err != nil {
