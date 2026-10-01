@@ -9,6 +9,7 @@ import (
 )
 
 type TicketConversionResult struct {
+	BillettholderID       int
 	CreatedBillettholders int
 }
 
@@ -69,6 +70,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 	} else if selectErr != nil {
 		return result, fmt.Errorf("failed to select billettholder for ticket %d: %w", ticketId, selectErr)
 	}
+	result.BillettholderID = int(billettholderID)
 
 	emails := []models.BillettholderEmail{
 		{

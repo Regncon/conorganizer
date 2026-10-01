@@ -75,6 +75,66 @@ func TestSyncPostLoginUser_WhenUserExists_UpdatesAdminStatusWithoutDuplicatingUs
 	}
 }
 
+func TestSyncPostLoginUser_WhenAnotherUserHasTheSameEmail_CreatesLocalUserForThisLogin(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en annen Descope-bruker med samme e-post allerede finnes lokalt.",
+		When:  "Når post-login synkroniserer en ny Descope-bruker med den e-posten.",
+		Then:  "Så skal den nye brukeren lagres lokalt, siden brukere kjennes igjen på Descope-id og ikke e-post.",
+	})
+
+	// Given
+	expectedUser := postLoginUser{
+		externalID: "descope-user-new",
+		email:      "shared@example.com",
+		isAdmin:    0,
+	}
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "post_login_same_email")
+	testutil.MustExec(t, db, `
+		INSERT INTO users(external_id, email, is_admin)
+		VALUES('descope-user-old', ?, 0)
+	`, expectedUser.email)
+
+	// When
+	err := syncPostLoginUser(db, expectedUser.externalID, expectedUser.email, false, logger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected post-login user sync to succeed: %v", err)
+	}
+	assertPostLoginUser(t, db, expectedUser)
+}
+
+func TestSyncPostLoginUser_WhenEmailChangedInDescope_UpdatesLocalEmail(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en lokal bruker har byttet e-post i Descope.",
+		When:  "Når post-login synkroniserer brukeren.",
+		Then:  "Så skal den lokale e-posten oppdateres, siden «Hent billetter» finner billetter på den.",
+	})
+
+	// Given
+	expectedUser := postLoginUser{
+		externalID: "descope-user-3",
+		email:      "new-address@example.com",
+		isAdmin:    0,
+	}
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "post_login_email_change")
+	testutil.MustExec(t, db, `
+		INSERT INTO users(external_id, email, is_admin)
+		VALUES(?, 'old-address@example.com', 0)
+	`, expectedUser.externalID)
+
+	// When
+	err := syncPostLoginUser(db, expectedUser.externalID, expectedUser.email, false, logger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected post-login user sync to succeed: %v", err)
+	}
+	assertPostLoginUser(t, db, expectedUser)
+}
+
 func assertPostLoginUser(t *testing.T, db *sql.DB, expectedUser postLoginUser) {
 	t.Helper()
 

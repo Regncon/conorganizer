@@ -15,10 +15,15 @@ Denne sjekklisten dekker `/admin/billettholder/add`, der admin kan se billetter 
   **Når** siden lastes.<br>
   **Så** skal hvert billettkort vise bestilling, type, navn, e-post og alder uten brutte kort eller uforståelige feilmeldinger.
 
-- [ ] **Konvertering oppretter riktig billettholder**<br>
-  **Gitt** at en billett kan konverteres.<br>
-  **Når** admin velger «Konverter billett til deltager».<br>
-  **Så** skal billetten bli til riktig billettholder, og kortet skal deretter vise at billetten allerede er konvertert, uten at admin må gjette om handlingen faktisk lyktes.
+- [ ] **Konvertering oppretter billettholdere for hele bestillingen**<br>
+  **Gitt** at en billett kan konverteres, og bestillingen har flere billetter.<br>
+  **Når** admin velger «Konverter bestilling til deltagere» på én av billettene.<br>
+  **Så** skal alle billettene på bestillingen, unntatt middag, bli billettholdere, og alle kortene på bestillingen skal deretter vise at billetten allerede er konvertert, uten at admin må gjette om handlingen faktisk lyktes.
+
+- [ ] **Brukere på bestillingen får billettholderne**<br>
+  **Gitt** at en bruker med en e-post på bestillingen allerede har logget inn.<br>
+  **Når** admin konverterer bestillingen.<br>
+  **Så** skal brukeren se billettholderne uten å trykke «Hent billetter».
 
 - [ ] **Middagsbilletter og konverterte billetter kan ikke konverteres**<br>
   **Gitt** at en billett er en middagsbillett eller allerede er konvertert til billettholder.<br>
