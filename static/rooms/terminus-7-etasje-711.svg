@@ -196,6 +196,12 @@
           </text>
           <text x="145" y="768" font-size="17">709</text>
         </g>
+        <g id="room-711-info-desk" font-size="22" font-weight="bold">
+          <title>Info Desk – rom 709</title>
+          <circle cx="91" cy="806" r="15" fill="#e7a965"/>
+          <text x="91" y="813" fill="#1a1b26" text-anchor="middle" font-size="21">i</text>
+          <text x="116" y="813" fill="#e7a965" text-anchor="start">Info Desk</text>
+        </g>
         <g id="room-711-label-710">
           <text x="335" y="890" font-weight="bold">
             <tspan x="335" dy="0">Lucie Wolf</tspan>
