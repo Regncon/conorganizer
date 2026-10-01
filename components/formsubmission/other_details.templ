@@ -150,6 +150,13 @@ func minMaxPlayers(isAdmin bool) int {
 	return minMaxPlayersForHost
 }
 
+func maxPlayersTooLowMessage(minimum int) string {
+	if minimum <= 0 {
+		return "Antall spillere kan ikke være negativt."
+	}
+	return fmt.Sprintf("Arrangementet må ha minst %d spillere.", minimum)
+}
+
 func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
@@ -168,8 +175,12 @@ func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, liveManager *live.Mana
 			return
 		}
 
-		if store.Input < minMaxPlayers(authctx.GetAdminFromUserToken(r.Context())) {
-			http.Error(w, "For lavt antall spillere", http.StatusBadRequest)
+		if minimum := minMaxPlayers(authctx.GetAdminFromUserToken(r.Context())); store.Input < minimum {
+			feedback := errorfeedback.New("maxPlayers")
+			feedback.Set("maxPlayers", maxPlayersTooLowMessage(minimum))
+			if err := feedback.Patch(datastar.NewSSE(w, r)); err != nil {
+				logger.Error("Failed to patch max players feedback", "error", err, "event_id", eventID)
+			}
 			return
 		}
 

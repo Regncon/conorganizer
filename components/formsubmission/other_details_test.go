@@ -59,11 +59,11 @@ func TestUpdateMaxPlayers_RegularUserBelowFourIsRejected(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt et arrangement med 4 spillere og en vanlig bruker.",
 		When:  "Når brukeren prøver å sette maks antall spillere til 3.",
-		Then:  "Så blir endringen avvist og antallet forblir 4.",
+		Then:  "Så får brukeren beskjed om at det må være minst 4 spillere, og antallet forblir 4.",
 	})
 
 	// Given
-	expectedStatus := http.StatusBadRequest
+	expectedMessage := "Arrangementet må ha minst 4 spillere."
 	expectedMaxPlayers := 4
 	db := createMaxPlayersTestDB(t, "update_max_players_user_rejected")
 	ctx := authctx.WithUserToken(context.Background(), "ext-42", "host@x.no")
@@ -72,9 +72,7 @@ func TestUpdateMaxPlayers_RegularUserBelowFourIsRejected(t *testing.T) {
 	recorder := putMaxPlayers(t, db, nil, ctx, 3)
 
 	// Then
-	if recorder.Code != expectedStatus {
-		t.Fatalf("HTTP status mismatch\nexpected: %d\nactual:   %d", expectedStatus, recorder.Code)
-	}
+	assertMaxPlayersFeedback(t, recorder, expectedMessage)
 	assertStoredMaxPlayers(t, db, expectedMaxPlayers)
 }
 
@@ -105,11 +103,11 @@ func TestUpdateMaxPlayers_AdminBelowZeroIsRejected(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt et arrangement med 4 spillere og en admin.",
 		When:  "Når admin prøver å sette maks antall spillere til -1.",
-		Then:  "Så blir endringen avvist og antallet forblir 4.",
+		Then:  "Så får admin beskjed om at antallet ikke kan være negativt, og antallet forblir 4.",
 	})
 
 	// Given
-	expectedStatus := http.StatusBadRequest
+	expectedMessage := "Antall spillere kan ikke være negativt."
 	expectedMaxPlayers := 4
 	db := createMaxPlayersTestDB(t, "update_max_players_admin_negative")
 	ctx := authctx.WithAdminUserToken(context.Background(), "ext-42", "admin@x.no")
@@ -118,9 +116,7 @@ func TestUpdateMaxPlayers_AdminBelowZeroIsRejected(t *testing.T) {
 	recorder := putMaxPlayers(t, db, nil, ctx, -1)
 
 	// Then
-	if recorder.Code != expectedStatus {
-		t.Fatalf("HTTP status mismatch\nexpected: %d\nactual:   %d", expectedStatus, recorder.Code)
-	}
+	assertMaxPlayersFeedback(t, recorder, expectedMessage)
 	assertStoredMaxPlayers(t, db, expectedMaxPlayers)
 }
 
@@ -172,6 +168,15 @@ func assertMaxPlayersMin(t *testing.T, actualMin string, expectedMin string) {
 
 	if actualMin != expectedMin {
 		t.Fatalf("max players min mismatch\nexpected: %q\nactual:   %q", expectedMin, actualMin)
+	}
+}
+
+func assertMaxPlayersFeedback(t *testing.T, recorder *httptest.ResponseRecorder, expectedMessage string) {
+	t.Helper()
+
+	expectedSignal := `{"feedbackErrors":{"maxPlayers":"` + expectedMessage + `"}}`
+	if !strings.Contains(recorder.Body.String(), expectedSignal) {
+		t.Fatalf("expected feedback signal %s\nactual body: %s", expectedSignal, recorder.Body.String())
 	}
 }
 
