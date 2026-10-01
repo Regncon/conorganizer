@@ -97,12 +97,12 @@ templ billettholderInterestDialogStyles() {
 			padding: 0;
 			border: none;
 			border-radius: var(--border-radius-2x);
-			background: var(--bg-surface);
+			background: var(--level-1-background);
 			color: var(--color-text-strong);
 			box-shadow: var(--shadow-dialog);
 
 			&::backdrop {
-				background: hsl(0deg 0% 0% / 55%);
+				background: var(--bg-backdrop);
 			}
 
 			& .billettholder-interest-dialog-shell {
@@ -117,7 +117,7 @@ templ billettholderInterestDialogStyles() {
 				justify-content: space-between;
 				gap: var(--spacing-4x);
 				padding: var(--spacing-4x);
-				border-bottom: 1px solid var(--bg-item-border);
+				border-bottom: 1px solid var(--level-3-border);
 			}
 
 			& .billettholder-interest-dialog-title {

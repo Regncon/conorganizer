@@ -1,6 +1,12 @@
 ## Check domain domeneordbok.md
 when adding names check domeneordbok.md instead of translating to english
 
+## Billettholder access
+- A user is linked to a billettholder only through `relation_billettholdere_users` (user id ↔ billettholder id). Every read, picker and access check must use that link.
+- Never match an email (`relation_billettholder_emails.email` or `users.email`) against the logged-in user to decide what they can see or do. An email is text a user typed, not a key.
+- Emails may only be used to *create* links, in the CheckIn flows: "Hent billetter" and the login sync (`checkIn.ImportUserTickets`), admin order conversion, and adding or deleting a manual email. See documentation/billettholdere.md.
+- Look users up by `users.external_id` (the Descope id), never by email.
+
 # CSS rules
 
 ### Required CSS style

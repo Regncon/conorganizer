@@ -18,7 +18,7 @@
      id="defs29" />
   <sodipodi:namedview
      id="namedview29"
-     pagecolor="#252735"
+     pagecolor="#232638"
      bordercolor="#ccd1e9"
      borderopacity="0.25"
      inkscape:showpageshadow="2"
@@ -37,19 +37,19 @@
   <title
      id="t0-overview-title">Grand Hotel Terminus – Romkart · 0. etasje</title>
   <desc
-     id="t0-overview-desc">Kart over Inger Haldorsen, Dorothe Engelbretsdatter og Søstrene Hagelin, samt Info Desk i lobbyen. Trapp og to heiser ligger på oversiden av gangen.</desc>
+     id="t0-overview-desc">Kart over Inger Haldorsen, Dorothe Engelbretsdatter og Søstrene Hagelin, samt Innsjekk i lobbyen. Trapp og to heiser ligger på oversiden av gangen.</desc>
   <metadata
      id="metadata1">Basert på brukerens skisse. Romnumrene er midlertidige, ikke hotellets bekreftede romnumre. To umerkede bokser er tolket som heiser. Dørslag er skjematiske og ikke verifisert. Åpningen øverst til høyre i rom 002 er bevart fra skissen; tilstøtende areal er ikke tegnet.</metadata>
   <rect
      width="1200"
      height="680"
-     fill="#252735"
+     fill="#232638"
      id="rect1" />
-  <g id="t0-overview-room-004" data-room-number="004" data-room-name="Info Desk" font-family="Arial, Helvetica, sans-serif">
-    <title>Info Desk</title>
+  <g id="t0-overview-room-004" data-room-number="004" data-room-name="Innsjekk" font-family="Arial, Helvetica, sans-serif">
+    <title>Innsjekk</title>
     <circle cx="525" cy="341" r="15" fill="#e7a965"/>
     <text x="525" y="348" fill="#1a1b26" text-anchor="middle" font-size="21" font-weight="bold">i</text>
-    <text x="550" y="348" fill="#e7a965" font-size="22" font-weight="bold">Info Desk</text>
+    <text x="550" y="348" fill="#e7a965" font-size="22" font-weight="bold">Innsjekk</text>
   </g>
   <g
      fill="none"
@@ -98,14 +98,14 @@
          id="path2"
          style="stroke-width:4.08362" />
       <rect
-         style="fill:#252735;stroke-width:3.07899"
+         style="fill:#232638;stroke-width:3.07899"
          id="rect30"
          width="2.217104"
          height="34.626389"
          x="370.78284"
          y="240.34959" />
       <rect
-         style="fill:#252735;stroke-width:3.12428"
+         style="fill:#232638;stroke-width:3.12428"
          id="rect30-9"
          width="2.1599021"
          height="36.596828"

@@ -11,7 +11,7 @@ These are shared conventions for templ components, CSS and user-facing HTML. The
 - `.surface-pane` / `.surface-pane-title`: the current panel style. Use it, or a specific local class, in new code.
 - `.form-card` / `.form-card-title`: marked deprecated in favour of `.surface-pane`. The two share one rule, and `.form-card` is still used in `components/formsubmission/`.
 
-The global `.card` class (`bg-surface`, `border-radius-1x`, a shadow and `1rem` padding) is legacy and should not be used in new code. It is still used in:
+The global `.card` class (`--level-1-background`, `border-radius-1x`, a shadow and `1rem` padding) is legacy and should not be used in new code. It is still used in:
 
 - `pages/event/event_interest_panel.templ` (`card event-interest-picker`)
 - `pages/profile/tickets/tickets_page.templ` (the info text and `profile-ticket-empty-state`)
@@ -23,12 +23,12 @@ Remove `.card` from `index.css` only after all of these have been migrated.
 
 ### Shared form and choice classes
 
-- `.label`, `.label-small` and `.form-group` (the label + control + message stack) are global rules in `static/css/index.css`, so they work outside `components/formsubmission/` too.
-- `static/css/choice.css` (loaded by `layouts/base.templ` after `buttons.css`) holds controls that switch an option on or off. `.choice-toggle-group` with `.choice-toggle` buttons (used together with `.btn .btn--outline`) picks one of a few options. The buttons stack, and sit side by side in equal columns when the nearest container is wider than 25rem. `.choice-chip-group` with `.choice-chip` buttons gives wrapping pill-shaped chips for picking any number of options. The selected look follows `aria-pressed="true"`, so the markup only binds `aria-pressed`. The feedback form (`pages/feedback/feedback_page.templ`) uses both.
+- `.label`, `.label-bold` and `.form-group` (the label + control + message stack) are global rules in `static/css/index.css`, so they work outside `components/formsubmission/` too.
+- `static/css/choice.css` (loaded by `layouts/base.templ` after `buttons.css`) holds controls that switch an option on or off. `.choice-toggle-group` with `.choice-toggle` buttons (used together with `.btn .btn--secondary`) picks one of a few options. The buttons stack, and sit side by side in equal columns when the nearest container is wider than 25rem. `.choice-chip-group` with `.choice-chip` buttons gives wrapping pill-shaped chips for picking any number of options. The selected look follows `aria-pressed="true"`, so the markup only binds `aria-pressed`. The feedback form (`pages/feedback/feedback_page.templ`) uses both.
 
 ## Focus-visible and accessibility
 
-Every interactive element needs a visible `:focus-visible` state, not only a `:hover` state (GitHub issue Regncon/conorganizer#407). Use the secondary focus colour (`--color-secondary-focus-visible`, or `--btn-ghost-focus-shadow`, which points to it) for focus rings.
+Every interactive element needs a visible `:focus-visible` state, not only a `:hover` state (GitHub issue Regncon/conorganizer#407). Use the soft focus colour (`--color-text-soft-50`, or `--btn-secondary-focus-shadow` / `--btn-ghost-focus-shadow`, which point to it) for focus rings. Primary elements use `--color-primary-focus-visible`.
 
 ### Reset and global fallback
 
@@ -42,7 +42,7 @@ A global fallback comes right after it:
 
 ```css
 :where(a[href], button, summary, [role="button"], input:not([type="hidden"]), select, textarea):focus-visible {
-    outline: 2px solid var(--color-secondary-focus-visible);
+    outline: 2px solid var(--color-text-soft-50);
     outline-offset: 2px;
 }
 ```
@@ -54,14 +54,15 @@ A global fallback comes right after it:
 
 | Element | Where | Focus-visible style |
 | --- | --- | --- |
-| Header logo link `.logo-link` | `components/header/menu.templ` | `border-radius: 50%`; on focus, `outline: none`, the ghost-button hover background and `box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow)`. `box-shadow` follows the border radius, so the ring is round. |
+| Header logo link `.logo-link` | `components/header/menu.templ` | `border-radius: 50%`; on focus, `outline: none`, the ghost-button hover background and `box-shadow: var(--btn-ghost-shadow)` (a `3px` `--btn-ghost-focus-shadow` ring). `box-shadow` follows the border radius, so the ring is round. |
 | Header dropdown links and buttons | `components/header/menu.templ` | Shared hover/focus background, plus an inset `box-shadow` ring on focused links. |
-| `.event-card-container` | `static/css/card.css`, used by `components/event_card.templ` | `border-color: var(--color-secondary)` on hover and focus, plus a `3px` `--color-secondary-focus-visible` outline on focus. |
-| `.event-bar-container`, `.profile-event-bar` | `static/css/card.css` | `3px` `--color-secondary-focus-visible` outline. `.profile-event-bar` also gets `outline-offset: 2px` and the hover brightness. |
-| `a.inline-link` | global, `static/css/index.css` | `2px` `--color-secondary-focus-visible` outline with offset and radius. Used for example by the help link in `event_interest_panel.templ`. |
+| `.event-card-container`, `.event-bar-container` | `static/css/card.css`, used by `components/event_card.templ` and the admin event bars | The Level 2 card states: `--level-2-background-hover` and `--level-2-border-hover` on hover and focus, `--level-2-background-active` on `:active`, plus a `3px` `--color-text-soft-50` outline on focus. |
+| `.profile-event-bar` | `static/css/card.css` | The Level 3 card states: `--level-3-background-hover` and `--level-3-border-hover` on hover and focus, plus a `3px` `--color-text-soft-50` outline with `outline-offset: 2px` on focus. |
+| `.card-clickable--level-2`, `.card-clickable--level-3` | `static/css/card.css`, used by the ticket holder pickers and the header menu | The level's hover background and border on hover and focus, plus a `3px` `--color-text-soft-50` outline on focus when the card is not `.selected`. |
+| `a.inline-link` | global, `static/css/index.css` | `2px` `--color-text-soft-50` outline with offset and radius. Used for example by the help link in `event_interest_panel.templ`. |
 | `.pulje-interests-summary` (`<summary>`) | `components/event_components/programpulje_interests.templ` | Same background as hover, plus a `3px` `--btn-ghost-focus-shadow` ring on the inner text span. |
-| `.choice-toggle`, `.choice-chip` | `static/css/choice.css` | `box-shadow: 0 0 0 3px var(--color-secondary-focus-visible)` on keyboard focus only (a mouse click gets no ring). Selected buttons (`aria-pressed="true"`) use `--color-primary-focus-visible` instead. |
-| `a.admin-tool-card` | `pages/admin/admin_card.templ` | Same background and border as hover, plus the global `2px` outline fallback (the card rule sets no outline of its own). |
+| `.choice-toggle`, `.choice-chip` | `static/css/choice.css` | `box-shadow: var(--choice-shadow)` (a `3px` `--color-text-soft-50` ring) on keyboard focus only (a mouse click gets no ring). Selected buttons (`aria-pressed="true"`) use `--choice-selected-shadow` (`--color-primary-focus-visible`) instead. `.choice-chip` also gets the Level 3 hover background and border on focus. |
+| `a.admin-tool-card` | `pages/admin/admin_card.templ` | The Level 2 card states: the same background and border as hover, `--level-2-background-active` on `:active`, plus the global `2px` outline fallback (the card rule sets no outline of its own). |
 
 The logo image's `alt` is "Regncon forside", because the image is the link's only accessible name. Give an image-only link an `alt` that describes where the link goes.
 

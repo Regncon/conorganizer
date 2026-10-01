@@ -210,8 +210,8 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 			.feedback-entry-topic {
 				font-size: var(--text-body-small);
 				color: var(--color-text-soft);
-				background: var(--bg-item);
-				border: 1px solid var(--bg-item-border);
+				background: var(--level-2-background);
+				border: 1px solid var(--level-2-border);
 				border-radius: var(--border-radius-2x);
 				padding-block: var(--spacing-1x);
 				padding-inline: var(--spacing-2x);
@@ -297,12 +297,12 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 	<div class="page-content-container feedback-admin">
 		<h1 class="page-heading">Tilbakemeldinger</h1>
 		<div>
-			<a href="/admin/tilbakemeldinger/qr" class="btn btn--outline">Skriv ut QR-kode</a>
+			<a href="/admin/tilbakemeldinger/qr" class="btn btn--secondary">Skriv ut QR-kode</a>
 		</div>
 		<nav class="feedback-filter-tabs" aria-label="Filtrer tilbakemeldinger">
-			<a href="/admin/tilbakemeldinger/" class="btn btn--outline" if activeCategory == "" { aria-current="page" }>Alle</a>
+			<a href="/admin/tilbakemeldinger/" class="btn btn--secondary" if activeCategory == "" { aria-current="page" }>Alle</a>
 			for _, category := range feedback.Categories {
-				<a href={ feedbackFilterHref(category) } class="btn btn--outline" if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
+				<a href={ feedbackFilterHref(category) } class="btn btn--secondary" if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
 			}
 		</nav>
 		@feedbackAdminContent(entries, activeCategory)
@@ -348,7 +348,7 @@ templ feedbackDeleteControl(entry feedback.Entry, activeCategory feedback.Catego
 	{{ dialogID := feedbackDeleteDialogID(entry.ID) }}
 	<button
 		type="button"
-		class="btn btn--outline feedback-danger feedback-delete-button"
+		class="btn btn--secondary feedback-danger feedback-delete-button"
 		commandfor={ dialogID }
 		command="show-modal"
 	>
@@ -360,13 +360,13 @@ templ feedbackDeleteControl(entry feedback.Entry, activeCategory feedback.Catego
 		<p>Tilbakemeldingen slettes for godt og kan ikke hentes tilbake.</p>
 		<p class="feedback-delete-excerpt">{ entry.Message }</p>
 		<div class="feedback-delete-dialog-actions">
-			<button type="button" class="btn btn--outline" commandfor={ dialogID } command="close">
+			<button type="button" class="btn btn--secondary" commandfor={ dialogID } command="close">
 				@icons.Icon(icons.CloseCircle, icons.Size20)
 				Avbryt
 			</button>
 			<button
 				type="button"
-				class="btn btn--outline feedback-danger feedback-delete-confirm"
+				class="btn btn--secondary feedback-danger feedback-delete-confirm"
 				data-on:click={ feedbackDeleteAction(entry.ID, activeCategory) }
 			>
 				@icons.Icon(icons.CheckCircle, icons.Size20)

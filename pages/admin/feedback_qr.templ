@@ -154,7 +154,7 @@ templ feedbackQRPage(formURL string, svg string, activeCategory feedback.Categor
 		}
 
 		.feedback-qr-url {
-			font-family: var(--font-mono, monospace);
+			font-family: var(--font-monospace);
 			font-size: 1rem;
 			overflow-wrap: anywhere;
 		}
@@ -181,9 +181,9 @@ templ feedbackQRPage(formURL string, svg string, activeCategory feedback.Categor
 			<h1 class="page-heading">QR-kode for tilbakemeldinger</h1>
 			<p>Velg hva skjemaet skal åpne med, og skriv ut arket. Koden peker til tilbakemeldingsskjemaet på denne nettsiden.</p>
 			<nav class="feedback-qr-choices" aria-label="Velg kategori for QR-koden">
-				<a href={ feedbackQRHref("") } class="btn btn--outline" if activeCategory == "" { aria-current="page" }>Alle</a>
+				<a href={ feedbackQRHref("") } class="btn btn--secondary" if activeCategory == "" { aria-current="page" }>Alle</a>
 				for _, category := range feedback.Categories {
-					<a href={ feedbackQRHref(category) } class="btn btn--outline" if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
+					<a href={ feedbackQRHref(category) } class="btn btn--secondary" if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
 				}
 			</nav>
 			<div>

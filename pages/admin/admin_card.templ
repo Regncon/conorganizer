@@ -26,24 +26,30 @@ templ adminCardStyles() {
 			gap: var(--spacing-4x);
 			inline-size: 100%;
 			box-sizing: border-box;
-			background-color: var(--bg-surface);
-			border: 1px solid var(--bg-item-border);
+			background-color: var(--level-2-background);
+			border: 1px solid var(--level-2-border);
 			border-radius: var(--border-radius-2x);
 			padding: var(--spacing-4x);
 			text-decoration: none;
 			color: inherit;
 		}
 
-		a.admin-tool-card:hover,
-		a.admin-tool-card:focus-visible {
-			background-color: var(--bg-item-hover);
-			border-color: var(--bg-item-border-hover);
+		a.admin-tool-card:is(:hover, :focus-visible) {
+			background-color: var(--level-2-background-hover);
+			border-color: var(--level-2-border-hover);
+		}
+
+		a.admin-tool-card:active {
+			background-color: var(--level-2-background-active);
+			border-color: var(--level-2-border-hover);
 		}
 
 		.admin-tool-card--wide {
 			grid-column: 1 / -1;
 			flex-wrap: wrap;
 			row-gap: var(--spacing-4x);
+			background-color: var(--level-1-background);
+			border-color: transparent;
 		}
 
 		.admin-tool-graphic {
@@ -94,8 +100,7 @@ templ adminCardStyles() {
 			}
 		}
 
-		.admin-tool-print-link:hover,
-		.admin-tool-print-link:focus-visible {
+		.admin-tool-print-link:is(:hover, :focus-visible) {
 			color: var(--color-primary-hover);
 		}
 

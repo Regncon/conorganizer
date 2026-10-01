@@ -1,7 +1,7 @@
 /*
  * Choice controls: buttons that switch an option on or off.
  *
- * - .choice-toggle-group holding .choice-toggle buttons (use with .btn .btn--outline)
+ * - .choice-toggle-group holding .choice-toggle buttons (use with .btn .btn--secondary)
  *   for picking one option from a few. The buttons stack, and sit side by side
  *   in equal columns once the nearest container is wider than 25rem.
  * - .choice-chip-group holding .choice-chip buttons: wrapping pill-shaped chips
@@ -9,10 +9,14 @@
  *
  * The selected look follows aria-pressed="true", so the markup only binds
  * aria-pressed. Loaded after buttons.css so the selected look wins over the
- * .btn--outline hover and focus rules.
+ * .btn--secondary hover and focus rules.
  */
 :root {
-    --choice-selected-bg: color-mix(in srgb, var(--color-primary) 14%, var(--bg-item));
+    --choice-selected-bg: var(--chip-primary-bg);
+    --choice-focus-shadow: var(--color-text-soft-50);
+    --choice-shadow: var(--shadow-focus-size) var(--choice-focus-shadow);
+    --choice-selected-focus-shadow: var(--color-primary-focus-visible);
+    --choice-selected-shadow: var(--shadow-focus-size) var(--choice-selected-focus-shadow);
 }
 
 .choice-toggle-group {
@@ -37,25 +41,31 @@
 .choice-chip {
     padding-block: var(--spacing-2x);
     padding-inline: var(--btn-padding-x);
-    border: 1px solid var(--bg-item-border);
-    border-radius: 999px;
-    background: var(--bg-item);
+    border: 1px solid var(--level-3-border);
+    border-radius: 100vw;
+    background: var(--level-3-background);
     color: var(--color-text-soft);
     font: inherit;
     font-size: var(--btn-font-size);
     cursor: pointer;
     transition: var(--btn-transition);
 
-    &:hover {
-        border-color: var(--bg-item-border-hover);
+    &:is(:hover, :focus-visible) {
+        background: var(--level-3-background-hover);
+        border-color: var(--level-3-border-hover);
         color: var(--color-text-strong);
+    }
+
+    &:active {
+        background: var(--level-3-background-active);
+        border-color: var(--level-3-border-hover);
     }
 }
 
 :is(.choice-toggle, .choice-chip) {
     &:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px var(--color-secondary-focus-visible);
+        box-shadow: var(--choice-shadow);
     }
 
     /* A mouse click focuses the button too; only keyboard focus gets a ring. */
@@ -70,6 +80,6 @@
     color: var(--color-text-strong);
 
     &:focus-visible {
-        box-shadow: 0 0 0 3px var(--color-primary-focus-visible);
+        box-shadow: var(--choice-selected-shadow);
     }
 }

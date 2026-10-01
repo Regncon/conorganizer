@@ -81,6 +81,15 @@ type eventRoomGroup struct {
 	Schedule []string
 }
 
+// eventSchedule is when the event happens across all its puljer, one line each.
+func eventSchedule(assignments []eventRoom, isProgramEvent bool) ([]string, error) {
+	puljeTimes := make([]program.PuljeTime, 0, len(assignments))
+	for _, assignment := range assignments {
+		puljeTimes = append(puljeTimes, program.PuljeTime{Pulje: assignment.Pulje, ProgramTime: assignment.ProgramTime})
+	}
+	return program.EventSchedule(puljeTimes, isProgramEvent)
+}
+
 // Input and output follow the first occurrence of each room in the schedule.
 // Cleared (hidden) rooms all share ID 0 and are grouped together as unassigned, same as any other pulje without a room.
 func groupEventRooms(assignments []eventRoom, isProgramEvent bool) ([]eventRoomGroup, error) {

@@ -8,7 +8,7 @@ templ programDaySelector(days []program.Day, selectedIndex int) {
 			padding: var(--spacing-2x) 0;
 			margin-bottom: var(--responsive-top-of-page-spacing);
 			position: sticky;
-			top: 51px;
+			top: 0;
 			background-color: var(--bg-base);
 			z-index: var(--subnav-z-index);
 		}
@@ -45,7 +45,7 @@ templ programDaySelector(days []program.Day, selectedIndex int) {
 			for index, day := range days {
 				<a
 					href={ templ.URL(programDateURL(day.QueryValue())) }
-					class={ "btn btn--outline", templ.KV("is-active", index == selectedIndex) }
+					class={ "btn btn--secondary", templ.KV("is-active", index == selectedIndex) }
 					aria-current={ templ.KV("page", index == selectedIndex) }
 				>{ day.Label() }</a>
 			}

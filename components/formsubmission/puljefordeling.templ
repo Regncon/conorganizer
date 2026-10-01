@@ -317,7 +317,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, isInPuljefordeling bool, d
 						style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
 						data-signals={ fmt.Sprintf("{roomAssignment:  {%s: '%s'}}", pulje.ID, assignedRoomNonNullable) }
 					>
-						<span class="label-small color-strong">Legg til rom</span>
+						<span class="label-bold color-strong">Legg til rom</span>
 						<select
 							class="input"
 							data-bind={ fmt.Sprintf("roomAssignment.%s", pulje.ID) }
@@ -355,7 +355,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, isInPuljefordeling bool, d
 						style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
 						data-signals={ components.DataSignals(map[string]map[models.Pulje]string{"programTime": {pulje.ID: eventPulje.ProgramTime}}) }
 					>
-						<span class="label-small color-strong">Tidspunkt</span>
+						<span class="label-bold color-strong">Tidspunkt</span>
 						<input
 							type="text"
 							class="input"

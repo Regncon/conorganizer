@@ -34,7 +34,7 @@ func highlightSearchTerm(text, searchTerm string) string {
 	for _, r := range text {
 		escaped := html.EscapeString(string(r)) // protect any HTML in the input
 		if _, ok := set[unicode.ToLower(r)]; ok {
-			out.WriteString("<b style=\"color: var(--color-primary-strong);\">")
+			out.WriteString("<b style=\"color: var(--color-primary);\">")
 			out.WriteString(escaped)
 			out.WriteString("</b>")
 		} else {
@@ -146,7 +146,7 @@ func addEmailToBilettholderRoute(
 					return
 				}
 				if id == billettholderIDInt {
-					newEmailAddress = v
+					newEmailAddress = strings.TrimSpace(v)
 					break
 				}
 			}
@@ -265,7 +265,7 @@ func deleteEmailFromBillettholderRoute(
 }
 
 templ billettholderCard(billettholder models.Billettholder, searchTerm string, interestSections []billettholderInterestPuljeSection) {
-	<div class="card billettholder-card" style="display:flex; flex-direction:column; gap:0.75rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
+	<div class="card billettholder-card" style="display:flex; flex-direction:column; gap:0.75rem; padding: 1rem; border-radius: 8px; color: var(--color-text-strong);">
 		<p style="margin:0;">
 			<strong>Bestilling: </strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
 		</p>
@@ -332,7 +332,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string, i
 			data-text={ fmt.Sprintf(`$successMessage-%d`, billettholder.ID) }
 		></strong>
 		<button
-			class="btn btn--outline"
+			class="btn btn--secondary"
 			data-on:click={ datastar.PostSSE("/admin/billettholder/api/new-email/%d/", billettholder.ID) }
 		>
 			Legg til epost

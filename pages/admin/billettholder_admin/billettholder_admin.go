@@ -48,7 +48,7 @@ func SetupBillettholderAdminRoute(router chi.Router, liveManager *live.Manager, 
 		})
 
 		addbillettholder.CheckInTicketsSearchRoute(addBillettholderRouter, db, logger, liveManager)
-		addbillettholder.ConvertTicketToBillettholderRoute(addBillettholderRouter, db, liveManager, logger)
+		addbillettholder.ConvertOrderToBillettholdereRoute(addBillettholderRouter, db, liveManager, logger)
 	})
 
 	return nil

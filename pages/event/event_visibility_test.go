@@ -433,13 +433,13 @@ func TestEventPageContent_WhenLegacyPuljePublishedFlagIsOff_StillRendersInterest
 	seedEventVisibilityEventPulje(t, db, "unpublished-pulje-event", models.PuljeFredagKveld, false)
 	setEventVisibilityProgramPublishing(t, db, true)
 	// The interest choices only render for a selected billettholder the signed-in
-	// user actually owns, so this needs the seeded email association, the selection
+	// user actually owns, so this needs the seeded user link, the selection
 	// cookie and its middleware. Owning a ticket is also what swaps the "Hent
 	// billett" link for the interest panel's own content.
 	seedEventVisibilityBillettholder(t, db, selectedBillettholderID)
 	request := httptest.NewRequest("GET", "/event/unpublished-pulje-event?pulje=fredag_kveld", nil)
 	request.AddCookie(&http.Cookie{Name: requestctx.SelectedBillettholderCookieName, Value: strconv.Itoa(selectedBillettholderID)})
-	request = request.WithContext(authctx.WithUserToken(request.Context(), "event-visibility-user", eventVisibilityUserEmail))
+	request = request.WithContext(authctx.WithUserToken(request.Context(), eventVisibilityUserID, eventVisibilityUserEmail))
 	var doc *goquery.Document
 	handler := requestctx.BillettholderSelectionMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		doc = templtest.Render(t, event_page_content("unpublished-pulje-event", false, logger, db, nil, r))

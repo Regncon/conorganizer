@@ -34,12 +34,12 @@ func PrintFriendlyRoute(router chi.Router, db *sql.DB, eventImageDir *string, lo
 type printOccurrence struct {
 	Pulje       models.PuljeRow
 	ProgramTime string
-	RoomID     int
-	RoomName   string
-	RoomNumber string
-	RoomFloor  int
-	MapPath    string
-	HasRoom    bool
+	RoomID      int
+	RoomName    string
+	RoomNumber  string
+	RoomFloor   int
+	MapPath     string
+	HasRoom     bool
 }
 
 type printEvent struct {
@@ -48,8 +48,8 @@ type printEvent struct {
 }
 
 type printRoomGroup struct {
-	Room   printOccurrence
-	Puljer []program.PuljeTime
+	Room     printOccurrence
+	Puljer   []program.PuljeTime
 	// Schedule is when the event is in this room, one line each.
 	Schedule []string
 }
@@ -297,12 +297,12 @@ templ printStyles() {
 			main { padding: 0; }
 			#print-page {
 				--bg-base: #fff;
-				--bg-surface: #fff;
+				--level-1-background: #fff;
+				--level-2-background: #fff;
 				--color-primary: #000;
 				--color-primary-text: #000;
-				--color-secondary-text: #000;
-				--color-text-strong: #000;
 				--color-text-soft: #000;
+				--color-text-strong: #000;
 				inline-size: 100%;
 				color: #000;
 				font-size: 10pt;

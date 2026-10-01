@@ -37,7 +37,7 @@ templ Event_mobile(
 					display: flex;
 					flex-direction: column;
 					padding: var(--spacing-4x);
-					background-color: var(--bg-base);
+					background-color: var(--level-1-background);
 					text-align: center;
 					height: fit-content;
 					border-radius: var(--border-radius-2x);
@@ -144,6 +144,9 @@ templ Event_mobile(
 					display: flex;
 					flex-direction: column;
 					gap: var(--spacing-3x);
+					padding: var(--spacing-3x);
+					border-radius: var(--border-radius-2x);
+					background-color: var(--level-2-background);
 				}
 
 				.event-detail-group {
@@ -152,17 +155,12 @@ templ Event_mobile(
 					gap: var(--spacing-1x);
 				}
 
-				.event-details-divider {
-					width: calc(100 + (var(--responsive-pane-padding) * 2));
-					margin: 0 calc(0px - var(--responsive-pane-padding));
-				}
-
 				.event-details-top {
 					p {
 						margin: 0;
 					}
 
-					.label-small {
+					.label-bold {
 						font-size: 12px;
 						font-weight: bold;
 						/* lmao hack to make the icon overflow the label */
@@ -203,8 +201,8 @@ templ Event_mobile(
 					display: grid;
 					grid-template-columns: 1fr 1fr;
 
-					hr {
-						display: none;
+					&:not(:has(.event-details-bottom)) {
+						grid-template-columns: 1fr;
 					}
 
 					.event-details-top {
@@ -317,7 +315,7 @@ templ Event_mobile(
 					grid-template-rows: auto 1fr;
 					gap: var(--spacing-8x);
 					padding-inline: var(--spacing-10x);
-					grid-template-columns: 1fr 25.3125rem;
+					grid-template-columns: 1fr 28.125rem;
 
 
 					.details {
@@ -364,12 +362,12 @@ templ Event_mobile(
 				<div class="event-details">
 					<div class="event-details-section event-details-top">
 						<div class="event-detail-group">
-							<span class="label-small color-strong">Arrangør</span>
+							<span class="label-bold color-strong">Arrangør</span>
 							<p title={ event.HostName }>{ event.HostName } </p>
 						</div>
 						<div class="event-detail-group">
 							<div class="event-details-type">
-								<span class="label-small color-strong">
+								<span class="label-bold color-strong">
 									if event.EventType == models.EventTypeRoleplay {
 										<span>{ event.EventType.Label() }</span>
 										@icons.Icon(icons.EventRoleplay, icons.Size16)
@@ -388,27 +386,28 @@ templ Event_mobile(
 							<p title={ event.System }>{ event.System } </p>
 						</div>
 					</div>
-					<hr class="event-details-divider"/>
-					<div class="event-details-section event-details-bottom">
-						if event.AgeGroup == models.AgeGroupAdultsOnly {
-							@event_components.Event_property(event.AgeGroup.BadgeLabel(), icons.EventAdultOnly)
-						}
-						if event.AgeGroup == models.AgeGroupChildFriendly {
-							@event_components.Event_property(event.AgeGroup.BadgeLabel(), icons.EventChildFriendly)
-						}
-						if event.Runtime == models.RunTimeLongRunning {
-							@event_components.Event_property(event.Runtime.BadgeLabel(), icons.TimeOver6Hours)
-						}
-						if event.Runtime == models.RunTimeShortRunning {
-							@event_components.Event_property(event.Runtime.BadgeLabel(), icons.TimeUnder3Hours)
-						}
-						if event.BeginnerFriendly {
-							@event_components.Event_property("Nybegynnervennlig", icons.EventBeginnerFriendly)
-						}
-						if event.CanBeRunInEnglish {
-							@event_components.Event_property("Can be run in English", icons.EventEnglish)
-						}
-					</div>
+					if hasEventDetailProperties(event) {
+						<div class="event-details-section event-details-bottom">
+							if event.AgeGroup == models.AgeGroupAdultsOnly {
+								@event_components.Event_property(event.AgeGroup.BadgeLabel(), icons.EventAdultOnly)
+							}
+							if event.AgeGroup == models.AgeGroupChildFriendly {
+								@event_components.Event_property(event.AgeGroup.BadgeLabel(), icons.EventChildFriendly)
+							}
+							if event.Runtime == models.RunTimeLongRunning {
+								@event_components.Event_property(event.Runtime.BadgeLabel(), icons.TimeOver6Hours)
+							}
+							if event.Runtime == models.RunTimeShortRunning {
+								@event_components.Event_property(event.Runtime.BadgeLabel(), icons.TimeUnder3Hours)
+							}
+							if event.BeginnerFriendly {
+								@event_components.Event_property("Nybegynnervennlig", icons.EventBeginnerFriendly)
+							}
+							if event.CanBeRunInEnglish {
+								@event_components.Event_property("Can be run in English", icons.EventEnglish)
+							}
+						</div>
+					}
 				</div>
 			</section>
 			<div class="description">
@@ -419,4 +418,13 @@ templ Event_mobile(
 			@components.PreviousNextBar(previousNextData)
 		}
 	</div>
+}
+
+func hasEventDetailProperties(event *models.Event) bool {
+	return event.AgeGroup == models.AgeGroupAdultsOnly ||
+		event.AgeGroup == models.AgeGroupChildFriendly ||
+		event.Runtime == models.RunTimeLongRunning ||
+		event.Runtime == models.RunTimeShortRunning ||
+		event.BeginnerFriendly ||
+		event.CanBeRunInEnglish
 }

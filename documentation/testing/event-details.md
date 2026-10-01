@@ -88,15 +88,15 @@ Denne sjekklisten dekker `/event/{id}`, altså detaljvisningen for et arrangemen
   **Når** brukeren åpner hvert romkart.<br>
   **Så** vises riktig pulje, romnavn, etasje og SVG-kart, også uten innlogging.
 
-- [ ] **Samme rom gir én knapp med alle tidspunktene**<br>
+- [ ] **Én boks med alle tidspunktene**<br>
   **Gitt** at arrangementet har samme rom i flere puljer og programmet er publisert.<br>
   **Når** detaljsiden vises.<br>
-  **Så** vises én kartknapp per rom med puljenavn og klokkeslett i kronologisk rekkefølge og større tekst. Det finnes ingen separat «Pulje(r)»-liste. Puljer uten rom vises som vanlige tidsrader uten kartknapp.
+  **Så** vises én «Sted og tidspunkt»-boks med alle puljene og klokkeslettene i kronologisk rekkefølge, og én rad per rom med romnavn og «Se rommet» når rommet har kart. Har arrangementet ikke noe kjent rom ennå, vises «Stedet for arrangementet kommer!» i stedet for romnavn og knapp. Det finnes ingen separat «Pulje(r)»-liste.
 
 - [ ] **Kartet forblir åpent ved liveoppdateringer**<br>
   **Gitt** at kartmodalen er åpen.<br>
   **Når** en endring i interesse, arrangement eller rom utløser en NATS/Datastar-oppdatering.<br>
-  **Så** forblir samme modal åpen. Endring av romnavn eller romtildeling oppdaterer innholdet uten å lukke modalen, også når romknapper slås sammen eller deles opp.
+  **Så** forblir samme modal åpen. Endring av romnavn eller romtildeling oppdaterer innholdet uten å lukke modalen, også når romrader slås sammen eller deles opp.
 
 - [ ] **Tilbaketrukket romkart lukkes**<br>
   **Gitt** at kartmodalen er åpen.<br>

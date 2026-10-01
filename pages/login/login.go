@@ -10,11 +10,14 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/Regncon/conorganizer/components/redirect"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
@@ -65,7 +68,7 @@ func authPathWithNeste(neste string) string {
 	return "/auth?" + nesteQueryParam + "=" + url.QueryEscape(neste)
 }
 
-func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, logger *slog.Logger, sessionValidator authctx.SessionValidator) error {
+func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, sessionValidator authctx.SessionValidator) error {
 	logger = logger.With("component", "auth")
 	publicRouter.Post("/auth/session", func(w http.ResponseWriter, r *http.Request) {
 		request := sessionRequest{}
@@ -218,6 +221,9 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 						http.Redirect(w, r, authPathWithNeste(neste), http.StatusSeeOther)
 						return
 					}
+					http.Redirect(w, r, neste, http.StatusSeeOther)
+					go syncTicketsAfterLogin(context.WithoutCancel(r.Context()), syncUserTicketsFromCheckIn, liveManager.Broadcast, db, userID, email, logger)
+					return
 				}
 				http.Redirect(w, r, neste, http.StatusSeeOther)
 			})
@@ -229,15 +235,64 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 }
 
 func syncPostLoginUser(db *sql.DB, userID string, email string, isAdmin bool, logger *slog.Logger) error {
-	exists, err := userExistsByEmail(db, email)
+	exists, err := userExistsByExternalID(db, userID)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		insertUser(db, userID, email, isAdmin, logger)
+	} else {
+		updateUserEmail(db, userID, email, logger)
 	}
 	updateUserAdmin(db, userID, isAdmin, logger)
 	return nil
+}
+
+// postLoginTicketSyncTimeout bounds the background "Hent billetter" run, so a
+// slow CheckIn cannot keep it alive indefinitely.
+const postLoginTicketSyncTimeout = time.Minute
+
+// syncUserTicketsFromCheckIn is the "Hent billetter" flow run after login.
+// Tests replace it so they do not reach CheckIn.
+var syncUserTicketsFromCheckIn = checkIn.SyncUserTicketsFromCheckIn
+
+// syncTicketsAfterLogin runs "Hent billetter" for a user who just logged in. It
+// runs after the redirect so login never waits for CheckIn, and its errors are
+// only logged. Like "Hent billetter", it broadcasts the billettholder bucket when
+// something was created, so open menus and admin pages pick up the change.
+func syncTicketsAfterLogin(
+	ctx context.Context,
+	syncUserTickets func(context.Context, string, string, *sql.DB, *slog.Logger) (checkIn.UserTicketImportResult, error),
+	broadcast func(context.Context, ...live.Bucket) error,
+	db *sql.DB,
+	userID string,
+	email string,
+	logger *slog.Logger,
+) {
+	logger = logger.With("component", "post_login_ticket_sync", "user_id", userID)
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			logger.Error("Post-login ticket sync panicked", "panic", recovered)
+		}
+	}()
+
+	ctx, cancel := context.WithTimeout(ctx, postLoginTicketSyncTimeout)
+	defer cancel()
+
+	result, err := syncUserTickets(ctx, userID, email, db, logger)
+	if err != nil {
+		logger.Error(fmt.Errorf("failed to sync tickets after login: %w", err).Error())
+	}
+	if result.CreatedBillettholders == 0 && result.CreatedUserAssociations == 0 {
+		return
+	}
+	logger.Info("Synced tickets after login",
+		"created_billettholdere", result.CreatedBillettholders,
+		"created_user_associations", result.CreatedUserAssociations,
+	)
+	if err := broadcast(ctx, live.BucketBillettholders); err != nil {
+		logger.Error(fmt.Errorf("failed to broadcast tickets synced after login: %w", err).Error())
+	}
 }
 
 func normalizeToken(token string) string {
@@ -248,16 +303,29 @@ func normalizeToken(token string) string {
 	return token
 }
 
-func userExistsByEmail(db *sql.DB, email string) (bool, error) {
+func userExistsByExternalID(db *sql.DB, externalID string) (bool, error) {
 	var exists int
-	err := db.QueryRow("SELECT 1 FROM users WHERE email = ?", email).Scan(&exists)
+	err := db.QueryRow("SELECT 1 FROM users WHERE external_id = ?", externalID).Scan(&exists)
 	if err == sql.ErrNoRows {
 		return false, nil
 	}
 	if err != nil {
-		return false, fmt.Errorf("failed to query user by email %q: %w", email, err)
+		return false, fmt.Errorf("failed to query user %q: %w", externalID, err)
 	}
 	return true, nil
+}
+
+// updateUserEmail keeps users.email in step with the login provider, since
+// "Hent billetter" matches tickets against it.
+func updateUserEmail(db *sql.DB, externalID, email string, logger *slog.Logger) {
+	result, err := db.Exec("UPDATE users SET email = ? WHERE external_id = ? AND email <> ?", email, externalID, email)
+	if err != nil {
+		logger.Error(fmt.Errorf("failed to update user email: %w", err).Error(), "external_id", externalID)
+		return
+	}
+	if rowsAffected, err := result.RowsAffected(); err == nil && rowsAffected > 0 {
+		logger.Info("Updated user email", "external_id", externalID)
+	}
 }
 
 func insertUser(db *sql.DB, externalID, email string, isAdmin bool, logger *slog.Logger) {

@@ -14,7 +14,7 @@ templ billettholderInterestTabsStyles() {
 			display: grid;
 			grid-template-columns: 1fr;
 			gap: var(--spacing-2x);
-			border-bottom: 1px solid var(--bg-item-border);
+			border-bottom: 1px solid var(--level-3-border);
 			padding-bottom: var(--spacing-3x);
 		}
 
@@ -24,19 +24,17 @@ templ billettholderInterestTabsStyles() {
 			align-items: center;
 			min-height: 4.25rem;
 			padding: var(--spacing-2x);
-			border: 1px solid var(--bg-item-border);
+			border: 1px solid var(--level-3-border);
 			border-radius: var(--border-radius-1x);
-			background: var(--bg-item);
+			background: var(--level-3-background);
 			color: var(--color-text-soft);
 			cursor: pointer;
 			text-align: left;
 			transition: var(--btn-transition);
 
-			&:hover,
-			&:focus-visible,
-			&.selected {
+			&:is(:hover, :focus-visible, .selected) {
 				border-color: var(--color-primary);
-				background: var(--bg-item-hover);
+				background: var(--level-3-background-hover);
 				color: var(--color-text-strong);
 				outline: none;
 			}
@@ -82,7 +80,7 @@ templ billettholderInterestTabsStyles() {
 			&::after {
 				content: "";
 				flex: 1;
-				border-top: 1px solid var(--bg-item-border);
+				border-top: 1px solid var(--level-3-border);
 			}
 		}
 

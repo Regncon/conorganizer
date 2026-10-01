@@ -25,14 +25,14 @@ func TestTicketCard_WhenTicketCanBeConverted_RendersConvertAction(t *testing.T) 
 		"Ola Nordmann",
 		"ola@example.com",
 		"Over 18",
-		"Konverter billett til deltager",
+		"Konverter bestilling til deltagere",
 	}
 	ticket := addBillettholderTestTicket(1)
 
 	// When
 	doc := templtest.Render(t, ticketCard(ticket, false, ""))
 	actualText := strings.Join(templtest.CollectTexts(doc, ".card"), " ")
-	actualConvertButtonVisible := templtest.HasSelector(doc, "button.btn--outline")
+	actualConvertButtonVisible := templtest.HasSelector(doc, "button.btn--secondary")
 
 	// Then
 	for _, expectedTextPart := range expectedTextParts {
@@ -54,7 +54,7 @@ func TestTicketCard_WhenTicketIsDinner_RendersDinnerWarningWithoutConvertAction(
 
 	// Given
 	expectedTextPart := "Dette er en middagsbillett"
-	unexpectedTextPart := "Konverter billett til deltager"
+	unexpectedTextPart := "Konverter bestilling til deltagere"
 	ticket := addBillettholderTestTicket(checkIn.TicketTypeMiddag)
 
 	// When
@@ -79,7 +79,7 @@ func TestTicketCard_WhenTicketIsAlreadyBillettholder_RendersConvertedWarningWith
 
 	// Given
 	expectedTextPart := "allerede konvertert til en billettholder"
-	unexpectedTextPart := "Konverter billett til deltager"
+	unexpectedTextPart := "Konverter bestilling til deltagere"
 	ticket := addBillettholderTestTicket(1)
 
 	// When

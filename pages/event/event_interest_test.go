@@ -613,6 +613,55 @@ func TestSelectedInterest_UnrelatedBillettholderDoesNotExposeNoticeContent(t *te
 	}
 }
 
+func TestSelectedInterest_WhenBillettholderOnlyCarriesTheUsersEmail_IsForbidden(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en billettholder med brukerens e-post, men uten kobling til brukeren.",
+		When:  "Når brukeren velger billettholderen for å melde interesse.",
+		Then:  "Så skal valget avvises, siden tilgang bare gis gjennom koblingen til brukeren.",
+	})
+
+	// Given
+	expectedStatus := http.StatusForbidden
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
+	seedNoticeBillettholder(t, db, 902, false)
+	mustExecEventInterestTest(t, db, `DELETE FROM relation_billettholdere_users WHERE billettholder_id = 902`)
+
+	// When
+	response := requestInterestContent(t, db, fixture, 902)
+
+	// Then
+	if response.Code != expectedStatus || strings.Contains(response.Body.String(), "datastar-patch-") {
+		t.Fatalf("expected forbidden without content patches, got %d: %s", response.Code, response.Body.String())
+	}
+}
+
+func TestSelectedInterest_WhenLinkedBillettholderHasAnotherTicketEmail_ShowsInterestChoices(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en ungdom er knyttet til en billettholder der billetten står på forelderens e-post.",
+		When:  "Når ungdommen velger billettholderen for å melde interesse.",
+		Then:  "Så skal ungdommen få velge interesse.",
+	})
+
+	// Given
+	expectedCanChoose := true
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
+	seedNoticeBillettholder(t, db, 902, false)
+	mustExecEventInterestTest(t, db, `DELETE FROM relation_billettholder_emails WHERE billettholder_id = 902`)
+	mustExecEventInterestTest(t, db, `
+		INSERT INTO relation_billettholder_emails (billettholder_id, email, kind) VALUES (902, 'forelder@example.com', ?)
+	`, models.BillettholderEmailKindTicket)
+
+	// When
+	actual := decodeInterestContent(t, requestInterestContent(t, db, fixture, 902))
+
+	// Then
+	if actual.CanChoose != expectedCanChoose {
+		t.Fatalf("can choose mismatch\nexpected: %v\nactual:   %v", expectedCanChoose, actual.CanChoose)
+	}
+}
+
 func TestInterestUpdateRoute_WhenSignalsArePosted_StoresChosenInterestLevel(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given an open pulje and a billettholder with an existing interest.",

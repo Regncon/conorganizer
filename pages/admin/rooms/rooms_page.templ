@@ -107,7 +107,7 @@ templ formModal() {
 			<span class="button-group">
 				<button
 					type="button"
-					class="btn btn--outline"
+					class="btn btn--secondary"
 					style="color: var(--color-error); border-color: var(--color-error);"
 					data-show="$mode === 'edit'"
 					data-on:click="document.getElementById('room-delete-dialog').showModal()"
@@ -117,12 +117,12 @@ templ formModal() {
 					<p>Er du sikker på at du vil slette dette rommet?</p>
 					<button
 						type="button"
-						class="btn btn--outline"
+						class="btn btn--secondary"
 						data-on:click="document.getElementById('room-delete-dialog').close()"
 					>Avbryt</button>
 					<button
 						type="button"
-						class="btn btn--outline"
+						class="btn btn--secondary"
 						style="color: var(--color-error); border-color: var(--color-error);"
 						data-on:click="@delete('/admin/rooms/api/'+$id)"
 					>Slett rom</button>
@@ -131,7 +131,7 @@ templ formModal() {
 					type="button"
 					data-text="$button_label"
 					data-on:click="@post('/admin/rooms/api/'+$id)"
-					class="btn btn--outline"
+					class="btn btn--secondary"
 				></button>
 			</span>
 			@errorfeedback.RenderMessage("error")
@@ -166,7 +166,7 @@ templ roomCard(room models.Room) {
 		@roomNotes(room.PublicNotes, room.AdminNotes)
 		<button
 			type="button"
-			class="btn btn--outline room-edit"
+			class="btn btn--secondary room-edit"
 			data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d'); document.getElementById('room-dialog').showModal()", room.ID) }
 		>Rediger rom</button>
 	</div>
@@ -229,9 +229,14 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
             flex-flow: column nowrap;
             gap: var(--spacing-1x);
             padding: var(--spacing-2x);
-            border: 1px solid var(--bg-item-border);
+            border: 1px solid var(--level-2-border);
             border-radius: var(--border-radius-1x);
-            background-color: var(--bg-item);
+            background-color: var(--level-2-background);
+
+            &:hover {
+                background-color: var(--level-2-background-hover);
+                border-color: var(--level-2-border-hover);
+            }
 
             h3 {
                 text-align: center;
@@ -248,10 +253,6 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
             }
         }
 
-        .room:hover {
-            background-color: var(--bg-item-hover);
-            border-color: var(--bg-item-border-hover);
-        }
         .room-map {
             display: block;
 
@@ -281,6 +282,10 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
             .rooms-container {
                 grid-template-columns: repeat(3, 1fr);
             }
+        }
+
+        #room-dialog {
+            background-color: var(--level-1-background);
         }
 
         #room-delete-dialog:open {
@@ -313,7 +318,7 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
 		}
 		<button
 			type="button"
-			class="btn btn--outline"
+			class="btn btn--secondary"
 			data-on:click="@get('/admin/rooms/api/0'); document.getElementById('room-dialog').showModal()"
 		>
 			Legg til nytt rom

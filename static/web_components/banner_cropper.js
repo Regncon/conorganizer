@@ -103,17 +103,17 @@ class BannerCropper extends HTMLElement {
                     --range-thumb-background: var(--color-primary);
 
                     --range-track-size: 12px;
-                    --range-track-border: var(--bg-item-border);
+                    --range-track-border: var(--level-3-border);
                     --range-track-border-size: 1px;
-                    --range-track-background: var(--bg-item);
+                    --range-track-background: var(--level-3-background);
 
                     --range-progress: 0%;
                     --range-progress-background: var(--color-primary-focus-visible);
                     /* firefox makes color a bit darker */
                     --range-progress-background-chromium: #997759;
-                    --range-progress-border: var(--bg-item-hover);
+                    --range-progress-border: var(--level-3-border);
 
-                    --range-focus-ring: var(--bg-item-border-hover);
+                    --range-focus-ring: var(--color-text-soft-50);
 
                     appearance: none;
                     -webkit-appearance: none;
@@ -136,7 +136,7 @@ class BannerCropper extends HTMLElement {
                             var(--range-progress-background-chromium) 0 var(--range-progress),
                             var(--range-track-background) var(--range-progress) 100%
                         );
-                        outline: 1px solid var(--range-track-border);
+                        outline: var(--range-track-border-size) solid var(--range-track-border);
                         outline-offset: -1px;
                         border-bottom-right-radius: var(--border-radius-2x);
                         border-bottom-left-radius: var(--border-radius-2x);
@@ -173,7 +173,7 @@ class BannerCropper extends HTMLElement {
                         block-size: var(--range-track-size);
                         box-sizing: border-box;
                         background: var(--range-track-background);
-                        border: 1px solid var(--range-track-border);
+                        border: var(--range-track-border-size) solid var(--range-track-border);
                         border-bottom-right-radius: var(--border-radius-2x);
                         border-bottom-left-radius: var(--border-radius-2x);
                     }
@@ -182,7 +182,7 @@ class BannerCropper extends HTMLElement {
                     &::-moz-range-progress {
                         block-size: var(--range-track-size);
                         background: var(--range-progress-background);
-                        outline: 1px var(--bg-item-hover) solid;
+                        outline: 1px var(--range-progress-border) solid;
                         outline-offset: -1px;
                         border-bottom-right-radius: var(--border-radius-2x);
                         border-bottom-left-radius: var(--border-radius-2x);

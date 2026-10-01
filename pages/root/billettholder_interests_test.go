@@ -16,6 +16,7 @@ import (
 )
 
 const interestTestUserEmail = "forelder@example.com"
+const interestTestUserExternalID = "interest-test-user"
 
 func TestRootPageContent_WhenBillettholdereOnTheAccountHaveInterest_ListsYouFirstThenTheMostInterested(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
@@ -33,8 +34,9 @@ func TestRootPageContent_WhenBillettholdereOnTheAccountHaveInterest_ListsYouFirs
 	andersID := insertRootPageBillettholder(t, db, "Anders", "Andersen", 1, interestTestUserEmail)
 	amalieID := insertRootPageBillettholder(t, db, "Amalie", "Berg", 2, "amalie@example.com")
 	bjornID := insertRootPageBillettholder(t, db, "Bjørn", "Berg", 3, "bjorn@example.com")
-	associateRootPageBillettholder(t, db, amalieID, interestTestUserEmail)
-	associateRootPageBillettholder(t, db, bjornID, interestTestUserEmail)
+	linkRootPageBillettholderToAccount(t, db, andersID)
+	linkRootPageBillettholderToAccount(t, db, amalieID)
+	linkRootPageBillettholderToAccount(t, db, bjornID)
 	insertRootPageInterest(t, db, andersID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelLow)
 	insertRootPageInterest(t, db, amalieID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelHigh)
 	insertRootPageInterest(t, db, bjornID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelMedium)
@@ -63,9 +65,10 @@ func TestRootPageContent_WhenOnlyALinkedBillettholderHasInterest_ShowsTheirNameI
 	expectedDescriptions := []string{"Amalie er veldig interessert"}
 
 	db := createInterestRootPageTestDB(t)
-	insertRootPageBillettholder(t, db, "Anders", "Andersen", 1, interestTestUserEmail)
+	andersID := insertRootPageBillettholder(t, db, "Anders", "Andersen", 1, interestTestUserEmail)
 	amalieID := insertRootPageBillettholder(t, db, "Amalie", "Berg", 2, "amalie@example.com")
-	associateRootPageBillettholder(t, db, amalieID, interestTestUserEmail)
+	linkRootPageBillettholderToAccount(t, db, andersID)
+	linkRootPageBillettholderToAccount(t, db, amalieID)
 	insertRootPageInterest(t, db, amalieID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelHigh)
 
 	// When
@@ -87,7 +90,7 @@ func TestRootPageContent_WhenTheTicketEmailDiffersFromTheLoginEmail_ShowsTheName
 
 	db := createInterestRootPageTestDB(t)
 	andersID := insertRootPageBillettholder(t, db, "Anders", "Andersen", 1, "annen-epost@example.com")
-	associateRootPageBillettholder(t, db, andersID, interestTestUserEmail)
+	linkRootPageBillettholderToAccount(t, db, andersID)
 	insertRootPageInterest(t, db, andersID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelHigh)
 
 	// When
@@ -108,8 +111,9 @@ func TestRootPageContent_WhenOnlyAnotherAccountHasInterest_ShowsNoInterestIndica
 	expectedInterestIndicatorVisible := false
 
 	db := createInterestRootPageTestDB(t)
-	insertRootPageBillettholder(t, db, "Anders", "Andersen", 1, interestTestUserEmail)
+	andersID := insertRootPageBillettholder(t, db, "Anders", "Andersen", 1, interestTestUserEmail)
 	strangerID := insertRootPageBillettholder(t, db, "Frida", "Fremmed", 2, "fremmed@example.com")
+	linkRootPageBillettholderToAccount(t, db, andersID)
 	insertRootPageInterest(t, db, strangerID, "alpha-event", models.PuljeFredagKveld, models.InterestLevelHigh)
 
 	// When
@@ -135,6 +139,7 @@ func TestRootPageContent_WhenInterestIsInAnotherPulje_ShowsNoInterestIndicatorOn
 	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
 	insertRootPageEventPulje(t, db, "alpha-event", models.PuljeLordagMorgen, true)
 	andersID := insertRootPageBillettholder(t, db, "Anders", "Andersen", 1, interestTestUserEmail)
+	linkRootPageBillettholderToAccount(t, db, andersID)
 	insertRootPageInterest(t, db, andersID, "alpha-event", models.PuljeLordagMorgen, models.InterestLevelHigh)
 
 	// When
@@ -161,9 +166,9 @@ func createInterestRootPageTestDB(t *testing.T) *sql.DB {
 func renderRootPageAs(t *testing.T, db *sql.DB, email string) *goquery.Document {
 	t.Helper()
 
-	ctx := authctx.WithUserToken(context.Background(), "interest-test-user", email)
+	ctx := authctx.WithUserToken(context.Background(), interestTestUserExternalID, email)
 	var html bytes.Buffer
-	if err := rootPageContentForDate(db, nil, "2026-10-09").Render(ctx, &html); err != nil {
+	if err := rootPageContentForDate(db, nil, "2026-10-09", rootPageTestNow).Render(ctx, &html); err != nil {
 		t.Fatalf("render root page: %v", err)
 	}
 	doc, err := goquery.NewDocumentFromReader(&html)
@@ -194,13 +199,19 @@ func insertRootPageBillettholder(t *testing.T, db *sql.DB, firstName string, las
 	return int(id)
 }
 
-func associateRootPageBillettholder(t *testing.T, db *sql.DB, billettholderID int, email string) {
+// linkRootPageBillettholderToAccount puts a billettholder on the signed-in
+// test user's account, which is what decides the billettholdere shown.
+func linkRootPageBillettholderToAccount(t *testing.T, db *sql.DB, billettholderID int) {
 	t.Helper()
 
 	mustExec(t, db, `
-		INSERT INTO relation_billettholder_emails(billettholder_id, email, kind)
-		VALUES(?, ?, ?)
-	`, billettholderID, email, models.BillettholderEmailKindAssociated)
+		INSERT OR IGNORE INTO users(external_id, email)
+		VALUES(?, ?)
+	`, interestTestUserExternalID, interestTestUserEmail)
+	mustExec(t, db, `
+		INSERT INTO relation_billettholdere_users(billettholder_id, user_id)
+		SELECT ?, id FROM users WHERE external_id = ?
+	`, billettholderID, interestTestUserExternalID)
 }
 
 func insertRootPageInterest(t *testing.T, db *sql.DB, billettholderID int, eventID string, puljeID models.Pulje, level models.InterestLevel) {

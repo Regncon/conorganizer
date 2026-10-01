@@ -26,7 +26,7 @@
       <path d="M 0,0 L 13,6.5 L 0,13 Z" fill="#e7a965" />
     </marker>
   </defs>
-  <rect x="0" y="110" width="675" height="540" fill="#252735" />
+  <rect x="0" y="110" width="675" height="540" fill="#232638" />
   <g clip-path="url(#room-710-map-crop)">
     <g font-family="Arial, Helvetica, sans-serif" fill="#ccd1e9" transform="translate(-30 -340)">
       <g id="room-710-service-room-fills" fill="#2B3045">
@@ -196,6 +196,12 @@
           </text>
           <text x="145" y="768" font-size="17">709</text>
         </g>
+        <g id="room-710-info-desk" font-size="22" font-weight="bold">
+          <title>Info Desk – rom 709</title>
+          <circle cx="91" cy="806" r="15" fill="#e7a965"/>
+          <text x="91" y="813" fill="#1a1b26" text-anchor="middle" font-size="21">i</text>
+          <text x="116" y="813" fill="#e7a965" text-anchor="start">Info Desk</text>
+        </g>
         <g id="room-710-label-710" fill="#e7a965" font-size="25">
           <text x="335" y="890" font-weight="bold">
             <tspan x="335" dy="0">Lucie Wolf</tspan>
@@ -245,9 +251,9 @@
         </g>
       </g>
       <g id="room-710-route" fill="none" stroke-linejoin="round" stroke-linecap="round">
-        <path d="M 350,683 H 283 V 813" stroke="#252735" stroke-width="8" />
+        <path d="M 350,683 H 283 V 813" stroke="#232638" stroke-width="8" />
         <path d="M 350,683 H 283 V 813" stroke="#e7a965" stroke-width="4" stroke-dasharray="9 6" marker-end="url(#room-710-route-arrow)" />
-        <circle cx="350" cy="683" r="7" fill="#e7a965" stroke="#252735" stroke-width="2" />
+        <circle cx="350" cy="683" r="7" fill="#e7a965" stroke="#232638" stroke-width="2" />
       </g>
     </g>
   </g>

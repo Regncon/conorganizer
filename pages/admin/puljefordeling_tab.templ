@@ -241,7 +241,7 @@ templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, 
 				}
 
 				a:hover {
-					border-color: var(--bg-item-border-hover);
+					border-color: var(--level-3-border-hover);
 					color: var(--color-text-strong);
 				}
 
@@ -323,7 +323,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             gap: var(--spacing-5x);
             padding: var(--spacing-5x);
             border-radius: var(--border-radius-2x);
-            background-color: var(--level-2-background);
+            background-color: var(--level-1-background);
         }
         @container pulje-section (width > 800px) {
             .pulje-meta-panel {
@@ -336,9 +336,9 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             place-content: center;
             gap: var(--spacing-3x);
             padding: var(--spacing-5x);
-            border: 1px solid var(--level-3-border);
+            border: 1px solid var(--level-2-border);
             border-radius: var(--border-radius-2x);
-            background-color: var(--level-3-background);
+            background-color: var(--level-2-background);
         }
         .pulje-status-controls {
             display: flex;
@@ -480,7 +480,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             transition: border-color 300ms ease-in-out;
 
             &:hover {
-                border-color: var(--bg-item-border-hover);
+                border-color: var(--level-3-border-hover);
             }
             &.is-drag-over {
                 border-color: var(--color-primary);
@@ -595,16 +595,16 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-players li.is-dragging {
             opacity: 0.5;
         }
-        .pulje-badge--error {
-            color: var(--color-text-error, #e05050);
-        }
         .pulje-badge {
             align-self: flex-start;
             padding: 0 var(--spacing-2x);
             border-radius: var(--border-radius-1x);
-            background-color: var(--bg-surface);
-            color: var(--color-text-warning, #e0a030);
-            font-size: var(--text-small, 0.85rem);
+            background-color: var(--level-2-background);
+            color: var(--color-warning);
+            font-size: var(--text-body-small);
+        }
+        .pulje-badge--error {
+            color: var(--color-error);
         }
         .pulje-players {
             margin: 0;
@@ -862,7 +862,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             }
         }
         .pulje-error {
-            color: var(--color-text-error, #e05050);
+            color: var(--color-error);
         }
         @container pulje-section (width > 640px) {
             .pulje-event-grid {
@@ -989,12 +989,12 @@ templ puljeAgeWarningDialog() {
 		<h3>Aldersgrense</h3>
 		<p data-text="$ageWarningText"></p>
 		<button
-			class="btn btn--outline"
+			class="btn btn--secondary"
 			type="button"
 			data-on:click="$ageWarningText = ''; document.getElementById('puljefordeling-age-dialog').close()"
 		>Avbryt</button>
 		<button
-			class="btn"
+			class="btn btn--primary"
 			type="button"
 			data-on:click={ puljeAgeConfirmAction() }
 		>Plasser likevel</button>
@@ -1016,17 +1016,17 @@ templ puljeStatusToggles(pulje models.PuljeRow, unsaved bool) {
 	}}
 	<ol class="pulje-status-controls" aria-label="Steg for puljefordeling">
 		@puljeStatusStep(puljeStep{
-			Number:     1,
-			Label:      "Vis advarsel om at puljefordeling stenger snart",
+			Number:   1,
+			Label:    "Vis advarsel om at puljefordeling stenger snart",
 			Done:     puljeClosingWarningStepDone(pulje),
 			Disabled: pulje.Status != models.PuljeStatusOpen,
-			Action:     fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID),
+			Action:   fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID),
 		})
 		@puljeStatusStep(puljeStep{
-			Number:     2,
-			Label:      "Puljefordeling lukket",
-			Done:     puljeIsLocked(pulje.Status),
-			Disabled: !puljeStatusStepAllowed(pulje, models.PuljeStatusLocked) || !puljeStatusStepAllowed(pulje, models.PuljeStatusOpen),
+			Number:      2,
+			Label:       "Puljefordeling lukket",
+			Done:        puljeIsLocked(pulje.Status),
+			Disabled:    !puljeStatusStepAllowed(pulje, models.PuljeStatusLocked) || !puljeStatusStepAllowed(pulje, models.PuljeStatusOpen),
 			WaitingText: lockWaitingText,
 			Action: puljeStatusUpdateAction(
 				pulje,
@@ -1036,10 +1036,10 @@ templ puljeStatusToggles(pulje models.PuljeRow, unsaved bool) {
 			),
 		})
 		@puljeStatusStep(puljeStep{
-			Number:     3,
-			Label:      "Puljefordeling publisert",
-			Done:     puljeIsCompleted(pulje.Status),
-			Disabled: !puljeStatusStepAllowed(pulje, models.PuljeStatusCompleted) || publishBlocked,
+			Number:      3,
+			Label:       "Puljefordeling publisert",
+			Done:        puljeIsCompleted(pulje.Status),
+			Disabled:    !puljeStatusStepAllowed(pulje, models.PuljeStatusCompleted) || publishBlocked,
 			WaitingText: publishWaitingText,
 			Action: puljeStatusUpdateAction(
 				pulje,
@@ -1055,8 +1055,8 @@ templ puljeStatusToggles(pulje models.PuljeRow, unsaved bool) {
 type puljeStep struct {
 	Number      int
 	Label       string
-	Done     bool
-	Disabled bool
+	Done        bool
+	Disabled    bool
 	WaitingText string // why a step that is not done yet can't be ticked
 	Action      string
 }

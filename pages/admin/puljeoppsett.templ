@@ -61,7 +61,7 @@ templ ScheduleBoardContent(db *sql.DB, logger *slog.Logger, eventImageDir *strin
 }
 
 templ poolColumn(games []BoardGame, eventImageDir *string) {
-	<div class="board-col board-col--pool">
+	<div class="board-col">
 		<header class="board-col-head">
 			<h3>I ingen pulje</h3>
 			<p class="board-stats">{ fmt.Sprintf("%d spill", len(games)) }</p>
@@ -260,22 +260,21 @@ templ scheduleBoardStyles() {
 			flex-direction: column;
 			gap: var(--spacing-1x);
 			padding: var(--spacing-2x);
-			border: 1px solid var(--bg-item-border);
+			border: 1px solid var(--level-3-border);
 			border-radius: var(--border-radius-1x);
-			background-color: var(--bg-item);
+			background-color: var(--level-1-background);
 			transition: border-color 300ms ease-in-out;
 		}
 		.board-col.is-drag-over {
 			border-color: var(--color-primary);
-			background-color: var(--bg-item-hover);
+			background-color: var(--level-2-background);
 		}
-		.board-col--pool { background-color: var(--bg-surface); }
 		.board-col-body {
 			display: flex;
 			flex-direction: column;
 			gap: var(--spacing-1x);
 		}
-		.board-stats { font-size: var(--text-body-small); color: var(--color-disabled); }
+		.board-stats { font-size: var(--text-body-small); color: var(--color-text-soft-50); }
 		.board-collision, .board-collision-summary {
 			color: var(--color-error);
 			font-weight: bold;
@@ -296,9 +295,9 @@ templ scheduleBoardStyles() {
 			gap: 2px;
 			min-height: 4.5rem;
 			padding: var(--spacing-1x);
-			border: 2px solid var(--bg-item-border);
+			border: 2px solid var(--level-3-border);
 			border-radius: var(--border-radius-2x);
-			background-color: var(--bg-item);
+			background-color: var(--level-3-background);
 			cursor: grab;
 			transition: border-color 300ms ease-in-out;
 		}
@@ -317,9 +316,9 @@ templ scheduleBoardStyles() {
 			z-index: 1;
 			background: linear-gradient(
 				to right,
-				rgba(53, 57, 74, 0.5) 0%,
-				rgba(53, 57, 74, 0.8) 20%,
-				rgba(53, 57, 74, 1) 50%
+				color-mix(in srgb, var(--level-3-background) 50%, transparent) 0%,
+				color-mix(in srgb, var(--level-3-background) 80%, transparent) 20%,
+				var(--level-3-background) 50%
 			);
 		}
 		.board-card.is-colliding { border-color: var(--color-error); }

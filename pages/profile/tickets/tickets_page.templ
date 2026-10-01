@@ -71,26 +71,14 @@ func getTicketsRouter(
 		var user = userctx.GetUserRequestInfo(ctx)
 
 		var errorMessage = ""
-		var ticketAssociationResult checkIn.TicketAssociationResult
-		var createdUserAssociations int
+		var importResult checkIn.UserTicketImportResult
 
 		ticketResult, ticketsErr := checkIn.GetTicketsFromCheckIn(ctx, logger.With("user_id", user.Id), "")
-		tickets := ticketResult.Tickets
 		errorMessage = checkInFetchErrorMessage(ticketResult, ticketsErr)
 
 		if errorMessage == "" {
 			var err error
-			ticketAssociationResult, err = checkIn.AssociateTicketsWithBillettholder(tickets, user.Email, db, logger)
-			if err != nil {
-				logger.Error(err.Error(), "user_id", user.Id)
-				errorMessage = "Vi klarte ikke å oppdatere billettene dine akkurat nå. Prøv igjen senere."
-			}
-		}
-
-		// Link user + billettholdere to relation_billettholdere_users
-		if errorMessage == "" {
-			var err error
-			createdUserAssociations, err = checkIn.AssociateUserWithBillettholder(user.Id, db, logger)
+			importResult, err = checkIn.ImportUserTickets(ticketResult.Tickets, user.Id, user.Email, db, logger)
 			if err != nil {
 				logger.Error(err.Error(), "user_id", user.Id)
 				errorMessage = "Vi klarte ikke å oppdatere billettene dine akkurat nå. Prøv igjen senere."
@@ -99,7 +87,7 @@ func getTicketsRouter(
 
 		feedback := fetchTicketsFeedback{}
 		if errorMessage == "" {
-			feedback = buildFetchTicketsFeedback(createdUserAssociations, ticketResult.UsedStaleCache)
+			feedback = buildFetchTicketsFeedback(importResult.CreatedUserAssociations, ticketResult.UsedStaleCache)
 		}
 		signalJSON, marshalErr := json.Marshal(map[string]string{
 			"getTicketsErrorMessage":   errorMessage,
@@ -117,7 +105,7 @@ func getTicketsRouter(
 			return
 		}
 
-		shouldBroadcast := shouldBroadcastTicketFetch(ticketAssociationResult.CreatedBillettholders, createdUserAssociations)
+		shouldBroadcast := shouldBroadcastTicketFetch(importResult.CreatedBillettholders, importResult.CreatedUserAssociations)
 		if shouldBroadcast {
 			if err := liveManager.Broadcast(r.Context(), live.BucketBillettholders); err != nil {
 				logger.Error(fmt.Errorf("failed to broadcast ticket fetch update for user %q: %w", user.Id, err).Error())
@@ -218,7 +206,7 @@ templ profileTicketsPageContent(userId string, db *sql.DB, logger *slog.Logger) 
 						href={ checkInTicketsURL }
 						target="_blank"
 						rel="noopener noreferrer"
-						class="btn btn--outline btn-with-icon"
+						class="btn btn--secondary btn-with-icon"
 					>
 						Kjøp billetter
 						@icons.Icon(icons.ExternalLink, icons.Size16)

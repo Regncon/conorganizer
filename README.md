@@ -53,6 +53,13 @@ Windows PowerShell:
 .\scripts\trust-docker-ca.ps1
 ```
 
+If PowerShell refuses with `running scripts is disabled on this system`, run
+the script with a bypass that only applies to that one process:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\trust-docker-ca.ps1
+```
+
 Linux or macOS:
 
 ```bash
