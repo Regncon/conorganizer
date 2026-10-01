@@ -61,8 +61,12 @@ Code lives in `service/checkIn`.
   18+ arrangement (`AgeGroupAdultsOnly`). The admin puljefordeling page uses it
   to warn about such seats, and to ask for confirmation before a manual pin. See
   [domeneordbok.md](../domeneordbok.md#aldersgrense-18).
-- `ConvertTicketToBillettholder(ctx, ticketId, db, logger)` fetches all tickets and
-  calls the unexported `converTicketIdToNewBillettholder`, which:
+- `ConvertOrderToBillettholdere(ctx, ticketID, db, logger)` is the admin
+  conversion. It fetches all tickets, converts every non-Middag ticket in the
+  order `ticketID` belongs to (the shared `convertOrders`, also used by
+  `AssociateTicketsWithBillettholder`), and links users with
+  `LinkUsersToBillettholdere`. Each ticket goes through the unexported
+  `converTicketIdToNewBillettholder`, which:
   - refuses Middag tickets,
   - reuses an existing billettholder with the same `ticket_id`, or inserts one
     (reporting `TicketConversionResult.CreatedBillettholders = 1`),
@@ -162,15 +166,17 @@ The only ways a user gets linked to, or unlinked from, a billettholder:
 | --- | --- | --- |
 | Self-service ticket fetch | `POST /profile/tickets/api/get-tickets` | `ImportUserTickets` |
 | Login (background) | `GET /auth/post-login` | `SyncUserTicketsFromCheckIn` → `ImportUserTickets` |
-| Admin ticket conversion | `GET /admin/billettholder/add/api/convert/{ticketID}/` | `ConvertTicketToBillettholder` → `LinkUsersToBillettholdere` |
+| Admin order conversion | `GET /admin/billettholder/add/api/convert/{ticketID}/` | `ConvertOrderToBillettholdere` → `LinkUsersToBillettholdere` |
 | Add manual e-post (admin) | `POST /admin/billettholder/api/new-email/{id}/` | `AssociateUsersWithBillettholderEmail` |
 | Add manual e-post (Min Side) | `POST /profile/tickets/api/new-email/{id}/` | `AssociateUsersWithBillettholderEmail` |
 | Delete manual e-post (admin) | `POST /admin/billettholder/api/delete-email/{id}/{emailID}/` | `DisassociateUsersFromBillettholderEmail` |
 | Delete manual e-post (Min Side) | `POST /profile/tickets/api/delete-email/{id}/{emailID}/` | `DisassociateUsersFromBillettholderEmail` |
 
-Admin ticket conversion links every existing user whose e-post is on the new
-billettholder, including the other e-post addresses on the same order
-(`Associated`). Users who log in later are linked by the login sync.
+Admin conversion ("Konverter bestilling til deltagere" on a ticket card)
+converts the whole order the ticket belongs to, like "Hent billetter", and links
+every existing user whose e-post is on those billettholdere, including the other
+e-post addresses on the order (`Associated`). Users who log in later are linked
+by the login sync.
 
 Add manual e-post:
 
@@ -296,7 +302,8 @@ currently commented out, so each filter request also resets `searchTerm` to "".)
   `DisassociateUsersFromBillettholderEmail`.
 - `service/checkIn/import_user_tickets_test.go`: `ImportUserTickets` linking other
   users on the order and a manual e-post added before first login,
-  `ConvertTicketToBillettholder` linking users, and `LinkUsersToBillettholdere`.
+  `ConvertOrderToBillettholdere` converting the whole order and linking users,
+  and `LinkUsersToBillettholdere`.
 - `components/ticket_holder/get_ticket_holders_test.go`: the picker lists linked
   billettholdere only, not ones that merely carry the user's e-post.
 - `pages/login/post_login_user_test.go` and `post_login_ticket_sync_test.go`:

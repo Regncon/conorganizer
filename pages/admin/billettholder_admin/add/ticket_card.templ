@@ -41,7 +41,7 @@ func highlightSearchTerm(text, searchTerm string) string {
 
 	return out.String()
 }
-func ConvertTicketToBillettholderRoute(
+func ConvertOrderToBillettholdereRoute(
 	router chi.Router,
 	db *sql.DB,
 	liveManager *live.Manager,
@@ -56,8 +56,9 @@ func ConvertTicketToBillettholderRoute(
 				return
 			}
 
-			err = checkIn.ConvertTicketToBillettholder(r.Context(), ticketID, db, logger)
+			_, err = checkIn.ConvertOrderToBillettholdere(r.Context(), ticketID, db, logger)
 			if err != nil {
+				logger.Error("Failed to convert order to billettholdere", "error", err, "ticket_id", ticketID)
 				http.Error(w, "Kunne ikke hente billettinformasjon fra Checkin. Prøv igjen senere.", http.StatusInternalServerError)
 				return
 			}
@@ -111,7 +112,7 @@ templ ticketCard(ticket checkIn.CheckInTicket, isBllettholder bool, searchTerm s
 				class="btn btn--outline"
 				data-on:click={ templ.URL(fmt.Sprintf("@get('/admin/billettholder/add/api/convert/%s/')", strconv.Itoa(ticket.ID))) }
 			>
-				Konverter billett til deltager
+				Konverter bestilling til deltagere
 			</button>
 		}
 	</div>

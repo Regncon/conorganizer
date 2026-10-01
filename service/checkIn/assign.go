@@ -37,11 +37,9 @@ func AssociateTicketsWithEmail(tickets []CheckInTicket, email string) ([]CheckIn
 // AssociateTicketsWithBillettholder imports every non-dinner ticket from an
 // order containing a ticket registered to email.
 func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db *sql.DB, logger *slog.Logger) (TicketAssociationResult, error) {
-	var result TicketAssociationResult
-
 	associatedTickets, err := AssociateTicketsWithEmail(tickets, email)
 	if err != nil {
-		return result, nil
+		return TicketAssociationResult{}, nil
 	}
 
 	associatedOrderIDs := make(map[int]struct{}, len(associatedTickets))
@@ -49,17 +47,29 @@ func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db
 		associatedOrderIDs[associatedTicket.OrderID] = struct{}{}
 	}
 
+	result, err := convertOrders(associatedOrderIDs, tickets, db, logger)
+	if err != nil {
+		return result, fmt.Errorf("unable to import orders for email %q: %w", email, err)
+	}
+	return result, nil
+}
+
+// convertOrders converts every non-dinner ticket in the given orders to a
+// billettholder, reusing billettholdere that already exist for a ticket.
+func convertOrders(orderIDs map[int]struct{}, tickets []CheckInTicket, db *sql.DB, logger *slog.Logger) (TicketAssociationResult, error) {
+	var result TicketAssociationResult
+
 	for _, ticket := range tickets {
 		if ticket.TypeId == TicketTypeMiddag {
 			continue
 		}
-		if _, belongsToAssociatedOrder := associatedOrderIDs[ticket.OrderID]; !belongsToAssociatedOrder {
+		if _, inOrder := orderIDs[ticket.OrderID]; !inOrder {
 			continue
 		}
 
 		conversionResult, err := converTicketIdToNewBillettholder(ticket.ID, tickets, db, logger)
 		if err != nil {
-			return result, fmt.Errorf("unable to convert ticket %d to billettholder for email %q: %w", ticket.ID, email, err)
+			return result, fmt.Errorf("unable to convert ticket %d to billettholder: %w", ticket.ID, err)
 		}
 		result.BillettholderIDs = append(result.BillettholderIDs, conversionResult.BillettholderID)
 		result.CreatedBillettholders += conversionResult.CreatedBillettholders

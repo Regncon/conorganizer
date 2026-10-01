@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
@@ -85,32 +86,64 @@ func TestImportUserTickets_WhenManualEmailWasAddedBeforeFirstLogin_LinksTheUser(
 	assertOnlyBillettholderUserAssociation(t, db, expectedAssociation)
 }
 
-func TestConvertTicketToBillettholder_WhenUsersOnTheOrderExist_LinksThem(t *testing.T) {
+func TestConvertOrderToBillettholdere_WhenAdminConvertsOneTicket_ConvertsTheWholeOrderAndLinksUsers(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at både forelderen og ungdommen har logget inn, og billettene deres står på samme bestilling.",
-		When:  "Når admin konverterer ungdommens billett til billettholder.",
-		Then:  "Så skal alle brukere med en e-post på billettholderen knyttes til den.",
+		When:  "Når admin konverterer bestillingen fra ungdommens billett.",
+		Then:  "Så skal alle billettene på bestillingen bli billettholdere, og alle brukere med en e-post på dem skal knyttes til dem.",
 	})
 
 	// Given
 	parentUserID, teenUserID := 1, 2
+	expectedCreatedBillettholders := 2
 	db, logger := createCheckInTestDB(t)
 	insertUser(t, db, parentUserID, "parent-user", parentEmail)
 	insertUser(t, db, teenUserID, "teen-user", teenEmail)
 	useCheckInResponse(t, familyOrderCheckinResponse)
 
 	// When
-	err := ConvertTicketToBillettholder(context.Background(), 602, db, logger)
+	result, err := ConvertOrderToBillettholdere(context.Background(), 602, db, logger)
 
 	// Then
 	if err != nil {
-		t.Fatalf("expected ticket conversion to succeed: %v", err)
+		t.Fatalf("expected order conversion to succeed: %v", err)
 	}
+	if result.CreatedBillettholders != expectedCreatedBillettholders {
+		t.Fatalf("created billettholder count mismatch\nexpected: %d\nactual:   %d", expectedCreatedBillettholders, result.CreatedBillettholders)
+	}
+	parentTicket := queryBillettholderByTicketID(t, db, 601)
 	teenTicket := queryBillettholderByTicketID(t, db, 602)
 	assertBillettholderUserAssociations(t, db, []models.BillettholderUsers{
+		{BillettholderID: parentTicket.ID, UserID: parentUserID},
+		{BillettholderID: parentTicket.ID, UserID: teenUserID},
 		{BillettholderID: teenTicket.ID, UserID: parentUserID},
 		{BillettholderID: teenTicket.ID, UserID: teenUserID},
 	})
+}
+
+func TestConvertOrderToBillettholdere_WhenTicketIsUnknown_ReturnsError(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at billetten admin konverterer ikke finnes i CheckIn.",
+		When:  "Når admin konverterer bestillingen.",
+		Then:  "Så skal konverteringen feile uten å opprette billettholdere.",
+	})
+
+	// Given
+	expectedBillettholderCount := 0
+	db, logger := createCheckInTestDB(t)
+	useCheckInResponse(t, familyOrderCheckinResponse)
+
+	// When
+	_, err := ConvertOrderToBillettholdere(context.Background(), 999, db, logger)
+
+	// Then
+	if err == nil {
+		t.Fatal("expected converting an unknown ticket to fail")
+	}
+	actualBillettholderCount := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM billettholdere`)
+	if actualBillettholderCount != expectedBillettholderCount {
+		t.Fatalf("billettholder count mismatch\nexpected: %d\nactual:   %d", expectedBillettholderCount, actualBillettholderCount)
+	}
 }
 
 func TestLinkUsersToBillettholdere_WhenRunTwice_CreatesNoDuplicates(t *testing.T) {
