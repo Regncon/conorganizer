@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -134,6 +136,27 @@ func UpdateCanBeRunInEnglish(eventRouter chi.Router, db *sql.DB, liveManager *li
 	})
 }
 
+const (
+	minMaxPlayersForAdmin = 0
+	minMaxPlayersForHost  = 4
+)
+
+// minMaxPlayers is the lowest max_players value the current user may set.
+// Admins can set any number from 0 and up; regular users need at least 4.
+func minMaxPlayers(isAdmin bool) int {
+	if isAdmin {
+		return minMaxPlayersForAdmin
+	}
+	return minMaxPlayersForHost
+}
+
+func maxPlayersTooLowMessage(minimum int) string {
+	if minimum <= 0 {
+		return "Antall spillere kan ikke være negativt."
+	}
+	return fmt.Sprintf("Arrangementet må ha minst %d spillere.", minimum)
+}
+
 func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
@@ -149,6 +172,15 @@ func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, liveManager *live.Mana
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
 			http.Error(w, "Arrangement-ID mangler", http.StatusBadRequest)
+			return
+		}
+
+		if minimum := minMaxPlayers(authctx.GetAdminFromUserToken(r.Context())); store.Input < minimum {
+			feedback := errorfeedback.New("maxPlayers")
+			feedback.Set("maxPlayers", maxPlayersTooLowMessage(minimum))
+			if err := feedback.Patch(datastar.NewSSE(w, r)); err != nil {
+				logger.Error("Failed to patch max players feedback", "error", err, "event_id", eventID)
+			}
 			return
 		}
 
@@ -240,7 +272,7 @@ func runtimeDescriptionExpression() string {
 	)
 }
 
-templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, canBeRunInEnglish bool, maxPlayers int, notes string) {
+templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, canBeRunInEnglish bool, maxPlayers int, notes string, isAdmin bool) {
 	<article class="form-card">
 		<h4 class="form-card-title">Andre detaljer</h4>
 		<section class="details-section">
@@ -359,7 +391,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-indicator="toastMaxPlayers"
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/max-players')", eventId) }
 					type="number"
-					min="4"
+					min={ strconv.Itoa(minMaxPlayers(isAdmin)) }
 					step="1"
 				/>
 				@errorfeedback.RenderMessage("maxPlayers")

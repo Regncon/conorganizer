@@ -17,3 +17,12 @@ func WithUserToken(ctx context.Context, externalID, email string) context.Contex
 		Claims: map[string]any{"email": email},
 	})
 }
+
+// WithAdminUserToken is like WithUserToken, but the token also carries the
+// Admin role, so GetAdminFromUserToken reports the user as an admin.
+func WithAdminUserToken(ctx context.Context, externalID, email string) context.Context {
+	return context.WithValue(ctx, ctxUserToken, &descope.Token{
+		ID:     externalID,
+		Claims: map[string]any{"email": email, "roles": []any{"Admin"}},
+	})
+}
