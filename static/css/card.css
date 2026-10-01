@@ -116,16 +116,21 @@
         padding-bottom: 0;
     }
 
-    /* The program times sit above the tag icons. */
-    .program-event-card-aside {
-        display: flex;
-        flex-direction: column;
-        place-content: center;
-        place-items: end;
-        gap: var(--spacing-1x);
+    /* The title is on the left and the program times on the right. */
+    .program-event-card-main-body {
+        flex-direction: row;
+        place-items: baseline;
+        gap: var(--spacing-3x);
+
+        .event-card-title {
+            flex: 1;
+            min-inline-size: 0;
+        }
     }
 
     .program-event-card-times {
+        flex-shrink: 0;
+        max-inline-size: 50%;
         margin: 0;
         padding: 0;
         list-style: none;

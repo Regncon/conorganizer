@@ -96,7 +96,7 @@ func TestProgramEventCard_ShowsEachTimeOnItsOwnLine(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt et programarrangement med to tidspunkter samme dag.",
 		When:  "Når programkortet vises.",
-		Then:  "Så står hvert tidspunkt på egen linje.",
+		Then:  "Så står hvert tidspunkt på egen linje ved siden av tittelen.",
 	})
 
 	// Given
@@ -107,7 +107,7 @@ func TestProgramEventCard_ShowsEachTimeOnItsOwnLine(t *testing.T) {
 	doc := templtest.Render(t, ProgramEventCard(event, nil, "LordagMorgen", "2026-10-03", expectedTimes))
 
 	// Then
-	got := templtest.CollectTexts(doc, ".program-event-card-times li")
+	got := templtest.CollectTexts(doc, ".program-event-card-main-body .program-event-card-times li")
 	if !slices.Equal(got, expectedTimes) {
 		t.Fatalf("program card times = %q, want %q", got, expectedTimes)
 	}

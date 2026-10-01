@@ -28,6 +28,13 @@ templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, p
 					Nytt arrangement
 				}
 			</h2>
+			if len(times) > 0 {
+				<ul class="program-event-card-times">
+					for _, programTime := range times {
+						<li>{ programTime }</li>
+					}
+				</ul>
+			}
 		</div>
 		<div class="event-card-footer">
 			<p class="event-card-description event-card-footer-description">
@@ -37,17 +44,8 @@ templ ProgramEventCard(eventCard models.EventCardModel, eventImageDir *string, p
 					Legg til en kort beskrivelse
 				}
 			</p>
-			<div class="program-event-card-aside">
-				if len(times) > 0 {
-					<ul class="program-event-card-times">
-						for _, programTime := range times {
-							<li>{ programTime }</li>
-						}
-					</ul>
-				}
-				<div class="event-card-footer-tagicons">
-					@eventCardTagIcons(eventCard)
-				</div>
+			<div class="event-card-footer-tagicons">
+				@eventCardTagIcons(eventCard)
 			</div>
 		</div>
 	</a>
