@@ -328,10 +328,13 @@ templ MenuBillettholderLive(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 		data-class:billettholder-pending="!$_menuBillettholderReady"
 		data-attr:aria-busy="!$_menuBillettholderReady"
 		data-init={ live.DatastarInit("/menu/api") }
-		if err == nil {
-			data-effect={ menuBillettholderSelectionEffect(billettholderOptions) }
-		}
 	>
+		if err == nil {
+			// data-init, not data-effect: when a live patch changes this expression, Datastar
+			// starts the new effect before disposing the old one, and the two then trigger
+			// each other through billettholder-selection-change until the stack overflows.
+			<span hidden data-init={ menuBillettholderSelectionInit(billettholderOptions) }></span>
+		}
 		@desktopBillettholderMenu(userInfo, initialOptions)
 		@phoneMenu(userInfo, initialOptions)
 		@billettholderSwitcherDialog(billettholderOptions.Associated)
@@ -436,7 +439,7 @@ templ menuBillettholderSkeletonStyles() {
 	</style>
 }
 
-func menuBillettholderSelectionEffect(billettholderOptions ticketholder.BillettholderOptions) (string, error) {
+func menuBillettholderSelectionInit(billettholderOptions ticketholder.BillettholderOptions) (string, error) {
 	associatedBillettholdereJSON, err := templ.JSONString(billettholderOptions.Associated)
 	if err != nil {
 		return "", fmt.Errorf("serialize associated billettholdere: %w", err)
