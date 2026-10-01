@@ -323,7 +323,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             gap: var(--spacing-5x);
             padding: var(--spacing-5x);
             border-radius: var(--border-radius-2x);
-            background-color: var(--level-2-background);
+            background-color: var(--level-1-background);
         }
         @container pulje-section (width > 800px) {
             .pulje-meta-panel {
@@ -336,9 +336,9 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             place-content: center;
             gap: var(--spacing-3x);
             padding: var(--spacing-5x);
-            border: 1px solid var(--level-3-border);
+            border: 1px solid var(--level-2-border);
             border-radius: var(--border-radius-2x);
-            background-color: var(--level-3-background);
+            background-color: var(--level-2-background);
         }
         .pulje-status-controls {
             display: flex;
