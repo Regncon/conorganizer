@@ -145,3 +145,60 @@ func TestMyProgram_WhenProgramIsNotReady_HidesPlayerResult(t *testing.T) {
 		t.Fatalf("expected rendered profile program to contain %q\nactual text: %s", expectedVisibleText, actualText)
 	}
 }
+
+func TestMyProgram_ProgramEventPointsToDescriptionForTime(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a GM assignment on a programarrangement.",
+		When:  "When Mitt festivalprogram is rendered.",
+		Then:  "Then the event card points to the description for the time.",
+	})
+
+	// Given
+	expectedHint := "Se beskrivelse for tidspunkt."
+
+	db, logger := createProfileProgramTestDB(t)
+	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgram(t, db, true)
+	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusOpen)
+	insertProfileProgramPublishedEvent(t, db, "program-gm-event", "Program GM Event")
+	insertProfileProgramPlayer(t, db, "program-gm-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM, puljefordeling.SourceManual)
+
+	// When
+	doc := templtest.Render(t, MyProgram(userInfo, billettholderID, db, logger, nil))
+
+	// Then
+	if got := doc.Find(".programpulje-event-container .text-event-time-hint").Text(); got != expectedHint {
+		t.Fatalf("event card time hint = %q, want %q", got, expectedHint)
+	}
+}
+
+func TestMyProgram_PuljeEventHasNoDescriptionTimeHint(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a GM assignment on an event in puljefordelingen.",
+		When:  "When Mitt festivalprogram is rendered.",
+		Then:  "Then the event card relies on the pulje time and has no description hint.",
+	})
+
+	// Given
+	expectedVisibleText := "Pulje GM Event"
+
+	db, logger := createProfileProgramTestDB(t)
+	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgram(t, db, true)
+	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusOpen)
+	insertProfileProgramPublishedEvent(t, db, "pulje-gm-event", expectedVisibleText)
+	mustExecProfileProgramTest(t, db, `UPDATE events SET is_in_puljefordeling = 1 WHERE id = 'pulje-gm-event'`)
+	insertProfileProgramPlayer(t, db, "pulje-gm-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRoleGM, puljefordeling.SourceManual)
+
+	// When
+	doc := templtest.Render(t, MyProgram(userInfo, billettholderID, db, logger, nil))
+	actualText := profileProgramVisibleText(doc)
+
+	// Then
+	if !strings.Contains(actualText, expectedVisibleText) {
+		t.Fatalf("expected rendered profile program to contain %q\nactual text: %s", expectedVisibleText, actualText)
+	}
+	if doc.Find(".text-event-time-hint").Length() != 0 {
+		t.Fatal("pulje event should not point to the description for its time")
+	}
+}

@@ -23,6 +23,8 @@ type UserEvent struct {
 	EventType   models.EventType
 	PuljeID     models.Pulje
 	IsGM        bool
+	// IsInPuljefordeling is false for programarrangementer, which do not follow the pulje time.
+	IsInPuljefordeling bool
 }
 
 type UserProgramPulje struct {
@@ -121,7 +123,7 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 								for _, event := range pulje.Events {
 									{{ imageCardUrl := eventimage.GetEventImageUrl(event.EventID, "card", eventImageDir) }}
 									{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
-									@event_components.ProgramPuljeEvent(event.EventID, imageCardUrl, imageBannerUrl, event.Title, event.Intro, event.EventType, event.IsGM)
+									@event_components.ProgramPuljeEvent(event.EventID, imageCardUrl, imageBannerUrl, event.Title, event.Intro, event.EventType, event.IsGM, event.IsInPuljefordeling)
 								}
 							}
 							if len(pulje.Events) == 0 && len(pulje.Interests) > 0 {
@@ -287,7 +289,8 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 			COALESCE(e.user_id, 0) as user_id,
 			e.event_type,
 			ep.pulje_id,
-			MAX(ep.role = ?) AS is_gamemaster
+			MAX(ep.role = ?) AS is_gamemaster,
+			e.is_in_puljefordeling
 		FROM relation_events_players ep
 		JOIN relation_billettholdere_users bu ON bu.billettholder_id = ep.billettholder_id
 		JOIN users u ON u.id = bu.user_id
@@ -311,7 +314,8 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 			e.description,
 			e.user_id,
 			e.event_type,
-			ep.pulje_id
+			ep.pulje_id,
+			e.is_in_puljefordeling
 		ORDER BY p.start_at ASC, e.title ASC
 	`
 
@@ -344,6 +348,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 			&event.EventType,
 			&event.PuljeID,
 			&event.IsGM,
+			&event.IsInPuljefordeling,
 		)
 
 		if scanErr != nil {

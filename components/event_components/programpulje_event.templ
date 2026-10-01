@@ -6,7 +6,10 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-templ ProgramPuljeEvent(eventID string, imageCardUrl string, imageBannerUrl string, title string, description string, eventType models.EventType, isGM bool) {
+// ProgramEventTimeHint replaces the pulje time for programarrangementer, which run on their own schedule given in the description.
+const ProgramEventTimeHint = "Se beskrivelse for tidspunkt."
+
+templ ProgramPuljeEvent(eventID string, imageCardUrl string, imageBannerUrl string, title string, description string, eventType models.EventType, isGM bool, isInPuljefordeling bool) {
 	<style>
 		.programpulje-event-container {
 			--linear-gradient-mask: linear-gradient(
@@ -68,6 +71,10 @@ templ ProgramPuljeEvent(eventID string, imageCardUrl string, imageBannerUrl stri
         color: var(--color-primary);
         font-size: var(--text-heading-4);
       }
+      .text-event-time-hint {
+        color: var(--color-text-soft);
+        font-size: var(--text-body-small);
+      }
     }
 
 		.programpulje-event-container-image {
@@ -91,6 +98,9 @@ templ ProgramPuljeEvent(eventID string, imageCardUrl string, imageBannerUrl stri
 			<div class="programpulje-event-container-text-title">
 				<span class="text-event-name event-container-clip-text">{ title }</span>
 				<span class="text-event-type event-container-clip-text">{ eventType.Label() }</span>
+				if !isInPuljefordeling {
+					<span class="text-event-time-hint event-container-clip-text">{ ProgramEventTimeHint }</span>
+				}
 			</div>
 			<span class="event-container-clip-text">
 				{ description }

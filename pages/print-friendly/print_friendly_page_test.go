@@ -119,7 +119,7 @@ func TestPrintFriendlyPage_ShowsOneMapForAProgramEventUsingTheSameRoomTwice(t *t
 	bdd.Behavior(t, bdd.BDD{
 		Given: "A program event runs in two puljer on the same day in one room.",
 		When:  "The printable program is rendered.",
-		Then:  "Its single sheet lists both times and prints the room map once.",
+		Then:  "Its single sheet points to the description for the time and prints the room map once.",
 	})
 
 	// Given
@@ -145,8 +145,39 @@ func TestPrintFriendlyPage_ShowsOneMapForAProgramEventUsingTheSameRoomTwice(t *t
 	if !slices.Equal(actualMaps, []string{expectedMap}) {
 		t.Fatalf("room maps = %v, want one %q", actualMaps, expectedMap)
 	}
-	if !strings.Contains(actualTimes, "Lørdag morgen · 10:00 - 15:00") || !strings.Contains(actualTimes, "Lørdag kveld · 18:00 - 23:00") {
-		t.Fatalf("printed times = %q, want both puljer", actualTimes)
+	if !strings.Contains(actualTimes, "Se beskrivelse for tidspunkt.") {
+		t.Fatalf("printed times = %q, want it to point to the description", actualTimes)
+	}
+	if strings.Contains(actualTimes, "10:00 - 15:00") || strings.Contains(actualTimes, "18:00 - 23:00") {
+		t.Fatalf("printed times = %q, want no pulje times for a programarrangement", actualTimes)
+	}
+}
+
+func TestPrintFriendlyPage_ShowsPuljeTimeForPuljeEvent(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "An event in puljefordelingen runs in one pulje.",
+		When:  "The printable program is rendered.",
+		Then:  "Its sheet shows the pulje name and time.",
+	})
+
+	// Given
+	expectedTime := "Lørdag morgen · 10:00 - 15:00"
+	db := createPrintPageTestDB(t)
+	insertPrintPulje(t, db, models.PuljeLordagMorgen, "Lørdag morgen", "2026-10-10T10:00:00Z", "2026-10-10T15:00:00Z")
+	insertPrintRoom(t, db, 705, "Morning room", "705")
+	insertPrintEvent(t, db, "morning-raffle", "Morning Raffle", true)
+	assignPrintEvent(t, db, "morning-raffle", models.PuljeLordagMorgen, 705)
+
+	// When
+	doc := templtest.Render(t, printFriendlyPage(db, nil, testutil.NewTestLogger()))
+	actualTimes := strings.Join(strings.Fields(doc.Find("article.print-event-sheet .print-room").Text()), " ")
+
+	// Then
+	if !strings.Contains(actualTimes, expectedTime) {
+		t.Fatalf("printed times = %q, want %q", actualTimes, expectedTime)
+	}
+	if strings.Contains(actualTimes, "Se beskrivelse for tidspunkt.") {
+		t.Fatalf("printed times = %q, pulje event should not point to the description", actualTimes)
 	}
 }
 

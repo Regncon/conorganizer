@@ -120,6 +120,67 @@ func TestEventRoomList_NoNoteElementWhenRoomHasNoPublicNotes(t *testing.T) {
 	}
 }
 
+func TestEventRoomTimes_PuljeEventShowsPuljeTimeChips(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A published event that is in puljefordelingen.",
+		When:  "The event page displays where and when it runs.",
+		Then:  "The room list and the map dialog show the pulje time as a chip.",
+	})
+
+	// Given
+	expectedChip := "Fredag kveld · 18:30 - 23:00"
+	db := createEventRoomTestDB(t)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if got := doc.Find(".event-room-list .event-room-schedule .chip").Text(); got != expectedChip {
+		t.Fatalf("list chip = %q, want %q", got, expectedChip)
+	}
+	if got := doc.Find(".event-room-dialog .event-room-schedule .chip").Text(); got != expectedChip {
+		t.Fatalf("dialog chip = %q, want %q", got, expectedChip)
+	}
+	if doc.Find(".event-room-time-hint").Length() != 0 {
+		t.Fatal("pulje event should not point to the description for its time")
+	}
+}
+
+func TestEventRoomTimes_ProgramEventPointsToDescriptionInsteadOfPuljeTime(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A published programarrangement, which is not in puljefordelingen.",
+		When:  "The event page displays where and when it runs.",
+		Then:  "The room list and the map dialog point to the description instead of showing the pulje time.",
+	})
+
+	// Given
+	expectedHint := "Se beskrivelse for tidspunkt."
+	db := createEventRoomTestDB(t)
+	testutil.MustExec(t, db, `UPDATE events SET is_in_puljefordeling = 0 WHERE id = 'room-event'`)
+
+	// When
+	request := httptest.NewRequest("GET", "/event/room-event", nil)
+	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
+
+	// Then
+	if got := doc.Find(".event-room-list .event-room-schedule").Text(); got != expectedHint {
+		t.Fatalf("list schedule = %q, want %q", got, expectedHint)
+	}
+	if got := doc.Find(".event-room-dialog .event-room-schedule").Text(); got != expectedHint {
+		t.Fatalf("dialog schedule = %q, want %q", got, expectedHint)
+	}
+	if doc.Find(".event-room-schedule .chip").Length() != 0 {
+		t.Fatal("programarrangement should not show pulje time chips")
+	}
+	if got := doc.Find(".event-room-heading").Text(); got != "Sted og tidspunkt" {
+		t.Fatalf("heading = %q, want %q", got, "Sted og tidspunkt")
+	}
+	if got := doc.Find(".event-room-name").Text(); got != "Amalie Hansen" {
+		t.Fatalf("expected the room to stay visible, got %q", got)
+	}
+}
+
 func TestEventRoomVisibility_NonAdminSeesTimeOnlyWhenPuljeRoomsUnpublished(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "A room assignment for a pulje whose rooms are not published.",

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/event"
@@ -145,7 +146,7 @@ func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
 		SELECT e.id, e.title, e.intro, e.description, e.system, e.event_type,
 			e.age_group, e.event_runtime, e.host_name, e.user_id, e.email,
 			e.phone_number, e.max_players, e.beginner_friendly,
-			e.can_be_run_in_english, e.notes, e.status,
+			e.can_be_run_in_english, e.is_in_puljefordeling, e.notes, e.status,
 			e.pulje_id, e.pulje_name, e.pulje_start_at, e.pulje_end_at,
 			p.rooms_published,
 			COALESCE(e.room_id, 0), COALESCE(e.room_name, ''),
@@ -173,7 +174,7 @@ func getPrintEventRows(db *sql.DB) (map[printEventKey]printEventRow, error) {
 			&row.Event.AgeGroup, &row.Event.Runtime, &row.Event.HostName,
 			&row.Event.UserID, &row.Event.Email, &row.Event.PhoneNumber,
 			&row.Event.MaxPlayers, &row.Event.BeginnerFriendly,
-			&row.Event.CanBeRunInEnglish, &row.Event.Notes, &row.Event.Status,
+			&row.Event.CanBeRunInEnglish, &row.Event.IsInPuljefordeling, &row.Event.Notes, &row.Event.Status,
 			&puljeID, &puljeName, &startAt, &endAt,
 			&roomsPublished,
 			&roomID, &row.Occurrence.RoomName,
@@ -208,8 +209,13 @@ templ printEventSheet(dayLabel string, groupLabel string, item printEvent, event
 			<div class="print-room-list">
 				for _, group := range groupPrintRooms(item.Occurrences) {
 					<div class="print-room">
-						for _, pulje := range group.Puljer {
-							<p>{ pulje.Name } · { pulje.TimeRange() }</p>
+						// Programarrangementer run on their own schedule, given in the description.
+						if item.Event.IsInPuljefordeling {
+							for _, pulje := range group.Puljer {
+								<p>{ pulje.Name } · { pulje.TimeRange() }</p>
+							}
+						} else {
+							<p>{ event_components.ProgramEventTimeHint }</p>
 						}
 						if group.Room.HasRoom {
 							<p>{ group.Room.RoomName } (rom { group.Room.RoomNumber }, { fmt.Sprintf("%d. etasje", group.Room.RoomFloor) })</p>
