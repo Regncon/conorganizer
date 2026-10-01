@@ -201,6 +201,10 @@ templ Event_mobile(
 					display: grid;
 					grid-template-columns: 1fr 1fr;
 
+					&:not(:has(.event-details-bottom)) {
+						grid-template-columns: 1fr;
+					}
+
 					.event-details-top {
 						.event-details-host {
 							display: flex;
@@ -382,26 +386,28 @@ templ Event_mobile(
 							<p title={ event.System }>{ event.System } </p>
 						</div>
 					</div>
-					<div class="event-details-section event-details-bottom">
-						if event.AgeGroup == models.AgeGroupAdultsOnly {
-							@event_components.Event_property(event.AgeGroup.BadgeLabel(), icons.EventAdultOnly)
-						}
-						if event.AgeGroup == models.AgeGroupChildFriendly {
-							@event_components.Event_property(event.AgeGroup.BadgeLabel(), icons.EventChildFriendly)
-						}
-						if event.Runtime == models.RunTimeLongRunning {
-							@event_components.Event_property(event.Runtime.BadgeLabel(), icons.TimeOver6Hours)
-						}
-						if event.Runtime == models.RunTimeShortRunning {
-							@event_components.Event_property(event.Runtime.BadgeLabel(), icons.TimeUnder3Hours)
-						}
-						if event.BeginnerFriendly {
-							@event_components.Event_property("Nybegynnervennlig", icons.EventBeginnerFriendly)
-						}
-						if event.CanBeRunInEnglish {
-							@event_components.Event_property("Can be run in English", icons.EventEnglish)
-						}
-					</div>
+					if hasEventDetailProperties(event) {
+						<div class="event-details-section event-details-bottom">
+							if event.AgeGroup == models.AgeGroupAdultsOnly {
+								@event_components.Event_property(event.AgeGroup.BadgeLabel(), icons.EventAdultOnly)
+							}
+							if event.AgeGroup == models.AgeGroupChildFriendly {
+								@event_components.Event_property(event.AgeGroup.BadgeLabel(), icons.EventChildFriendly)
+							}
+							if event.Runtime == models.RunTimeLongRunning {
+								@event_components.Event_property(event.Runtime.BadgeLabel(), icons.TimeOver6Hours)
+							}
+							if event.Runtime == models.RunTimeShortRunning {
+								@event_components.Event_property(event.Runtime.BadgeLabel(), icons.TimeUnder3Hours)
+							}
+							if event.BeginnerFriendly {
+								@event_components.Event_property("Nybegynnervennlig", icons.EventBeginnerFriendly)
+							}
+							if event.CanBeRunInEnglish {
+								@event_components.Event_property("Can be run in English", icons.EventEnglish)
+							}
+						</div>
+					}
 				</div>
 			</section>
 			<div class="description">
@@ -412,4 +418,13 @@ templ Event_mobile(
 			@components.PreviousNextBar(previousNextData)
 		}
 	</div>
+}
+
+func hasEventDetailProperties(event *models.Event) bool {
+	return event.AgeGroup == models.AgeGroupAdultsOnly ||
+		event.AgeGroup == models.AgeGroupChildFriendly ||
+		event.Runtime == models.RunTimeLongRunning ||
+		event.Runtime == models.RunTimeShortRunning ||
+		event.BeginnerFriendly ||
+		event.CanBeRunInEnglish
 }
