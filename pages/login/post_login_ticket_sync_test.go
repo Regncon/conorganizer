@@ -6,11 +6,14 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/descope/go-sdk/descope"
 )
@@ -71,6 +74,60 @@ func TestPostLogin_RedirectsWithoutWaitingForTicketSync(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("expected tickets to be synced after login")
+	}
+}
+
+func TestSyncTicketsAfterLogin_WhenTicketsWereLinked_BroadcastsBillettholdere(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en admin har billettholderlisten åpen.",
+		When:  "Når en bruker logger inn og får billettholdere knyttet til seg i bakgrunnen.",
+		Then:  "Så skal billettholderne kringkastes, slik at åpne sider oppdateres.",
+	})
+
+	// Given
+	expectedBroadcasts := [][]live.Bucket{{live.BucketBillettholders}}
+	var actualBroadcasts [][]live.Bucket
+	linkedTickets := func(context.Context, string, string, *sql.DB, *slog.Logger) (checkIn.UserTicketImportResult, error) {
+		return checkIn.UserTicketImportResult{CreatedUserAssociations: 1}, nil
+	}
+	recordBroadcast := func(_ context.Context, buckets ...live.Bucket) error {
+		actualBroadcasts = append(actualBroadcasts, buckets)
+		return nil
+	}
+
+	// When
+	syncTicketsAfterLogin(context.Background(), linkedTickets, recordBroadcast, nil, "user-ticket-sync", "ungdom@example.com", testutil.NewTestLogger())
+
+	// Then
+	if !reflect.DeepEqual(actualBroadcasts, expectedBroadcasts) {
+		t.Fatalf("broadcast mismatch\nexpected: %v\nactual:   %v", expectedBroadcasts, actualBroadcasts)
+	}
+}
+
+func TestSyncTicketsAfterLogin_WhenNothingChanged_DoesNotBroadcast(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukerens billetter allerede er hentet og knyttet.",
+		When:  "Når brukeren logger inn igjen.",
+		Then:  "Så skal ingenting kringkastes, slik at åpne sider ikke tegnes på nytt uten grunn.",
+	})
+
+	// Given
+	expectedBroadcastCount := 0
+	actualBroadcastCount := 0
+	nothingNew := func(context.Context, string, string, *sql.DB, *slog.Logger) (checkIn.UserTicketImportResult, error) {
+		return checkIn.UserTicketImportResult{}, nil
+	}
+	countBroadcast := func(context.Context, ...live.Bucket) error {
+		actualBroadcastCount++
+		return nil
+	}
+
+	// When
+	syncTicketsAfterLogin(context.Background(), nothingNew, countBroadcast, nil, "user-ticket-sync", "ungdom@example.com", testutil.NewTestLogger())
+
+	// Then
+	if actualBroadcastCount != expectedBroadcastCount {
+		t.Fatalf("broadcast count mismatch\nexpected: %d\nactual:   %d", expectedBroadcastCount, actualBroadcastCount)
 	}
 }
 

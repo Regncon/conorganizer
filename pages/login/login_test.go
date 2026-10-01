@@ -440,7 +440,7 @@ func authTestRouter(t *testing.T, validator authctx.SessionValidator) chi.Router
 	router := chi.NewRouter()
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	authenticatedRouter := router.With(authctx.AuthMiddleware(validator, logger))
-	if err := SetupAuthRoute(router, authenticatedRouter, nil, logger, validator); err != nil {
+	if err := SetupAuthRoute(router, authenticatedRouter, nil, nil, logger, validator); err != nil {
 		t.Fatalf("expected auth route setup to succeed: %v", err)
 	}
 	return router
@@ -456,7 +456,7 @@ func authTestRouterWithDB(t *testing.T, validator authctx.SessionValidator, dbNa
 	})
 	router := chi.NewRouter()
 	authenticatedRouter := router.With(authctx.AuthMiddleware(validator, logger))
-	if err := SetupAuthRoute(router, authenticatedRouter, db, logger, validator); err != nil {
+	if err := SetupAuthRoute(router, authenticatedRouter, nil, db, logger, validator); err != nil {
 		t.Fatalf("expected auth route setup to succeed: %v", err)
 	}
 	return router

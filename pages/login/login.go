@@ -17,6 +17,7 @@ import (
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
@@ -67,7 +68,7 @@ func authPathWithNeste(neste string) string {
 	return "/auth?" + nesteQueryParam + "=" + url.QueryEscape(neste)
 }
 
-func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, logger *slog.Logger, sessionValidator authctx.SessionValidator) error {
+func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, sessionValidator authctx.SessionValidator) error {
 	logger = logger.With("component", "auth")
 	publicRouter.Post("/auth/session", func(w http.ResponseWriter, r *http.Request) {
 		request := sessionRequest{}
@@ -221,7 +222,7 @@ func SetupAuthRoute(publicRouter, authenticatedRouter chi.Router, db *sql.DB, lo
 						return
 					}
 					http.Redirect(w, r, neste, http.StatusSeeOther)
-					go syncTicketsAfterLogin(context.WithoutCancel(r.Context()), syncUserTicketsFromCheckIn, db, userID, email, logger)
+					go syncTicketsAfterLogin(context.WithoutCancel(r.Context()), syncUserTicketsFromCheckIn, liveManager.Broadcast, db, userID, email, logger)
 					return
 				}
 				http.Redirect(w, r, neste, http.StatusSeeOther)
@@ -257,10 +258,12 @@ var syncUserTicketsFromCheckIn = checkIn.SyncUserTicketsFromCheckIn
 
 // syncTicketsAfterLogin runs "Hent billetter" for a user who just logged in. It
 // runs after the redirect so login never waits for CheckIn, and its errors are
-// only logged.
+// only logged. Like "Hent billetter", it broadcasts the billettholder bucket when
+// something was created, so open menus and admin pages pick up the change.
 func syncTicketsAfterLogin(
 	ctx context.Context,
 	syncUserTickets func(context.Context, string, string, *sql.DB, *slog.Logger) (checkIn.UserTicketImportResult, error),
+	broadcast func(context.Context, ...live.Bucket) error,
 	db *sql.DB,
 	userID string,
 	email string,
@@ -280,11 +283,15 @@ func syncTicketsAfterLogin(
 	if err != nil {
 		logger.Error(fmt.Errorf("failed to sync tickets after login: %w", err).Error())
 	}
-	if result.CreatedBillettholders > 0 || result.CreatedUserAssociations > 0 {
-		logger.Info("Synced tickets after login",
-			"created_billettholdere", result.CreatedBillettholders,
-			"created_user_associations", result.CreatedUserAssociations,
-		)
+	if result.CreatedBillettholders == 0 && result.CreatedUserAssociations == 0 {
+		return
+	}
+	logger.Info("Synced tickets after login",
+		"created_billettholdere", result.CreatedBillettholders,
+		"created_user_associations", result.CreatedUserAssociations,
+	)
+	if err := broadcast(ctx, live.BucketBillettholders); err != nil {
+		logger.Error(fmt.Errorf("failed to broadcast tickets synced after login: %w", err).Error())
 	}
 }
 

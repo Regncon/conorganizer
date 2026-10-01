@@ -150,6 +150,10 @@ to billettholdere that already carry their e-post, such as a manual e-post a
 parent added before the teen's first login. The CheckIn cache keeps this to at
 most one upstream request per TTL however many users log in.
 
+The first page after login can render before the sync is done. When the sync
+created billettholdere or links, it broadcasts `live.BucketBillettholders`, like
+"Hent billetter", so the user's menu and open admin pages update without a reload.
+
 ## Association paths and helpers
 
 The only ways a user gets linked to, or unlinked from, a billettholder:
