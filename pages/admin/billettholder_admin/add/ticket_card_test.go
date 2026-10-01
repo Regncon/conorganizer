@@ -32,7 +32,7 @@ func TestTicketCard_WhenTicketCanBeConverted_RendersConvertAction(t *testing.T) 
 	// When
 	doc := templtest.Render(t, ticketCard(ticket, false, ""))
 	actualText := strings.Join(templtest.CollectTexts(doc, ".card"), " ")
-	actualConvertButtonVisible := templtest.HasSelector(doc, "button.btn--outline")
+	actualConvertButtonVisible := templtest.HasSelector(doc, "button.btn--secondary")
 
 	// Then
 	for _, expectedTextPart := range expectedTextParts {

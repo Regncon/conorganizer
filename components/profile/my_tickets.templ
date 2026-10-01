@@ -30,12 +30,12 @@ templ MyTickets(tickets []TicketHolder) {
 		<div class="flex flex-col" style="gap: var(--spacing-4x);">
 			if len(tickets) == 0 {
 				<p>Ingen billetter er knyttet til profilen din ennå.</p>
-				<a href="/profile/tickets" class="btn btn--outline" style="width: fit-content; margin-left: auto;">Hent billetter</a>
+				<a href="/profile/tickets" class="btn btn--secondary" style="width: fit-content; margin-left: auto;">Hent billetter</a>
 			} else {
 				for _, ticket := range tickets {
 					@ticketHolder(ticket.Name, ticket.Ticket, ticket.Email)
 				}
-				<a href="/profile/tickets" class="btn btn--outline" style="width: fit-content; margin-left: auto;">Mine billetter</a>
+				<a href="/profile/tickets" class="btn btn--secondary" style="width: fit-content; margin-left: auto;">Mine billetter</a>
 			}
 		</div>
 	</div>

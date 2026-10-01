@@ -3,6 +3,7 @@ package event
 import (
 	"database/sql"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
+
+const eventRoomPendingText = "Stedet for arrangementet kommer!"
 
 func createEventRoomTestDB(t *testing.T) *sql.DB {
 	t.Helper()
@@ -142,8 +145,11 @@ func TestEventRoomVisibility_NonAdminSeesTimeOnlyWhenPuljeRoomsUnpublished(t *te
 	if strings.Contains(doc.Text(), "Amalie Hansen") {
 		t.Fatal("hidden room name leaked into markup")
 	}
-	if got := doc.Find(".event-schedule-unassigned").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
+	if got := doc.Find(".event-room-list .event-room-schedule").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
 		t.Fatalf("expected the time to remain visible, got %q", got)
+	}
+	if got := doc.Find(".event-room-pending").Text(); got != eventRoomPendingText {
+		t.Fatalf("expected the pending room text, got %q", got)
 	}
 }
 
@@ -169,6 +175,9 @@ func TestEventRoomVisibility_NonAdminSeesRoomWhenPuljeRoomsPublished(t *testing.
 	if doc.Find(".event-room-button").Length() != 1 {
 		t.Fatal("expected the map button to be visible")
 	}
+	if doc.Find(".event-room-pending").Length() != 0 {
+		t.Fatal("pending room text shown although the room is published")
+	}
 }
 
 func TestEventRoomVisibility_AdminSeesTimeOnlyWhenPuljeRoomsUnpublished(t *testing.T) {
@@ -193,8 +202,11 @@ func TestEventRoomVisibility_AdminSeesTimeOnlyWhenPuljeRoomsUnpublished(t *testi
 	if doc.Find(".event-room-button, .event-room-dialog img").Length() != 0 {
 		t.Fatal("unpublished room map should be hidden from admins too")
 	}
-	if got := doc.Find(".event-schedule-unassigned").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
+	if got := doc.Find(".event-room-list .event-room-schedule").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
 		t.Fatalf("expected the time to remain visible, got %q", got)
+	}
+	if got := doc.Find(".event-room-pending").Text(); got != eventRoomPendingText {
+		t.Fatalf("expected the pending room text, got %q", got)
 	}
 }
 
@@ -269,6 +281,12 @@ func TestEventRoomVisibility(t *testing.T) {
 }
 
 func TestEventRoomsUseEachPuljeAssignment(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "An event whose puljer are in different rooms, each with a map.",
+		When:  "The event page displays the rooms.",
+		Then:  "Each pulje's map button sits in its own room's row, and its map dialog shows that pulje's room.",
+	})
+
 	db := createEventRoomTestDB(t)
 	seedEventVisibilityPulje(t, db, models.PuljeLordagKveld)
 	seedEventVisibilityEventPulje(t, db, "room-event", models.PuljeLordagKveld, false)
@@ -306,8 +324,8 @@ func TestEventRoomsUseEachPuljeAssignment(t *testing.T) {
 		if got := doc.Find("#"+id+" img").AttrOr("src", ""); got != assignment.MapPath {
 			t.Fatalf("map = %q, want %q", got, assignment.MapPath)
 		}
-		if !strings.Contains(doc.Find("#"+id+"-button").Text(), assignment.Pulje.Name) {
-			t.Fatal("button is missing its pulje name")
+		if got := doc.Find("#" + id + "-button").Closest(".event-room-row").Find(".event-room-name").Text(); got != assignment.Room.Name {
+			t.Fatalf("map button for %s is in the row for %q, want %q", assignment.Pulje.Name, got, assignment.Room.Name)
 		}
 	}
 	// A reassignment updates the map without changing the dialog's identity.
@@ -319,18 +337,24 @@ func TestEventRoomsUseEachPuljeAssignment(t *testing.T) {
 }
 
 func TestEventRoomButtonsGroupSchedulesByRoom(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "An event with two puljer in the same room, different rooms, or one pulje without a room.",
+		When:  "The event page displays the schedule.",
+		Then:  "Each time is listed once, each room gets one row, and the pending text stays hidden because the event has a room.",
+	})
+
 	tests := []struct {
-		name           string
-		secondRoomID   any
-		roomNumber     string
-		roomName       string
-		wantButtons    int
-		wantUnassigned int
+		name         string
+		secondRoomID any
+		roomNumber   string
+		roomName     string
+		wantButtons  int
+		wantRooms    []string
 	}{
-		{name: "same room", secondRoomID: 42, wantButtons: 1},
-		{name: "different rooms", secondRoomID: 43, roomNumber: "710", roomName: "Lucie Wolf", wantButtons: 2},
-		{name: "same name but different rooms", secondRoomID: 43, roomNumber: "710", roomName: "Amalie Hansen", wantButtons: 2},
-		{name: "unassigned occurrence", secondRoomID: nil, wantButtons: 1, wantUnassigned: 1},
+		{name: "same room", secondRoomID: 42, wantButtons: 1, wantRooms: []string{"Amalie Hansen"}},
+		{name: "different rooms", secondRoomID: 43, roomNumber: "710", roomName: "Lucie Wolf", wantButtons: 2, wantRooms: []string{"Amalie Hansen", "Lucie Wolf"}},
+		{name: "same name but different rooms", secondRoomID: 43, roomNumber: "710", roomName: "Amalie Hansen", wantButtons: 2, wantRooms: []string{"Amalie Hansen", "Amalie Hansen"}},
+		{name: "unassigned occurrence", secondRoomID: nil, wantButtons: 1, wantRooms: []string{"Amalie Hansen"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -347,8 +371,11 @@ func TestEventRoomButtonsGroupSchedulesByRoom(t *testing.T) {
 			if got := doc.Find(".event-room-button").Length(); got != test.wantButtons {
 				t.Fatalf("got %d buttons, want %d", got, test.wantButtons)
 			}
-			if got := doc.Find(".event-schedule-unassigned").Length(); got != test.wantUnassigned {
-				t.Fatalf("got %d unassigned schedule rows, want %d", got, test.wantUnassigned)
+			if got := templtest.CollectTexts(doc, ".event-room-row .event-room-name"); !slices.Equal(got, test.wantRooms) {
+				t.Fatalf("rooms = %q, want %q", got, test.wantRooms)
+			}
+			if doc.Find(".event-room-pending").Length() != 0 {
+				t.Fatal("pending room text shown although the event has a room")
 			}
 			list := doc.Find(".event-room-list")
 			for _, schedule := range []string{"Fredag kveld · 18:30 - 23:00", "Lørdag morgen · 10:00 - 15:00"} {
@@ -360,14 +387,14 @@ func TestEventRoomButtonsGroupSchedulesByRoom(t *testing.T) {
 				t.Fatal("redundant pulje section is still rendered")
 			}
 			if test.name == "same room" {
-				button := doc.Find(".event-room-button")
-				if button.Find(".event-room-schedule > span").Length() != 2 {
-					t.Fatal("shared room button must include both times")
+				box := doc.Find(".event-room-list")
+				if box.Find(".event-room-schedule > span").Length() != 2 {
+					t.Fatal("shared room box must include both times")
 				}
-				if strings.Index(button.Text(), "Fredag kveld") > strings.Index(button.Text(), "Lørdag morgen") {
+				if strings.Index(box.Text(), "Fredag kveld") > strings.Index(box.Text(), "Lørdag morgen") {
 					t.Fatal("puljer are not chronological")
 				}
-				id := button.AttrOr("aria-controls", "")
+				id := box.Find(".event-room-button").AttrOr("aria-controls", "")
 				if doc.Find("#"+id+" .event-room-schedule > span").Length() != 2 {
 					t.Fatal("shared room modal must include both times")
 				}
@@ -377,11 +404,17 @@ func TestEventRoomButtonsGroupSchedulesByRoom(t *testing.T) {
 }
 
 func TestEventScheduleIsHiddenBeforeProgramPublication(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "An event with a room assignment while the program is not published.",
+		When:  "The event page is displayed.",
+		Then:  "No schedule, room, placeholder text or map is rendered.",
+	})
+
 	db := createEventRoomTestDB(t)
 	setEventVisibilityProgramPublishing(t, db, false)
 	request := httptest.NewRequest("GET", "/event/room-event", nil)
 	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
-	for _, text := range []string{"Pulje(r)", "Fredag kveld", "18:30", "Amalie Hansen"} {
+	for _, text := range []string{"Pulje(r)", "Fredag kveld", "18:30", "Amalie Hansen", "Sted og tidspunkt", eventRoomPendingText} {
 		if strings.Contains(doc.Text(), text) {
 			t.Fatalf("unpublished schedule leaked into page: %s", text)
 		}
@@ -392,12 +425,21 @@ func TestEventScheduleIsHiddenBeforeProgramPublication(t *testing.T) {
 }
 
 func TestUnassignedEventKeepsItsPublishedSchedule(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A published event whose pulje has no room yet.",
+		When:  "The event page is displayed.",
+		Then:  "The time is shown with the pending room text and no map button.",
+	})
+
 	db := createEventRoomTestDB(t)
 	testutil.MustExec(t, db, `UPDATE relation_event_puljer SET room_id = NULL`)
 	request := httptest.NewRequest("GET", "/event/room-event", nil)
 	doc := templtest.Render(t, event_page_content("room-event", false, testutil.NewTestLogger(), db, nil, request))
-	if got := doc.Find(".event-schedule-unassigned").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
+	if got := doc.Find(".event-room-list .event-room-schedule").Text(); !strings.Contains(got, "Fredag kveld · 18:30 - 23:00") {
 		t.Fatalf("missing unassigned event schedule: %q", got)
+	}
+	if got := doc.Find(".event-room-pending").Text(); got != eventRoomPendingText {
+		t.Fatalf("expected the pending room text, got %q", got)
 	}
 	if doc.Find(".event-room-button").Length() != 0 {
 		t.Fatal("unassigned event has a map button")

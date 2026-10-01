@@ -1,5 +1,5 @@
 /*
-    style for clickable items
+    Clickable cards: .card-clickable--level-2 on the base color, .card-clickable--level-3 on Level 1
 */
 .card-clickable {
     display: grid;
@@ -29,48 +29,60 @@
     }
 }
 
-.card-clickable-surface {
+.card-clickable--level-2 {
     color: var(--color-text-strong);
-    background-color: var(--bg-surface);
-    border-color: var(--bg-surface-border);
+    background-color: var(--level-2-background);
+    border-color: var(--level-2-border);
 
     &:not(.selected):hover,
     &:not(.selected):focus-visible {
-        background-color: var(--bg-surface-hover);
-        border-color: var(--bg-surface-border-hover);
+        background-color: var(--level-2-background-hover);
+        border-color: var(--level-2-border-hover);
         outline-color: var(--color-text-soft-50);
     }
 
     &:not(.selected):active {
-        background-color: var(--bg-surface-active);
-        border-color: var(--bg-surface-border-hover);
+        background-color: var(--level-2-background-active);
+        border-color: var(--level-2-border-hover);
     }
 
     &[disabled]:not(.selected) {
-        background-color: var(--bg-surface);
-        border-color: var(--bg-surface-border);
+        background-color: var(--level-1-background);
+        border-color: var(--level-2-border);
     }
 }
 
-.card-clickable-item {
-    background-color: var(--bg-item);
-    border-color: var(--bg-item-border);
+.card-clickable--level-3 {
+    background-color: var(--level-3-background);
+    border-color: var(--level-3-border);
 
     &:not(.selected):hover,
     &:not(.selected):focus-visible {
-        background-color: var(--bg-item-hover);
-        border-color: var(--bg-item-border-hover);
+        background-color: var(--level-3-background-hover);
+        border-color: var(--level-3-border-hover);
         outline-color: var(--color-text-soft-50);
     }
 
     &:not(.selected):active {
-        background-color: var(--bg-surface-active);
-        border-color: var(--bg-item-border-hover);
+        background-color: var(--level-3-background-active);
+        border-color: var(--level-3-border-hover);
     }
 
     &[disabled]:not(.selected) {
         background-color: unset;
-        border-color: var(--bg-item-border);
+        border-color: var(--level-3-border);
+    }
+}
+
+.card-clickable--level-2-border {
+    border-color: var(--level-2-border);
+
+    &:not(.selected):is(:hover, :focus-visible, :active) {
+        border-color: var(--level-2-border-hover);
+    }
+
+    &[disabled]:not(.selected) {
+        border-color: var(--level-2-border);
     }
 }
 
@@ -84,14 +96,14 @@
 
     /* min-width to fit smallest mobile size */
     color: var(--color-primary-text);
-    background-color: var(--bg-surface);
+    background-color: var(--level-2-background);
     border-radius: var(--border-radius-1x);
-    border: 1px solid var(--bg-item-border);
+    border: 1px solid var(--level-2-border);
     box-sizing: border-box;
     text-decoration: none;
     outline: 0;
     position: relative;
-    transition: border-color 120ms ease-in-out;
+    transition: border-color 120ms ease-in-out, background-color 120ms ease-in-out;
 }
 
 .program-event-card {
@@ -107,11 +119,17 @@
 
 .event-card-container:hover,
 .event-card-container:focus-visible {
-    border-color: var(--color-secondary);
+    background-color: var(--level-2-background-hover);
+    border-color: var(--level-2-border-hover);
+}
+
+.event-card-container:active {
+    background-color: var(--level-2-background-active);
+    border-color: var(--level-2-border-hover);
 }
 
 .event-card-container:focus-visible {
-    outline: 3px solid var(--color-secondary-focus-visible);
+    outline: 3px solid var(--color-text-soft-50);
 }
 
 .event-card-thumbnail {
@@ -169,7 +187,7 @@
 
 .event-card-footer {
     padding: var(--spacing-3x);
-    border-top: 1px solid var(--bg-item-border);
+    border-top: 1px solid var(--level-2-border);
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: var(--spacing-3x);
@@ -231,9 +249,9 @@
 .event-bar-container {
     color: var(--color-primary-text);
     border: solid;
-    background-color: var(--bg-surface);
+    background-color: var(--level-2-background);
     border-radius: var(--border-radius-2x);
-    border-color: var(--bg-item-border);
+    border-color: var(--level-2-border);
     border-width: 1px;
     display: block;
     text-decoration: none;
@@ -241,16 +259,22 @@
     min-height: 65px;
     padding: var(--spacing-3x) var(--spacing-4x);
     box-sizing: border-box;
-    transition: border-color 120ms ease-in-out;
+    transition: border-color 120ms ease-in-out, background-color 120ms ease-in-out;
 }
 
-.event-bar-container:hover {
-    border-color: var(--color-primary);
+.event-bar-container:hover,
+.event-bar-container:focus-visible {
+    background-color: var(--level-2-background-hover);
+    border-color: var(--level-2-border-hover);
 }
 
 .event-bar-container:focus-visible {
-    border-color: var(--color-secondary);
-    outline: 3px solid var(--color-secondary-focus-visible);
+    outline: 3px solid var(--color-text-soft-50);
+}
+
+.event-bar-container:active {
+    background-color: var(--level-2-background-active);
+    border-color: var(--level-2-border-hover);
 }
 
 .event-bar-title {
@@ -290,9 +314,20 @@
     text-decoration: none;
     padding: var(--spacing-3x) var(--spacing-4x);
     border-radius: var(--border-radius-1x);
-    border: 1px solid var(--bg-item-border);
+    background-color: var(--level-3-background);
+    border: 1px solid var(--level-3-border);
     cursor: pointer;
     font-size: var(--text-body-small);
+
+    &:is(:hover, :focus-visible) {
+        background-color: var(--level-3-background-hover);
+        border-color: var(--level-3-border-hover);
+    }
+
+    &:focus-visible {
+        outline: 3px solid var(--color-text-soft-50);
+        outline-offset: 2px;
+    }
 
     .profile-event-bar-title {
         font-weight: normal;
@@ -301,14 +336,4 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-}
-
-.profile-event-bar:hover,
-.profile-event-bar:focus-visible {
-    filter: brightness(110%);
-}
-
-.profile-event-bar:focus-visible {
-    outline: 3px solid var(--color-secondary-focus-visible);
-    outline-offset: 2px;
 }

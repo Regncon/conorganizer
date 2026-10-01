@@ -69,7 +69,7 @@ func getBillettholderAdminOverviewCounts(db *sql.DB) (billettholderAdminOverview
 }
 
 func billettholderAdminOverviewFilterClass(active bool) string {
-	class := "btn btn--outline billettholder-admin-overview-filter"
+	class := "btn btn--secondary billettholder-admin-overview-filter"
 	if active {
 		class += " selected"
 	}
@@ -104,9 +104,9 @@ templ billettholderAdminOverview(db *sql.DB, logger *slog.Logger, filters billet
 				align-items: center;
 				min-height: 2rem;
 				padding: 0 var(--spacing-2x);
-				border: 1px solid var(--bg-item-border);
+				border: 1px solid var(--level-3-border);
 				border-radius: var(--border-radius-1x);
-				background: var(--bg-item);
+				background: var(--level-1-background);
 				color: var(--color-text-strong);
 				font-size: 12px;
 				font-weight: 700;
@@ -114,7 +114,7 @@ templ billettholderAdminOverview(db *sql.DB, logger *slog.Logger, filters billet
 
 			& .billettholder-admin-overview-filter.selected {
 				border-color: var(--color-primary);
-				background: var(--bg-item-hover);
+				background: var(--choice-selected-bg);
 				color: var(--color-text-strong);
 			}
 		}

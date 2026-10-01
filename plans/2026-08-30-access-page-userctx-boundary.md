@@ -123,7 +123,7 @@ templ Unauthorized() {
 		<p>Logg inn for å se denne siden.</p>
 		<div class="access-denied-actions">
 			<a href="/auth" class="btn btn--primary btn-login">Logg inn</a>
-			<a href="/" class="btn btn--outline">Gå til arrangementslisten</a>
+			<a href="/" class="btn btn--secondary">Gå til arrangementslisten</a>
 		</div>
 	</section>
 }

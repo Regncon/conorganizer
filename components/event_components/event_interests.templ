@@ -188,7 +188,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			</div>
 			<div class="dialog-footer">
 				<p class="auto-save-message">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
-				<button class="btn btn--outline" data-on:click="$_interestIsOpen = false">
+				<button class="btn btn--secondary" data-on:click="$_interestIsOpen = false">
 					Ferdig
 				</button>
 			</div>
@@ -499,4 +499,3 @@ func LoadInterestNoticeState(billettholderID int, puljeID string, ageGroup model
 		AssignedEvent:     assignedEvent,
 	}, nil
 }
-

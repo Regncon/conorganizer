@@ -12,7 +12,13 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 		groups := groupEventRooms(assignments)
 		// Clear a withdrawn map selection so publishing it again does not reopen it.
 		availableDialogIDs := []string{}
+		puljer := make([]models.PuljeRow, 0, len(assignments))
+		hasRoom := false
 		for _, assignment := range assignments {
+			puljer = append(puljer, assignment.Pulje)
+			if assignment.Room.ID != 0 {
+				hasRoom = true
+			}
 			if assignment.MapPath != "" {
 				availableDialogIDs = append(availableDialogIDs, eventRoomDialogID(eventID, assignment.Pulje.ID))
 			}
@@ -30,39 +36,15 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 		if len(groups) > 0 {
 			@eventRoomStyles()
 			<div class="event-room-list">
+				<h3 class="event-room-heading label-bold">Sted og tidspunkt</h3>
+				@eventRoomTimes(puljer)
 				for _, group := range groups {
-					{{ dialogID := eventRoomDialogID(eventID, group.Puljer[0].ID) }}
-					<div class="event-room-entry">
-						if group.MapPath != "" {
-							<button
-								type="button"
-								id={ dialogID + "-button" }
-								class="event-room-button"
-								aria-haspopup="dialog"
-								aria-controls={ dialogID }
-								data-on:click={ fmt.Sprintf("$_eventRoomMapDialog = %q", dialogID) }
-							>
-								@eventRoomTimes(group.Puljer)
-								<span class="event-room-name">{ group.Room.Name }</span>
-								<span class="event-room-action">
-									Se rommet
-									<span aria-hidden="true">
-										@icons.Icon(icons.Map, icons.Size20)
-									</span>
-								</span>
-							</button>
-						} else if group.Room.ID != 0 {
-							<div class="event-room-unmapped">
-								@eventRoomTimes(group.Puljer)
-								<span class="event-room-name">{ group.Room.Name }</span>
-							</div>
-						} else {
-							<div class="event-schedule-unassigned">
-								@eventRoomTimes(group.Puljer)
-							</div>
-						}
-						@eventRoomNote(group.Room.PublicNotes)
-					</div>
+					if group.Room.ID != 0 {
+						@eventRoomRow(eventID, group)
+					}
+				}
+				if !hasRoom {
+					@eventRoomPendingRow()
 				}
 			</div>
 			// Dialogs remain keyed by pulje so an open map follows a room reassignment.
@@ -79,10 +61,40 @@ templ eventRoomLocations(eventID string, assignments []eventRoom) {
 	</div>
 }
 
+templ eventRoomRow(eventID string, group eventRoomGroup) {
+	{{ dialogID := eventRoomDialogID(eventID, group.Puljer[0].ID) }}
+	<div class="event-room-row">
+		<span class="event-room-name">{ group.Room.Name }</span>
+		if group.MapPath != "" {
+			<button
+				type="button"
+				id={ dialogID + "-button" }
+				class="event-room-button btn btn--primary btn-with-icon"
+				aria-haspopup="dialog"
+				aria-controls={ dialogID }
+				aria-label={ fmt.Sprintf("Se rommet %s", group.Room.Name) }
+				data-on:click={ fmt.Sprintf("$_eventRoomMapDialog = %q", dialogID) }
+			>
+				Se rommet
+				<span aria-hidden="true">
+					@icons.Icon(icons.Map, icons.Size20)
+				</span>
+			</button>
+		}
+		@eventRoomNote(group.Room.PublicNotes)
+	</div>
+}
+
+templ eventRoomPendingRow() {
+	<div class="event-room-row">
+		<span class="event-room-pending">Stedet for arrangementet kommer!</span>
+	</div>
+}
+
 templ eventRoomTimes(puljer []models.PuljeRow) {
 	<span class="event-room-schedule">
 		for _, pulje := range puljer {
-			<span>{ fmt.Sprintf("%s · %s", pulje.Name, pulje.TimeRange()) }</span>
+			<span class="chip chip--primary"><span>{ pulje.Name }</span>{ " " }<span>·</span>{ " " }<span>{ pulje.TimeRange() }</span></span>
 		}
 	</span>
 }
@@ -134,11 +146,28 @@ templ eventRoomStyles() {
 		.event-room-list {
 			display: grid;
 			gap: var(--spacing-3x);
-			margin-bottom: var(--spacing-3x);
-		}
-		.event-room-entry {
-			display: grid;
-			gap: var(--spacing-2x);
+			margin-block-end: var(--spacing-3x);
+			padding: var(--spacing-3x);
+			border: 1px solid var(--color-primary);
+			border-radius: var(--border-radius-2x);
+			background: var(--color-primary-background-dark);
+			color: var(--color-text-strong);
+
+			.event-room-heading {
+				margin: 0;
+			}
+
+			.event-room-row {
+				display: flex;
+				flex-wrap: wrap;
+				place-content: center space-between;
+				gap: var(--spacing-2x) var(--spacing-3x);
+			}
+
+			.event-room-note {
+				flex-basis: 100%;
+				padding-inline: 0;
+			}
 		}
 		.event-room-note {
 			display: flex;
@@ -153,53 +182,14 @@ templ eventRoomStyles() {
 		.event-room-dialog .event-room-note {
 			margin-block-end: var(--spacing-4x);
 		}
-		.event-room-button, .event-room-unmapped, .event-schedule-unassigned {
-			padding: var(--spacing-3x);
-			border-radius: var(--border-radius-2x);
-			color: var(--color-text-strong);
-		}
-		.event-room-button {
-			display: grid;
-			grid-template-columns: minmax(0, 1fr) auto;
-			align-items: center;
-			gap: var(--spacing-3x);
-			inline-size: 100%;
-			font: inherit;
-			text-align: start;
-			border: 2px solid var(--color-primary);
-			background: color-mix(in srgb, var(--color-primary) 18%, var(--bg-surface));
-			cursor: pointer;
-		}
-		.event-room-button:hover {
-			background: color-mix(in srgb, var(--color-primary) 28%, var(--bg-surface));
-		}
-		.event-room-button:focus-visible {
-			outline: 2px solid var(--color-text-strong);
-			outline-offset: 3px;
-		}
 		.event-room-schedule {
-			grid-column: 1 / -1;
-			font-size: 1.125rem;
-			font-weight: 600;
-			line-height: 1.5;
-			display: grid;
-			gap: var(--spacing-1x);
-			overflow-wrap: anywhere;
+			display: flex;
+			flex-wrap: wrap;
+			gap: var(--spacing-2x);
 		}
 		.event-room-name {
 			overflow-wrap: anywhere;
 			font-size: 1rem;
-		}
-		.event-room-action {
-			display: flex;
-			align-items: center;
-			gap: var(--spacing-2x);
-			flex-shrink: 0;
-		}
-		.event-room-unmapped, .event-schedule-unassigned {
-			display: grid;
-			gap: var(--spacing-3x);
-			background: var(--bg-surface);
 		}
 		.event-room-dialog {
 			box-sizing: border-box;
@@ -209,13 +199,13 @@ templ eventRoomStyles() {
 			padding: 0;
 			border: none;
 			border-radius: var(--border-radius-2x);
-			background: var(--bg-surface);
+			background: var(--level-1-background);
 			color: var(--color-text-soft);
 			box-shadow: var(--shadow-dialog);
 			overflow: auto;
 		}
 		.event-room-dialog::backdrop {
-			background: rgb(0 0 0 / 65%);
+			background: var(--bg-backdrop);
 		}
 		.event-room-dialog-content {
 			padding: var(--responsive-pane-padding);

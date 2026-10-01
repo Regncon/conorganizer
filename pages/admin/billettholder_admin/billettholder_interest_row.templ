@@ -34,8 +34,8 @@ templ billettholderInterestRowStyles() {
 			gap: var(--spacing-2x);
 			min-height: 2.5rem;
 			padding: var(--spacing-2x) var(--spacing-3x);
-			border: 1px solid var(--bg-item-border);
-			background: var(--bg-item);
+			border: 1px solid var(--level-3-border);
+			background: var(--level-3-background);
 			color: var(--color-text-strong);
 			text-decoration: none;
 			transition: var(--btn-transition);
@@ -51,17 +51,16 @@ templ billettholderInterestRowStyles() {
 			}
 
 			&:nth-of-type(odd) {
-				background: var(--bg-item);
+				background: var(--level-3-background);
 			}
 
 			&:nth-of-type(even) {
-				background: color-mix(in srgb, var(--bg-item) 95%, white);
+				background: color-mix(in srgb, var(--level-3-background) 95%, white);
 			}
 
-			&:hover,
-			&:focus-visible {
+			&:is(:hover, :focus-visible) {
 				border-color: var(--color-primary);
-				background: var(--bg-item-hover);
+				background: var(--level-3-background-hover);
 				outline: none;
 			}
 
@@ -107,9 +106,9 @@ templ billettholderInterestRowStyles() {
 				width: fit-content;
 				min-height: 1.75rem;
 				padding: 0 var(--spacing-2x);
-				border: 1px solid var(--bg-surface-border);
+				border: 1px solid var(--level-2-border);
 				border-radius: var(--border-radius-1x);
-				background: var(--bg-surface);
+				background: var(--level-2-background);
 				color: var(--color-text-strong);
 				font-size: 12px;
 				font-weight: 700;

@@ -17,7 +17,7 @@ templ ProgramPuljeInterests(interests []Interest) {
 		.pulje-interests-container {
       display: flex;
       flex-direction: column;
-			border: 1px solid var(--bg-item-border);
+			background-color: var(--level-2-background);
 			border-radius: var(--border-radius-2x);
       container-type: inline-size;
       container-name: pulje-interests-container;
@@ -29,13 +29,13 @@ templ ProgramPuljeInterests(interests []Interest) {
       padding: var(--spacing-4x);
     }
     .pulje-interests-collapse {
-      border-top: 1px solid var(--bg-item-border);
+      border-top: 1px solid var(--level-2-border);
     }
 
     .pulje-interests-summary {
       display: flex;
-      align-items: center;
-      justify-content: center;
+      place-items: center;
+      place-content: center;
       padding: var(--spacing-1x) var(--spacing-4x);
       min-height: var(--spacing-8x);
       cursor: pointer;
@@ -45,11 +45,11 @@ templ ProgramPuljeInterests(interests []Interest) {
     .pulje-interests-summary:hover .pulje-interests-summary-text,
     .pulje-interests-summary:focus-visible .pulje-interests-summary-text {
         background-color: var(--btn-ghost-hover-bg);
-        color: var(--btn-ghost-active-text);
+        color: var(--color-text-soft);
     }
     .pulje-interests-summary:active .pulje-interests-summary-text {
         background-color: var(--btn-ghost-active-bg);
-        color: var(--btn-ghost-active-text);
+        color: var(--color-text-soft);
     }
 
     .pulje-interests-summary-text {
@@ -60,19 +60,28 @@ templ ProgramPuljeInterests(interests []Interest) {
       padding-left: var(--spacing-2x);
       padding-right: var(--spacing-1x);
       border-radius: var(--border-radius-1x);
+      color: var(--color-text-soft);
+      font-size: var(--text-body-small);
       transition: var(--btn-transition);
     }
     .pulje-interests-summary:focus-visible {
       outline: none;
     }
     .pulje-interests-summary:focus-visible .pulje-interests-summary-text {
-      box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
+      box-shadow: var(--btn-ghost-shadow);
     }
     .pulje-interests-collapse[open] .inline-icon {
       transform: rotate(180deg);
     }
 
     .pulje-interests-collapse-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-2x);
+      padding: 0 var(--spacing-4x) var(--spacing-4x);
+    }
+
+    .pulje-interests-list {
       display: flex;
       flex-direction: column;
       gap: var(--spacing-2x);
@@ -119,7 +128,7 @@ templ ProgramPuljeInterests(interests []Interest) {
 					@icons.Icon(icons.ChevronDown, icons.Size24)
 				</span>
 			</summary>
-			<div>
+			<div class="pulje-interests-list">
 				for _, interest := range interests {
 					<a href={ templ.URL(fmt.Sprintf("/event/%s", interest.EventID)) } class="item-card profile-event-bar pulje-interests-collapse-content">
 						<span class="profile-event-bar-title">{ interest.EventName }</span>

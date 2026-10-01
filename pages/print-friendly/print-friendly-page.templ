@@ -47,8 +47,8 @@ type printEvent struct {
 }
 
 type printRoomGroup struct {
-	Room       printOccurrence
-	Puljer     []models.PuljeRow
+	Room   printOccurrence
+	Puljer []models.PuljeRow
 }
 
 func groupPrintRooms(occurrences []printOccurrence) []printRoomGroup {
@@ -283,12 +283,12 @@ templ printStyles() {
 			main { padding: 0; }
 			#print-page {
 				--bg-base: #fff;
-				--bg-surface: #fff;
+				--level-1-background: #fff;
+				--level-2-background: #fff;
 				--color-primary: #000;
 				--color-primary-text: #000;
-				--color-secondary-text: #000;
-				--color-text-strong: #000;
 				--color-text-soft: #000;
+				--color-text-strong: #000;
 				inline-size: 100%;
 				color: #000;
 				font-size: 10pt;

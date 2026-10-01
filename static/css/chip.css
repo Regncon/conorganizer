@@ -1,0 +1,24 @@
+:root {
+    --chip-height: 24px;
+    --chip-primary-bg: hsl(from var(--color-primary) h s l / 20%);
+    --chip-primary-border: var(--color-primary);
+}
+
+.chip {
+    display: inline-flex;
+    place-items: center;
+    gap: var(--spacing-1x);
+    block-size: var(--chip-height);
+    padding-inline: var(--spacing-2x);
+    border: 1px solid transparent;
+    border-radius: 100vw;
+    color: var(--color-text-strong);
+    font-size: var(--text-label);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.chip--primary {
+    border-color: var(--chip-primary-border);
+    background-color: var(--chip-primary-bg);
+}

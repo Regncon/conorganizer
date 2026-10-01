@@ -1,78 +1,116 @@
 :root {
+    /* text colors */
     --color-text-strong: #f1f3f9;
     --color-text-soft: #ccd1e9;
     --color-text-soft-50: hsl(from var(--color-text-soft) h s l / 50%);
     --color-text-soft-20: hsl(from var(--color-text-soft) h s l / 20%);
 
-    --color-primary-text: var(--color-text-soft);
+    /* primary colors */
     --color-primary: #e7a965;
-    --color-primary-hover: #e7a96566;
-    --color-primary-focus-visible: #feb56780;
-    --color-primary-active: #feb56799;
-    --color-primary-strong: #e7a965;
-    /* Deprecated variable, use color-primary instead */
+    --color-primary-text: var(--color-text-soft);
+    --color-primary-hover: hsl(from var(--color-primary) h s l / 40%);
+    --color-primary-active: hsl(from var(--color-primary) h s l / 60%);
+    --color-primary-focus-visible: hsl(from var(--color-primary) h s l / 50%);
 
-    --color-secondary-text: var(--color-text-soft);
-    --color-secondary: #ccd1e9;
-    --color-secondary-hover: #ccd1e91a;
-    --color-secondary-focus-visible: #ccd1e980;
-    --color-secondary-active: #ccd1e933;
+    /* status colors */
+    --color-success: #a6da95;
+    --color-warning: #eed49f;
+    --color-error: #ed8796;
 
-    --color-accent-blue: #8EADEE;
-    --color-accent-purple: #C6A0F6;
-    --color-accent-pink: #F5BDE6;
+    /* accent colors */
     --color-accent-red: var(--color-error);
-    --color-accent-orange: #F5A97F;
+    --color-accent-orange: #f5a97f;
     --color-accent-yellow: var(--color-warning);
     --color-accent-green: var(--color-success);
-    --color-accent-teal: #8BD5CA;
-    --color-accent-cyan: #83C3E0;
+    --color-accent-teal: #8bd5ca;
+    --color-accent-cyan: #83c3e0;
+    --color-accent-blue: #8eadee;
+    --color-accent-purple: #c6a0f6;
+    --color-accent-pink: #f5bde6;
 
-    --color-success: #A6DA95;
-    --color-warning: #EED49F;
-    --color-error: #ED8796;
-
-    --color-disabled: #ccd1e980;
-
+    /* background */
+    --bg-base: #0e0f16;
+    --bg-base-indent: #15161e;
     --bg-tooltip: #11111b;
-    --bg-base: #1a1b26;
+    --bg-backdrop: #0009;
+    --color-primary-background-dark: color-mix(in srgb, var(--color-primary) 8%, var(--level-2-state-base));
 
-    --bg-surface: #252735;
-    --bg-surface-border: var(--bg-item-border);
-    --bg-surface-border-hover: var(--bg-item-border-hover);
-    --bg-surface-hover: #353847;
-    --bg-surface-active: #474957;
+    /* level 1 */
+    --level-1-background: #1b1e2c;
 
-    --bg-item: #35394a;
-    --bg-item-hover: #44485A;
-    --bg-item-border-hover: #7f8198;
-    --bg-item-border: #494D62;
-    --item-flat-active: hsl(230deg 40% 86% / 20%);
-
-    --level-1-background: #1B1E2C;
-
+    /* level 2 */
+    --level-2-state-layer: #cbd2e0;
+    --level-2-state-base: #232537;
     --level-2-background: #232638;
+    --level-2-background-hover: color-mix(in srgb, var(--level-2-state-layer) 5%, var(--level-2-state-base));
+    --level-2-background-active: color-mix(in srgb, var(--level-2-state-layer) 10%, var(--level-2-state-base));
+    --level-2-border: #31374f;
+    --level-2-border-hover: color-mix(in srgb, var(--level-2-state-layer) 40%, var(--level-2-border));
 
-    --level-3-background: #2B3045;
+    /* level 3 */
+    --level-3-background: #2b3045;
+    --level-3-background-hover: #3d4461;
+    --level-3-background-active: #495174;
     --level-3-border: #495174;
+    --level-3-border-hover: color-mix(in srgb, var(--color-text-soft) 40%, var(--level-3-border));
 
-    --bg-backdrop: #11111B;
-    --bg-indent: #15161E;
+    /* Gradient background colors */
+    --color-primary-background-gradient:
+        linear-gradient(
+            to right,
+            hsl(from var(--color-primary) h s l / 25%),
+            hsl(from var(--color-primary) h s l / 20%)
+        ),
+        var(--level-2-state-base);
+    --color-yellow-background-gradient:
+        linear-gradient(
+            to right,
+            hsl(from var(--color-accent-yellow) h s l / 25%),
+            hsl(from var(--color-accent-yellow) h s l / 20%)
+        ),
+        var(--level-2-state-base);
+    --color-green-background-gradient:
+        linear-gradient(
+            to right,
+            hsl(from var(--color-accent-green) h s l / 25%),
+            hsl(from var(--color-accent-green) h s l / 20%)
+        ),
+        var(--level-2-state-base);
+    --color-blue-background-gradient:
+        linear-gradient(
+            to right,
+            hsl(from var(--color-accent-blue) h s l / 25%),
+            hsl(from var(--color-accent-blue) h s l / 20%)
+        ),
+        var(--level-2-state-base);
 
-    /* text & font */
-    --text-body: 16px;
-    --text-body-small: 14px;
+    /* call to action banner */
+    --banner-glow: #4966e2;
+
+    /* font sizes */
     --text-heading-1-xl: 52px;
+    --text-heading-1-xl-lh: 1.2;
     --text-heading-1: 40px;
-    --text-heading-1-mobile: 28px;
+    --text-heading-1-lh: 1.2;
     --text-heading-2: 32px;
-    --text-heading-2-mobile: 24px;
+    --text-heading-2-lh: 1.3;
     --text-heading-3: 16px;
     --text-heading-4: 12px;
     --text-article: 20px;
+    --text-article-lh: 1.5;
+    --text-body: 16px;
+    --text-body-small: 14px;
+    --text-label: 12px;
+    --text-heading-1-mobile: 28px;
+    --text-heading-1-mobile-lh: 1.2;
+    --text-heading-2-mobile: 24px;
+    --text-heading-2-mobile-lh: 1.3;
+    --text-article-mobile: 16px;
+    --text-article-mobile-lh: 1.5;
 
-    --font-sans-serif: "Open Sans", Helvetica, sans-serif;
-    --font-serif: "EB Garamond", Georgia, Times, serif;
+    /* font families */
+    --font-sans-serif: "Open Sans", "Helvetica", sans-serif;
+    --font-serif: "EB Garamond", "Georgia", "Times", serif;
     --font-monospace: "Fira Code", monospace;
 
     /* spacings */
@@ -92,6 +130,7 @@
 
     /* shadow */
     --shadow-dialog: 0 19px 38px hsl(0deg 0% 0% / 30%), 0 15px 12px hsl(0deg 0% 0% / 22%);
+    --shadow-focus-size: 0 0 0 3px;
 
     /* content width */
     --page-content-narrow-max-width: 1280px;
@@ -129,6 +168,7 @@
         --responsive-h2-margin: var(--spacing-5x);
     }
 }
+
 @media screen and (width > 1200px) {
     :root {
         --responsive-top-of-page-spacing: var(--spacing-10x);
@@ -278,7 +318,7 @@ p {
     margin: 0;
 }
 
-p+p {
+p + p {
     margin-top: 1rem;
 }
 
@@ -293,7 +333,7 @@ a.inline-link:focus-visible {
 }
 
 a.inline-link:focus-visible {
-    outline: 2px solid var(--color-secondary-focus-visible);
+    outline: 2px solid var(--color-text-soft-50);
     outline-offset: 2px;
     border-radius: var(--border-radius-1x);
 }
@@ -341,15 +381,17 @@ hr {
 }
 
 .input {
-    background-color: var(--bg-item);
-    color: var(--color-text-primary);
+    background-color: var(--level-3-background);
+    color: var(--color-text-soft);
     border-radius: var(--border-radius-2x);
     min-height: 2.6rem;
-    border: 1px solid var(--bg-item-border);
+    border: 1px solid var(--level-3-border);
     font-size: 1rem;
     padding-inline-start: 1rem;
     margin: 0;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    transition:
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
 }
 
 :is(textarea).input {
@@ -368,8 +410,8 @@ hr {
 
 .input:user-invalid,
 .input:user-invalid:focus-visible {
-    border-color: #DC3545;
-    box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l /25%);
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 25%);
 }
 
 /* Form field labels and the label + control + message stack they wrap. */
@@ -378,9 +420,9 @@ hr {
     font-size: var(--text-body-small);
 }
 
-.label-small {
+.label-bold {
+    font-size: var(--text-label);
     font-weight: 600;
-    font-size: 12px;
 }
 
 .form-group {
@@ -399,7 +441,7 @@ hr {
 }
 
 .slider::-moz-range-track {
-    background: var(--color-primary-focus);
+    background: var(--level-3-background);
 }
 
 /* WebKit (Chrome/Edge/Safari): thumb only; track fill can’t be styled separately with pure CSS */
@@ -408,7 +450,7 @@ hr {
 }
 
 .slider::-webkit-slider-runnable-track {
-    background: var(--bg-item-border);
+    background: var(--level-3-background);
 }
 
 input {
@@ -437,7 +479,7 @@ input {
 }
 
 :where(a[href], button, summary, [role="button"], input:not([type="hidden"]), select, textarea):focus-visible {
-    outline: 2px solid var(--color-secondary-focus-visible);
+    outline: 2px solid var(--color-text-soft-50);
     outline-offset: 2px;
 }
 
@@ -465,7 +507,7 @@ input {
 }
 
 .card {
-    background: var(--bg-surface);
+    background: var(--level-1-background);
     border-radius: var(--border-radius-1x);
     box-shadow: 0 0 10px hsl(0deg 0% 0% / 10%);
     padding: 1rem;
@@ -475,7 +517,7 @@ input {
 /* deprecate form-card, use surface-pane instead */
 .surface-pane {
     border-radius: var(--border-radius-2x);
-    background-color: var(--bg-surface);
+    background-color: var(--level-1-background);
     padding: var(--responsive-pane-padding);
 }
 
@@ -491,7 +533,7 @@ input {
 
 .item-card {
     padding: 1rem;
-    background-color: var(--bg-item);
+    background-color: var(--level-2-background);
     border-radius: var(--border-radius-2x);
 }
 
@@ -610,13 +652,13 @@ input {
 }
 
 .kladd {
-    color: var(--color-soft-text);
-    border-color: var(--color-soft-text);
+    color: var(--color-text-soft);
+    border-color: var(--color-text-soft);
 }
 
 .innsendt {
-    color: var(--color-soft-text);
-    border-color: var(--color-soft-text);
+    color: var(--color-text-soft);
+    border-color: var(--color-text-soft);
 }
 
 .publisert {
@@ -635,7 +677,6 @@ input {
 }
 
 @media print {
-
     .no-print,
     .no-print * {
         display: none !important;

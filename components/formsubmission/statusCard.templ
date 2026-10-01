@@ -48,7 +48,7 @@ func UpdateStatus(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager,
 templ statusCard(event *models.Event, isAdmin bool) {
 	<article class="form-card">
 		<section class="form-group">
-			<label for="status" class="label-small color-strong">Status</label>
+			<label for="status" class="label-bold color-strong">Status</label>
 			<select
 				name="status"
 				class="input"

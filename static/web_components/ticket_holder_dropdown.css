@@ -40,6 +40,8 @@
         padding-block: var(--spacing-3x);
         border-radius: var(--border-radius-1x);
         height: 2.75rem;
+        background-color: var(--level-3-background);
+        border-color: var(--level-2-border);
 
         .select-button-end {
             .arrow {
@@ -59,7 +61,11 @@
         &:focus,
         &:focus-visible {
             color: var(--btn-primary-active-text);
-            box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
+            box-shadow: var(--btn-primary-shadow);
+        }
+
+        &:focus-visible {
+            border-color: var(--color-primary);
         }
     }
 
@@ -68,9 +74,9 @@
         top: 85%;
         left: 0;
         width: 100%;
-        background-color: var(--bg-item);
+        background-color: var(--level-1-background);
         color: var(--color-text-soft);
-        border: 1px solid var(--bg-item-border);
+        border: 1px solid var(--level-3-border);
         border-radius: var(--border-radius-1x);
         list-style: none;
         overflow-y: auto;
@@ -85,6 +91,10 @@
             [content-end] 12px
             [select-end] var(--spacing-1x)
             [outer-end];
+
+        @container main (width > 600px) {
+            background-color: var(--level-3-background);
+        }
 
         &.hidden {
             display: none;
@@ -107,7 +117,7 @@
                 grid-column: select-start / select-end;
                 border-radius: var(--border-radius-1x);
                 outline: 0;
-                background-color: var(--item-flat-active);
+                background-color: var(--btn-flat-hover);
                 border-color: var(--color-primary);
             }
 

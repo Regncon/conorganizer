@@ -33,11 +33,11 @@ if (!customElements.get("admin-billettholder-search")) {
         }
 
         .input {
-            background-color: var(--bg-item);
-            color: var(--color-text-primary);
+            background-color: var(--level-3-background);
+            color: var(--color-text-soft);
             border-radius: var(--border-radius-2x);
             min-height: 2.6rem;
-            border: 1px solid var(--bg-item-border);
+            border: 1px solid var(--level-3-border);
             font-size: 1rem;
             padding-inline: 1rem;
             margin: 0;
@@ -75,34 +75,29 @@ if (!customElements.get("admin-billettholder-search")) {
             line-height: 1;
             border-radius: var(--btn-border-radius);
             border-style: solid;
-            border-width: var(--btn-border-width);
+            border-width: 1px;
             cursor: pointer;
             user-select: none;
-            transition:
-                background-color var(--btn-transition-duration) ease,
-                color var(--btn-transition-duration) ease,
-                border-color var(--btn-transition-duration) ease,
-                box-shadow var(--btn-transition-duration) ease,
-                transform var(--btn-transition-duration) ease;
+            transition: var(--btn-transition);
             inline-size: auto;
             max-inline-size: 100%;
             text-align: left;
-            border-color: var(--btn-outline-border);
-            color: var(--color-secondary);
+            border-color: var(--btn-secondary-border);
+            color: var(--color-text-soft);
             background-color: transparent;
             margin: 0 var(--spacing-2x) var(--spacing-2x) 0;
             vertical-align: top;
 
             &:hover {
-                background-color: var(--btn-outline-hover-bg);
-                color: var(--btn-outline-active-text);
+                background-color: var(--btn-secondary-hover-bg);
+                color: var(--btn-secondary-active-text);
             }
 
             &:focus-visible {
                 outline: none;
-                background-color: var(--btn-outline-hover-bg);
-                color: var(--btn-outline-active-text);
-                box-shadow: 0 0 0 3px var(--btn-outline-focus-shadow);
+                background-color: var(--btn-secondary-hover-bg);
+                color: var(--btn-secondary-active-text);
+                box-shadow: var(--btn-secondary-shadow);
             }
         }
 
@@ -492,7 +487,7 @@ if (!customElements.get("admin-billettholder-search")) {
         #createSearchResultButton(option, normalizedQuery) {
             const resultButtonElement = document.createElement("button")
             resultButtonElement.type = "button"
-            resultButtonElement.classList.add("btn", "btn--outline", "gm-search-item")
+            resultButtonElement.classList.add("btn", "btn--secondary", "gm-search-item")
             resultButtonElement.dataset.value = option.label
             resultButtonElement.dataset.id = String(option.id)
             resultButtonElement.append(renderHighlightedLabelFragment(option.label, normalizedQuery))

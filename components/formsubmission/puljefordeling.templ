@@ -273,7 +273,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 						style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
 						data-signals={ fmt.Sprintf("{roomAssignment:  {%s: '%s'}}", pulje.ID, assignedRoomNonNullable) }
 					>
-						<span class="label-small color-strong">Legg til rom</span>
+						<span class="label-bold color-strong">Legg til rom</span>
 						<select
 							class="input"
 							data-bind={ fmt.Sprintf("roomAssignment.%s", pulje.ID) }
