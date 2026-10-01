@@ -36,7 +36,7 @@ func TestLogout_ClearsSessionAndRefreshCookies(t *testing.T) {
 	logger := discardLogger()
 	validator := &fakeSessionValidator{}
 	authenticatedRouter := router.With(authctx.AuthMiddleware(validator, logger))
-	if err := SetupAuthRoute(router, authenticatedRouter, db, logger, validator); err != nil {
+	if err := SetupAuthRoute(router, authenticatedRouter, nil, db, logger, validator); err != nil {
 		t.Fatalf("setup auth route: %v", err)
 	}
 	request := httptest.NewRequest(http.MethodGet, "/auth/logout", nil)

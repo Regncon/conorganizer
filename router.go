@@ -75,7 +75,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, authenticatedRouter, 
 		admin.SetupAdminRoute(routerAdmin, logger, liveManager, db, eventImageDir),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, liveManager, logger, db),
 		event.SetupEventRoute(authenticatedRouter, liveManager, db, logger, eventImageDir),
-		login.SetupAuthRoute(publicRouter, authenticatedRouter, db, logger, sessionValidator),
+		login.SetupAuthRoute(publicRouter, authenticatedRouter, liveManager, db, logger, sessionValidator),
 		profilepage.SetupProfileRoute(isLoggedInRouter, liveManager, db, eventImageDir, logger),
 		feedbackpage.SetupFeedbackRoute(isLoggedInRouter, db, logger),
 	); err != nil {

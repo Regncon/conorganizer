@@ -30,7 +30,7 @@ func loadPuljeInterests(ctx context.Context, db *sql.DB, puljeID models.Pulje) b
 }
 
 func loadBillettholderInterests(userInfo requestctx.UserRequestInfo, selectedBillettholderHint int, puljeID models.Pulje, db *sql.DB) (billettholderInterestsByEvent, error) {
-	if userInfo.Email == "" {
+	if userInfo.Id == "" {
 		return nil, nil
 	}
 
