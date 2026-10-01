@@ -111,7 +111,7 @@
     /* font families */
     --font-sans-serif: "Open Sans", "Helvetica", sans-serif;
     --font-serif: "EB Garamond", "Georgia", "Times", serif;
-    --font-monospace: "Fira Code", "monospace";
+    --font-monospace: "Fira Code", monospace;
 
     /* spacings */
     --spacing-1x: 4px;
