@@ -74,6 +74,18 @@
     }
 }
 
+.card-clickable--level-2-border {
+    border-color: var(--level-2-border);
+
+    &:not(.selected):is(:hover, :focus-visible, :active) {
+        border-color: var(--level-2-border-hover);
+    }
+
+    &[disabled]:not(.selected) {
+        border-color: var(--level-2-border);
+    }
+}
+
 /*
     Styles for card-shaped event elements
 */

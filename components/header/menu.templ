@@ -1047,7 +1047,7 @@ templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolde
 	<div class="ticket-holder-picker">
 		<button
 			id={ fmt.Sprintf("menu-billettholder-option-%d", currentBillettHolder.Id) }
-			class="card-clickable card-clickable--level-3"
+			class="card-clickable card-clickable--level-3 card-clickable--level-2-border"
 			data-attr:aria-pressed={ fmt.Sprintf(`$billettHolderId == %d ? 'true' : 'false'`, currentBillettHolder.Id) }
 			data-attr:disabled={ fmt.Sprintf("$billettHolderId == %d", currentBillettHolder.Id) }
 			data-preserve-attr="class aria-pressed disabled"
