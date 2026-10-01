@@ -137,6 +137,7 @@
         text-align: end;
         color: var(--color-primary);
         font-size: var(--text-body-small);
+        font-weight: 600;
     }
 }
 
