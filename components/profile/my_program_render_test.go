@@ -154,7 +154,7 @@ func TestMyProgram_ProgramEventPointsToDescriptionForTime(t *testing.T) {
 	})
 
 	// Given
-	expectedHint := "Se beskrivelse for tidspunkt"
+	expectedHint := "Se beskrivelse for tidspunkt."
 
 	db, logger := createProfileProgramTestDB(t)
 	userInfo, billettholderID := seedProfileProgramUser(t, db)

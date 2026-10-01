@@ -77,7 +77,7 @@ Denne sjekklisten dekker `/profile`: innlogget oversikt, egne arrangementer, kor
 - [ ] **Programarrangement viser til beskrivelsen for tidspunkt**<br>
   **Gitt** at programmet er publisert og billettholderen er GM eller manuelt satt opp på et programarrangement.<br>
   **Når** Mitt festivalprogram vises.<br>
-  **Så** viser kortet for programarrangementet «Se beskrivelse for tidspunkt». Puljeoverskriften beholder klokkeslettet, og kort for arrangementer i puljefordelingen har ikke denne teksten.
+  **Så** viser kortet for programarrangementet «Se beskrivelse for tidspunkt.». Puljeoverskriften beholder klokkeslettet, og kort for arrangementer i puljefordelingen har ikke denne teksten.
 
 - [ ] **Tomme programpunkter forklares tydelig**<br>
   **Gitt** at programmet er publisert og brukeren ikke har noe i en eller flere puljer i sitt festivalprogram.<br>

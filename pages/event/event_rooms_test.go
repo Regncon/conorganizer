@@ -155,7 +155,7 @@ func TestEventRoomTimes_ProgramEventPointsToDescriptionInsteadOfPuljeTime(t *tes
 	})
 
 	// Given
-	expectedHint := "Se beskrivelse for tidspunkt"
+	expectedHint := "Se beskrivelse for tidspunkt."
 	db := createEventRoomTestDB(t)
 	testutil.MustExec(t, db, `UPDATE events SET is_in_puljefordeling = 0 WHERE id = 'room-event'`)
 

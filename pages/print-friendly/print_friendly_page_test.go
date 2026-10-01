@@ -145,7 +145,7 @@ func TestPrintFriendlyPage_ShowsOneMapForAProgramEventUsingTheSameRoomTwice(t *t
 	if !slices.Equal(actualMaps, []string{expectedMap}) {
 		t.Fatalf("room maps = %v, want one %q", actualMaps, expectedMap)
 	}
-	if !strings.Contains(actualTimes, "Se beskrivelse for tidspunkt") {
+	if !strings.Contains(actualTimes, "Se beskrivelse for tidspunkt.") {
 		t.Fatalf("printed times = %q, want it to point to the description", actualTimes)
 	}
 	if strings.Contains(actualTimes, "10:00 - 15:00") || strings.Contains(actualTimes, "18:00 - 23:00") {
@@ -176,7 +176,7 @@ func TestPrintFriendlyPage_ShowsPuljeTimeForPuljeEvent(t *testing.T) {
 	if !strings.Contains(actualTimes, expectedTime) {
 		t.Fatalf("printed times = %q, want %q", actualTimes, expectedTime)
 	}
-	if strings.Contains(actualTimes, "Se beskrivelse for tidspunkt") {
+	if strings.Contains(actualTimes, "Se beskrivelse for tidspunkt.") {
 		t.Fatalf("printed times = %q, pulje event should not point to the description", actualTimes)
 	}
 }

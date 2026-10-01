@@ -96,7 +96,7 @@ Denne sjekklisten dekker `/event/{id}`, altså detaljvisningen for et arrangemen
 - [ ] **Programarrangement viser til beskrivelsen for tidspunkt**<br>
   **Gitt** at et programarrangement (ikke med i puljefordelingen) er satt opp i en eller flere puljer og programmet er publisert.<br>
   **Når** detaljsiden vises og brukeren åpner romkartet.<br>
-  **Så** viser «Sted og tidspunkt»-boksen og kartmodalen teksten «Se beskrivelse for tidspunkt» i stedet for puljenavn og klokkeslett. Rommet og «Se rommet» vises som før.
+  **Så** viser «Sted og tidspunkt»-boksen og kartmodalen teksten «Se beskrivelse for tidspunkt.» i stedet for puljenavn og klokkeslett. Rommet og «Se rommet» vises som før.
 
 - [ ] **Kartet forblir åpent ved liveoppdateringer**<br>
   **Gitt** at kartmodalen er åpen.<br>
