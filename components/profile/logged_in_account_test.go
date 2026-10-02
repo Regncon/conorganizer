@@ -11,7 +11,7 @@ import (
 func TestLoggedInAccount_RendersAccountEmail(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren er logget inn med en e-postadresse.",
-		When:  "Når Kontoadministrasjon vises.",
+		When:  "Når kontoboksen vises på Min Side.",
 		Then:  "Så skal brukeren se hvilken konto de er innlogget som.",
 	})
 
@@ -30,5 +30,30 @@ func TestLoggedInAccount_RendersAccountEmail(t *testing.T) {
 	}
 	if !slices.Equal(expectedEmail, actualEmail) {
 		t.Fatalf("email mismatch\nexpected: %v\nactual:   %v", expectedEmail, actualEmail)
+	}
+}
+
+func TestLoggedInAccount_RendersResetPasswordAndLogoutLinks(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren er logget inn.",
+		When:  "Når kontoboksen vises på Min Side.",
+		Then:  "Så skal brukeren kunne resette passord og logge ut fra boksen.",
+	})
+
+	// Given
+	expectedResetPasswordText := []string{"Reset passord"}
+	expectedLogoutText := []string{"Logg ut"}
+
+	// When
+	doc := templtest.Render(t, LoggedInAccount("ola.nordmann@example.no"))
+	actualResetPasswordText := templtest.CollectTexts(doc, `a[href="/profile/descope-profile"]`)
+	actualLogoutText := templtest.CollectTexts(doc, `a[href="/auth/logout"]`)
+
+	// Then
+	if !slices.Equal(expectedResetPasswordText, actualResetPasswordText) {
+		t.Fatalf("reset password link mismatch\nexpected: %v\nactual:   %v", expectedResetPasswordText, actualResetPasswordText)
+	}
+	if !slices.Equal(expectedLogoutText, actualLogoutText) {
+		t.Fatalf("logout link mismatch\nexpected: %v\nactual:   %v", expectedLogoutText, actualLogoutText)
 	}
 }

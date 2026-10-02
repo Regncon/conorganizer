@@ -5,15 +5,10 @@ import "github.com/Regncon/conorganizer/components/icons"
 templ LoggedInAccount(email string) {
 	<style>
     .logged-in-account {
-        display: flex;
-        place-items: center;
-        gap: var(--spacing-3x);
-        padding-block: var(--spacing-4x);
-        padding-inline: var(--spacing-4x);
-        margin-block-end: var(--spacing-4x);
-        background-color: var(--level-3-background);
-        border: 1px solid var(--level-3-border);
-        border-radius: var(--border-radius-2x);
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: var(--spacing-5x) var(--spacing-2x);
+        align-items: center;
         color: var(--color-text-soft);
 
         p {
@@ -21,9 +16,17 @@ templ LoggedInAccount(email string) {
         }
     }
 
+    .logged-in-account-avatar {
+        display: inline-grid;
+        place-content: center;
+        inline-size: 2.5rem;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background-color: var(--color-text-soft-20);
+    }
+
     .logged-in-account-text {
-        display: flex;
-        flex-direction: column;
+        display: grid;
         min-inline-size: 0;
     }
 
@@ -36,12 +39,28 @@ templ LoggedInAccount(email string) {
         color: var(--color-text-strong);
         overflow-wrap: anywhere;
     }
-    </style>
-	<div class="logged-in-account">
-		@icons.Icon(icons.User, icons.Size32)
-		<div class="logged-in-account-text">
-			<p class="logged-in-account-label">Innlogget som</p>
-			<p class="logged-in-account-email">{ email }</p>
+
+    .logged-in-account-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        place-content: end;
+        gap: var(--spacing-5x);
+    }
+	</style>
+	<div class="surface-pane logged-in-account">
+		if email != "" {
+			<span class="logged-in-account-avatar" aria-hidden="true">
+				@icons.Icon(icons.User, icons.Size24)
+			</span>
+			<div class="logged-in-account-text">
+				<p class="logged-in-account-label">Innlogget som</p>
+				<p class="logged-in-account-email">{ email }</p>
+			</div>
+		}
+		<div class="logged-in-account-actions">
+			<a href="/profile/descope-profile" class="btn btn--secondary">Reset passord</a>
+			<a href="/auth/logout" class="btn btn--secondary">Logg ut</a>
 		</div>
 	</div>
 }

@@ -1,6 +1,7 @@
 package profilecomponent
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -70,5 +71,32 @@ func TestMyTickets_WhenUserHasNoTicketHolders_RendersEmptyStateAndFetchLink(t *t
 	}
 	if strings.Join(actualLinkText, " ") != strings.Join(expectedLinkText, " ") {
 		t.Fatalf("ticket page link text mismatch\nexpected: %v\nactual:   %v", expectedLinkText, actualLinkText)
+	}
+}
+
+func TestMyTickets_RendersOneBoxPerBillettholder(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren har flere billettinnehavere knyttet til profilen.",
+		When:  "Når billettseksjonen vises på Min Side.",
+		Then:  "Så skal hver billettinnehaver vises i sin egen boks med navn, billettype og e-post.",
+	})
+
+	// Given
+	expectedBoxTexts := []string{
+		"Anders Andersen Festivalpass anders@example.com",
+		"Berit Bertelsen Dagspass berit@example.com",
+	}
+	tickets := []TicketHolder{
+		{Name: "Anders Andersen", Ticket: "Festivalpass", Email: "anders@example.com"},
+		{Name: "Berit Bertelsen", Ticket: "Dagspass", Email: "berit@example.com"},
+	}
+
+	// When
+	doc := templtest.Render(t, MyTickets(tickets))
+	actualBoxTexts := templtest.CollectTexts(doc, ".billettholder-summary")
+
+	// Then
+	if !slices.Equal(expectedBoxTexts, actualBoxTexts) {
+		t.Fatalf("billettholder boxes mismatch\nexpected: %v\nactual:   %v", expectedBoxTexts, actualBoxTexts)
 	}
 }
