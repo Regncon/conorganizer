@@ -171,3 +171,44 @@ func TestRemoveManualSeat_BeforeFirstSaveKeepsItUnsaved(t *testing.T) {
 		t.Fatal("expected the pulje to still need its first save")
 	}
 }
+
+func TestSaveConfirmedDistribution_ClearsManualSeatOnEventNoLongerInPulje(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en lagret fordeling der Xander er plassert manuelt på Bravo.",
+		When:  "Når Bravo tas ut av puljen og admin lagrer fordelingen.",
+		Then:  "Så skal den manuelle plassen på Bravo fjernes, og det skal ikke være noe mer å lagre.",
+	})
+
+	// Given
+	db, _ := testutil.CreateTestDBAndLogger(t, "save_status_manual_seat_removed_event")
+	seedConsequenceChain(t, db)
+	seedManualSeat(t, db, "evB", models.PuljeFredagKveld, consequenceX)
+	if err := CommitDistribution(db, models.PuljeFredagKveld); err != nil {
+		t.Fatalf("CommitDistribution: %v", err)
+	}
+	testutil.MustExec(t, db,
+		`UPDATE relation_event_puljer SET is_in_pulje = 0 WHERE event_id = 'evB' AND pulje_id = ?`,
+		string(models.PuljeFredagKveld))
+	status, err := LoadSaveStatus(db, models.PuljeFredagKveld)
+	if err != nil || !status.HasChanges() {
+		t.Fatalf("expected changes after removing Bravo, got %+v, %v", status, err)
+	}
+
+	// When
+	retry, err := SaveConfirmedDistribution(db, models.PuljeFredagKveld, status.Confirmation)
+
+	// Then
+	if err != nil || retry != nil {
+		t.Fatalf("SaveConfirmedDistribution: %+v, %v", retry, err)
+	}
+	if got := assignmentEvents(t, db, models.PuljeFredagKveld, consequenceX, models.EventPlayerRolePlayer); slices.Contains(got, "evB") {
+		t.Fatalf("expected Xander's seat on Bravo to be gone, got %v", got)
+	}
+	after, err := LoadSaveStatus(db, models.PuljeFredagKveld)
+	if err != nil {
+		t.Fatalf("LoadSaveStatus: %v", err)
+	}
+	if after.HasChanges() {
+		t.Fatalf("expected nothing to save, got %+v", after.Changes)
+	}
+}
