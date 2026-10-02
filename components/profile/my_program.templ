@@ -28,9 +28,10 @@ type UserEvent struct {
 }
 
 type UserProgramPulje struct {
-	Pulje     models.PuljeRow
-	Events    []UserEvent
-	Interests []UserInterest
+	Pulje      models.PuljeRow
+	ProgramDate string
+	Events     []UserEvent
+	Interests  []UserInterest
 }
 
 templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
@@ -61,7 +62,12 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 
 		puljer := make([]UserProgramPulje, len(puljeRows))
 		for i, pulje := range puljeRows {
-			puljer[i].Pulje = pulje
+			programDate, dateErr := program.DateQueryValue(pulje.StartAt.TimeOrZero())
+			if dateErr != nil {
+				logger.Error(fmt.Errorf("failed to derive profile program date: %w", dateErr).Error(), "user_id", userInfo.Id, "pulje_id", pulje.ID)
+				hasError = true
+			}
+			puljer[i] = UserProgramPulje{Pulje: pulje, ProgramDate: programDate}
 		}
 
 		for i := range puljer {
@@ -140,7 +146,7 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 								@event_components.ProgramPuljeInterests(interestList)
 							}
 							if len(pulje.Events) == 0 && len(pulje.Interests) == 0 {
-								@event_components.ProgramPuljeNoEvents(pulje.Pulje.ID)
+								@event_components.ProgramPuljeNoEvents(pulje.ProgramDate)
 							}
 						</div>
 					}

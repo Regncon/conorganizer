@@ -28,12 +28,6 @@ func programEventRows(events []program.EventOccurrence) []programEventRow {
 	return rows
 }
 
-func programDateURL(date string) string {
-	query := url.Values{}
-	query.Set(programDateQueryParam, date)
-	return "/?" + query.Encode()
-}
-
 func rootAPIURL(requestedDate string) string {
 	if requestedDate == "" {
 		return "/root/api"

@@ -2,6 +2,13 @@ package program
 
 import "net/url"
 
+// ProgramDateURL builds a homepage URL that selects the requested program day.
+func ProgramDateURL(date string) string {
+	query := url.Values{}
+	query.Set("date", date)
+	return "/?" + query.Encode()
+}
+
 // EventURL preserves the selected pulje and day when linking to an event.
 func EventURL(eventID string, pulje string, date string) string {
 	query := url.Values{}

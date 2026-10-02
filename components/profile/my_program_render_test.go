@@ -10,6 +10,33 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
+func TestMyProgram_WhenPuljeHasNoEvents_LinksToItsProgramDate(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an empty pulje in the published program.",
+		When:  "When Mitt festivalprogram is rendered.",
+		Then:  "Then the no-events link selects the pulje's program date.",
+	})
+
+	// Given
+	expectedHref := "/?date=2026-10-09"
+	db, logger := createProfileProgramTestDB(t)
+	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgram(t, db, true)
+	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusOpen)
+
+	// When
+	doc := templtest.Render(t, MyProgram(userInfo, billettholderID, db, logger, nil))
+
+	// Then
+	actualHref, exists := doc.Find(".pulje-no-events-container a").Attr("href")
+	if !exists {
+		t.Fatal("expected empty-pulje link to have an href")
+	}
+	if actualHref != expectedHref {
+		t.Fatalf("empty-pulje link href = %q, want %q", actualHref, expectedHref)
+	}
+}
+
 func TestMyProgram_WhenPuljeIsNotCompleted_RendersInterestsAndHidesPlayerResult(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given a player assignment and a wish in an open pulje.",

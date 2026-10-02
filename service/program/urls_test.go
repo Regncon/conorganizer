@@ -2,6 +2,12 @@ package program
 
 import "testing"
 
+func TestProgramDateURL_SelectsRequestedDate(t *testing.T) {
+	if got, want := ProgramDateURL("2026-10-03"), "/?date=2026-10-03"; got != want {
+		t.Fatalf("program date URL = %q, want %q", got, want)
+	}
+}
+
 func TestEventURL_PreservesOptionalContextAndEscapesIDs(t *testing.T) {
 	cases := []struct {
 		name, eventID, pulje, date, want string
