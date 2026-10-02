@@ -80,7 +80,14 @@ templ ProgramPuljeInterests(interests []Interest) {
       display: flex;
       flex-direction: column;
       gap: var(--spacing-2x);
-      padding: 0 var(--spacing-4x) var(--spacing-4x);
+      padding: var(--spacing-4x);
+      padding-top: 0;
+    }
+
+    .pulje-interests-event-bar {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
     }
 
     .pulje-interests-list {
@@ -92,29 +99,16 @@ templ ProgramPuljeInterests(interests []Interest) {
 
     .pulje-interest-event-choice {
       font-weight: bold;
-      text-align: right;
-      min-width: 120px; /* "veldig interessert" */
-      white-space: nowrap;
-    }
-
-    .pulje-interests-collapse-content  {
-      flex-direction: row;
-      justify-content: space-between;
-      padding-top: 16px
-    }
-
-
-    @container pulje-interests-container (width < 768px) {
-      .pulje-interest-event-choice {
-        text-align: left;
-        min-width: unset;
-      }
+      text-align: left;
+      width: fit-content;
+      flex-shrink: 0;
     }
 
     @container pulje-interests-container (width < 500px) {
-      .pulje-interests-collapse-content {
+      .pulje-interests-event-bar {
         flex-direction: column;
-        align-items: start;
+        align-items: flex-start;
+        gap: 8px;
       }
     }
 
@@ -142,9 +136,9 @@ templ ProgramPuljeInterests(interests []Interest) {
 					@icons.Icon(icons.ChevronDown, icons.Size24)
 				</span>
 			</summary>
-			<div class="pulje-interests-list">
+			<div class="pulje-interests-collapse-content">
 				for _, interest := range interests {
-					<a href={ templ.URL(fmt.Sprintf("/event/%s", interest.EventID)) } class="item-card profile-event-bar pulje-interests-collapse-content">
+          <a href={ templ.URL(fmt.Sprintf("/event/%s", interest.EventID)) } class="item-card profile-event-bar pulje-interests-event-bar">
 						<span class="profile-event-bar-title">{ interest.EventName }</span>
 						<span class="pulje-interest-event-choice">{ interest.InterestLevel.Label() }</span>
 					</a>
