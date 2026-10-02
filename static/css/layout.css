@@ -80,12 +80,12 @@
 
 .program-event-row {
     display: grid;
-    grid-template-columns: 1.618fr 1fr;
+    grid-template-columns: 6fr 5fr;
     gap: var(--spacing-4x);
 }
 
 .program-event-row.reversed {
-    grid-template-columns: 1fr 1.618fr;
+    grid-template-columns: 5fr 6fr;
 }
 
 .program-event-row > .event-card-container {
@@ -99,6 +99,13 @@
 
 .raffle-eventcard-grid > .event-card-container {
     grid-template-rows: 150px minmax(90px, 1fr) min-content;
+}
+
+@container main (width <= 900px) {
+    .program-event-row,
+    .program-event-row.reversed {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 @container main (width <= 720px) {
