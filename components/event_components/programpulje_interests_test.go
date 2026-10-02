@@ -1,6 +1,7 @@
 package event_components
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
@@ -55,5 +56,62 @@ func TestProgramPuljeInterests_LinksToProgramDate(t *testing.T) {
 	}
 	if want := "/?date=2026-10-03#pulje-FredagKveld"; actualHref != want {
 		t.Fatalf("see-arrangements href = %q, want %q", actualHref, want)
+	}
+}
+
+func TestProgramPuljeInterests_SaysHowManyAndInvitesToFindMore(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a billettholder with three interests in a pulje.",
+		When:  "When the profile program interest section is rendered.",
+		Then:  "Then it says they only have three and invites them to find more arrangementer.",
+	})
+
+	// Given
+	expectedSummary := "Du har bare meldt interesse for 3 arrangement(er) i denne puljen."
+	expectedLink := "Finn flere arrangementer"
+	interests := []Interest{
+		{EventID: "a", EventName: "A", InterestLevel: models.InterestLevelHigh},
+		{EventID: "b", EventName: "B", InterestLevel: models.InterestLevelHigh},
+		{EventID: "c", EventName: "C", InterestLevel: models.InterestLevelLow},
+	}
+
+	// When
+	doc := templtest.Render(t, ProgramPuljeInterests(interests, "2026-10-03", models.PuljeFredagKveld))
+
+	// Then
+	if got := doc.Find(".pulje-interests-description p").Text(); !strings.Contains(got, expectedSummary) {
+		t.Fatalf("summary = %q, want it to contain %q", got, expectedSummary)
+	}
+	if got := strings.TrimSpace(doc.Find(".pulje-interests-description a").Text()); got != expectedLink {
+		t.Fatalf("link text = %q, want %q", got, expectedLink)
+	}
+}
+
+func TestProgramPuljeInterests_WhenMoreThanThree_DoesNotSayOnly(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a billettholder with four interests in a pulje.",
+		When:  "When the profile program interest section is rendered.",
+		Then:  "Then it says how many they have without calling it only.",
+	})
+
+	// Given
+	expectedSummary := "Du har meldt interesse for 4 arrangement(er) i denne puljen."
+	interests := []Interest{
+		{EventID: "a", EventName: "A", InterestLevel: models.InterestLevelHigh},
+		{EventID: "b", EventName: "B", InterestLevel: models.InterestLevelHigh},
+		{EventID: "c", EventName: "C", InterestLevel: models.InterestLevelMedium},
+		{EventID: "d", EventName: "D", InterestLevel: models.InterestLevelLow},
+	}
+
+	// When
+	doc := templtest.Render(t, ProgramPuljeInterests(interests, "2026-10-03", models.PuljeFredagKveld))
+
+	// Then
+	got := doc.Find(".pulje-interests-description p").Text()
+	if !strings.Contains(got, expectedSummary) {
+		t.Fatalf("summary = %q, want it to contain %q", got, expectedSummary)
+	}
+	if strings.Contains(got, "bare") {
+		t.Fatalf("summary = %q, should not say bare with more than three interests", got)
 	}
 }
