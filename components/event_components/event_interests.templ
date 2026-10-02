@@ -113,6 +113,12 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 						margin-block-end: var(--spacing-1x);
 					}
 
+					.interest-limit-hint {
+						margin-block-start: var(--spacing-3x);
+						color: var(--color-text-soft);
+						font-size: 12px;
+					}
+
 					button .emoji {
 						font-size: 25px;
 						margin-inline-end: var(--spacing-5x);
@@ -228,6 +234,10 @@ templ InterestContent(eventID string, title string, state InterestNoticeState, i
 		}
 		if state.CanChooseInterest {
 			@ticketholder.TicketHolderInterestPicker(eventID)
+			<p class="interest-limit-hint">
+				Du kan melde interesse for så mange arrangementer du vil i hver pulje.
+				Flere arrangementer kan ha samme interessenivå.
+			</p>
 		}
 	</div>
 }

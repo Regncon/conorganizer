@@ -122,12 +122,15 @@ templ ProgramPuljeInterests(interests []Interest, date string, puljeID models.Pu
 	<div class="pulje-interests-container">
 		<div class="pulje-interests-description flex-responsive">
 			<p>
-				I denne puljen har du arrangementer du er interessert i.
-				Du kan utvide denne seksjonen for å se disse, 
-        eller se etter flere arrangementer.
+				if len(interests) <= 3 {
+					Du har bare meldt interesse for { fmt.Sprint(len(interests)) } arrangement(er) i denne puljen.
+				} else {
+					Du har meldt interesse for { fmt.Sprint(len(interests)) } arrangement(er) i denne puljen.
+				}
+				Du kan melde interesse for så mange du vil.
 			</p>
 			<a href={ templ.URL(program.ProgramPuljeURL(date, puljeID)) } class="btn btn--secondary">
-				Se arrangementer
+				Finn flere arrangementer
 			</a>
 		</div>
 		<details class="pulje-interests-collapse" data-preserve-attr="open">
