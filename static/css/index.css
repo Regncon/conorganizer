@@ -644,36 +644,34 @@ input {
 /* Event status card */
 .event-status {
     display: flex;
+    place-items: center;
     gap: var(--spacing-1x);
     padding-inline: var(--spacing-2x);
     padding-block: var(--spacing-1x);
+    color: var(--color-text-strong);
     border: 1px solid;
+    border-color: var(--event-status-color, var(--color-text-soft));
+    background-color: hsl(from var(--event-status-color, var(--color-text-soft)) h s l / 20%);
     border-radius: 100vw;
+    .inline-icon {
+        color: var(--event-status-color, var(--color-text-soft));
+    }
 }
 
-.kladd {
-    color: var(--color-text-soft);
-    border-color: var(--color-text-soft);
+.event-status.innsendt {
+    --event-status-color: var(--color-accent-blue);
 }
 
-.innsendt {
-    color: var(--color-text-soft);
-    border-color: var(--color-text-soft);
+.event-status.godkjent {
+    --event-status-color: var(--color-accent-yellow);
 }
 
-.publisert {
-    color: var(--color-success);
-    border-color: var(--color-success);
+.event-status.annonsert {
+    --event-status-color: var(--color-accent-green);
 }
 
-.godkjent {
-    color: var(--color-warning);
-    border-color: var(--color-warning);
-}
-
-.forkastet {
-    color: var(--color-error);
-    border-color: var(--color-error);
+.event-status.forkastet {
+    --event-status-color: var(--color-accent-red);
 }
 
 @media print {

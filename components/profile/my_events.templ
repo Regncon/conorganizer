@@ -25,17 +25,28 @@ templ MyEvents(events []models.EventCardModel, email string) {
 	<style>
     .submit-event-message {
         display: flex;
-        width: 100%;
         flex-direction: column;
-        padding-top: var(--spacing-3x);
-        gap: var(--responsive-pane-padding);
         justify-content: space-between;
+        gap: var(--responsive-pane-padding);
+        width: 100%;
 
         button {
             align-self: flex-end;
             flex-shrink: 0;
         }
     }
+
+		.my-events-content {
+			display: flex;
+			flex-direction: column;
+			gap: var(--responsive-pane-padding);
+		}
+
+		.my-events-list {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+		}
 
     .my-events-account-info {
         display: flex;
@@ -65,25 +76,29 @@ templ MyEvents(events []models.EventCardModel, email string) {
         }
     }
     </style>
-	<div class="surface-pane flex flex-col" style="gap: var(--spacing-2x)">
+	<div class="surface-pane flex flex-col">
 		<h2 class="surface-pane-title">Mine arrangementer</h2>
-		if len(events) > 0 {
-			for _, event := range events {
-				@singleEvent(event)
+		<div class="my-events-content">
+			if len(events) > 0 {
+				<div class="my-events-list">
+						for _, event := range events {
+							@singleEvent(event)
+						}
+						if email != "" {
+							<p class="my-events-account-info">
+								@icons.Icon(icons.Info, icons.Size16)
+								<span>Arrangementene lagres direkte på kontoen <strong>{ email }</strong>, ikke på billetten.</span>
+							</p>
+						}
+				</div>
 			}
-		}
-		<form action="/profile/api/create" method="post" class="submit-event-message">
-			<p>
-				Ønsker du å arrangere noe under festivalen? Dørene er fortsatt åpne for nye arrangementer, la oss høre fra
-				deg!
-			</p>
-			<button type="submit" class="btn btn--secondary">Send inn arrangement</button>
-		</form>
-		if email != "" {
-			<p class="my-events-account-info">
-				@icons.Icon(icons.Info, icons.Size16)
-				<span>Arrangementene lagres på kontoen <strong>{ email }</strong></span>
-			</p>
-		}
+			<form action="/profile/api/create" method="post" class="submit-event-message">
+				<p>
+					Ønsker du å arrangere noe under festivalen? Dørene er fortsatt åpne for nye arrangementer, la oss høre fra
+					deg!
+				</p>
+				<button type="submit" class="btn btn--secondary">Send inn arrangement</button>
+			</form>
+		</div>
 	</div>
 }

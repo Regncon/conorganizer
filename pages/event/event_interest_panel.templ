@@ -22,16 +22,10 @@ templ eventInterestPanelFrame() {
         gap: var(--spacing-4x);
         padding: var(--spacing-4x);
 
-        >button {
-            width: 100%;
-            align-self: flex-end;
-        }
-
         .inline-link {
             display: inline-flex;
             align-items: center;
             gap: var(--spacing-1x);
-            margin-top: var(--spacing-3x);
             text-decoration: none;
             width: fit-content;
             .link-text {
@@ -39,38 +33,61 @@ templ eventInterestPanelFrame() {
             }
         }
 
-        .event-interest-helper {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-2x);
-            width: 100%;
-            color: var(--color-text-soft);
-        }
+	    }
 
-        .event-interest-helper .inline-icon {
-            flex: 0 0 auto;
-        }
+	    .event-interest-available-content {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-4x);
+		width: 100%;
+	    }
 
-        .event-interest-helper.pulje-interest-state--warning {
-			color: var(--color-error);
-        }
+	    .event-interest-available-actions {
+		display: flex;
+		align-items: center;
+		flex-direction: column;
+		gap: var(--spacing-4x);
 
-        .event-interest-helper.pulje-interest-state--locked {
-            color: var(--color-accent-blue);
-        }
+		>button {
+		    width: 100%;
+		    align-self: flex-end;
+		}
+	    }
 
-        .event-interest-helper.pulje-interest-state--completed {
-            color: var(--color-success);
-        }
-    }
+	    .event-interest-helper {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2x);
+		color: var(--color-text-soft);
+	    }
+
+	    .event-interest-helper .inline-icon {
+		flex: 0 0 auto;
+	    }
+
+	    .event-interest-helper.pulje-interest-state--warning {
+			color: var(--color-accent-yellow);
+	    }
+
+	    .event-interest-helper.pulje-interest-state--locked {
+		color: var(--color-accent-blue);
+	    }
+
+	    .event-interest-helper.pulje-interest-state--completed {
+		color: var(--color-accent-green);
+	    }
 
     /* We need some inline sizing to do the flex-layout of this component */
     @container event-interest-picker (width > 600px) {
         .event-interest-picker {
             flex-direction: row;
+		}
 
-            >button {
-                align-self: center;
+		.event-interest-available-actions {
+			flex-direction: row;
+
+			>button {
+				align-self: center;
             }
         }
     }
@@ -83,7 +100,7 @@ templ eventInterestPanelFrame() {
             height: fit-content;
         }
 
-        .event-interest-picker {
+		.event-interest-available-actions {
             >button {
                 max-width: 200px;
                 flex-shrink: 0;
@@ -113,37 +130,41 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, sele
 			</p>
 		} else if hasTickets {
 			if interestAvailable {
-				<div>
-					Tenker du dette arrangementet ser spennende ut?
-					Husk å melde interesse i god tid, aller senest en time før puljen til arrangementet starter.
-					<a
-						class="inline-link"
-						href="https://www.regncon.no/vanlege-sporsmal/"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<span class="link-text">Hvordan fungerer interessevalget?</span>
-						@icons.Icon(icons.ExternalLink, icons.Size16)
-					</a>
+				<div class="event-interest-available-content">
+					<div class="event-interest-available-actions">
+						<div>
+							Tenker du dette arrangementet ser spennende ut?
+							Husk å melde interesse i god tid, aller senest en time før puljen til arrangementet starter.
+							<a
+								class="inline-link"
+								href="https://www.regncon.no/vanlege-sporsmal/"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<span class="link-text">Hvordan fungerer interessevalget?</span>
+								@icons.Icon(icons.ExternalLink, icons.Size16)
+							</a>
+						</div>
+						<button
+							class="btn btn--cta event-interest-open-button"
+							data-on:click="$_interestIsOpen = true"
+						>
+							Meld interesse
+						</button>
+					</div>
+					if hasHelperState {
+						<div class={ "event-interest-helper", helperState.ClassName() }>
+							if helperState.IsWarning() {
+								@icons.Icon(icons.Warning, icons.Size16)
+							} else if helperState.IsLocked() {
+								@icons.Icon(icons.Lock, icons.Size16)
+							} else if helperState.IsCompleted() {
+								@icons.Icon(icons.ProgressComplete, icons.Size16)
+							}
+							<span>{ helperState.Message }</span>
+						</div>
+					}
 				</div>
-				if hasHelperState {
-					<p class={ "event-interest-helper", helperState.ClassName() }>
-						if helperState.IsWarning() {
-							@icons.Icon(icons.Warning, icons.Size16)
-						} else if helperState.IsLocked() {
-							@icons.Icon(icons.Lock, icons.Size16)
-						} else if helperState.IsCompleted() {
-							@icons.Icon(icons.ProgressComplete, icons.Size16)
-						}
-						<span>{ helperState.Message }</span>
-					</p>
-				}
-				<button
-					class="btn btn--cta event-interest-open-button"
-					data-on:click="$_interestIsOpen = true"
-				>
-					Meld interesse
-				</button>
 			} else {
 				<p class="event-interest-unavailable-message color-strong">
 					Interessevalg er ikke åpnet for dette arrangementet ennå.

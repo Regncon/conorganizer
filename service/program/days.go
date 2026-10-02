@@ -149,6 +149,16 @@ func programDate(value time.Time, location *time.Location) time.Time {
 	return time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, location)
 }
 
+// DateQueryValue returns the program-day query value for a timestamp.
+func DateQueryValue(value time.Time) (string, error) {
+	location, err := time.LoadLocation(programTimeZone)
+	if err != nil {
+		return "", fmt.Errorf("load program time zone %q: %w", programTimeZone, err)
+	}
+
+	return programDate(value, location).Format(programDateLayout), nil
+}
+
 type PuljeBlock struct {
 	Pulje  models.PuljeRow
 	Events []models.EventCardModel

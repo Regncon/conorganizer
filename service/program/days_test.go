@@ -179,3 +179,26 @@ func TestBuildDays_PreservesEmptyDaysAndDeduplicatesProgramWithinEachLocalDay(t 
 		}
 	}
 }
+
+func TestDateQueryValue_UsesOsloCalendarDate(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et puljetidspunkt som ligger på en annen dato i UTC enn i Oslo.",
+		When:  "Når datoen for programlenken formateres.",
+		Then:  "Så skal datoen følge den lokale programdagen i Oslo.",
+	})
+
+	// Given
+	puljeStartAt := time.Date(2026, 10, 2, 22, 30, 0, 0, time.UTC)
+	want := "2026-10-03"
+
+	// When
+	got, err := DateQueryValue(puljeStartAt)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected date query value to be calculated: %v", err)
+	}
+	if got != want {
+		t.Fatalf("date query value = %q, want %q", got, want)
+	}
+}

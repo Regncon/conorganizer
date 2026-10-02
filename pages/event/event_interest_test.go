@@ -29,7 +29,7 @@ func TestEventInterestPanel_WhenClosingWarningIsActive_RendersWarningState(t *te
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at en åpen pulje har et aktivt stengevarsel.",
 		When:  "Når interessepanelet rendres på nytt.",
-		Then:  "Så skal billettholderen se varselstatus ved knappen.",
+		Then:  "Så skal billettholderen se varselstatus under interesseinnholdet.",
 	})
 
 	// Given
@@ -53,6 +53,9 @@ func TestEventInterestPanel_WhenClosingWarningIsActive_RendersWarningState(t *te
 	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeFredagKveld), true, true))
 	helper := doc.Find(".event-interest-helper")
 	actualHelperVisible := helper.Length() > 0
+	actualHelperIsInsidePicker := doc.Find(".event-interest-picker .event-interest-available-content > .event-interest-helper").Length() == 1
+	actualHelperFollowsActions := helper.Prev().HasClass("event-interest-available-actions")
+	actualHelperFollowsContent := actualHelperIsInsidePicker && actualHelperFollowsActions
 	actualMessage := strings.Join(strings.Fields(helper.Text()), " ")
 	actualHasExpectedClass := helper.HasClass(expectedHelperClass)
 	actualExternalLinkIconVisible := doc.Find(`a[href="https://www.regncon.no/vanlege-sporsmal/"] .inline-icon`).Length() > 0
@@ -60,6 +63,9 @@ func TestEventInterestPanel_WhenClosingWarningIsActive_RendersWarningState(t *te
 	// Then
 	if actualHelperVisible != expectedHelperVisible {
 		t.Fatalf("helper visibility mismatch\nexpected: %v\nactual:   %v", expectedHelperVisible, actualHelperVisible)
+	}
+	if !actualHelperFollowsContent {
+		t.Fatal("expected helper status to be a div below the interest content")
 	}
 	if !actualHasExpectedClass {
 		t.Fatalf("helper class mismatch\nexpected helper to have class: %s", expectedHelperClass)

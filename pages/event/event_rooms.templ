@@ -77,9 +77,7 @@ templ eventRoomRow(eventID string, group eventRoomGroup) {
 				data-on:click={ fmt.Sprintf("$_eventRoomMapDialog = %q", dialogID) }
 			>
 				Se rommet
-				<span aria-hidden="true">
-					@icons.Icon(icons.Map, icons.Size20)
-				</span>
+				@icons.Icon(icons.Map, icons.Size24)
 			</button>
 		}
 		@eventRoomNote(group.Room.PublicNotes)
