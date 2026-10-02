@@ -17,8 +17,13 @@ Denne sjekklisten dekker `/profile`: innlogget oversikt, egne arrangementer, kor
 
 - [ ] **Min Side inviterer til å gi tilbakemelding**<br>
   **Gitt** at en innlogget bruker åpner Min Side.<br>
-  **Når** boksen «Har du en tilbakemelding?» vises over Kontoadministrasjon.<br>
+  **Når** boksen «Har du en tilbakemelding?» vises over Billetter.<br>
   **Så** skal boksen forklare at brukeren kan si hva hen synes om nettsiden eller festivalen, og knappen «Gi tilbakemelding» skal åpne `/tilbakemelding`.
+
+- [ ] **Kontoboksen viser innlogget konto og kontohandlinger**<br>
+  **Gitt** at en innlogget bruker åpner Min Side.<br>
+  **Når** kontoboksen vises nederst i høyre kolonne, under Billetter.<br>
+  **Så** skal boksen vise «Innlogget som» med brukerens e-postadresse ved siden av et brukerikon i en rund bakgrunn, og knappene «Reset passord» og «Logg ut» skal ligge til høyre under den.
 
 ### Mine arrangementer
 

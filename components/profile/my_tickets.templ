@@ -8,34 +8,69 @@ type TicketHolder struct {
 	Email  string
 }
 
-// Single ticket holder used in component below
 templ ticketHolder(name string, ticket string, email string) {
-	<div class="flex flex-col" style="gap: var(--spacing-1x); width: fit-content;">
-		<p style="font-weight: bold; text-transform: capitalize;">{ name }</p>
-		<span class="flex" style="gap: var(--spacing-2x); align-items: center;">
+	<div class="billettholder-summary">
+		<p class="billettholder-summary-name">{ name }</p>
+		<p class="billettholder-summary-detail">
 			@icons.Icon(icons.Ticket, icons.Size24)
-			<p>{ ticket }</p>
-		</span>
-		<span class="flex" style="gap: var(--spacing-2x); align-items: center;">
+			{ ticket }
+		</p>
+		<p class="billettholder-summary-detail">
 			@icons.Icon(icons.Email, icons.Size24)
-			<p>{ email }</p>
-		</span>
+			{ email }
+		</p>
 	</div>
 }
 
-// Combine multiple ticket holders for profile page
 templ MyTickets(tickets []TicketHolder) {
+	<style>
+    .my-tickets-list {
+        display: grid;
+        gap: var(--spacing-3x);
+    }
+
+    .my-tickets-link {
+        justify-self: end;
+        margin-block-start: var(--spacing-2x);
+    }
+
+    .billettholder-summary {
+        display: grid;
+        gap: var(--spacing-1x);
+        padding: var(--spacing-3x);
+        border-radius: var(--border-radius-2x);
+        background-color: var(--level-2-background);
+        color: var(--color-text-soft);
+
+        p {
+            margin: 0;
+        }
+    }
+
+    .billettholder-summary-name {
+        font-weight: bold;
+        text-transform: capitalize;
+        color: var(--color-text-strong);
+    }
+
+    .billettholder-summary-detail {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-2x);
+        overflow-wrap: anywhere;
+    }
+	</style>
 	<div class="surface-pane">
 		<h2 class="surface-pane-title">Billetter</h2>
-		<div class="flex flex-col" style="gap: var(--spacing-4x);">
+		<div class="my-tickets-list">
 			if len(tickets) == 0 {
 				<p>Ingen billetter er knyttet til profilen din ennå.</p>
-				<a href="/profile/tickets" class="btn btn--secondary" style="width: fit-content; margin-left: auto;">Hent billetter</a>
+				<a href="/profile/tickets" class="btn btn--secondary my-tickets-link">Hent billetter</a>
 			} else {
 				for _, ticket := range tickets {
 					@ticketHolder(ticket.Name, ticket.Ticket, ticket.Email)
 				}
-				<a href="/profile/tickets" class="btn btn--secondary" style="width: fit-content; margin-left: auto;">Mine billetter</a>
+				<a href="/profile/tickets" class="btn btn--secondary my-tickets-link">Mine billetter</a>
 			}
 		</div>
 	</div>
