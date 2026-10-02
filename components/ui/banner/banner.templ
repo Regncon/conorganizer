@@ -1,7 +1,69 @@
 package banner
 
-templ Banner(role BannerRole) {
-	switch role {
+templ Banner() {
+	{{
+		var bannerRole = BannerRoleMoreEvents
+	}}
+		<style>
+		/* Defining styles here, that are shared between all banners */
+		.banner {
+			max-width: 1400px;
+			margin: var(--responsive-top-of-page-spacing) auto;
+			display: grid;
+			grid-template-columns: 1fr;
+		}
+		.banner-avatar {
+            position: relative;
+            display: none;
+            height: 265px;
+			width: auto;
+		}
+		.banner-content {
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			gap: var(--spacing-3x);
+			padding: var(--spacing-5x);
+		}
+		.banner-header {
+			margin-bottom: var(--spacing-3x);
+		}
+		@container main (width > 600px) {
+			.banner-content {
+				padding: var(--spacing-5x) var(--spacing-10x);
+			}
+		}
+
+        @container main (width > 800px) {
+			.banner {
+				grid-template-columns: 3fr minmax(380px, 1fr);
+			}
+
+			.banner-avatar {
+				display: block;
+                padding: var(--spacing-5x) var(--spacing-10x);
+			}
+		}
+
+		@container main (width > 1000px) {
+			.banner-content {
+				gap: var(--spacing-8x);
+			}
+
+			.banner-header {
+				font-size: var(--text-heading-1-xl);
+			}
+		}
+		@container main (width > 1200px) {
+            .banner {
+                place-items: center;
+            }
+			.banner-content {
+				padding: var(--spacing-10x) 80px;
+			}
+		}
+	</style>
+	switch bannerRole {
 		case BannerRoleMoreEvents:
 			@BannerMoreEvents()
 	}
