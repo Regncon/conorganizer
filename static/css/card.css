@@ -114,6 +114,8 @@
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 1;
         line-clamp: 1;
+        white-space: nowrap; 
+        text-overflow: ellipsis;
     }
     .event-card-footer {
         grid-template-columns: minmax(0, 1fr) auto;
