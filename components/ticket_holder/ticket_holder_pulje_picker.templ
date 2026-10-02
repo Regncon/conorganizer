@@ -27,40 +27,38 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 
             .card-clickable {
                 display: flex;
-                position: relative;
+                flex-direction: column;
                 gap: var(--spacing-1x);
-                font-size: 12px;
                 border-radius: var(--border-radius-1x);
+                padding: var(--spacing-4x) var(--spacing-2x);
                 justify-content: center;
-                height: 3rem;
+                height: auto;
+                min-height: 3rem;
                 width: 100%;
                 place-items: center;
                 p + p {
                     margin: 0;
                 }
-
-                .pulje-picker-status {
-                    display: flex;
-                    position: absolute;
-                    top: var(--spacing-1x);
-                    right: var(--spacing-1x);
-                    align-items: center;
-                    justify-content: center;
-                    gap: var(--spacing-1x);
-                    font-size: 11px;
-                    line-height: 1.1;
-                }
             }
 
-            .pulje-interest-state--warning {
-				color: var(--color-warning);
+            .pulje-picker-status {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: var(--spacing-1x);
+                font-size: 11px;
+                line-height: 1.1;
             }
 
-            .pulje-interest-state--locked {
+            .pulje-picker-status.status-warning {
+				color: var(--color-accent-yellow);
+            }
+
+            .pulje-picker-status.status-locked {
                 color: var(--color-accent-blue);
             }
 
-            .pulje-interest-state--completed {
+            .pulje-picker-status.status-completed {
                 color: var(--color-success);
             }
         }
@@ -74,9 +72,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
                     display: grid;
                     gap: var(--spacing-1x);
                     text-align: center;
-                    padding-inline: var(--spacing-4x);
-                    font-size: 16px;
-                    height: 5.5rem;
+                    height: auto;
                     max-width: 7.125rem;
                 }
             }
@@ -95,18 +91,23 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 						data-class:selected={ fmt.Sprintf("$puljeId == '%s'", pulje.ID) }
 						data-on:click={ fmt.Sprintf("$puljeId = '%s'; %s", pulje.ID, puljeState.SignalPatch()) }
 					>
-						<p>{ pulje.Name }</p>
-						if puljeState.Availability != PuljeInterestOpen {
-							<span class="pulje-picker-status">
-								if puljeState.IsWarning() {
-									@icons.Icon(icons.Warning, icons.Size16)
-								} else if puljeState.IsLocked() {
-									@icons.Icon(icons.Lock, icons.Size16)
-								} else if puljeState.IsCompleted() {
-									@icons.Icon(icons.ProgressComplete, icons.Size16)
-								}
-							</span>
-						}
+                        <p>{ pulje.Name }</p>
+                        if puljeState.IsWarning() {
+                            <span class="pulje-picker-status status-warning">
+                                @icons.Icon(icons.Warning, icons.Size16)
+                                <span>Låser Snart</span>
+                            </span>
+                        } else if puljeState.IsLocked() {
+                            <span class="pulje-picker-status status-locked">
+                                @icons.Icon(icons.Lock, icons.Size16)
+                                <span>Pulje Låst</span>
+                            </span>
+                        } else if puljeState.IsCompleted() {
+                            <span class="pulje-picker-status status-completed">
+                                @icons.Icon(icons.ProgressComplete, icons.Size16)
+                                <span>Fordelt</span>
+                            </span>
+                        }
 					</div>
 				}
 			</div>
