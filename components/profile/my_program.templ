@@ -143,7 +143,7 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 										}
 									}
 								}}
-								@event_components.ProgramPuljeInterests(interestList)
+								@event_components.ProgramPuljeInterests(interestList, pulje.ProgramDate)
 							}
 							if len(pulje.Events) == 0 && len(pulje.Interests) == 0 {
 								@event_components.ProgramPuljeNoEvents(pulje.ProgramDate)
