@@ -1,0 +1,24 @@
+package event_components
+
+// ProgramPuljeNoSeat tells a billettholder who wanted to play in a pulje with
+// a published distribution, but got no seat, where to get help.
+templ ProgramPuljeNoSeat() {
+	<style>
+		.pulje-no-seat-container {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+			background-color: var(--level-2-background);
+			border-radius: var(--border-radius-2x);
+			padding: var(--spacing-4x);
+
+			& strong {
+				color: var(--color-text-strong);
+			}
+		}
+	</style>
+	<div class="pulje-no-seat-container">
+		<strong>Beklager, du fikk ikke plass i denne puljen.</strong>
+		<p>Kom til infodesken, så finner vi noen å spille med! 🎲</p>
+	</div>
+}

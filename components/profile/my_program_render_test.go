@@ -229,3 +229,64 @@ func TestMyProgram_PuljeEventHasNoDescriptionTimeHint(t *testing.T) {
 		t.Fatal("pulje event should not point to the description for its time")
 	}
 }
+
+func TestMyProgram_WhenCompletedPuljeGaveNoSeat_TellsUserToVisitInfoDesk(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a wish in a completed pulje where the user got no seat.",
+		When:  "When Mitt festivalprogram is rendered.",
+		Then:  "Then the user is told they got no seat and to visit the infodesk, instead of seeing their wishes.",
+	})
+
+	// Given
+	expectedText := "Beklager, du fikk ikke plass i denne puljen."
+	hiddenWish := "Wish Without Seat"
+
+	db, logger := createProfileProgramTestDB(t)
+	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgram(t, db, true)
+	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
+	insertProfileProgramPublishedEvent(t, db, "wish-without-seat", hiddenWish)
+	insertProfileProgramInterest(t, db, "wish-without-seat", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
+
+	// When
+	doc := templtest.Render(t, MyProgram(userInfo, billettholderID, db, logger, nil))
+	actualText := profileProgramVisibleText(doc)
+
+	// Then
+	if !strings.Contains(actualText, expectedText) {
+		t.Fatalf("expected rendered profile program to contain %q\nactual text: %s", expectedText, actualText)
+	}
+	if strings.Contains(actualText, hiddenWish) {
+		t.Fatalf("expected rendered profile program to hide %q\nactual text: %s", hiddenWish, actualText)
+	}
+}
+
+func TestMyProgram_WhenOpenPuljeHasNoSeatYet_KeepsShowingWishes(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a wish in a pulje whose distribution is not published.",
+		When:  "When Mitt festivalprogram is rendered.",
+		Then:  "Then the wishes are shown and there is no no-seat message.",
+	})
+
+	// Given
+	unexpectedText := "du fikk ikke plass"
+
+	db, logger := createProfileProgramTestDB(t)
+	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgram(t, db, true)
+	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusLocked)
+	insertProfileProgramPublishedEvent(t, db, "locked-wish", "Locked Wish")
+	insertProfileProgramInterest(t, db, "locked-wish", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
+
+	// When
+	doc := templtest.Render(t, MyProgram(userInfo, billettholderID, db, logger, nil))
+	actualText := profileProgramVisibleText(doc)
+
+	// Then
+	if strings.Contains(actualText, unexpectedText) {
+		t.Fatalf("expected no no-seat message before the distribution is published\nactual text: %s", actualText)
+	}
+	if !strings.Contains(actualText, "Locked Wish") {
+		t.Fatalf("expected the wish to be shown\nactual text: %s", actualText)
+	}
+}
