@@ -18,7 +18,7 @@ func TestMyProgram_WhenPuljeHasNoEvents_LinksToItsProgramDate(t *testing.T) {
 	})
 
 	// Given
-	expectedHref := "/?date=2026-10-09"
+	expectedHref := "/?date=2026-10-09#pulje-FredagKveld"
 	db, logger := createProfileProgramTestDB(t)
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
 	insertProfileProgram(t, db, true)

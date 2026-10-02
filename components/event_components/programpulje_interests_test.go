@@ -25,7 +25,7 @@ func TestProgramPuljeInterests_PreservesOpenStateAcrossLiveUpdates(t *testing.T)
 	}
 
 	// When
-	doc := templtest.Render(t, ProgramPuljeInterests(interests, "2026-10-03"))
+	doc := templtest.Render(t, ProgramPuljeInterests(interests, "2026-10-03", models.PuljeFredagKveld))
 	collapse := doc.Find(".pulje-interests-collapse")
 	actualPreserveAttr, actualPreserveAttrExists := collapse.Attr("data-preserve-attr")
 
@@ -46,14 +46,14 @@ func TestProgramPuljeInterests_LinksToProgramDate(t *testing.T) {
 	date := "2026-10-03"
 
 	// When
-	doc := templtest.Render(t, ProgramPuljeInterests(nil, date))
+	doc := templtest.Render(t, ProgramPuljeInterests(nil, date, models.PuljeFredagKveld))
 	actualHref, exists := doc.Find(".pulje-interests-description a").Attr("href")
 
 	// Then
 	if !exists {
 		t.Fatal("expected see-arrangements link to have an href")
 	}
-	if want := "/?date=2026-10-03"; actualHref != want {
+	if want := "/?date=2026-10-03#pulje-FredagKveld"; actualHref != want {
 		t.Fatalf("see-arrangements href = %q, want %q", actualHref, want)
 	}
 }

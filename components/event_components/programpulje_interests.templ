@@ -13,7 +13,7 @@ type Interest struct {
 	InterestLevel models.InterestLevel
 }
 
-templ ProgramPuljeInterests(interests []Interest, date string) {
+templ ProgramPuljeInterests(interests []Interest, date string, puljeID models.Pulje) {
 	<style>
 		.pulje-interests-container {
       display: flex;
@@ -126,7 +126,7 @@ templ ProgramPuljeInterests(interests []Interest, date string) {
 				Du kan utvide denne seksjonen for å se disse, 
         eller se etter flere arrangementer.
 			</p>
-      <a href={ templ.URL(program.ProgramDateURL(date)) } class="btn btn--secondary">
+			<a href={ templ.URL(program.ProgramPuljeURL(date, puljeID)) } class="btn btn--secondary">
 				Se arrangementer
 			</a>
 		</div>

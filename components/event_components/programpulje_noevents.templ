@@ -1,9 +1,12 @@
 package event_components
 
-import "github.com/Regncon/conorganizer/service/program"
+import (
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/program"
+)
 
-// The date query selects the root program day that contains this pulje.
-templ ProgramPuljeNoEvents(date string) {
+// The date and pulje anchor select the corresponding section on the root page.
+templ ProgramPuljeNoEvents(date string, puljeID models.Pulje) {
 	<style>
 		.pulje-no-events-container {
 			align-items: center;
@@ -26,7 +29,7 @@ templ ProgramPuljeNoEvents(date string) {
 			Vi har ingenting å vise her ennå.
 			Har du sjekket om det finnes noen kule arrangementer du ønsker å delta på?
 		</p>
-		<a href={ templ.URL(program.ProgramDateURL(date)) } class="btn btn--secondary">
+		<a href={ templ.URL(program.ProgramPuljeURL(date, puljeID)) } class="btn btn--secondary">
 			Se arrangementer
 		</a>
 	</div>

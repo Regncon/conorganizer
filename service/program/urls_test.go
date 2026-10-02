@@ -1,10 +1,21 @@
 package program
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Regncon/conorganizer/models"
+)
 
 func TestProgramDateURL_SelectsRequestedDate(t *testing.T) {
 	if got, want := ProgramDateURL("2026-10-03"), "/?date=2026-10-03"; got != want {
 		t.Fatalf("program date URL = %q, want %q", got, want)
+	}
+}
+
+func TestProgramPuljeURL_SelectsDateAndPulje(t *testing.T) {
+	got := ProgramPuljeURL("2026-10-03", models.PuljeFredagKveld)
+	if want := "/?date=2026-10-03#pulje-FredagKveld"; got != want {
+		t.Fatalf("program pulje URL = %q, want %q", got, want)
 	}
 }
 
