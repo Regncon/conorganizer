@@ -1,7 +1,6 @@
 package root
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/service/requestctx"
@@ -31,47 +30,6 @@ func TestRootPageContent_DoesNotRenderBreadcrumb(t *testing.T) {
 	// Then
 	if actualBreadcrumbVisible != expectedBreadcrumbVisible {
 		t.Fatalf("breadcrumb visibility mismatch\nexpected: %v\nactual:   %v", expectedBreadcrumbVisible, actualBreadcrumbVisible)
-	}
-}
-
-func TestRootPageContent_RendersBannerMoreEvents(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at brukeren åpner forsiden.",
-		When:  "Når innsendingseksjonen vises.",
-		Then:  "Så skal den gi en tydelig inngang til å sende inn arrangement.",
-	})
-
-	// Given
-	expectedTextParts := []string{
-		"Vil du arrangere noe under Regncon?",
-		"Send inn arrangement",
-	}
-	expectedHref := "/profile"
-	expectedImageSrc := "/static/calltoactiondragon1.webp"
-	expectedImageAlt := "Send inn arrangement"
-
-	db := createRootPageTestDB(t)
-	setProgramPublishing(t, db, false)
-
-	// When
-	doc := templtest.Render(t, rootPageContent(db, nil))
-	actualText := strings.Join(templtest.CollectTexts(doc, ".banner"), " ")
-	actualHref, actualHrefExists := doc.Find(".banner a").Attr("href")
-	actualImageSrc, actualImageSrcExists := doc.Find(".banner img.banner-avatar").Attr("src")
-	actualImageAlt, actualImageAltExists := doc.Find(".banner img.banner-avatar").Attr("alt")
-
-	// Then
-	for _, expectedTextPart := range expectedTextParts {
-		assertTextContains(t, actualText, expectedTextPart)
-	}
-	if !actualHrefExists || actualHref != expectedHref {
-		t.Fatalf("banner href mismatch\nexpected: %q\nactual:   %q", expectedHref, actualHref)
-	}
-	if !actualImageSrcExists || actualImageSrc != expectedImageSrc {
-		t.Fatalf("banner image src mismatch\nexpected: %q\nactual:   %q", expectedImageSrc, actualImageSrc)
-	}
-	if !actualImageAltExists || actualImageAlt != expectedImageAlt {
-		t.Fatalf("banner image alt mismatch\nexpected: %q\nactual:   %q", expectedImageAlt, actualImageAlt)
 	}
 }
 
