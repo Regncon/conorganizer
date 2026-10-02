@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/Regncon/conorganizer/models"
 )
@@ -15,7 +16,8 @@ var ErrPuljeCompleted = errors.New("pulje is published; changes are not allowed"
 // (and, once the pulje is published, to participants).
 //
 // Solver-placed players are written as source='solver'; manually pinned players
-// are already persisted as source='manual' and are left untouched. Any previous
+// are already persisted as source='manual' and are left untouched, unless their
+// event is no longer in the pulje. Any previous
 // solver-committed seats for the pulje are cleared first, so re-committing always
 // reflects the latest distribution. GM rows are not touched.
 func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
@@ -68,6 +70,22 @@ func saveDistribution(tx *sql.Tx, em Emulation, pulje models.Pulje) error {
 		string(pulje), SourceSolver, models.EventPlayerRolePlayer,
 	); err != nil {
 		return fmt.Errorf("clear solver seats for %s: %w", pulje, err)
+	}
+
+	// Manual pins on events no longer in the pulje are not part of the
+	// distribution, so saving it drops them too.
+	args := []any{string(pulje), models.EventPlayerRolePlayer}
+	placeholders := make([]string, 0, len(target.Events))
+	for _, ev := range target.Events {
+		args = append(args, ev.EventID)
+		placeholders = append(placeholders, "?")
+	}
+	query := `DELETE FROM relation_events_players WHERE pulje_id = ? AND role = ?`
+	if len(placeholders) > 0 {
+		query += ` AND event_id NOT IN (` + strings.Join(placeholders, ", ") + `)`
+	}
+	if _, err := tx.Exec(query, args...); err != nil {
+		return fmt.Errorf("clear seats on events no longer in %s: %w", pulje, err)
 	}
 
 	const upsert = `
