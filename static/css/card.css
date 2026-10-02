@@ -109,11 +109,16 @@
 .program-event-card {
     grid-template-rows: 220px min-content min-content;
 
+    .event-card-description {
+        height: 20px;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+    }
     .event-card-footer {
         grid-template-columns: minmax(0, 1fr) auto;
         border-top: 0;
         padding-top: 0;
-        padding-bottom: 0;
     }
 }
 
