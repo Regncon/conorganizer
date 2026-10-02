@@ -47,11 +47,14 @@ func TestMyEvents_RendersAccountEmailInfo(t *testing.T) {
 	})
 
 	// Given
-	expectedInfoText := []string{"Arrangementene lagres på kontoen ola.nordmann@example.no"}
+	expectedInfoText := []string{"Arrangementene lagres direkte på kontoen ola.nordmann@example.no, ikke på billetten."}
 	expectedEmail := []string{"ola.nordmann@example.no"}
+	events := []models.EventCardModel{
+		{Id: "my-event", Title: "My Event", Status: models.EventStatusDraft},
+	}
 
 	// When
-	doc := templtest.Render(t, MyEvents(nil, "ola.nordmann@example.no"))
+	doc := templtest.Render(t, MyEvents(events, "ola.nordmann@example.no"))
 	actualInfoText := templtest.CollectTexts(doc, ".my-events-account-info")
 	actualEmail := templtest.CollectTexts(doc, ".my-events-account-info strong")
 
