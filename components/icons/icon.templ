@@ -90,7 +90,7 @@ templ Icon(icon IconType, size IconSize) {
 	containerClass := fmt.Sprintf("inline-icon icon-size-%s", size)
 	}}
 	if svgContent != "" {
-		<span class={ containerClass }>
+		<span class={ containerClass } aria-hidden="true">
 			@templ.Raw(svgContent)
 		</span>
 	}
