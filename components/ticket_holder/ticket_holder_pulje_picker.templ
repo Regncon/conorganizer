@@ -27,6 +27,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 
             .card-clickable {
                 display: flex;
+                position: relative;
                 gap: var(--spacing-1x);
                 font-size: 12px;
                 border-radius: var(--border-radius-1x);
@@ -40,6 +41,9 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 
                 .pulje-picker-status {
                     display: flex;
+                    position: absolute;
+                    top: var(--spacing-1x);
+                    right: var(--spacing-1x);
                     align-items: center;
                     justify-content: center;
                     gap: var(--spacing-1x);
@@ -49,18 +53,15 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
             }
 
             .pulje-interest-state--warning {
-				color: var(--color-error);
-                border-color: currentColor;
+				color: var(--color-warning);
             }
 
             .pulje-interest-state--locked {
                 color: var(--color-accent-blue);
-                border-color: currentColor;
             }
 
             .pulje-interest-state--completed {
                 color: var(--color-success);
-                border-color: currentColor;
             }
         }
 
@@ -103,13 +104,6 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 									@icons.Icon(icons.Lock, icons.Size16)
 								} else if puljeState.IsCompleted() {
 									@icons.Icon(icons.ProgressComplete, icons.Size16)
-								}
-								if puljeState.Availability == PuljeInterestWarning {
-									<span>Låses snart</span>
-								} else if puljeState.IsLocked() {
-									<span>Låst</span>
-								} else if puljeState.IsCompleted() {
-									<span>Klar</span>
 								}
 							</span>
 						}
