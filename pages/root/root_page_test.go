@@ -34,7 +34,7 @@ func TestRootPageContent_DoesNotRenderBreadcrumb(t *testing.T) {
 	}
 }
 
-func TestRootPageContent_RendersSubmitEventCallToAction(t *testing.T) {
+func TestRootPageContent_RendersBannerMoreEvents(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren åpner forsiden.",
 		When:  "Når innsendingseksjonen vises.",
@@ -55,23 +55,23 @@ func TestRootPageContent_RendersSubmitEventCallToAction(t *testing.T) {
 
 	// When
 	doc := templtest.Render(t, rootPageContent(db, nil))
-	actualText := strings.Join(templtest.CollectTexts(doc, ".call-to-action"), " ")
-	actualHref, actualHrefExists := doc.Find(".call-to-action a").Attr("href")
-	actualImageSrc, actualImageSrcExists := doc.Find(".call-to-action img.call-to-action-avatar").Attr("src")
-	actualImageAlt, actualImageAltExists := doc.Find(".call-to-action img.call-to-action-avatar").Attr("alt")
+	actualText := strings.Join(templtest.CollectTexts(doc, ".banner"), " ")
+	actualHref, actualHrefExists := doc.Find(".banner a").Attr("href")
+	actualImageSrc, actualImageSrcExists := doc.Find(".banner img.banner-avatar").Attr("src")
+	actualImageAlt, actualImageAltExists := doc.Find(".banner img.banner-avatar").Attr("alt")
 
 	// Then
 	for _, expectedTextPart := range expectedTextParts {
 		assertTextContains(t, actualText, expectedTextPart)
 	}
 	if !actualHrefExists || actualHref != expectedHref {
-		t.Fatalf("CTA href mismatch\nexpected: %q\nactual:   %q", expectedHref, actualHref)
+		t.Fatalf("banner href mismatch\nexpected: %q\nactual:   %q", expectedHref, actualHref)
 	}
 	if !actualImageSrcExists || actualImageSrc != expectedImageSrc {
-		t.Fatalf("CTA image src mismatch\nexpected: %q\nactual:   %q", expectedImageSrc, actualImageSrc)
+		t.Fatalf("banner image src mismatch\nexpected: %q\nactual:   %q", expectedImageSrc, actualImageSrc)
 	}
 	if !actualImageAltExists || actualImageAlt != expectedImageAlt {
-		t.Fatalf("CTA image alt mismatch\nexpected: %q\nactual:   %q", expectedImageAlt, actualImageAlt)
+		t.Fatalf("banner image alt mismatch\nexpected: %q\nactual:   %q", expectedImageAlt, actualImageAlt)
 	}
 }
 

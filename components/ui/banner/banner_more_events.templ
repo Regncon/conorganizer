@@ -1,68 +1,68 @@
-package components
+package banner
 
-templ CallToAction() {
+templ BannerMoreEvents() {
 	<style>
-		.call-to-action {
+		.banner {
 			max-width: 1400px;
 			margin: var(--responsive-top-of-page-spacing) auto;
 			display: grid;
 			grid-template-columns: 1fr;
 		}
-		.call-to-action-avatar {
+		.banner-avatar {
             position: relative;
             display: none;
             height: 265px;
 			width: auto;
 		}
-		.call-to-action-content {
+		.banner-content {
 			display: flex;
 			flex-direction: column;
 			justify-content: space-between;
 			gap: var(--spacing-3x);
 			padding: var(--spacing-5x);
 		}
-		.call-to-action-header {
+		.banner-header {
 			margin-bottom: var(--spacing-3x);
 		}
 		@container main (width > 600px) {
-			.call-to-action-content {
+			.banner-content {
 				padding: var(--spacing-5x) var(--spacing-10x);
 			}
 		}
 
         @container main (width > 800px) {
-			.call-to-action {
+			.banner {
 				grid-template-columns: 3fr minmax(380px, 1fr);
 			}
 
-			.call-to-action-avatar {
+			.banner-avatar {
 				display: block;
                 padding: var(--spacing-5x) var(--spacing-10x);
 			}
 		}
 
 		@container main (width > 1000px) {
-			.call-to-action-content {
+			.banner-content {
 				gap: var(--spacing-8x);
 			}
 
-			.call-to-action-header {
+			.banner-header {
 				font-size: var(--text-heading-1-xl);
 			}
 		}
 		@container main (width > 1200px) {
-            .call-to-action {
+            .banner {
                 place-items: center;
             }
-			.call-to-action-content {
+			.banner-content {
 				padding: var(--spacing-10x) 80px;
 			}
 		}
 	</style>
-	<div class="call-to-action">
-		<div class="call-to-action-content">
+	<div class="banner">
+		<div class="banner-content">
 			<div>
-				<h1 class="call-to-action-header">
+				<h1 class="banner-header">
 					Vil du arrangere noe under Regncon?
 				</h1>
 				<p style="font-size: var(--text-article); line-height: var(--text-article-lh);">
@@ -79,6 +79,6 @@ templ CallToAction() {
 				Send inn arrangement
 			</a>
 		</div>
-		<img class="call-to-action-avatar" src="/static/calltoactiondragon1.webp" alt="Send inn arrangement"/>
+		<img class="banner-avatar" src="/static/calltoactiondragon1.webp" alt="Send inn arrangement"/>
 	</div>
 }

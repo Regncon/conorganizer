@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/Regncon/conorganizer/components"
+	banner "github.com/Regncon/conorganizer/components/ui/banner"
 	"github.com/Regncon/conorganizer/service/program"
 )
 
@@ -38,21 +38,21 @@ templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate st
 	} else {
 		if programPublished {
 			if programDaysErr != nil {
-				@components.CallToAction()
+				@banner.Banner(banner.BannerRoleMoreEvents)
 				<div class="page-content-container">
 					<p class="root-page-error">{ rootEventsLoadErrorMessage }</p>
 				</div>
 			} else if len(programDays) > 0 {
 				@programDaySelector(programDays, selectedDayIndex)
-				@components.CallToAction()
+				@banner.Banner(banner.BannerRoleMoreEvents)
 				{{ selectedDay := programDays[selectedDayIndex] }}
 				@eventList(db, eventImageDir, true, &selectedDay)
 			} else {
-				@components.CallToAction()
+				@banner.Banner(banner.BannerRoleMoreEvents)
 				@eventList(db, eventImageDir, true, nil)
 			}
 		} else {
-			@components.CallToAction()
+			@banner.Banner(banner.BannerRoleMoreEvents)
 			@eventList(db, eventImageDir, false, nil)
 		}
 	}
