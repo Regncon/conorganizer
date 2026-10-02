@@ -38,21 +38,21 @@ templ rootPageContentForDate(db *sql.DB, eventImageDir *string, requestedDate st
 	} else {
 		if programPublished {
 			if programDaysErr != nil {
-				@banner.Banner(banner.BannerRoleMoreEvents)
+				@banner.Banner()
 				<div class="page-content-container">
 					<p class="root-page-error">{ rootEventsLoadErrorMessage }</p>
 				</div>
 			} else if len(programDays) > 0 {
 				@programDaySelector(programDays, selectedDayIndex)
-				@banner.Banner(banner.BannerRoleMoreEvents)
+				@banner.Banner()
 				{{ selectedDay := programDays[selectedDayIndex] }}
 				@eventList(db, eventImageDir, true, &selectedDay)
 			} else {
-				@banner.Banner(banner.BannerRoleMoreEvents)
+				@banner.Banner()
 				@eventList(db, eventImageDir, true, nil)
 			}
 		} else {
-			@banner.Banner(banner.BannerRoleMoreEvents)
+			@banner.Banner()
 			@eventList(db, eventImageDir, false, nil)
 		}
 	}

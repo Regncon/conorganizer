@@ -2,7 +2,7 @@ package banner
 
 templ Banner() {
 	{{
-		var bannerRole = BannerRoleMoreEvents
+		var bannerRole = BannerRoleDuringFestival
 	}}
 		<style>
 		/* Defining styles here, that are shared between all banners */
@@ -66,5 +66,7 @@ templ Banner() {
 	switch bannerRole {
 		case BannerRoleMoreEvents:
 			@BannerMoreEvents()
+		case BannerRoleDuringFestival:
+			@BannerDuringFestival()
 	}
 }
