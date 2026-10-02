@@ -132,7 +132,10 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 									@event_components.ProgramPuljeEvent(event.EventID, imageCardUrl, imageBannerUrl, event.Title, event.Intro, event.EventType, event.IsGM, event.IsInPuljefordeling)
 								}
 							}
-							if len(pulje.Events) == 0 && len(pulje.Interests) > 0 {
+							if len(pulje.Events) == 0 && len(pulje.Interests) > 0 && pulje.Pulje.Status == models.PuljeStatusCompleted {
+								@event_components.ProgramPuljeNoSeat()
+							}
+							if len(pulje.Events) == 0 && len(pulje.Interests) > 0 && pulje.Pulje.Status != models.PuljeStatusCompleted {
 								{{ interestList := make([]event_components.Interest, len(pulje.Interests)) }}
 								{{
 									for i, interest := range pulje.Interests {
