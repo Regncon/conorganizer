@@ -39,10 +39,10 @@ templ eventPuljeBlock(block program.PuljeBlock, db *sql.DB, eventImageDir *strin
 templ programDaySchedule(day program.Day) {
 	switch day.Date.Weekday() {
 		case time.Friday:
-			<h1 class="program-day-heading container-inner-padding">Fredag (17:00 - 22:00)</h1>
+			<h1 class="program-day-heading container-inner-padding">Fredag (16:00 - 23:00)</h1>
 			@components.TimeScheduleFriday()
 		case time.Saturday:
-			<h1 class="program-day-heading container-inner-padding">Lørdag (09:00 - 22:00)</h1>
+			<h1 class="program-day-heading container-inner-padding">Lørdag (09:00 - 23:00)</h1>
 			@components.TimeScheduleLoordag()
 		case time.Sunday:
 			<h1 class="program-day-heading container-inner-padding">Søndag (09:00 - 16:00)</h1>
