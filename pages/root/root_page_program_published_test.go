@@ -331,7 +331,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersSelectedDayScheduleBef
 	})
 
 	// Then
-	if actualDayHeading != "Lørdag (09:00 - 22:00)" {
+	if actualDayHeading != "Lørdag (09:00 - 23:00)" {
 		t.Fatalf("day heading = %q", actualDayHeading)
 	}
 	if actualScheduleHeadings != 0 {
