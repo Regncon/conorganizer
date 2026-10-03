@@ -16,7 +16,7 @@ const (
 	closingAlertText   = "Interessevalget stenger snart! Hvis du vil endre valgene dine for kommende pulje, gjør det nå."
 	closingAlertLink   = "Klikk her for å gå til puljen."
 	lockedAlertText    = "Interessevalg for kommende pulje er nå låst og kan ikke endres. Vi jobber med å fordele spillere og publiserer resultatet snart!"
-	completedAlertText = "Puljefordelingen er klar! Se hva du fikk på profilen din."
+	completedAlertText = "Puljefordelingen er klar! Se hva du fikk på profilen din. Om du fikk en plass, møt opp ved rommet når puljen starter (kl 10 / kl 18)."
 )
 
 func TestRootPageContent_WhenPuljeHasAlert_ShowsItAtTopOfPage(t *testing.T) {

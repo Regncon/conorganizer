@@ -59,7 +59,7 @@ func puljeAlertFor(pulje models.PuljeRow) (puljeAlert, bool) {
 		}, true
 	case models.PuljeStatusCompleted:
 		return puljeAlert{
-			Message: "Puljefordelingen er klar! Se hva du fikk på profilen din.",
+			Message: "Puljefordelingen er klar! Se hva du fikk på profilen din. Om du fikk en plass, møt opp ved rommet når puljen starter (kl 10 / kl 18).",
 			Class:   "is-completed",
 			Icon:    icons.ProgressComplete,
 		}, true

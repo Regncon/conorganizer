@@ -148,7 +148,7 @@ func BuildPuljeInterestState(pulje models.PuljeRow, now time.Time) PuljeInterest
 		return state
 	case models.PuljeStatusCompleted:
 		state.Availability = PuljeInterestCompleted
-		state.Message = "Puljefordelingen er klar. Se hva du fikk på profilen din."
+		state.Message = "Puljefordelingen er klar. Se hva du fikk på profilen din. Om du fikk en plass, møt opp ved rommet når puljen starter."
 		state.CanEdit = false
 		state.ShowProfileLink = true
 		state.Priority = 0
