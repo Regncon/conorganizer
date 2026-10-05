@@ -88,20 +88,11 @@ grafana.regncon.no {
 }
 
 program.regncon.no {
-	# conorganizer-maintenance-mode on|off creates or removes this flag file.
-	# Caddy checks it on every request, so toggling needs no reload.
-	@maintenance file {
-		root /var/lib/conorganizer
-		try_files /maintenance.on
-	}
-
-	handle @maintenance {
-		import conorganizer-maintenance
-	}
-
-	handle {
-		import conorganizer-main
-	}
+	# The con is over, so every request goes to the old programme page on
+	# regncon.no. 302 keeps the redirect temporary: browsers do not cache it,
+	# and the block can be switched back to the app before the next con.
+	# The previous block (app plus maintenance flag) is in git history.
+	redir https://regncon.no/gamle-regncon-program/ 302
 }
 
 main.lekeplassen.regncon.no {

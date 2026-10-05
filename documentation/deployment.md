@@ -13,7 +13,7 @@ There are two kinds of environments:
 
 | Name | Host | Port | systemd unit | App dir | Data dir |
 | --- | --- | --- | --- | --- | --- |
-| main | `program.regncon.no`, `main.lekeplassen.regncon.no` | 19080 | `conorganizer-main.service` | `/opt/conorganizer/main/` | `/mnt/HC_Volume_103911252/environments/main/` |
+| main | `main.lekeplassen.regncon.no` (`program.regncon.no` redirects to `https://regncon.no/gamle-regncon-program/` while the con is over) | 19080 | `conorganizer-main.service` | `/opt/conorganizer/main/` | `/mnt/HC_Volume_103911252/environments/main/` |
 | demo | `demo.lekeplassen.regncon.no` | 19081 | `conorganizer-demo.service` | `/opt/conorganizer/demo/` | `/mnt/HC_Volume_103911252/environments/demo/` |
 | restored | `restored.lekeplassen.regncon.no` | 19082 | `conorganizer-restored.service` | `/opt/conorganizer/restored/` | `/mnt/HC_Volume_103911252/environments/restored/` |
 | PR preview | `<PR_NUMBER>-merge.lekeplassen.regncon.no` | 20000 + PR_NUMBER | `conorganizer-<PR_NUMBER>-merge.service` | `/opt/conorganizer/<PR_NUMBER>-merge/` | `/mnt/HC_Volume_103911252/environments/<PR_NUMBER>-merge/` |
@@ -78,7 +78,7 @@ import /etc/caddy/sites-enabled/*.caddy
 
 ### Maintenance page
 
-The Caddyfile defines two snippets: `conorganizer-main` (a reverse proxy to `127.0.0.1:19080`) and `conorganizer-maintenance` (a bilingual English/Norwegian maintenance page served with status 503 and `Cache-Control: no-store`). The `program.regncon.no` block serves the maintenance snippet while `/var/lib/conorganizer/maintenance.on` exists and `conorganizer-main` otherwise. Switch with `sudo conorganizer-maintenance-mode on|off`; Caddy checks the flag file on every request, so no reload is needed. `main.lekeplassen.regncon.no` always imports `conorganizer-main`, so main can still be reached there while `program.regncon.no` shows the maintenance page. The migration procedure in [migrations.md](migrations.md) uses this toggle. See [configuration-as-code/README.md](../configuration-as-code/README.md#maintenance-mode) for details.
+The Caddyfile defines two snippets: `conorganizer-main` (a reverse proxy to `127.0.0.1:19080`) and `conorganizer-maintenance` (a bilingual English/Norwegian maintenance page served with status 503 and `Cache-Control: no-store`). While the con is over, `program.regncon.no` only redirects (302) to `https://regncon.no/gamle-regncon-program/`, so the maintenance flag has no effect until the previous block is restored from git history. That block serves the maintenance snippet while `/var/lib/conorganizer/maintenance.on` exists and `conorganizer-main` otherwise. Switch with `sudo conorganizer-maintenance-mode on|off`; Caddy checks the flag file on every request, so no reload is needed. `main.lekeplassen.regncon.no` always imports `conorganizer-main`, so main can still be reached there while `program.regncon.no` shows the maintenance page. The migration procedure in [migrations.md](migrations.md) uses this toggle. See [configuration-as-code/README.md](../configuration-as-code/README.md#maintenance-mode) for details.
 
 ## Service user and ownership
 
