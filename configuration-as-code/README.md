@@ -110,7 +110,7 @@ Hostnames in the checked-in Caddyfile:
 | Hostname | Target |
 | --- | --- |
 | `main.lekeplassen.regncon.no` | `import conorganizer-main` (`127.0.0.1:19080`) |
-| `program.regncon.no` | `import conorganizer-main`, or `import conorganizer-maintenance` while the maintenance flag file exists, see [Maintenance mode](#maintenance-mode) |
+| `program.regncon.no` | Temporary (302) redirect of every request to `https://regncon.no/gamle-regncon-program/` while the con is over, see [Maintenance mode](#maintenance-mode) |
 | `demo.lekeplassen.regncon.no` | `127.0.0.1:19081` |
 | `restored.lekeplassen.regncon.no` | `127.0.0.1:19082` |
 | `grafana.regncon.no` | `127.0.0.1:3400` |
@@ -127,7 +127,7 @@ The maintenance page is defined entirely in the Caddyfile as the snippet `(conor
 - HTTP `503`, which tells browsers and crawlers that the outage is temporary.
 - `Cache-Control: no-store`, so the maintenance page is not cached and still shown after the site is back.
 
-The `program.regncon.no` block serves that snippet while the flag file `/var/lib/conorganizer/maintenance.on` exists, and `import conorganizer-main` otherwise. Caddy checks the file on every request, so switching needs no Caddy reload or restart and no edit to the Caddyfile:
+While the con is over, `program.regncon.no` redirects every request to `https://regncon.no/gamle-regncon-program/` and does not import either snippet, so the flag file has no effect. To bring the site back, restore the previous `program.regncon.no` block from git history. That block serves the maintenance snippet while the flag file `/var/lib/conorganizer/maintenance.on` exists, and `import conorganizer-main` otherwise. Caddy checks the file on every request, so switching needs no Caddy reload or restart and no edit to the Caddyfile:
 
 ```bash
 sudo conorganizer-maintenance-mode on    # create the flag file
