@@ -27,7 +27,7 @@ CREATE TABLE program_publishing_state(
 ) STRICT;
 ```
 
-- Migration `20260522150000_program_publishing_state.sql` and `initialize.sql` both seed it with `(1, 0)`, so the program starts unpublished.
+- Migration `20260522150000_program_publishing_state.sql` seeds it with `(1, 0)`, so the program starts unpublished. `schema.sql` has the table but no row, so tests that need one insert it themselves.
 - `program.IsPublished` (`service/program/publishing.go`) treats a missing row as not published. Fresh databases still need the table and its seed row.
 - Admins toggle it with the "Publiser program" card on `/admin`, which calls `PUT /admin/api/program-publishing` (`pages/admin/publiser_program.templ`). The handler upserts the row with `id = 1` and broadcasts the `events` bucket (see [live-update-lifecycle.md](./live-update-lifecycle.md)).
 
@@ -96,7 +96,7 @@ Code locations:
 
 - `puljer.start_at` and `puljer.end_at` are RFC3339 `TEXT`. No application code writes them.
 - `DBDateTime` parses them and keeps the stored offset. `PuljeRow.TimeRange()` formats the stored clock time as is (`Format("15:04")`, no timezone conversion). The stored value must therefore hold Oslo wall-clock time.
-- Test fixtures use explicit Oslo offsets, for example `2026-10-09T18:30:00+02:00`. The `initialize.sql` seed uses `Z` timestamps, but their clock time is meant as Oslo time.
+- Test fixtures use explicit Oslo offsets, for example `2026-10-09T18:30:00+02:00`.
 - The front page decides which day a pulje belongs to by converting `start_at` to `Europe/Oslo` (`service/program/days.go`).
 - No time-based logic uses these timestamps for warnings or locking.
 
