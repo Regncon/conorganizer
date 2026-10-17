@@ -1,5 +1,7 @@
-## Check domain domeneordbok.md
-when adding names check domeneordbok.md instead of translating to english
+## Names
+- Code is in English, except the domain words in domeneordbok.md, which stay Norwegian: `getBillettholder`, not `getTicketHolder`.
+- Write domain words without æøå in identifiers, as domeneordbok.md does: `Forstevalg`, `Lordag`.
+- Some existing names translate a domain word: `event` (arrangement), `interest` (interesse), `room` (rom) and the `ticketholder` package (billettholder). They will be renamed in a later, separate change. Don't rename them as part of other work. New names use the domain word.
 
 ## Billettholder access
 - A user is linked to a billettholder only through `relation_billettholdere_users` (user id ↔ billettholder id). Every read, picker and access check must use that link.
