@@ -105,6 +105,8 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 
 			profileApiRouter.Route("/new", func(newApiRouter chi.Router) {
 				newApiRouter.Route("/{id}", func(newApiIdRouter chi.Router) {
+					newApiIdRouter.Use(newevent.RequireEventOwnerOrAdmin(db, logger))
+
 					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 						eventId := chi.URLParam(r, "id")
 						if eventId == "" {

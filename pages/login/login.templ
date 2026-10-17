@@ -4,20 +4,20 @@ import "github.com/Regncon/conorganizer/service/authctx"
 
 templ alreadyLogedIn(neste string) {
 	<style>
-    .already-logedin-wrapper {
-        display: flex;
-        flex-flow: column nowrap;
-        width: fit-content;
-        margin: auto;
-        margin-top: var(--responsive-top-of-page-spacing);
-        padding: ;
-        gap: var(--spacing-1x);
+		.already-logedin-wrapper {
+			display: flex;
+			flex-flow: column nowrap;
+			width: fit-content;
+			margin: auto;
+			margin-top: var(--responsive-top-of-page-spacing);
+			padding:;
+			gap: var(--spacing-1x);
 
-        h1 {
-            text-align: center;
-        }
-    }
-    </style>
+			h1 {
+				text-align: center;
+			}
+		}
+	</style>
 	<div class="already-logedin-wrapper page-content-container" data-login-neste={ neste }>
 		<h1>Velkommen tilbake!</h1>
 		<p>Det ser ut til at du allerede er innlogget, og du trenger ikke logge inn på nytt. </p>
@@ -25,24 +25,24 @@ templ alreadyLogedIn(neste string) {
 		<p>Om videresendingen ikke fungerer, kan du bruke <a href={ templ.SafeURL(neste) }>denne lenken</a>.</p>
 	</div>
 	<script>
-        const alreadyLogedInWrapper = document.querySelector('.already-logedin-wrapper')
-        const alreadyLogedInNeste = alreadyLogedInWrapper?.getAttribute('data-login-neste') || '/'
+		const alreadyLogedInWrapper = document.querySelector(".already-logedin-wrapper");
+		const alreadyLogedInNeste = alreadyLogedInWrapper?.getAttribute("data-login-neste") || "/";
 
-        let remaining = 5
-        const countdown = document.getElementById('countdown')
+		let remaining = 5;
+		const countdown = document.getElementById("countdown");
 
-        const interval = setInterval(() => {
-            remaining--
+		const interval = setInterval(() => {
+			remaining--;
 
-            if (remaining <= 0) {
-                clearInterval(interval)
-                window.location.replace(alreadyLogedInNeste)
-                return
-            }
+			if (remaining <= 0) {
+				clearInterval(interval);
+				window.location.replace(alreadyLogedInNeste);
+				return;
+			}
 
-            countdown.textContent = remaining
-        }, 1000)
-    </script>
+			countdown.textContent = remaining;
+		}, 1000);
+	</script>
 }
 
 templ loginForm(neste string) {
@@ -50,29 +50,29 @@ templ loginForm(neste string) {
 	<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
 	<script src="https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js"></script>
 	<style>
-        .descope-login-wrapper {
-            container-type: inline-size;
-        }
+		.descope-login-wrapper {
+			container-type: inline-size;
+		}
 
-        .descope-login-wrapper,
-        .descope-login-wrapper > form {
-            display: flex;
-            place-content: center;
+		.descope-login-wrapper,
+		.descope-login-wrapper > form {
+			display: flex;
+			place-content: center;
 
-            > descope-wc {
-                max-width: 35.3125rem;
-            }
-        }
+			> descope-wc {
+				max-width: 35.3125rem;
+			}
+		}
 
-        @container (width <= 26.5625rem) {
-            .descope-login-wrapper > descope-wc,
-            .descope-login-wrapper > form > descope-wc {
-                --descope-container-align-items__override: auto;
-                --descope-container-horizontal-padding__override: var(--spacing-2x);
-                --descope-container-host-width__override: 100%;
-            }
-        }
-    </style>
+		@container (width <= 26.5625rem) {
+			.descope-login-wrapper > descope-wc,
+			.descope-login-wrapper > form > descope-wc {
+				--descope-container-align-items__override: auto;
+				--descope-container-horizontal-padding__override: var(--spacing-2x);
+				--descope-container-host-width__override: 100%;
+			}
+		}
+	</style>
 	<div class="descope-login-wrapper" data-login-neste={ neste }>
 		<descope-wc
 			project-id={ authctx.DescopeProjectID }
@@ -81,89 +81,87 @@ templ loginForm(neste string) {
 		></descope-wc>
 	</div>
 	<script>
-            const wcElement = document.getElementsByTagName('descope-wc')[0];
-            const loginWrapper = document.querySelector('.descope-login-wrapper');
-            const loginNeste = loginWrapper?.getAttribute('data-login-neste') || '/';
-            const descopeProjectID = wcElement?.getAttribute('project-id') ?? '';
-            const descopeSdk = window.Descope
-                ? Descope({ projectId: descopeProjectID, persistTokens: true, autoRefresh: true })
-                : null;
+		const wcElement = document.getElementsByTagName("descope-wc")[0];
+		const loginWrapper = document.querySelector(".descope-login-wrapper");
+		const loginNeste = loginWrapper?.getAttribute("data-login-neste") || "/";
+		const descopeProjectID = wcElement?.getAttribute("project-id") ?? "";
+		const descopeSdk = window.Descope
+			? Descope({ projectId: descopeProjectID, persistTokens: true, autoRefresh: true })
+			: null;
 
-            function normalizeToken(token) {
-                if (typeof token !== 'string') {
-                    return '';
-                }
-                const trimmed = token.trim();
-                return trimmed.toLowerCase().startsWith('bearer ')
-                    ? trimmed.slice('bearer '.length).trim()
-                    : trimmed;
-            }
+		function normalizeToken(token) {
+			if (typeof token !== "string") {
+				return "";
+			}
+			const trimmed = token.trim();
+			return trimmed.toLowerCase().startsWith("bearer ") ? trimmed.slice("bearer ".length).trim() : trimmed;
+		}
 
-            async function getTokenPair(detail) {
-                if (descopeSdk) {
-                    try {
-                        await descopeSdk.refresh();
-                    } catch (err) {
-                        console.warn('Unable to refresh Descope SDK session before app session setup:', err);
-                    }
+		async function getTokenPair(detail) {
+			if (descopeSdk) {
+				try {
+					await descopeSdk.refresh();
+				} catch (err) {
+					console.warn("Unable to refresh Descope SDK session before app session setup:", err);
+				}
 
-                    const sdkSessionJwt = normalizeToken(descopeSdk.getSessionToken?.());
-                    const sdkRefreshJwt = normalizeToken(descopeSdk.getRefreshToken?.());
-                    if (sdkSessionJwt && sdkRefreshJwt) {
-                        return {
-                            sessionJwt: sdkSessionJwt,
-                            refreshJwt: sdkRefreshJwt,
-                        };
-                    }
-                }
+				const sdkSessionJwt = normalizeToken(descopeSdk.getSessionToken?.());
+				const sdkRefreshJwt = normalizeToken(descopeSdk.getRefreshToken?.());
+				if (sdkSessionJwt && sdkRefreshJwt) {
+					return {
+						sessionJwt: sdkSessionJwt,
+						refreshJwt: sdkRefreshJwt,
+					};
+				}
+			}
 
-                return {
-                    sessionJwt: normalizeToken(detail?.sessionJwt),
-                    refreshJwt: normalizeToken(detail?.refreshJwt),
-                };
-            }
+			return {
+				sessionJwt: normalizeToken(detail?.sessionJwt),
+				refreshJwt: normalizeToken(detail?.refreshJwt),
+			};
+		}
 
-            async function establishSession(sessionJwt, refreshJwt) {
-                const response = await fetch('/auth/session', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ sessionJwt, refreshJwt }),
-                });
+		async function establishSession(sessionJwt, refreshJwt) {
+			const response = await fetch("/auth/session", {
+				method: "POST",
+				credentials: "same-origin",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ sessionJwt, refreshJwt }),
+			});
 
-                if (!response.ok) {
-                    throw new Error(`Session setup failed with status ${response.status}`);
-                }
-            }
+			if (!response.ok) {
+				throw new Error(`Session setup failed with status ${response.status}`);
+			}
+		}
 
-            const onSuccess = async (e) => {
-                console.log('Login successful');
-                console.log('User:', e.detail?.user?.name ?? '');
-                console.log('Email:', e.detail?.user?.email ?? '');
+		const onSuccess = async (e) => {
+			console.log("Login successful");
+			console.log("User:", e.detail?.user?.name ?? "");
+			console.log("Email:", e.detail?.user?.email ?? "");
 
-                const { sessionJwt, refreshJwt } = await getTokenPair(e.detail);
-                if (!sessionJwt || !refreshJwt) {
-                    console.error('Login error:', new Error('Missing session tokens'));
-                    return;
-                }
+			const { sessionJwt, refreshJwt } = await getTokenPair(e.detail);
+			if (!sessionJwt || !refreshJwt) {
+				console.error("Login error:", new Error("Missing session tokens"));
+				return;
+			}
 
-                try {
-                    await establishSession(sessionJwt, refreshJwt);
-                    wcElement.removeEventListener('success', onSuccess);
-                    wcElement.removeEventListener('error', onError);
-                    window.location.href = '/auth/post-login?neste=' + encodeURIComponent(loginNeste);
-                } catch (err) {
-                    console.error('Login error:', err);
-                }
-            };
+			try {
+				await establishSession(sessionJwt, refreshJwt);
+				wcElement.removeEventListener("success", onSuccess);
+				wcElement.removeEventListener("error", onError);
+				window.location.href = "/auth/post-login?neste=" + encodeURIComponent(loginNeste);
+			} catch (err) {
+				console.error("Login error:", err);
+			}
+		};
 
-            const onError = (err) => {
-                console.error('Login error:', err);
-            };
+		const onError = (err) => {
+			console.error("Login error:", err);
+		};
 
-            wcElement.addEventListener('success', onSuccess);
-            wcElement.addEventListener('error', onError);
-        </script>
+		wcElement.addEventListener("success", onSuccess);
+		wcElement.addEventListener("error", onError);
+	</script>
 }

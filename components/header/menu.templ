@@ -127,7 +127,6 @@ templ menuStyles() {
 				}
 			}
 		}
-
 	</style>
 }
 
@@ -176,31 +175,30 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 templ mainMenuButtonsStyles() {
 	<style>
+		#main-menu-nav-buttons {
+			display: contents;
 
-        #main-menu-nav-buttons {
-                display: contents;
+			.main-menu-buttons {
+				display: contents;
+			}
+		}
+		nav:not([data-menu-open="true"]):not([data-menu-open=""]) {
+			.main-menu-button {
+				&.selected {
+					color: var(--color-primary);
+				}
+			}
+		}
 
-                .main-menu-buttons {
-                    display: contents;
-                }
-        }
-        nav:not([data-menu-open="true"]):not([data-menu-open=""]) {
-            .main-menu-button {
-                &.selected {
-                    color: var(--color-primary);
-                }
-            }
-        }
-
-        #main-menu-user-menu {
-            #main-menu-billettholder-live {
-                .main-menu-button {
-                        .selected {
-                            color: var(--color-primary);
-                        }
-                }
-            }
-        }
+		#main-menu-user-menu {
+			#main-menu-billettholder-live {
+				.main-menu-button {
+					.selected {
+						color: var(--color-primary);
+					}
+				}
+			}
+		}
 
 		@container main (width > 600px) {
 			#main-menu-nav-buttons {
@@ -233,8 +231,8 @@ templ mainMenuButtonsStyles() {
 
 templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
 	{{
-	r := chi.RouteContext(ctx)
-	path := r.RoutePattern()
+		r := chi.RouteContext(ctx)
+		path := r.RoutePattern()
 	}}
 	<section class="main-menu-buttons">
 		<a href="/" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("selected", path == "/") }>
@@ -420,7 +418,8 @@ templ menuBillettholderSkeletonStyles() {
 		}
 
 		@keyframes menu-billettholder-pulse {
-			0%, 100% {
+			0%,
+			100% {
 				opacity: 0.5;
 			}
 
@@ -581,7 +580,6 @@ templ desktopBillettholderMenuStyles() {
 				}
 			}
 		}
-
 	</style>
 }
 
@@ -741,21 +739,21 @@ templ phoneMenu(userInfo requestctx.UserRequestInfo, billettholderOptions ticket
 templ phoneMenuDialogLifecycleScript() {
 	<script>
 		(() => {
-			const mainContainer = document.currentScript?.closest("main")
+			const mainContainer = document.currentScript?.closest("main");
 			if (!(mainContainer instanceof HTMLElement)) {
-				return
+				return;
 			}
 
 			const closePhoneMenuOutsideMobileLayout = ([entry]) => {
-				const dialog = mainContainer.querySelector("#modal-hamburger-phone")
+				const dialog = mainContainer.querySelector("#modal-hamburger-phone");
 				if (entry.contentRect.width > 600 && dialog instanceof HTMLDialogElement && dialog.open) {
-					dialog.close()
+					dialog.close();
 				}
-			}
+			};
 
-			const observer = new ResizeObserver(closePhoneMenuOutsideMobileLayout)
-			observer.observe(mainContainer)
-		})()
+			const observer = new ResizeObserver(closePhoneMenuOutsideMobileLayout);
+			observer.observe(mainContainer);
+		})();
 	</script>
 }
 

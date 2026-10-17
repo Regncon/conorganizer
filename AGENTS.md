@@ -97,6 +97,7 @@ Skills live in `.agents/skills/<name>/` (SKILL.md, references/, agents/openai.ya
 - Avoid viewport media queries for components. Use `@container` instead. Media queries about the device, like `(hover: hover)`, are fine.
 - In container and media queries write `(width > 600px)`, not `(min-width: 600px)`. The `min-width` property itself is fine.
 - Use viewport media queries only for page-level/global layout concerns.
+- A component rendered in a loop wraps its `<style>` block in a package-level `templ.NewOnceHandle()` so the style tag renders once per page; a component rendered once keeps a plain `<style>` block. See documentation/ui-conventions.md.
 
 ### Backgrounds and tokens
 - Pick backgrounds by Level (the `--level-*` tokens in static/css/index.css): containers on base are Level 1; non-clickable boxes inside Level 1 are Level 2; clickable items on base use the Level 2 states; clickable items and form fields on Level 1 use Level 3; anything inside Level 2 is Level 3; Level 1 edges use `--level-3-border`. Ask when a case isn't covered.

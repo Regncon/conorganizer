@@ -60,7 +60,7 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 
 		@container main (width > 1200px) {
 			.event-pulje-overview {
-			    margin-top: var(--spacing-2x);
+				margin-top: var(--spacing-2x);
 			}
 		}
 
@@ -82,7 +82,9 @@ templ eventList(db *sql.DB, eventImageDir *string, programPublished bool, publis
 		@container main (width > 600px) {
 			.pulje-heading {
 				margin: 0 0 var(--spacing-5x);
-				scroll-margin-block-start: calc(var(--nav-height) + var(--program-day-selector-height) + var(--spacing-4x));
+				scroll-margin-block-start: calc(
+					var(--nav-height) + var(--program-day-selector-height) + var(--spacing-4x)
+				);
 			}
 		}
 	</style>

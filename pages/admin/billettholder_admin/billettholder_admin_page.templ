@@ -85,7 +85,7 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 			{Name: "Billettholdere", Url: ""},
 		})
 		<article class="page-content-container">
-			<div style="display: flex; gap: 1rem; align-items: center;">
+			<div style="display: flex; gap: 1rem; align-items: center">
 				<h1 class="page-heading">Billettholdere</h1>
 				<a
 					href="/admin/billettholder/add/"
@@ -101,10 +101,7 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 				<style>
 					.billettholder-admin-grid {
 						display: grid;
-						grid-template-columns: repeat(
-							auto-fit,
-							minmax(var(--mobile-min-width), 1fr)
-						);
+						grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
 						gap: 1rem;
 					}
 				</style>

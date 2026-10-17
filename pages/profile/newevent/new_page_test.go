@@ -12,7 +12,7 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestValidateEventExists_WhenEventBelongsToUser_Succeeds(t *testing.T) {
+func TestValidateEventOwnedByUser_WhenEventBelongsToUser_Succeeds(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at arrangementet tilhører brukeren.",
 		When:  "Når skjema-ruten validerer tilgang.",
@@ -23,10 +23,11 @@ func TestValidateEventExists_WhenEventBelongsToUser_Succeeds(t *testing.T) {
 	expectedStatusCode := 200
 	db := testutil.CreateTestDB(t, "new_event_validate_owner")
 	seedNewEventPageLookups(t, db)
+	insertNewEventPageUser(t, db, 501, "ekstern-kari-eier")
 	insertNewEventPageEvent(t, db, "owned-event", 501, models.EventStatusDraft)
 
 	// When
-	err, actualStatusCode := validateEventExists(db, "owned-event", "501")
+	err, actualStatusCode := validateEventOwnedByUser(db, "owned-event", "ekstern-kari-eier")
 
 	// Then
 	if err != nil {
@@ -37,7 +38,7 @@ func TestValidateEventExists_WhenEventBelongsToUser_Succeeds(t *testing.T) {
 	}
 }
 
-func TestValidateEventExists_WhenEventBelongsToAnotherUser_ReturnsNotFound(t *testing.T) {
+func TestValidateEventOwnedByUser_WhenEventBelongsToAnotherUser_ReturnsNotFound(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at arrangementet tilhører en annen bruker.",
 		When:  "Når skjema-ruten validerer tilgang.",
@@ -48,10 +49,12 @@ func TestValidateEventExists_WhenEventBelongsToAnotherUser_ReturnsNotFound(t *te
 	expectedStatusCode := 404
 	db := testutil.CreateTestDB(t, "new_event_validate_foreign")
 	seedNewEventPageLookups(t, db)
+	insertNewEventPageUser(t, db, 501, "ekstern-kari-eier")
+	insertNewEventPageUser(t, db, 999, "ekstern-per-annen")
 	insertNewEventPageEvent(t, db, "foreign-event", 501, models.EventStatusDraft)
 
 	// When
-	err, actualStatusCode := validateEventExists(db, "foreign-event", "999")
+	err, actualStatusCode := validateEventOwnedByUser(db, "foreign-event", "ekstern-per-annen")
 
 	// Then
 	if err == nil {
@@ -97,6 +100,12 @@ func seedNewEventPageLookups(t *testing.T, db *sql.DB) {
 	testutil.MustExec(t, db, `INSERT INTO events_types(event_type) VALUES (?) ON CONFLICT(event_type) DO NOTHING`, models.EventTypeOther)
 	testutil.MustExec(t, db, `INSERT INTO age_groups(age_group) VALUES (?) ON CONFLICT(age_group) DO NOTHING`, models.AgeGroupDefault)
 	testutil.MustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES (?) ON CONFLICT(runtime) DO NOTHING`, models.RunTimeNormal)
+}
+
+func insertNewEventPageUser(t *testing.T, db *sql.DB, userID int64, externalID string) {
+	t.Helper()
+
+	testutil.MustExec(t, db, `INSERT INTO users(id, external_id, email) VALUES(?, ?, ?)`, userID, externalID, externalID+"@example.com")
 }
 
 func insertNewEventPageEvent(t *testing.T, db *sql.DB, eventID string, userID int64, status models.EventStatus) {

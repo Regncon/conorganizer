@@ -84,7 +84,7 @@ templ AddBillettholderAdminPage(ctx context.Context, db *sql.DB, logger *slog.Lo
 			{Name: "Billettholdere", Url: "/admin/billettholder/"},
 			{Name: "billetter", Url: ""},
 		})
-		<article style="display:flex; flex-direction:column; gap:1rem; padding: 1rem;">
+		<article style="display: flex; flex-direction: column; gap: 1rem; padding: 1rem">
 			<h1 class="page-heading">Billetter</h1>
 			<p class="page-heading-help-text">Her kan du legge til en ny billettholder</p>
 			if ticketsErr != nil && !ticketResult.UsedStaleCache {
@@ -104,10 +104,7 @@ templ AddBillettholderAdminPage(ctx context.Context, db *sql.DB, logger *slog.Lo
 			<style>
 				.add-billettholder-admin-grid {
 					display: grid;
-					grid-template-columns: repeat(
-						auto-fit,
-						minmax(var(--mobile-min-width), 1fr)
-					);
+					grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
 					gap: 1rem;
 				}
 				@media (min-width: 600px) {

@@ -10,6 +10,13 @@ Task, templ and Air are tool dependencies in `go.mod`, so you do not install
 them separately. Run every Taskfile command as `go tool task <name>`, and the
 other tools as `go tool templ` and `go tool air`.
 
+Editing needs two things on the machine that runs your editor, whichever
+platform it is: [Go](https://go.dev/dl/), and [Node.js](https://nodejs.org/en/download)
+with `npm`. templ formats `<style>` and
+`<script>` blocks through Prettier, which `go tool task setup:editor` installs
+with `npm`; the same task installs the templ version from `go.mod` for the
+editor. Run it once after cloning (see [IDE Setup](#ide-setup)).
+
 The app needs no `.env` file to start, but it does need a database and a
 writable image directory. `go tool task start` opens `database/events.db` and
 refuses to create it when it is missing. If `local-event-images/` (present in
@@ -23,10 +30,15 @@ fresh checkout has no database, so download data first:
 
 Choose your preferred method to run the project:
 ### Mac/Linux Setup
-Install Go. Downloads also need `ssh`, `sqlite3` and `tar`, and
+Install [Go](https://go.dev/dl/) and [Node.js](https://nodejs.org/en/download).
+Downloads also need `ssh`, `sqlite3` and `tar`, and
 `go tool task test` needs `sqlite3`.
 
 ### Docker Setup (Recommended for Windows)
+
+The container has everything the app needs, but your editor runs on the host,
+so install [Go](https://go.dev/dl/) and [Node.js](https://nodejs.org/en/download)
+on Windows as well and run `go tool task setup:editor` there once.
 
 Start the application using Docker Compose
 
@@ -271,6 +283,19 @@ Its `build:templ` dependency runs `go tool templ generate` for `components`,
 generated code, such as unused variables or a shadowed `err` in `{{ }}` Go
 blocks, only show up after generation.
 
+### Formatting
+
+CI fails when a `.templ` file is not formatted. To format every `.templ` file
+in place, including the `<style>` and `<script>` blocks, run:
+
+```bash
+go tool task fmt:templ
+```
+
+`go tool task check:templ-fmt` is the check CI runs; `make fmt` and
+`make check` wrap the two. Both need Prettier on `PATH`, which
+`go tool task setup:editor` installs (see [IDE Setup](#ide-setup)).
+
 A bare `return` line in template markup is rendered as text, not as a Go early
 exit, so rendering continues. For guard and early-exit logic inside a
 component, use a Go code block, as `pages/event/event_page.templ` does:
@@ -285,6 +310,16 @@ if event == nil {
 ## IDE Setup
 
 See [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-support/) for detailed IDE support information.
+
+On every platform, run this once after cloning and again whenever `go.mod` bumps templ:
+
+```bash
+go tool task setup:editor
+```
+
+It installs the templ version from `go.mod` globally, because VS Code falls back to the templ binary on `PATH`, and the Prettier version CI uses for formatting `<style>` and `<script>` blocks. `go tool task check:editor` shows what is on `PATH` next to what the repository expects.
+
+VS Code setup, the templ binary version on Windows and Prettier for `<style>` blocks live in [documentation/editor-setup.md](documentation/editor-setup.md).
 
 Neovim-specific setup lives in [documentation/neovim-setup.md](documentation/neovim-setup.md).
 

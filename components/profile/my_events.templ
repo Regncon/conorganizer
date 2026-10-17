@@ -13,7 +13,7 @@ templ singleEvent(event models.EventCardModel) {
 	}
 	<a href={ eventLink } class="item-card profile-event-bar">
 		if event.Title == "" {
-			<h3 class="profile-event-bar-title" style="color: gray; font-style: italic;">Mangler navn</h3>
+			<h3 class="profile-event-bar-title" style="color: gray; font-style: italic">Mangler navn</h3>
 		} else {
 			<h3 class="profile-event-bar-title">{ event.Title }</h3>
 		}
@@ -23,18 +23,18 @@ templ singleEvent(event models.EventCardModel) {
 
 templ MyEvents(events []models.EventCardModel, email string) {
 	<style>
-    .submit-event-message {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: var(--responsive-pane-padding);
-        width: 100%;
+		.submit-event-message {
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			gap: var(--responsive-pane-padding);
+			width: 100%;
 
-        button {
-            align-self: flex-end;
-            flex-shrink: 0;
-        }
-    }
+			button {
+				align-self: flex-end;
+				flex-shrink: 0;
+			}
+		}
 
 		.my-events-content {
 			display: flex;
@@ -48,48 +48,48 @@ templ MyEvents(events []models.EventCardModel, email string) {
 			gap: var(--spacing-2x);
 		}
 
-    .my-events-account-info {
-        display: flex;
-        place-items: center;
-        gap: var(--spacing-1x);
-        margin: 0;
-        font-size: var(--text-body-small);
-        color: var(--color-text-soft);
-        overflow-wrap: anywhere;
+		.my-events-account-info {
+			display: flex;
+			place-items: center;
+			gap: var(--spacing-1x);
+			margin: 0;
+			font-size: var(--text-body-small);
+			color: var(--color-text-soft);
+			overflow-wrap: anywhere;
 
-        .inline-icon {
-            flex-shrink: 0;
-        }
+			.inline-icon {
+				flex-shrink: 0;
+			}
 
-        strong {
-            color: var(--color-text-strong);
-        }
-    }
+			strong {
+				color: var(--color-text-strong);
+			}
+		}
 
-    @container main (width > 600px) {
-        .submit-event-message {
-            flex-direction: row;
+		@container main (width > 600px) {
+			.submit-event-message {
+				flex-direction: row;
 
-            button {
-                align-self: initial;
-            }
-        }
-    }
-    </style>
+				button {
+					align-self: initial;
+				}
+			}
+		}
+	</style>
 	<div class="surface-pane flex flex-col">
 		<h2 class="surface-pane-title">Mine arrangementer</h2>
 		<div class="my-events-content">
 			if len(events) > 0 {
 				<div class="my-events-list">
-						for _, event := range events {
-							@singleEvent(event)
-						}
-						if email != "" {
-							<p class="my-events-account-info">
-								@icons.Icon(icons.Info, icons.Size16)
-								<span>Arrangementene lagres direkte på kontoen <strong>{ email }</strong>, ikke på billetten.</span>
-							</p>
-						}
+					for _, event := range events {
+						@singleEvent(event)
+					}
+					if email != "" {
+						<p class="my-events-account-info">
+							@icons.Icon(icons.Info, icons.Size16)
+							<span>Arrangementene lagres direkte på kontoen <strong>{ email }</strong>, ikke på billetten.</span>
+						</p>
+					}
 				</div>
 			}
 			<form action="/profile/api/create" method="post" class="submit-event-message">

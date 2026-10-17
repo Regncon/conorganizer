@@ -1,10 +1,8 @@
 package banner
 
 templ Banner() {
-	{{
-		var bannerRole = BannerRoleDuringFestival
-	}}
-		<style>
+	{{ var bannerRole = BannerRoleDuringFestival }}
+	<style>
 		/* Defining styles here, that are shared between all banners */
 		.banner {
 			max-width: 1400px;
@@ -13,9 +11,9 @@ templ Banner() {
 			grid-template-columns: 1fr;
 		}
 		.banner-avatar {
-            position: relative;
-            display: none;
-            height: 265px;
+			position: relative;
+			display: none;
+			height: 265px;
 			width: auto;
 		}
 		.banner-content {
@@ -41,14 +39,14 @@ templ Banner() {
 			}
 		}
 
-        @container main (width > 800px) {
+		@container main (width > 800px) {
 			.banner {
 				grid-template-columns: 3fr minmax(380px, 1fr);
 			}
 
 			.banner-avatar {
 				display: block;
-                padding: var(--spacing-5x) var(--spacing-10x);
+				padding: var(--spacing-5x) var(--spacing-10x);
 			}
 		}
 
@@ -62,9 +60,9 @@ templ Banner() {
 			}
 		}
 		@container main (width > 1200px) {
-            .banner {
-                place-items: center;
-            }
+			.banner {
+				place-items: center;
+			}
 			.banner-content {
 				padding: var(--spacing-10x) 80px;
 			}
