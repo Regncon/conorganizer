@@ -237,12 +237,12 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 	}
 	{{ roomStatus := getRoomsPuljeByFloor(db, pulje.ID) }}
 	if len(roomStatus) == 0 {
-		<p style="color: red;">Klarte ikke å hente rom</p>
+		<p style="color: red">Klarte ikke å hente rom</p>
 	}
-	<div style="display: flex; gap: 1rem; align-items: center;">
-		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
+	<div style="display: flex; gap: 1rem; align-items: center">
+		<div style="display: flex; gap: 0.5rem; flex-direction: column">
 			<h3>{ pulje.Name } <span>({ pulje.TimeRange() })</span></h3>
-			<div style="display: flex; gap: 1rem;">
+			<div style="display: flex; gap: 1rem">
 				<div class="feedback-control-group">
 					<label class="checkbox-background form-group-checkbox">
 						<span>Legg til i pulje </span>

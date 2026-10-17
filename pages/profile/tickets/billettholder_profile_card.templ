@@ -237,14 +237,24 @@ func deleteEmailFromBillettholderRoute(
 }
 
 templ billettholderCard(billettholder models.Billettholder) {
-	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; color: var(--color-text-strong);">
-		<p style="margin:0;">
+	<div
+		class="card"
+		style="
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 1rem;
+		border-radius: 8px;
+		color: var(--color-text-strong);
+	"
+	>
+		<p style="margin: 0">
 			{ billettholder.OrderID }
 		</p>
-		<p style="margin:0;">
+		<p style="margin: 0">
 			<strong>Type: </strong> { billettholder.TicketType }
 		</p>
-		<p style="margin:0;">
+		<p style="margin: 0">
 			<strong>Navn:</strong>
 			<em>
 				{ billettholder.FirstName } { billettholder.LastName }
@@ -252,7 +262,7 @@ templ billettholderCard(billettholder models.Billettholder) {
 		</p>
 		for _, email := range billettholder.Emails {
 			if email.Kind == models.BillettholderEmailKindTicket {
-				<div style="display: flex; align-items: center; gap:0.5rem; ">
+				<div style="display: flex; align-items: center; gap: 0.5rem">
 					<strong>Epost:</strong>
 					<a href={ "mailto:" + email.Email }>
 						{ email.Email }
@@ -260,7 +270,7 @@ templ billettholderCard(billettholder models.Billettholder) {
 				</div>
 			}
 		}
-		<div style="display: flex; align-items: center; gap:0.5rem; ">
+		<div style="display: flex; align-items: center; gap: 0.5rem">
 			if billettholder.IsOver18 {
 				@icons.Icon(icons.EventAdultOnly, icons.Size24)
 				<p><strong>Alder:</strong> Over 18</p>
@@ -272,7 +282,7 @@ templ billettholderCard(billettholder models.Billettholder) {
 		<span>Andre epostadresser på samme bestilling:</span>
 		for _, email := range billettholder.Emails {
 			if email.Kind == models.BillettholderEmailKindAssociated || email.Kind == models.BillettholderEmailKindManual {
-				<div style="display:flex; align-items:center; gap:0.5rem; justify-content: space-between;">
+				<div style="display: flex; align-items: center; gap: 0.5rem; justify-content: space-between">
 					<a href={ "mailto:" + email.Email }>
 						{ email.Email }
 					</a>
@@ -294,12 +304,12 @@ templ billettholderCard(billettholder models.Billettholder) {
 			data-on:keydown={ fmt.Sprintf("if (evt.key === 'Enter') { evt.preventDefault(); %s }", datastar.PostSSE("/profile/tickets/api/new-email/%d/", billettholder.ID)) }
 		/>
 		<strong
-			style="color: var(--color-error);"
+			style="color: var(--color-error)"
 			data-signals={ fmt.Sprintf(`"errorMessage-%d"`, billettholder.ID) }
 			data-text={ fmt.Sprintf(`$errorMessage-%d`, billettholder.ID) }
 		></strong>
 		<strong
-			style="color: var(--color-success);"
+			style="color: var(--color-success)"
 			data-signals={ fmt.Sprintf(`"successMessage-%d"`, billettholder.ID) }
 			data-text={ fmt.Sprintf(`$successMessage-%d`, billettholder.ID) }
 		></strong>

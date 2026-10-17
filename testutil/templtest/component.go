@@ -15,7 +15,8 @@ func Render(t testing.TB, component templ.Component) *goquery.Document {
 	t.Helper()
 
 	var html bytes.Buffer
-	if err := component.Render(context.Background(), &html); err != nil {
+	ctx := templ.InitializeContext(context.Background())
+	if err := component.Render(ctx, &html); err != nil {
 		t.Fatalf("render component: %v", err)
 	}
 

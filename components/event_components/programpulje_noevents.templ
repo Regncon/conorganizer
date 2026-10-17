@@ -5,25 +5,29 @@ import (
 	"github.com/Regncon/conorganizer/service/program"
 )
 
+var programPuljeNoEventsStylesOnce = templ.NewOnceHandle()
+
 // The date and pulje anchor select the corresponding section on the root page.
 templ ProgramPuljeNoEvents(date string, puljeID models.Pulje) {
-	<style>
-		.pulje-no-events-container {
-			align-items: center;
-			gap: var(--spacing-4x);
-			background-color: var(--level-2-background);
-			border-radius: var(--border-radius-2x);
-			padding: var(--spacing-4x);
-			.btn {
-				flex-shrink: 0;
+	@programPuljeNoEventsStylesOnce.Once() {
+		<style>
+			.pulje-no-events-container {
+				align-items: center;
+				gap: var(--spacing-4x);
+				background-color: var(--level-2-background);
+				border-radius: var(--border-radius-2x);
+				padding: var(--spacing-4x);
+				.btn {
+					flex-shrink: 0;
+				}
 			}
-		}
-		@media screen and (width < 600px) {
-			.pulje-no-events-container .btn {
-				align-self: flex-end;
+			@media screen and (width < 600px) {
+				.pulje-no-events-container .btn {
+					align-self: flex-end;
+				}
 			}
-		}
-	</style>
+		</style>
+	}
 	<div class="pulje-no-events-container flex-responsive">
 		<p>
 			Vi har ingenting å vise her ennå.

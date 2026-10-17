@@ -90,9 +90,9 @@ templ ApprovalPageContent(db *sql.DB, logger *slog.Logger) {
 					<section>
 						<h2 class="event-approval-section-header">{ string(status) }</h2>
 						<div class="event-approval-section-layout">
-						for _, e := range events {
-							@eventBar(e)
-						}
+							for _, e := range events {
+								@eventBar(e)
+							}
 						</div>
 					</section>
 				}
