@@ -1,7 +1,9 @@
 package templtest
 
 import (
+	"encoding/json"
 	"regexp"
+	"testing"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -18,4 +20,18 @@ func SignalsAttrsWithModifierBeforeKey(doc *goquery.Document) []string {
 		}
 	})
 	return names
+}
+
+func SignalsObject(t testing.TB, el *goquery.Selection, attr string) map[string]any {
+	t.Helper()
+
+	raw, ok := el.Attr(attr)
+	if !ok {
+		t.Fatalf("expected element to have a %s attribute", attr)
+	}
+	var signals map[string]any
+	if err := json.Unmarshal([]byte(raw), &signals); err != nil {
+		t.Fatalf("%s is not a JSON object: %q: %v", attr, raw, err)
+	}
+	return signals
 }

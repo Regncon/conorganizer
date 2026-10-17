@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/program"
 	"github.com/go-chi/chi/v5"
@@ -159,7 +160,7 @@ templ publiserProgram(db *sql.DB) {
 	if err != nil {
 		<p class="publiser-program-error">Kunne ikke hente publiseringsstatus: { err.Error() }</p>
 	} else {
-		<div class="publiser-program" data-signals:program-published={ fmt.Sprintf("%t", programPublished) }>
+		<div class="publiser-program" data-signals={ components.DataSignals(map[string]bool{"programPublished": programPublished}) }>
 			<div class="publiser-program-control">
 				<span class="publiser-program-state-label">Status</span>
 				<div class="publiser-program-control-body">

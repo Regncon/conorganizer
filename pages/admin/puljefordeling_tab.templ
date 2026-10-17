@@ -882,7 +882,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 	<section
 		id="puljefordeling-tab"
 		class="pulje-section"
-		data-signals:pulje-status={ fmt.Sprintf("'%s'", string(row.Status)) }
+		data-signals={ components.DataSignals(map[string]models.PuljeStatus{"puljeStatus": row.Status}) }
 	>
 		if hasRow {
 			<h2>{ row.Name }</h2>

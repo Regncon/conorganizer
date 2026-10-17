@@ -222,8 +222,10 @@ templ InterestContent(eventID string, title string, state InterestNoticeState, i
 	<div
 		id="interest-content"
 		data-ignore-morph
-		data-signals:selected-interest-level={ fmt.Sprintf("%q", interest) }
-		data-signals:current-interest-level-choice={ fmt.Sprintf("'%s'", ticketholder.InterestChoicePending) }
+		data-signals={ components.DataSignals(map[string]string{
+			"selectedInterestLevel":      string(interest),
+			"currentInterestLevelChoice": ticketholder.InterestChoicePending,
+		}) }
 	>
 		<p class="label">Velg interesse</p>
 		if state.ShowAssignedEvent {

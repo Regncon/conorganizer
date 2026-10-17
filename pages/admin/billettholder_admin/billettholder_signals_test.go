@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
@@ -67,5 +68,27 @@ func TestBillettholderInterestDialog_DeclaresFirstPuljeAsActivePuljeDefault(t *t
 	}
 	if names := templtest.SignalsAttrsWithModifierBeforeKey(doc); len(names) > 0 {
 		t.Fatalf("expected no data-signals__modifier:key attributes, got %v", names)
+	}
+}
+
+func TestBillettholderAdminOverview_DeclaresActiveFiltersAsJSONSignals(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at filteret Uten førstevalg er på og GM/DM er av.",
+		When:  "Når oversikten rendres.",
+		Then:  "Så skal data-signals inneholde filterWithoutFirstChoice og filterGmOrDm som JSON.",
+	})
+
+	// Given
+	expected := map[string]any{"filterWithoutFirstChoice": true, "filterGmOrDm": false}
+	db, logger := testutil.CreateTestDBAndLogger(t, "billettholder_admin_overview_signals")
+	filters := billettholderService.BillettholderFilters{WithoutFirstChoice: true}
+
+	// When
+	doc := templtest.Render(t, billettholderAdminOverview(db, logger, filters))
+
+	// Then
+	actual := templtest.SignalsObject(t, doc.Find(".billettholder-admin-overview"), "data-signals")
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("overview filter signals = %v, want %v", actual, expected)
 	}
 }
