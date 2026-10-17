@@ -2,6 +2,8 @@
 
 Status: plan, not started. Written 2026-10-18 against main at 8033ed17.
 
+The code will have changed by the time this plan runs. Do [Before you start: rescan](#before-you-start-rescan) first, so the plan covers every name in the code as it is then.
+
 ## Why
 
 On 2026-10-18 the naming rule was decided (AGENTS.md "Names", added in #663). Code is English, but words from [domeneordbok.md](../domeneordbok.md) stay Norwegian, written without æøå (`getBillettholder`, `Forstevalg`). Some existing names translate a domain word. This plan renames them:
@@ -180,9 +182,11 @@ Non-test declarations: top-level `type` lines with Event 30, Interest 17, Room 1
 ### templ, CSS and signals
 
 - 236 templ components. Names with the word: Event 48, Interest 27, Room 20, TicketHolder 6.
+- 3 CSS custom properties: `--event-banner-height`, `--event-status-color`, `--nav-event-height`.
 - 106 distinct CSS selectors with the word in templ `<style>` blocks and `.css` files (one is the false positive `.prevent`). Examples: `.program-event-row`, `.event-room-dialog`, `.pulje-interests-summary`.
 - 11 HTML `id` values, 23 Datastar signals (`$draggedEventId`, `$currentInterestLevelChoice`, `$_roomNumber`, ...) and 13 JSON tags (`json:"event_id"`, `json:"roomsPublished"`, ...).
 - The custom element `room-map` in `static/web_components/room_map.js`. `ticket_holder_dropdown.js` already defines `billettholder-dropdown`.
+- The 15 SVG maps in `static/rooms/` hold 560 distinct names with `room` (839 uses): ids like `room-705` and `room-705-door-706`, `id="room-targets"`, and the attributes `data-room-number`, `data-room-target` and `data-room-name`. Those attributes are a contract with `room_map.js`, `service/rooms/maps_test.go`, `pages/admin/rooms/rooms_assignment_page.templ` and `documentation/room-assignment.md`. See open item 7.
 
 ### Live buckets
 
@@ -205,6 +209,13 @@ All paths stay. The handlers and route setup functions named after them change (
 - The logging skill (`.agents/skills/conorganizer-logging/SKILL.md`, `references/project-logging-baseline.md`) uses `event_id` and `event_service` as examples.
 - `.vscode/settings.json` has the spelling words `eventimage`, `eventimgupload`, `eventservice`, `myevents` and `newevent`.
 - Log keys in non-test Go: `"event_id"` 60, `"room_id"` 3, `"interest_level"` 1. Component names: `event`, `event_form`, `my_events`, `new_event`, `room_assignment`, `rooms`. No dashboard in `configuration-as-code/grafana-dashboards` filters on them.
+- Log message text is not a name and stays. One dashboard depends on it: `conorganizer-main-service-debugging.json` line 586 filters on the message `event image directory`. If that message changes, update the dashboard.
+
+### Baseline scan
+
+`plans/2026-10-18-norwegian-domain-rename-scan.txt` lists every distinct name that contains event, interest, room or ticket holder, from all tracked text files except `.claude/` and `plans/`, plus every such path. It has 2178 lines: 2039 names (14743 uses) and 139 paths. The rescan diffs against it.
+
+It was reviewed by kind on 2026-10-18, not line by line. Besides the areas above, it holds names that stay: paths and file names (`events.db`, `event-images`, `local-event-images`) in `.gitignore`, `.dockerignore`, `Makefile`, `Taskfile.yml`, `deploy/`, `scripts/download-environment`, the systemd units and the images-backup script; `eventstream` in `go.mod`/`go.sum`; "event" in `LICENSE`, `grafana.ini` and `static/datastar.js.map`; and the names of applied migrations.
 
 ## How the migration renames tables that views depend on
 
@@ -259,6 +270,21 @@ ALTER TABLE puljer RENAME COLUMN rooms_published TO rom_published;
 
 The same PR adds a short "Renaming tables and columns" section to `documentation/migrations.md` with these findings.
 
+## Before you start: rescan
+
+Do this before phase 0, in its own PR that changes only this plan and the baseline. No rename starts until it is merged. The commands are in the appendix.
+
+1. **Start from current main.** Write the commit you scan into the status line at the top.
+2. **Diff the names against the baseline.** Run the scan command into `tmp/rename-scan.txt` and diff it with `plans/2026-10-18-norwegian-domain-rename-scan.txt`. Lines starting with `>` are names or paths added since 2026-10-18; lines starting with `<` are gone. Put every `>` line in one of three places: the name mapping and a phase, "Not in scope", or "Open items". Then replace the baseline file with the new scan.
+3. **Check the database.** Run `git diff 8033ed17..main -- schema.sql migrations/` and `grep -n -i -E 'event|interest|room' schema.sql`. Add every new table, column, view, index or trigger to the database mapping and to the migration. Then rerun the in-memory rehearsal against the current `schema.sql`, with the full Up section and the `CREATE VIEW` statements written out. `integrity_check` must return ok, `foreign_key_check` must return no rows, and the leftover query must return nothing.
+4. **Check packages, files, buckets and routes.** Look for new folders and files in `git diff --name-status 8033ed17..main`, new constants in `service/live/live.go`, and new paths with the route command.
+5. **Check outside the app.** Run the server-script command. Anything that reads a renamed table must handle both schemas in phase 0 if it runs on the server, or change in phase 6.
+6. **Recount.** Rerun the counting commands and update the Inventory, so the phase sizes are right.
+7. **Check open PRs.** Run `gh pr list`. A rename PR conflicts with almost everything, so merge or wait for large open PRs that touch the same files.
+8. **Check the rules.** Look for new domain words in `domeneordbok.md` and changes to "Names" in `AGENTS.md`. Go through "Decisions" and "Open items" again.
+
+Done when every line of the new scan is in the mapping, "Not in scope" or "Open items", and the counts, the migration and the baseline match the code you scanned.
+
 ## Phases
 
 Each phase is one PR, or a few for the large ones. Each one builds, passes `go tool task test`, and can ship alone. The Go renames come before the database because the compiler checks them and they need no rollout. One word per PR keeps the diffs reviewable. Each PR is a pure rename: no behavior changes and no refactors.
@@ -272,6 +298,7 @@ How to do a Go phase:
 
 ### Phase 0: groundwork
 
+- Finish [Before you start: rescan](#before-you-start-rescan).
 - Merge #663. It adds the "Names" rule and deletes `initialize.sql`, so that file needs no update.
 - Make `conorganizer-sqlite-backup` accept either `events` or `arrangementer` in its table check and its `COUNT`. Pull it into the server checkout at `/srv/configuration-as-code-repo/conorganizer`, whose files the scripts are symlinked to. Without this, every backup fails from the migration until someone updates the checkout.
 - Settle the open items below.
@@ -286,7 +313,7 @@ Rename the four constants and bucket names, and update the two tables in `docume
 
 ### Phase 3: room → rom (1–2 PRs)
 
-`service/rooms` → `service/rom`, `pages/admin/rooms` → `pages/admin/rom`, `models/rooms.go` → `models/rom.go` (`Room` → `Rom`, `RoomInput` → `RomInput`, `RoomEventPuljeSummary` → `RomEventPuljeSummary`, ...), plus `pages/event/event_rooms.*`. Also the CSS classes, `$_room*` signals, log key `room_id`, and components `rooms` → `rom` and `room_assignment` → `rom_assignment`. Paths under `/admin/rooms/` and `/static/rooms/` stay. Size: 173 distinct `*Room*` identifiers with 863 uses in 36 files, plus 63 lowercase `room*` names.
+`service/rooms` → `service/rom`, `pages/admin/rooms` → `pages/admin/rom`, `models/rooms.go` → `models/rom.go` (`Room` → `Rom`, `RoomInput` → `RomInput`, `RoomEventPuljeSummary` → `RomEventPuljeSummary`, ...), plus `pages/event/event_rooms.*`. Also the CSS classes, `$_room*` signals, log key `room_id`, and components `rooms` → `rom` and `room_assignment` → `rom_assignment`. Paths under `/admin/rooms/` and `/static/rooms/` stay. The SVG map contents follow open item 7. Size: 173 distinct `*Room*` identifiers with 863 uses in 36 files, plus 63 lowercase `room*` names.
 
 ### Phase 4: interest → interesse (1–2 PRs)
 
@@ -349,12 +376,30 @@ These are suggestions to approve or change before the phase that needs them.
 4. **`events_types`** (phase 6). A pure rename gives `arrangementer_types`, which keeps today's odd plural. `arrangement_types` would match `arrangement_statuses` and `arrangement_runtimes`. Usikker.
 5. **`v_event_summary` is unused** (0 uses in code). The plan renames it. Dropping it would be a separate change.
 6. **Saved Loki queries** outside the repo that filter on `event_id` or `component=event` stop matching new logs after phase 5c.
+7. **SVG map contents** (phase 3). The maps hold 560 room names, and `data-room-number`/`data-room-target` are read by `room_map.js` and `maps_test.go`. Suggestion: leave the SVG files and these attribute names as they are, because they are map data under a URL that stays, and keep the code that reads them pointing at `data-room-*`. The other choice is to rename them all in one PR together with `room_map.js`, `maps_test.go`, `rooms_assignment_page.templ` and `room-assignment.md`. Usikker.
 
 ## Appendix: commands
 
 Run from the repository root (Git Bash) with `set -f` so that pathspecs are not expanded as globs.
 
 ```bash
+# full scan: every distinct name and path with a word, compared with the baseline
+mkdir -p tmp
+{ git grep -I -o -h -i -E '[A-Za-z0-9_-]*(event|interest|room|ticket.?holder)[A-Za-z0-9_-]*' -- ':!.claude' ':!plans' | sed 's/^/name /'
+  git ls-files -- ':!.claude' ':!plans' | grep -i -E 'event|interest|room|ticket.?holder' | sed 's/^/path /'
+} | LC_ALL=C sort -u > tmp/rename-scan.txt
+diff plans/2026-10-18-norwegian-domain-rename-scan.txt tmp/rename-scan.txt
+
+# schema objects that still mention a word (run after the Up section in the rehearsal)
+#   SELECT type, name FROM sqlite_master
+#   WHERE sql LIKE '%event%' OR sql LIKE '%room%' OR sql LIKE '%interest%';
+
+# server scripts, deploy and CI that name a table or column
+git grep -n -w -E 'events|interests|rooms|event_id|room_id|interest_level' -- configuration-as-code deploy scripts Taskfile.yml .github
+
+# URL path strings with a word
+git grep -o -h -E "[\"'\`(]/[A-Za-z0-9_{}./%-]*(event|room|interest)[A-Za-z0-9_{}./%-]*" -- '*.go' '*.templ' '*.js' ':!.claude' ':!*_test.go' | sort | uniq -c
+
 # paths that contain a word
 git ls-files -- ':!.claude' | grep -i -c event
 
