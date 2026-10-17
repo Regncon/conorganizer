@@ -33,10 +33,10 @@ func TestLoginForm_RendersDescopeWidgetAndPostLoginRedirect(t *testing.T) {
 	expectedInlineScriptParts := []string{
 		"descopeSdk.getSessionToken",
 		"descopeSdk.getRefreshToken",
-		"fetch('/auth/session'",
+		`fetch("/auth/session"`,
 		"sessionJwt",
 		"refreshJwt",
-		"window.location.href = '/auth/post-login?neste=' + encodeURIComponent(loginNeste);",
+		`window.location.href = "/auth/post-login?neste=" + encodeURIComponent(loginNeste);`,
 	}
 
 	// When

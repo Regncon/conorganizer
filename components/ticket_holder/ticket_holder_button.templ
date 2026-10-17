@@ -16,14 +16,14 @@ templ TicketHolderButton(currentBillettHolder BillettHolder) {
 	{{ currentBillettHolderJSON, _ := templ.JSONString(currentBillettHolder) }}
 	<style>
 		.ticket-holder-picker {
-            padding-inline: var(--border-outline-width);
+			padding-inline: var(--border-outline-width);
 			.card-clickable {
-                place-content: start;
-                height: 3.125rem;
-                width: 9.1rem;
-                width: stretch;
-                width: -webkit-fill-available;
-            }
+				place-content: start;
+				height: 3.125rem;
+				width: 9.1rem;
+				width: stretch;
+				width: -webkit-fill-available;
+			}
 		}
 	</style>
 	<div class="ticket-holder-picker">

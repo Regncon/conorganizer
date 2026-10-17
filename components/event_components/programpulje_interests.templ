@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
-  "github.com/Regncon/conorganizer/service/program"
+	"github.com/Regncon/conorganizer/service/program"
 )
 
 type Interest struct {
@@ -16,104 +16,104 @@ type Interest struct {
 templ ProgramPuljeInterests(interests []Interest, date string, puljeID models.Pulje) {
 	<style>
 		.pulje-interests-container {
-      display: flex;
-      flex-direction: column;
+			display: flex;
+			flex-direction: column;
 			background-color: var(--level-2-background);
 			border-radius: var(--border-radius-2x);
-      container-type: inline-size;
-      container-name: pulje-interests-container;
+			container-type: inline-size;
+			container-name: pulje-interests-container;
 			.btn {
 				flex-shrink: 0;
 			}
 		}
-    .pulje-interests-description {
-      align-items: center;
-      padding: var(--spacing-4x);
-      gap: var(--spacing-4x);
-    }
-    .pulje-interests-collapse {
-      border-top: 1px solid var(--level-2-border);
-    }
+		.pulje-interests-description {
+			align-items: center;
+			padding: var(--spacing-4x);
+			gap: var(--spacing-4x);
+		}
+		.pulje-interests-collapse {
+			border-top: 1px solid var(--level-2-border);
+		}
 
-    .pulje-interests-summary {
-      display: flex;
-      place-items: center;
-      place-content: center;
-      padding: var(--spacing-1x) var(--spacing-4x);
-      min-height: var(--spacing-8x);
-      cursor: pointer;
-      list-style: none;
-      transition: var(--btn-transition);
-    }
-    .pulje-interests-summary:hover .pulje-interests-summary-text,
-    .pulje-interests-summary:focus-visible .pulje-interests-summary-text {
-        background-color: var(--btn-ghost-hover-bg);
-        color: var(--color-text-soft);
-    }
-    .pulje-interests-summary:active .pulje-interests-summary-text {
-        background-color: var(--btn-ghost-active-bg);
-        color: var(--color-text-soft);
-    }
+		.pulje-interests-summary {
+			display: flex;
+			place-items: center;
+			place-content: center;
+			padding: var(--spacing-1x) var(--spacing-4x);
+			min-height: var(--spacing-8x);
+			cursor: pointer;
+			list-style: none;
+			transition: var(--btn-transition);
+		}
+		.pulje-interests-summary:hover .pulje-interests-summary-text,
+		.pulje-interests-summary:focus-visible .pulje-interests-summary-text {
+			background-color: var(--btn-ghost-hover-bg);
+			color: var(--color-text-soft);
+		}
+		.pulje-interests-summary:active .pulje-interests-summary-text {
+			background-color: var(--btn-ghost-active-bg);
+			color: var(--color-text-soft);
+		}
 
-    .pulje-interests-summary-text {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-2x);
-      height: 24px;
-      padding-left: var(--spacing-2x);
-      padding-right: var(--spacing-1x);
-      border-radius: var(--border-radius-1x);
-      color: var(--color-text-soft);
-      font-size: var(--text-body-small);
-      transition: var(--btn-transition);
-    }
-    .pulje-interests-summary:focus-visible {
-      outline: none;
-    }
-    .pulje-interests-summary:focus-visible .pulje-interests-summary-text {
-      box-shadow: var(--btn-ghost-shadow);
-    }
-    .pulje-interests-collapse[open] .inline-icon {
-      transform: rotate(180deg);
-    }
+		.pulje-interests-summary-text {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-2x);
+			height: 24px;
+			padding-left: var(--spacing-2x);
+			padding-right: var(--spacing-1x);
+			border-radius: var(--border-radius-1x);
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+			transition: var(--btn-transition);
+		}
+		.pulje-interests-summary:focus-visible {
+			outline: none;
+		}
+		.pulje-interests-summary:focus-visible .pulje-interests-summary-text {
+			box-shadow: var(--btn-ghost-shadow);
+		}
+		.pulje-interests-collapse[open] .inline-icon {
+			transform: rotate(180deg);
+		}
 
-    .pulje-interests-collapse-content {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-2x);
-      padding: var(--spacing-4x);
-      padding-top: 0;
-    }
+		.pulje-interests-collapse-content {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+			padding: var(--spacing-4x);
+			padding-top: 0;
+		}
 
-    .pulje-interests-event-bar {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-    }
+		.pulje-interests-event-bar {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+		}
 
-    .pulje-interests-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-2x);
-      padding: 0 var(--spacing-4x) var(--spacing-4x);
-    }
+		.pulje-interests-list {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+			padding: 0 var(--spacing-4x) var(--spacing-4x);
+		}
 
-    .pulje-interest-event-choice {
-      font-weight: bold;
-      text-align: left;
-      width: fit-content;
-      flex-shrink: 0;
-    }
+		.pulje-interest-event-choice {
+			font-weight: bold;
+			text-align: left;
+			width: fit-content;
+			flex-shrink: 0;
+		}
 
-    @container pulje-interests-container (width < 500px) {
-      .pulje-interests-event-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-    }
+		@container pulje-interests-container (width < 500px) {
+			.pulje-interests-event-bar {
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 8px;
+			}
+		}
 
-    @media screen and (width < 600px) {
+		@media screen and (width < 600px) {
 			.pulje-interests-description .btn {
 				align-self: flex-end;
 			}
@@ -142,7 +142,7 @@ templ ProgramPuljeInterests(interests []Interest, date string, puljeID models.Pu
 			</summary>
 			<div class="pulje-interests-collapse-content">
 				for _, interest := range interests {
-          <a href={ templ.URL(fmt.Sprintf("/event/%s", interest.EventID)) } class="item-card profile-event-bar pulje-interests-event-bar">
+					<a href={ templ.URL(fmt.Sprintf("/event/%s", interest.EventID)) } class="item-card profile-event-bar pulje-interests-event-bar">
 						<span class="profile-event-bar-title">{ interest.EventName }</span>
 						<span class="pulje-interest-event-choice">{ interest.InterestLevel.Label() }</span>
 					</a>

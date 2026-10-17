@@ -217,9 +217,11 @@ templ roomEventCard(event models.RoomEventPuljeSummary, pulje models.Pulje, even
 }
 
 templ roomPuljeContainer(room models.RoomByPulje, pulje models.Pulje, eventImageDir *string) {
-	{{ _, hasRoomMap := roomService.MapPathForRoom(room.RoomNumber)
-	_, hasFloorMap := roomService.MapPathForFloor(room.Floor)
-	mapped := hasRoomMap && hasFloorMap }}
+	{{
+		_, hasRoomMap := roomService.MapPathForRoom(room.RoomNumber)
+		_, hasFloorMap := roomService.MapPathForFloor(room.Floor)
+		mapped := hasRoomMap && hasFloorMap
+	}}
 	<div
 		class={ "room", templ.KV("room--map", mapped) }
 		if mapped {
@@ -282,279 +284,353 @@ templ floorPuljeContainer(floor int, rooms []models.RoomByPulje, pulje models.Pu
 templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
 	<script type="module" src="/static/web_components/room_map.js"></script>
 	<style>
-        #room-assignment { container-type: inline-size; min-inline-size: 0; }
-        .assignment-map-panel { display: grid; gap: var(--spacing-2x); min-inline-size: 0; }
-        .event-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
-            gap: var(--spacing-1x);
-        }
-        .rooms-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: var(--spacing-2x);
-            h2 { grid-column: 1/-1; }
-        }
-        @container (width > 700px) {
-            .rooms-container { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        }
-        .room {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            min-inline-size: 0;
-            padding: 12px;
-            border: 1px solid var(--level-2-border);
-            border-radius: 6px;
-            background: var(--level-2-background);
-            &.is-drag-over { outline: 3px solid var(--color-primary); }
-        }
-        .room-heading {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            h3 { margin: 0; font-size: 16px; }
-        }
-        .room-event-count {
-            display: inline-grid;
-            place-items: center;
-            min-inline-size: 24px;
-            block-size: 24px;
-            border-radius: 12px;
-            background: var(--level-3-background);
-            font-size: 12px;
-        }
-        .room-add-event, .room-event-remove {
-            display: grid;
-            place-items: center;
-            flex: 0 0 auto;
-            inline-size: 28px;
-            block-size: 28px;
-            padding: 0;
-            border: 1px solid var(--level-3-border);
-            border-radius: 4px;
-            color: var(--color-primary-text);
-            font-size: 20px;
-            cursor: pointer;
-            &:hover { background: var(--level-3-background-hover); }
-            &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-            &:disabled { opacity: 0.5; cursor: wait; }
-        }
-        .room-add-event {
-            margin-inline-start: auto;
-            background: var(--level-3-background);
-        }
-        .room-event-remove { background: transparent; }
-        .room-event-container {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            min-block-size: 0;
-            margin: 0;
-            padding: 0;
-        }
-        .room-empty { font-size: 12px; opacity: 0.7; }
-        .room--map {
-            position: relative;
-            padding: 8px;
-            gap: 6px;
-            border-color: color-mix(in srgb, var(--level-3-border) 75%, transparent);
-            border-radius: 8px;
-            background: color-mix(in srgb, var(--level-3-background) 28%, transparent);
-            box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+		#room-assignment {
+			container-type: inline-size;
+			min-inline-size: 0;
+		}
+		.assignment-map-panel {
+			display: grid;
+			gap: var(--spacing-2x);
+			min-inline-size: 0;
+		}
+		.event-list {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+			gap: var(--spacing-1x);
+		}
+		.rooms-container {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: var(--spacing-2x);
+			h2 {
+				grid-column: 1/-1;
+			}
+		}
+		@container (width > 700px) {
+			.rooms-container {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+		}
+		.room {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			min-inline-size: 0;
+			padding: 12px;
+			border: 1px solid var(--level-2-border);
+			border-radius: 6px;
+			background: var(--level-2-background);
+			&.is-drag-over {
+				outline: 3px solid var(--color-primary);
+			}
+		}
+		.room-heading {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			h3 {
+				margin: 0;
+				font-size: 16px;
+			}
+		}
+		.room-event-count {
+			display: inline-grid;
+			place-items: center;
+			min-inline-size: 24px;
+			block-size: 24px;
+			border-radius: 12px;
+			background: var(--level-3-background);
+			font-size: 12px;
+		}
+		.room-add-event,
+		.room-event-remove {
+			display: grid;
+			place-items: center;
+			flex: 0 0 auto;
+			inline-size: 28px;
+			block-size: 28px;
+			padding: 0;
+			border: 1px solid var(--level-3-border);
+			border-radius: 4px;
+			color: var(--color-primary-text);
+			font-size: 20px;
+			cursor: pointer;
+			&:hover {
+				background: var(--level-3-background-hover);
+			}
+			&:focus-visible {
+				outline: 2px solid var(--color-primary);
+				outline-offset: 2px;
+			}
+			&:disabled {
+				opacity: 0.5;
+				cursor: wait;
+			}
+		}
+		.room-add-event {
+			margin-inline-start: auto;
+			background: var(--level-3-background);
+		}
+		.room-event-remove {
+			background: transparent;
+		}
+		.room-event-container {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+			min-block-size: 0;
+			margin: 0;
+			padding: 0;
+		}
+		.room-empty {
+			font-size: 12px;
+			opacity: 0.7;
+		}
+		.room--map {
+			position: relative;
+			padding: 8px;
+			gap: 6px;
+			border-color: color-mix(in srgb, var(--level-3-border) 75%, transparent);
+			border-radius: 8px;
+			background: color-mix(in srgb, var(--level-3-background) 28%, transparent);
+			box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
 
-            .room-heading {
-                position: absolute;
-                inset: 6px 6px auto;
-                justify-content: flex-end;
-                z-index: 2;
-                pointer-events: none;
-            }
-            .room-heading .room-event-count,
-            .room-heading .room-add-event,
-            .room-heading .room-notes-toggle { pointer-events: auto; }
-            .room-event-container {
-                padding-block-start: 30px;
-                overflow-y: auto;
-                overscroll-behavior: contain;
-            }
-            .room-empty { display: none; }
-        }
-        .room-event {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            flex: 0 0 auto;
-            gap: 4px;
-            min-inline-size: 0;
-            padding: 4px;
-            border: 1px solid var(--level-3-border);
-            border-radius: 4px;
-            background: var(--level-3-background);
-            cursor: grab;
-            a {
-                display: flex;
-                align-items: center;
-                flex: 1;
-                gap: 6px;
-                min-inline-size: 0;
-                color: var(--color-primary-text);
-                text-decoration: none;
-                font-size: 12px;
-                line-height: 1.25;
-                overflow-wrap: anywhere;
-            }
-            img { inline-size: 36px; block-size: 36px; object-fit: cover; border-radius: 3px; flex: 0 0 auto; }
-            &:hover { border-color: var(--color-primary); }
-            &.is-dragging { opacity: 0.5; }
-        }
-        .event-notes {
-            min-inline-size: 0;
-            font-size: 11px;
-            line-height: 1.35;
-            summary {
-                inline-size: fit-content;
-                color: var(--color-primary-text);
-                cursor: pointer;
-            }
-            p {
-                max-block-size: 8rem;
-                margin: 4px 0 0;
-                overflow-y: auto;
-                white-space: pre-wrap;
-                overflow-wrap: anywhere;
-            }
-        }
-        .room-event .event-notes {
-            flex: 0 0 100%;
-            border-block-start: 1px solid var(--level-3-border);
-            padding-block-start: 4px;
-        }
-        #assignment-dialog {
-            inline-size: min(560px, calc(100% - 32px));
-            max-block-size: calc(100dvh - 32px);
-            padding: 24px;
-            overflow-y: auto;
-            background-color: var(--level-1-background);
-            h2 { padding-inline-end: 24px; }
-            .room-event-container { margin-block-start: 16px; }
-        }
-        .room-event-option {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 12px;
-            padding: 8px;
-            text-align: start;
-            border: 1px solid var(--level-2-border);
-            border-radius: 6px;
-            background: var(--level-2-background);
-            color: var(--color-primary-text);
-            .room-event-option-main {
-                display: flex;
-                align-items: center;
-                flex: 1;
-                gap: 12px;
-                min-inline-size: 0;
-            }
-            img { inline-size: 64px; block-size: 48px; object-fit: cover; border-radius: 4px; }
-            span { display: grid; gap: 4px; }
-            small { opacity: 0.7; }
-            &:hover { border-color: var(--color-primary); }
-        }
-        .room-event-option-add {
-            display: grid;
-            place-items: center;
-            flex: 0 0 auto;
-            inline-size: 32px;
-            block-size: 32px;
-            padding: 0;
-            border: 1px solid var(--level-3-border);
-            border-radius: 4px;
-            background: var(--level-3-background);
-            color: var(--color-primary-text);
-            font-size: 20px;
-            line-height: 1;
-            cursor: pointer;
-            &:hover { background: var(--level-3-background-hover); }
-            &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-            &:disabled { opacity: 0.5; cursor: wait; }
-        }
-        .room-event-option .event-notes {
-            flex: 0 0 100%;
-            border-block-start: 1px solid var(--level-2-border);
-            padding-block-start: 4px;
-            padding-inline: 8px;
-        }
-        .rooms-heading-row {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: var(--spacing-4x);
-            h2 { margin: 0; }
-        }
-        .rooms-publish-error { color: var(--color-error); }
-        .rooms-publish-control-body {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-2x);
-        }
-        .rooms-publish-state {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-1x);
-        }
-        .rooms-publish-state-label {
-            color: var(--color-text-soft);
-            font-size: var(--text-body-small);
-        }
-        .rooms-publish-state-value {
-            color: var(--color-text-strong);
-        }
-        .rooms-publish-switch {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            flex: 0 0 auto;
-            cursor: pointer;
-        }
-        .rooms-publish-switch input {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-        }
-        .rooms-publish-switch-track {
-            position: relative;
-            display: inline-flex;
-            width: 52px;
-            height: 30px;
-            border: 1px solid var(--level-3-border-hover);
-            border-radius: 999px;
-            background-color: var(--level-1-background);
-            transition: var(--btn-transition);
-        }
-        .rooms-publish-switch-thumb {
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 22px;
-            height: 22px;
-            border-radius: 999px;
-            background-color: var(--color-text-soft);
-            transition: transform 0.2s ease, background-color 0.2s ease;
-        }
-        .rooms-publish-switch input:checked + .rooms-publish-switch-track {
-            border-color: var(--color-primary);
-            background-color: var(--color-primary-hover);
-        }
-        .rooms-publish-switch input:checked + .rooms-publish-switch-track .rooms-publish-switch-thumb {
-            transform: translateX(22px);
-            background-color: var(--color-primary);
-        }
-        .rooms-publish-switch input:focus-visible + .rooms-publish-switch-track {
-            box-shadow: var(--btn-primary-shadow);
-        }
+			.room-heading {
+				position: absolute;
+				inset: 6px 6px auto;
+				justify-content: flex-end;
+				z-index: 2;
+				pointer-events: none;
+			}
+			.room-heading .room-event-count,
+			.room-heading .room-add-event,
+			.room-heading .room-notes-toggle {
+				pointer-events: auto;
+			}
+			.room-event-container {
+				padding-block-start: 30px;
+				overflow-y: auto;
+				overscroll-behavior: contain;
+			}
+			.room-empty {
+				display: none;
+			}
+		}
+		.room-event {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			flex: 0 0 auto;
+			gap: 4px;
+			min-inline-size: 0;
+			padding: 4px;
+			border: 1px solid var(--level-3-border);
+			border-radius: 4px;
+			background: var(--level-3-background);
+			cursor: grab;
+			a {
+				display: flex;
+				align-items: center;
+				flex: 1;
+				gap: 6px;
+				min-inline-size: 0;
+				color: var(--color-primary-text);
+				text-decoration: none;
+				font-size: 12px;
+				line-height: 1.25;
+				overflow-wrap: anywhere;
+			}
+			img {
+				inline-size: 36px;
+				block-size: 36px;
+				object-fit: cover;
+				border-radius: 3px;
+				flex: 0 0 auto;
+			}
+			&:hover {
+				border-color: var(--color-primary);
+			}
+			&.is-dragging {
+				opacity: 0.5;
+			}
+		}
+		.event-notes {
+			min-inline-size: 0;
+			font-size: 11px;
+			line-height: 1.35;
+			summary {
+				inline-size: fit-content;
+				color: var(--color-primary-text);
+				cursor: pointer;
+			}
+			p {
+				max-block-size: 8rem;
+				margin: 4px 0 0;
+				overflow-y: auto;
+				white-space: pre-wrap;
+				overflow-wrap: anywhere;
+			}
+		}
+		.room-event .event-notes {
+			flex: 0 0 100%;
+			border-block-start: 1px solid var(--level-3-border);
+			padding-block-start: 4px;
+		}
+		#assignment-dialog {
+			inline-size: min(560px, calc(100% - 32px));
+			max-block-size: calc(100dvh - 32px);
+			padding: 24px;
+			overflow-y: auto;
+			background-color: var(--level-1-background);
+			h2 {
+				padding-inline-end: 24px;
+			}
+			.room-event-container {
+				margin-block-start: 16px;
+			}
+		}
+		.room-event-option {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 12px;
+			padding: 8px;
+			text-align: start;
+			border: 1px solid var(--level-2-border);
+			border-radius: 6px;
+			background: var(--level-2-background);
+			color: var(--color-primary-text);
+			.room-event-option-main {
+				display: flex;
+				align-items: center;
+				flex: 1;
+				gap: 12px;
+				min-inline-size: 0;
+			}
+			img {
+				inline-size: 64px;
+				block-size: 48px;
+				object-fit: cover;
+				border-radius: 4px;
+			}
+			span {
+				display: grid;
+				gap: 4px;
+			}
+			small {
+				opacity: 0.7;
+			}
+			&:hover {
+				border-color: var(--color-primary);
+			}
+		}
+		.room-event-option-add {
+			display: grid;
+			place-items: center;
+			flex: 0 0 auto;
+			inline-size: 32px;
+			block-size: 32px;
+			padding: 0;
+			border: 1px solid var(--level-3-border);
+			border-radius: 4px;
+			background: var(--level-3-background);
+			color: var(--color-primary-text);
+			font-size: 20px;
+			line-height: 1;
+			cursor: pointer;
+			&:hover {
+				background: var(--level-3-background-hover);
+			}
+			&:focus-visible {
+				outline: 2px solid var(--color-primary);
+				outline-offset: 2px;
+			}
+			&:disabled {
+				opacity: 0.5;
+				cursor: wait;
+			}
+		}
+		.room-event-option .event-notes {
+			flex: 0 0 100%;
+			border-block-start: 1px solid var(--level-2-border);
+			padding-block-start: 4px;
+			padding-inline: 8px;
+		}
+		.rooms-heading-row {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: var(--spacing-4x);
+			h2 {
+				margin: 0;
+			}
+		}
+		.rooms-publish-error {
+			color: var(--color-error);
+		}
+		.rooms-publish-control-body {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-2x);
+		}
+		.rooms-publish-state {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-1x);
+		}
+		.rooms-publish-state-label {
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+		}
+		.rooms-publish-state-value {
+			color: var(--color-text-strong);
+		}
+		.rooms-publish-switch {
+			position: relative;
+			display: inline-flex;
+			align-items: center;
+			flex: 0 0 auto;
+			cursor: pointer;
+		}
+		.rooms-publish-switch input {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			opacity: 0;
+		}
+		.rooms-publish-switch-track {
+			position: relative;
+			display: inline-flex;
+			width: 52px;
+			height: 30px;
+			border: 1px solid var(--level-3-border-hover);
+			border-radius: 999px;
+			background-color: var(--level-1-background);
+			transition: var(--btn-transition);
+		}
+		.rooms-publish-switch-thumb {
+			position: absolute;
+			top: 3px;
+			left: 3px;
+			width: 22px;
+			height: 22px;
+			border-radius: 999px;
+			background-color: var(--color-text-soft);
+			transition:
+				transform 0.2s ease,
+				background-color 0.2s ease;
+		}
+		.rooms-publish-switch input:checked + .rooms-publish-switch-track {
+			border-color: var(--color-primary);
+			background-color: var(--color-primary-hover);
+		}
+		.rooms-publish-switch input:checked + .rooms-publish-switch-track .rooms-publish-switch-thumb {
+			transform: translateX(22px);
+			background-color: var(--color-primary);
+		}
+		.rooms-publish-switch input:focus-visible + .rooms-publish-switch-track {
+			box-shadow: var(--btn-primary-shadow);
+		}
 	</style>
 	{{ allEvents := getApprovedEventsForPulje(db, logger, pulje) }}
 	<div
@@ -660,7 +736,7 @@ templ roomsAssignmentLiveContent(db *sql.DB, logger *slog.Logger, pulje models.P
 				}
 			</div>
 		} else {
-			<p style="text-align: center;">Ingen rom funnet, vær den første til å <a href="/admin/rooms/">legge inn</a> et rom nå!</p>
+			<p style="text-align: center">Ingen rom funnet, vær den første til å <a href="/admin/rooms/">legge inn</a> et rom nå!</p>
 		}
 	</section>
 }

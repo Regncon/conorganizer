@@ -28,16 +28,16 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	r *http.Request,
 	logger *slog.Logger) {
 	{{
-	puljer, puljerErr := ticketholder.GetPuljerFromEventId(eventId, db)
-	if puljerErr != nil {
-		logger.Error(puljerErr.Error(), "event_id", eventId)
-	}
-	selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
-	billettholderID := ticketholder.ResolveSelectedBillettholderID(userInfo, associatedTicketHolders, requestctx.SelectedBillettholderID(r.Context()))
-	noticeState, noticeErr := LoadInterestNoticeState(billettholderID, puljeId, ageGroup, eventImageDir, db)
-	if noticeErr != nil {
-		logger.Error(noticeErr.Error(), "event_id", eventId, "pulje_id", puljeId, "billettholder_id", billettholderID)
-	}
+		puljer, puljerErr := ticketholder.GetPuljerFromEventId(eventId, db)
+		if puljerErr != nil {
+			logger.Error(puljerErr.Error(), "event_id", eventId)
+		}
+		selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
+		billettholderID := ticketholder.ResolveSelectedBillettholderID(userInfo, associatedTicketHolders, requestctx.SelectedBillettholderID(r.Context()))
+		noticeState, noticeErr := LoadInterestNoticeState(billettholderID, puljeId, ageGroup, eventImageDir, db)
+		if noticeErr != nil {
+			logger.Error(noticeErr.Error(), "event_id", eventId, "pulje_id", puljeId, "billettholder_id", billettholderID)
+		}
 	}}
 	<style>
 		.dialog-container {
@@ -98,7 +98,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				}
 
 				.dialog-content {
-                    --border-outline-width: 4px;
+					--border-outline-width: 4px;
 
 					display: flex;
 					flex-direction: column;
@@ -244,61 +244,60 @@ templ InterestContent(eventID string, title string, state InterestNoticeState, i
 
 templ InterestAlreadyAssigned(eventID string, assignedEvent AssignedEvent) {
 	<style>
-        .interest-already-assigned {
-            padding: var(--spacing-3x);
-            background-color: var(--level-2-background);
-            border-radius: var(--border-radius-1x);
-            color: var(--color-text-soft);
+		.interest-already-assigned {
+			padding: var(--spacing-3x);
+			background-color: var(--level-2-background);
+			border-radius: var(--border-radius-1x);
+			color: var(--color-text-soft);
 
-            > p {
-                margin-block: var(--spacing-3x);
-            }
+			> p {
+				margin-block: var(--spacing-3x);
+			}
 
-            .clickable-event-card{
-                background-color: var(--level-3-background);
-                border-radius: var(--border-radius-2x);
-                border: 1px solid var(--level-3-border);
+			.clickable-event-card {
+				background-color: var(--level-3-background);
+				border-radius: var(--border-radius-2x);
+				border: 1px solid var(--level-3-border);
 
-                .previous-next-buttons {
-                    text-decoration: none;
-                    color: inherit;
-                    display: block;
-                    padding: 0;
+				.previous-next-buttons {
+					text-decoration: none;
+					color: inherit;
+					display: block;
+					padding: 0;
 
-                    .text-container {
-                        div {
-                            padding: var(--spacing-3x);
-                            color: var(--color-text-strong);
+					.text-container {
+						div {
+							padding: var(--spacing-3x);
+							color: var(--color-text-strong);
 
-                            p {
-                                font-size: 12px;
-                                color: var(--color-primary);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+							p {
+								font-size: 12px;
+								color: var(--color-primary);
+							}
+						}
+					}
+				}
+			}
+		}
 
-        @container interest-dialog (width > 375px) {
-            .interest-already-assigned {
-                padding: var(--spacing-5x);
-                    > p {
-                        margin-block: var(--spacing-5x);
-                    }
-                .clickable-event-card {
-                    .previous-next-buttons {
-                        .text-container {
-                            div {
-                                padding: var(--spacing-5x);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-    </style>
+		@container interest-dialog (width > 375px) {
+			.interest-already-assigned {
+				padding: var(--spacing-5x);
+				> p {
+					margin-block: var(--spacing-5x);
+				}
+				.clickable-event-card {
+					.previous-next-buttons {
+						.text-container {
+							div {
+								padding: var(--spacing-5x);
+							}
+						}
+					}
+				}
+			}
+		}
+	</style>
 	<section class="interest-already-assigned">
 		if assignedEvent.Role == models.EventPlayerRoleGM {
 			@interestAlreadyAssignedGM(eventID, assignedEvent)
@@ -332,31 +331,31 @@ templ interestAlreadyAssignedGM(eventID string, assignedEvent AssignedEvent) {
 
 templ interestUnder18(title string) {
 	<style>
-        .interest-under-18 {
-            padding: var(--spacing-3x);
-            background-color: var(--level-2-background);
-            border-radius: var(--border-radius-1x);
-            color: var(--color-text-soft);
+		.interest-under-18 {
+			padding: var(--spacing-3x);
+			background-color: var(--level-2-background);
+			border-radius: var(--border-radius-1x);
+			color: var(--color-text-soft);
 
-            p:first-of-type {
-                margin-block-start: var(--spacing-3x);
-            }
-        }
-        .interest-under-18 ~ .interest-buttons {
-            margin-block-start: var(--spacing-3x);
-        }
-        @container interest-dialog (width > 375px) {
-            .interest-under-18 {
-                padding: var(--spacing-5x);
-                p:first-of-type {
-                    margin-block-start: var(--spacing-5x);
-                }
-            }
-            .interest-under-18 ~ .interest-buttons {
-                margin-block-start: var(--spacing-5x);
-            }
-        }
-    </style>
+			p:first-of-type {
+				margin-block-start: var(--spacing-3x);
+			}
+		}
+		.interest-under-18 ~ .interest-buttons {
+			margin-block-start: var(--spacing-3x);
+		}
+		@container interest-dialog (width > 375px) {
+			.interest-under-18 {
+				padding: var(--spacing-5x);
+				p:first-of-type {
+					margin-block-start: var(--spacing-5x);
+				}
+			}
+			.interest-under-18 ~ .interest-buttons {
+				margin-block-start: var(--spacing-5x);
+			}
+		}
+	</style>
 	<section class="interest-under-18">
 		<h3>Anbefalt for voksne (18+)</h3>
 		<p>Arrangementet <i>{ title }</i> er anbefalt for deltakere som er 18 år eller eldre.</p>
@@ -365,61 +364,61 @@ templ interestUnder18(title string) {
 
 templ ClickableEventCard(assignedEvent AssignedEvent) {
 	<style>
-        .clickable-event-card {
-            .event-card-grid {
-                display: grid;
-                grid-template-rows: 1fr;
-                grid-template-columns: minmax(0, 1fr);
-                height: 100%;
-                position: relative;
-            }
+		.clickable-event-card {
+			.event-card-grid {
+				display: grid;
+				grid-template-rows: 1fr;
+				grid-template-columns: minmax(0, 1fr);
+				height: 100%;
+				position: relative;
+			}
 
-            .text-container {
-                display: flex;
-                align-items: center;
-                grid-row: 1 / 2;
-                grid-column: 1 / 2;
-                min-inline-size: 0;
-            }
+			.text-container {
+				display: flex;
+				align-items: center;
+				grid-row: 1 / 2;
+				grid-column: 1 / 2;
+				min-inline-size: 0;
+			}
 
-            .event-card-text {
-                display: flex;
-                flex-direction: column;
-                gap: var(--spacing-1x);
-                overflow: clip;
-                min-inline-size: 0;
+			.event-card-text {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-1x);
+				overflow: clip;
+				min-inline-size: 0;
 
-                strong {
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                }
+				strong {
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+				}
 
-                p {
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                }
-            }
+				p {
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+				}
+			}
 
-            /* --linear-gradient-mask comes from .previous-next-buttons in PreviousNextBar. */
-            .event-card-image {
-                grid-row: 1 / 2;
-                grid-column: 1 / 2;
-                mask-image: var(--linear-gradient-mask);
-                -webkit-mask-image: var(--linear-gradient-mask);
-                filter: opacity(0.5);
-                border-radius: var(--border-radius-2x);
-                position: absolute;
-                inset-block: 0;
-                inset-inline-end: 0;
-                block-size: 100%;
-                inline-size: auto;
-                max-inline-size: 100%;
-                object-fit: cover;
-            }
-        }
-    </style>
+			/* --linear-gradient-mask comes from .previous-next-buttons in PreviousNextBar. */
+			.event-card-image {
+				grid-row: 1 / 2;
+				grid-column: 1 / 2;
+				mask-image: var(--linear-gradient-mask);
+				-webkit-mask-image: var(--linear-gradient-mask);
+				filter: opacity(0.5);
+				border-radius: var(--border-radius-2x);
+				position: absolute;
+				inset-block: 0;
+				inset-inline-end: 0;
+				block-size: 100%;
+				inline-size: auto;
+				max-inline-size: 100%;
+				object-fit: cover;
+			}
+		}
+	</style>
 	<section class="prev-next-button-container no-print clickable-event-card">
 		<a class="previous-next-buttons" href={ templ.URL("/event/" + assignedEvent.EventID) }>
 			<div class="event-card-grid">

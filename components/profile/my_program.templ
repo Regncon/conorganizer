@@ -28,10 +28,10 @@ type UserEvent struct {
 }
 
 type UserProgramPulje struct {
-	Pulje      models.PuljeRow
+	Pulje       models.PuljeRow
 	ProgramDate string
-	Events     []UserEvent
-	Interests  []UserInterest
+	Events      []UserEvent
+	Interests   []UserInterest
 }
 
 templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
@@ -112,7 +112,14 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 			Mitt festivalprogram
 		</h2>
 		if hasError {
-			<div style="padding: var(--spacing-4x); color: var(--color-error); background-color: color-mix(in srgb, var(--color-error) 12%, var(--level-2-background)); border-radius: var(--border-radius-2x);">
+			<div
+				style="
+		padding: var(--spacing-4x);
+		color: var(--color-error);
+		background-color: color-mix(in srgb, var(--color-error) 12%, var(--level-2-background));
+		border-radius: var(--border-radius-2x);
+	"
+			>
 				<p>Vi klarte ikke å laste hele festivalprogrammet ditt akkurat nå.</p>
 				<p>Prøv igjen om litt.</p>
 			</div>
@@ -155,7 +162,7 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 					}
 				} else {
 					<div class="program-pulje-container">
-						<h3 class="program-pulje" style="text-align: center;">Programmet for Regncon er ikke publisert ennå</h3>
+						<h3 class="program-pulje" style="text-align: center">Programmet for Regncon er ikke publisert ennå</h3>
 						<p>
 							Vi arbeider fortsatt med planleggingen og vil legge ut programmet så snart det er klart.
 							Følg med på nettsiden for oppdateringer og nyheter.

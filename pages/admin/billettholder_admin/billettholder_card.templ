@@ -265,14 +265,24 @@ func deleteEmailFromBillettholderRoute(
 }
 
 templ billettholderCard(billettholder models.Billettholder, searchTerm string, interestSections []billettholderInterestPuljeSection) {
-	<div class="card billettholder-card" style="display:flex; flex-direction:column; gap:0.75rem; padding: 1rem; border-radius: 8px; color: var(--color-text-strong);">
-		<p style="margin:0;">
+	<div
+		class="card billettholder-card"
+		style="
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding: 1rem;
+		border-radius: 8px;
+		color: var(--color-text-strong);
+	"
+	>
+		<p style="margin: 0">
 			<strong>Bestilling: </strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
 		</p>
-		<p style="margin:0;">
+		<p style="margin: 0">
 			<strong>Type: </strong> @templ.Raw(highlightSearchTerm(billettholder.TicketType, searchTerm))
 		</p>
-		<p style="margin:0;">
+		<p style="margin: 0">
 			<strong>Navn:</strong>
 			<em>
 				@templ.Raw(highlightSearchTerm(billettholder.FirstName+" "+billettholder.LastName, searchTerm))
@@ -280,7 +290,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string, i
 		</p>
 		for _, email := range billettholder.Emails {
 			if email.Kind == models.BillettholderEmailKindTicket {
-				<div style="display: flex; align-items: center; gap:0.5rem; ">
+				<div style="display: flex; align-items: center; gap: 0.5rem">
 					<strong>Epost:</strong>
 					<a href={ "mailto:" + email.Email }>
 						@templ.Raw(highlightSearchTerm(email.Email, searchTerm))
@@ -288,7 +298,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string, i
 				</div>
 			}
 		}
-		<div style="display: flex; align-items: center; gap:0.5rem; ">
+		<div style="display: flex; align-items: center; gap: 0.5rem">
 			if billettholder.IsOver18 {
 				@icons.Icon(icons.EventAdultOnly, icons.Size24)
 				<p><strong>Alder:</strong> Over 18</p>
@@ -301,7 +311,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string, i
 		<span>Andre epostadresser på samme bestilling:</span>
 		for _, email := range billettholder.Emails {
 			if email.Kind == models.BillettholderEmailKindAssociated || email.Kind == models.BillettholderEmailKindManual {
-				<div style="display:flex; align-items:center; gap:0.5rem; justify-content: space-between;">
+				<div style="display: flex; align-items: center; gap: 0.5rem; justify-content: space-between">
 					<a href={ "mailto:" + email.Email }>
 						@templ.Raw(highlightSearchTerm(email.Email, searchTerm))
 					</a>
@@ -322,12 +332,12 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string, i
 			data-on:keydown={ fmt.Sprintf("if (evt.key === 'Enter') { evt.preventDefault(); %s }", datastar.PostSSE("/admin/billettholder/api/new-email/%d/", billettholder.ID)) }
 		/>
 		<strong
-			style="color: var(--color-error);"
+			style="color: var(--color-error)"
 			data-signals={ fmt.Sprintf(`"errorMessage-%d"`, billettholder.ID) }
 			data-text={ fmt.Sprintf(`$errorMessage-%d`, billettholder.ID) }
 		></strong>
 		<strong
-			style="color: var(--color-success);"
+			style="color: var(--color-success)"
 			data-signals={ fmt.Sprintf(`"successMessage-%d"`, billettholder.ID) }
 			data-text={ fmt.Sprintf(`$successMessage-%d`, billettholder.ID) }
 		></strong>
