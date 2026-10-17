@@ -46,3 +46,19 @@ jobs:
               uses: golangci/golangci-lint-action@v9
               with:
                   version: v2.13.2
+
+    templ-fmt:
+        name: templ fmt
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-go@v6
+              with:
+                  go-version: "1.27"
+                  cache: false
+            # templ fmt formats <style> and <script> bodies through prettier,
+            # so the check needs the same prettier as developers use.
+            - name: Install prettier
+              run: npm install -g prettier@3.9.10
+            - name: Check templ formatting
+              run: go tool task check:templ-fmt

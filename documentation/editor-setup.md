@@ -27,6 +27,8 @@ Repeat the install whenever `go.mod` bumps templ. Setting `templ.executablePath`
 
 `.vscode/settings.json` makes `a-h.templ` the formatter for `.templ` files and turns on format on save, so saved files come out the way `go tool templ fmt` writes them.
 
+CI and `make check` run `go tool task check:templ-fmt`, which fails when a `.templ` file is not formatted. Both need Prettier on `PATH`, and CI pins Prettier 3.9.10 in `.github/workflows/golangci-lint.yml`, so install the same major version locally. `go tool task fmt:templ` formats everything in place.
+
 ## Prettier for `<style>` and `<script>` blocks
 
 `templ fmt` formats the templ and Go parts by itself. The bodies of `<style>` and `<script>` elements, and constant attribute values, are formatted by Prettier when `prettier` or `prettierd` is on `PATH`. Without Prettier those parts are left as they are, which is how the CSS indentation inside `.templ` files drifted. Install one of them globally:

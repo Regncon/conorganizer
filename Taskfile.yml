@@ -196,6 +196,37 @@ tasks:
         deps:
             - build
 
+    # Format .templ files. <style> and <script> bodies and constant attribute
+    # values are only formatted when prettier is on PATH, see documentation/editor-setup.md
+    fmt:templ:
+        cmds:
+            - |
+              set -eu
+              for dir in components pages layouts service; do
+                if [ -d "$dir" ]; then
+                  go tool templ fmt -log-level error "$dir"
+                fi
+              done
+
+    # Fail when a .templ file is not formatted. Requires prettier so the result
+    # matches CI. templ writes the formatted files before failing, so the diff
+    # shows what to commit.
+    check:templ-fmt:
+        cmds:
+            - |
+              set -eu
+              status=0
+              for dir in components pages layouts service; do
+                if [ -d "$dir" ]; then
+                  go tool templ fmt -fail -prettier-required -log-level error "$dir" || status=1
+                fi
+              done
+              if [ "$status" -ne 0 ]; then
+                echo "templ fmt changed these files, commit them:" >&2
+                git --no-pager diff --name-only -- '*.templ' >&2
+                exit 1
+              fi
+
     # Run all tests in all subdirectories
     test:
         cmds:
