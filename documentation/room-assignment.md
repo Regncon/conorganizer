@@ -17,7 +17,7 @@ A room is linked to an event in a pulje through `relation_event_puljer.room_id`.
 
 `rooms.max_concurrent_games` and `rooms.is_disabled` are legacy columns. The application has no capacity control and no way to disable a room, and no application code reads either column.
 
-- Both are still in `schema.sql` and `initialize.sql`. `max_concurrent_games` is `NOT NULL` with no default, and `is_disabled` is `NOT NULL DEFAULT 0`.
+- Both are still in `schema.sql`. `max_concurrent_games` is `NOT NULL` with no default, and `is_disabled` is `NOT NULL DEFAULT 0`.
 - The views `v_events_by_pulje_active` and `v_event_puljer_active` still select them as `room_max_concurrent_games` and `room_is_disabled`.
 - `rooms.CreateRoom` (`service/rooms/rooms.go`) writes `0` to both.
 - Test fixtures that insert rooms with raw SQL must set `max_concurrent_games` explicitly, because the column is `NOT NULL` (see `pages/admin/rooms_assignment_route_test.go`).

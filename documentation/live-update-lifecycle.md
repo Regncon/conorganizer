@@ -119,7 +119,7 @@ A pulje status or closing-warning change broadcasts `events`, so open event page
 
 | Page | Live endpoint | Buckets | Notes |
 | --- | --- | --- | --- |
-| `/` | `/root/api` | `events` | Keeps the selected program day through the `date` query parameter. |
+| `/` | `/root/api` | `events`, `interests`, `billettholders` | Keeps the selected program day through the `date` query parameter. |
 | `/event/{id}` | `/event/api/{id}` | `events`, `interests`, `rooms` | The page's query string is passed to the live endpoint. |
 | `/profile` | `/profile/api` | `events`, `interests`, `billettholders` | Uses `DatastarInitExpression` to pass `window.location.search`. Patches only `#profile-main-column`. |
 | `/profile/new/{id}` | `/profile/api/new/{id}` | `events`, `rooms` | Event form with pulje and room choices. |

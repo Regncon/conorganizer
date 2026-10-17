@@ -106,7 +106,7 @@ If `goose up` reports `no next version found` but the database is clearly behind
 sqlite3 database/events.db "SELECT id, version_id, is_applied, tstamp FROM goose_db_version ORDER BY id;"
 ```
 
-Goose reports this error when the table exists but has no applied rows. A database created from `initialize.sql` has the table but no rows.
+Goose reports this error when the table exists but has no applied rows. A database created from `schema.sql` has the table but no rows.
 
 To repair:
 

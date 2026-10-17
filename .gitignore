@@ -24,6 +24,7 @@ tmp-gocache/
 # Ai folder
 .codex/*
 !.codex/config.toml
+/.claude/worktrees/
 
 # graphify (knowledge graph tooling - local only)
 .graphifyignore
