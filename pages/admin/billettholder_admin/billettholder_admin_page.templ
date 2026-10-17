@@ -49,17 +49,6 @@ func billettholdereSearchRoute(
 	})
 }
 
-/*
-
-	<input
-		style="max-width: 30rem;"
-		data-bind-search
-		data-on-input__debounce.50ms="@get('/admin/billettholder/api/search/')"
-		placeholder="Search..."
-		type="text"
-	/>
-*/
-
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	{{
 		bilettholdere, err := billettholderService.GetBillettholdereWithFilters("", db, billettholderFilters)

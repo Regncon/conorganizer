@@ -59,17 +59,6 @@ func isBillettholder(ticketID int, bilettholdere []models.Billettholder) bool {
 	return false
 }
 
-/*
-
-	<input
-		style="max-width: 30rem;"
-		data-bind-search
-		data-on-input__debounce.50ms="@get('/admin/billettholder/add/api/search/')"
-		placeholder="Search..."
-		type="text"
-	/>
-*/
-
 templ AddBillettholderAdminPage(ctx context.Context, db *sql.DB, logger *slog.Logger) {
 	{{ ticketResult, ticketsErr := checkIn.GetTicketsFromCheckIn(ctx, logger, searchTerm) }}
 	{{ tickets := ticketResult.Tickets }}
