@@ -61,7 +61,8 @@ Skills live in `.agents/skills/<name>/` (SKILL.md, references/, agents/openai.ya
 - Import edges that exist today: layouts imports components/header; userctx imports layouts and authctx; testutil imports service; pages import service packages. So header and layouts cannot import userctx, authctx cannot import userctx, package service cannot import testutil (testutil/bdd is fine), and service packages never import pages.
 - New service packages take `db *sql.DB` like their neighbours, return wrapped errors without logging them, and export sentinel errors (like `feedback.ErrNotFound`) so handlers can map them to 404.
 - golangci-lint runs with `tests: false`, so a production function that only tests call is reported as unused. Error strings start lowercase (ST1005).
-- Don't reformat untouched code. Keep the blank line between stdlib and module imports.
+- Don't reformat untouched Go code; not every file is gofmt-clean. Keep the blank line between stdlib and module imports.
+- `.templ` files are the opposite: CI fails on an unformatted one, so run `go tool task fmt:templ` after editing them (README, Formatting).
 - Don't add code comments unless they are needed. Keep the `// Given`, `// When`, `// Then` markers and notes on magic numbers.
 
 ## Database
