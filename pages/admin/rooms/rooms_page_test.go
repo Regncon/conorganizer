@@ -486,6 +486,32 @@ func TestRoomAssignmentPicker_ExistsWhenPuljeHasNoEvents(t *testing.T) {
 	}
 }
 
+func TestRoomAssignmentPicker_SaysEventsFromOtherPuljerAreAddedToPulje(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt romfordelingen for en pulje.",
+		When:  "Når dialogen for å legge til arrangement i et rom rendres.",
+		Then:  "Så skal teksten si at arrangementer fra andre puljer blir lagt til i puljen, ikke publisert.",
+	})
+
+	// Given
+	expectedText := "Arrangementer fra andre puljer blir lagt til i denne puljen."
+	oldText := "lagt til og publisert i denne puljen"
+	db, logger := testutil.CreateTestDBAndLogger(t, "room_picker_other_pulje_text")
+	createRoomsPageRoom(t, db, "Amalie", "705", 7)
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
+	actualText := doc.Find("#assignment-dialog").Text()
+
+	// Then
+	if !strings.Contains(actualText, expectedText) {
+		t.Fatalf("expected dialog text %q\nactual text: %s", expectedText, actualText)
+	}
+	if strings.Contains(actualText, oldText) {
+		t.Fatalf("expected old dialog text %q to be gone\nactual text: %s", oldText, actualText)
+	}
+}
+
 func TestRoomAssignmentPicker_IncludesApprovedEventsOutsidePulje(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "approved_events_outside_pulje")
 	seedRoomsPageLookups(t, db)

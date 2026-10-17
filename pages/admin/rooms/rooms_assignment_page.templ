@@ -122,7 +122,7 @@ templ assignEventModal(events []models.RoomEventPuljeSummaryJson, pulje models.P
 		aria-labelledby="assignment-dialog-title"
 	>
 		<h2 id="assignment-dialog-title">Legg til arrangement i rom <span data-text="$_roomNumber"></span></h2>
-		<p>Velg et godkjent arrangement. Arrangementer fra andre puljer blir lagt til og publisert i denne puljen.</p>
+		<p>Velg et godkjent arrangement. Arrangementer fra andre puljer blir lagt til i denne puljen.</p>
 		@errorfeedback.RenderMessage("room-picker")
 		<div
 			class="room-event-container"

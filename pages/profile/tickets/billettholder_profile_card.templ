@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/checkIn"
@@ -305,12 +306,12 @@ templ billettholderCard(billettholder models.Billettholder) {
 		/>
 		<strong
 			style="color: var(--color-error)"
-			data-signals={ fmt.Sprintf(`"errorMessage-%d"`, billettholder.ID) }
+			data-signals={ components.DataSignals(map[string]string{"errorMessage-" + strconv.Itoa(billettholder.ID): ""}) }
 			data-text={ fmt.Sprintf(`$errorMessage-%d`, billettholder.ID) }
 		></strong>
 		<strong
 			style="color: var(--color-success)"
-			data-signals={ fmt.Sprintf(`"successMessage-%d"`, billettholder.ID) }
+			data-signals={ components.DataSignals(map[string]string{"successMessage-" + strconv.Itoa(billettholder.ID): ""}) }
 			data-text={ fmt.Sprintf(`$successMessage-%d`, billettholder.ID) }
 		></strong>
 		<button

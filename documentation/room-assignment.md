@@ -112,7 +112,7 @@ When there are no such events, the dialog shows "Ingen godkjente arrangementer."
 4. It broadcasts the `rooms` and `events` live buckets.
 5. It responds with a script that closes `#assignment-dialog` and dispatches `room-saved` on `window`.
 
-The endpoint does **not** change the legacy `relation_event_puljer.is_published` flag. A new row keeps the database default `0`, and an existing row keeps its value (checked in `pages/admin/rooms_assignment_route_test.go`). The dialog text says events from other puljer are "lagt til og publisert i denne puljen", but what the endpoint actually sets is `is_in_pulje = 1`. Whether the program is published is a separate global flag in `program_publishing_state`.
+The endpoint does **not** change the legacy `relation_event_puljer.is_published` flag. A new row keeps the database default `0`, and an existing row keeps its value (checked in `pages/admin/rooms_assignment_route_test.go`). The dialog text says events from other puljer are "lagt til i denne puljen", which is what `is_in_pulje = 1` means; it does not announce the event. Whether the program is published is a separate global flag in `program_publishing_state`.
 
 ### `DELETE /admin/rooms/api/assignment/{pulje}/{event}/{room}`
 

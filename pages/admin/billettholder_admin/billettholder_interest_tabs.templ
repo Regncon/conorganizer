@@ -84,13 +84,13 @@ templ billettholderInterestTabsStyles() {
 			}
 		}
 
-		@container billettholder-interest-dialog (min-width: 36rem) {
+		@container billettholder-interest-dialog (width >= 36rem) {
 			.billettholder-interest-tabs {
 				grid-template-columns: repeat(2, minmax(0, 1fr));
 			}
 		}
 
-		@container billettholder-interest-dialog (min-width: 48rem) {
+		@container billettholder-interest-dialog (width >= 48rem) {
 			.billettholder-interest-tabs {
 				grid-template-columns: repeat(4, minmax(0, 1fr));
 			}

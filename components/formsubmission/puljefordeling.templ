@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
@@ -271,7 +272,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 					<label
 						class="form-group"
 						style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
-						data-signals={ fmt.Sprintf("{roomAssignment:  {%s: '%s'}}", pulje.ID, assignedRoomNonNullable) }
+						data-signals={ components.DataSignals(map[string]map[models.Pulje]string{"roomAssignment": {pulje.ID: assignedRoomNonNullable}}) }
 					>
 						<span class="label-bold color-strong">Legg til rom</span>
 						<select

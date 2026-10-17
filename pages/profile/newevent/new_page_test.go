@@ -73,7 +73,8 @@ func TestNewEventFormPageContent_WhenApprovedEventIsOpenedByNonAdmin_RendersLock
 	})
 
 	// Given
-	expectedTextPart := "Arrangementet er allerede godkjent eller publisert"
+	expectedTextPart := "Arrangementet er allerede godkjent eller annonsert"
+	oldTextPart := "Arrangementet er allerede godkjent eller publisert"
 	db, logger := testutil.CreateTestDBAndLogger(t, "new_event_approved")
 	seedNewEventPageLookups(t, db)
 	insertNewEventPageEvent(t, db, "approved-event", 501, models.EventStatusApproved)
@@ -85,6 +86,9 @@ func TestNewEventFormPageContent_WhenApprovedEventIsOpenedByNonAdmin_RendersLock
 	// Then
 	if !strings.Contains(actualText, expectedTextPart) {
 		t.Fatalf("expected approved event message %q\nactual text: %s", expectedTextPart, actualText)
+	}
+	if strings.Contains(actualText, oldTextPart) {
+		t.Fatalf("expected old message %q to be gone\nactual text: %s", oldTextPart, actualText)
 	}
 }
 
