@@ -281,6 +281,19 @@ Its `build:templ` dependency runs `go tool templ generate` for `components`,
 generated code, such as unused variables or a shadowed `err` in `{{ }}` Go
 blocks, only show up after generation.
 
+### Formatting
+
+CI fails when a `.templ` file is not formatted. To format every `.templ` file
+in place, including the `<style>` and `<script>` blocks, run:
+
+```bash
+go tool task fmt:templ
+```
+
+`go tool task check:templ-fmt` is the check CI runs; `make fmt` and
+`make check` wrap the two. Both need Prettier on `PATH`, which
+`go tool task setup:editor` installs (see [IDE Setup](#ide-setup)).
+
 A bare `return` line in template markup is rendered as text, not as a Go early
 exit, so rendering continues. For guard and early-exit logic inside a
 component, use a Go code block, as `pages/event/event_page.templ` does:
