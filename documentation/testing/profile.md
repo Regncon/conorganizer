@@ -45,7 +45,7 @@ Denne sjekklisten dekker `/profile`: innlogget oversikt, egne arrangementer, kor
 - [ ] **Godkjent arrangement kan ikke redigeres av vanlig bruker**<br>
   **Gitt** at et arrangement har status Godkjent og brukeren ikke er admin.<br>
   **Når** brukeren åpner `/profile/new/{id}` direkte.<br>
-  **Så** vises «Arrangementet er allerede godkjent eller publisert» og beskjed om å ta kontakt med RegnCon-styret, i stedet for skjemaet.
+  **Så** vises «Arrangementet er allerede godkjent eller annonsert» og beskjed om å ta kontakt med RegnCon-styret, i stedet for skjemaet.
 
 - [ ] **Mange arrangementer forblir lesbare**<br>
   **Gitt** at brukeren har mange arrangementer.<br>

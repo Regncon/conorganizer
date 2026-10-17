@@ -45,8 +45,8 @@ templ NewEventFormPageContent(eventId string, eventImageDir *string, userId stri
 		return
 	}
 	if isAdmin == false && eventData.Status == models.EventStatusApproved {
-		{{ logger.Warn("Attempt to edit an already approved or published event", "event_id", eventId) }}
-		<h1>Arrangementet er allerede godkjent eller publisert</h1>
+		{{ logger.Warn("Attempt to edit an already approved or announced event", "event_id", eventId) }}
+		<h1>Arrangementet er allerede godkjent eller annonsert</h1>
 		<h2>Ta kontakt med RegnCon-styret på Discord eller via epost om du ønsker å gjøre endringer på arrangementet.</h2>
 	} else {
 		@components.Breadcrumbs([]components.BreadcrumbPath{
