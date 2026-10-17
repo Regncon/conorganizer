@@ -329,6 +329,8 @@ Size: 422 distinct `*Event*` identifiers with 3186 uses in 195 files, plus 97 lo
 
 ### Phase 6: database (1 PR, then a migration by hand)
 
+Ask open item 8 again first: rename the database tables, or keep them as they are.
+
 The PR contains:
 
 - The migration above.
@@ -377,6 +379,9 @@ These are suggestions to approve or change before the phase that needs them.
 5. **`v_event_summary` is unused** (0 uses in code). The plan renames it. Dropping it would be a separate change.
 6. **Saved Loki queries** outside the repo that filter on `event_id` or `component=event` stop matching new logs after phase 5c.
 7. **SVG map contents** (phase 3). The maps hold 560 room names, and `data-room-number`/`data-room-target` are read by `room_map.js` and `maps_test.go`. Suggestion: leave the SVG files and these attribute names as they are, because they are map data under a URL that stays, and keep the code that reads them pointing at `data-room-*`. The other choice is to rename them all in one PR together with `room_map.js`, `maps_test.go`, `rooms_assignment_page.templ` and `room-assignment.md`. Usikker.
+8. **Rename the database tables?** (phase 6). Answered yes on 2026-10-18, but ask again before phase 6 starts. The choices:
+   - **Rename tables, columns and views** (today's answer): one migration, a migration of main and demo by hand, the backup and anonymize scripts updated, `restored` and old backups need `goose up`, and open PRs must merge main afterwards.
+   - **Only Go and templ names**: no migration and no rollout, but the SQL keeps `events`, `interests` and `rooms`, so code that says arrangement queries `FROM events`. Phase 6 is then dropped, and so is the backup-script change in phase 0.
 
 ## Appendix: commands
 
