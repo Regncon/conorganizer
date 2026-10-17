@@ -28,10 +28,17 @@ selection or a newer endpoint response. Plain `data-signals` applies the value
 when Datastar processes the attribute, including when a live HTML patch changes
 its value. Choose plain initialization when the server should replace the value.
 
+Put the modifier after the key: `data-signals:save-message__ifmissing="''"`.
+Datastar splits the attribute name on `__` before it reads the key, so
+`data-signals__ifmissing:save-message` is read as a keyless `data-signals` with
+the key inside the modifier name. The modifier is dropped and the value is
+spread into the signals, so `'Player'` becomes signals `0` to `5`. The keyless
+form takes an object: `data-signals__ifmissing={ components.DataSignals(map...) }`.
+
 ## Example: expand details in the browser
 
 ```html
-<section data-signals__ifmissing:_details-open="false">
+<section data-signals:_details-open__ifmissing="false">
     <button data-on:click="$_detailsOpen = !$_detailsOpen">
         Show details
     </button>
@@ -49,7 +56,7 @@ lets the user's choice survive later HTML updates that retain this component.
 Initialize a server-provided message and bind it to the UI:
 
 ```html
-<div data-signals__ifmissing:save-message="''">
+<div data-signals:save-message__ifmissing="''">
     <button data-on:click="@post('/example/save')">Save</button>
     <p role="status" data-text="$saveMessage"></p>
 </div>
@@ -97,7 +104,7 @@ carries the initializer.
 `data-effect` runs initially and when signals it reads change. For example:
 
 ```html
-<div data-signals__ifmissing:search-text="''"
+<div data-signals:search-text__ifmissing="''"
      data-effect="if ($searchText.length >= 3) { @get('/example/search') }">
     <input data-bind:search-text />
 </div>
@@ -169,7 +176,7 @@ When the dialog must be inside a live fragment, use this pattern:
 5. `data-preserve-attr="open"` keeps morphs from stripping `open`.
 
 ```html
-<div data-signals__ifmissing:billettholder-interest-open-dialog-id="''">
+<div data-signals:billettholder-interest-open-dialog-id__ifmissing="''">
     <button data-on:click="$billettholderInterestOpenDialogId = 'billettholder-interests-42'">
         Interesser
     </button>

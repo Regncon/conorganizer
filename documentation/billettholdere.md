@@ -252,7 +252,7 @@ signal `$billettholderInterestOpenDialogId`; see
 
 - One tab per pulje, in `start_at` order. Tabs are client-only: the page-wide
   signal `$billettholderInterestActivePulje` (declared with
-  `data-signals__ifmissing:billettholder-interest-active-pulje`) drives
+  `data-signals__ifmissing` with `components.DataSignals`) drives
   `data-class:selected`, `aria-selected`, `tabindex` and which panel is hidden.
   Switching tabs needs no server round trip. The open button sets the signal to
   that billettholder's first pulje before opening.
