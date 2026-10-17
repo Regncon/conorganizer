@@ -141,6 +141,8 @@ These full-page routes call `notfound.RenderEvent` when the arrangement does not
 
 API, SSE and admin action endpoints still return plain `http.Error` text with 404, so Datastar and other client callers do not get HTML. Examples are `pages/admin/puljefordeling.go` (`Pulje not found`), `pages/admin/tildelinger.go` (`Fant ikke billettholder, arrangement eller pulje`) and `DELETE /admin/tilbakemeldinger/{id}` in `pages/admin/feedback_admin.templ` (`Fant ikke tilbakemeldingen.`).
 
+The new-event form API under `/profile/api/new/{id}` (the SSE stream and every PUT and POST route under it) runs `newevent.RequireEventOwnerOrAdmin` (`pages/profile/newevent/new_index.templ`) on the `/{id}` sub-router. An admin passes. Anyone else must be the owner, meaning the token ID matches `users.external_id` on the row that `events.user_id` points to. The middleware and the page GET share that one query, `validateEventOwnedByUser`. Otherwise the response is plain text 404 `Fant ikke arrangementet.`, the same status the page gives a non-owner. Tests: `pages/profile/new_event_access_route_test.go`.
+
 ### Content
 
 The page is one centered column with:
