@@ -11,7 +11,8 @@ them separately. Run every Taskfile command as `go tool task <name>`, and the
 other tools as `go tool templ` and `go tool air`.
 
 Editing needs two things on the machine that runs your editor, whichever
-platform it is: Go, and Node.js with `npm`. templ formats `<style>` and
+platform it is: [Go](https://go.dev/dl/), and [Node.js](https://nodejs.org/en/download)
+with `npm`. templ formats `<style>` and
 `<script>` blocks through Prettier, which `go tool task setup:editor` installs
 with `npm`; the same task installs the templ version from `go.mod` for the
 editor. Run it once after cloning (see [IDE Setup](#ide-setup)).
@@ -29,14 +30,15 @@ fresh checkout has no database, so download data first:
 
 Choose your preferred method to run the project:
 ### Mac/Linux Setup
-Install Go and Node.js. Downloads also need `ssh`, `sqlite3` and `tar`, and
+Install [Go](https://go.dev/dl/) and [Node.js](https://nodejs.org/en/download).
+Downloads also need `ssh`, `sqlite3` and `tar`, and
 `go tool task test` needs `sqlite3`.
 
 ### Docker Setup (Recommended for Windows)
 
 The container has everything the app needs, but your editor runs on the host,
-so install Go and Node.js on Windows as well and run `go tool task setup:editor`
-there once.
+so install [Go](https://go.dev/dl/) and [Node.js](https://nodejs.org/en/download)
+on Windows as well and run `go tool task setup:editor` there once.
 
 Start the application using Docker Compose
 
