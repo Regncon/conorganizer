@@ -63,6 +63,32 @@ func TestBillettholderCard_RendersDetailsAndOnlyAllowsManualEmailDelete(t *testi
 	}
 }
 
+func TestBillettholderCard_DeclaresEmptyEmailMessageSignals(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en billettholder vises på adminkortet.",
+		When:  "Når adminkortet rendres.",
+		Then:  "Så skal feil- og suksessmeldingen for ny e-post starte som tomme signaler med billettholderens id.",
+	})
+
+	// Given
+	expectedErrorSignals := `{"errorMessage-42":""}`
+	expectedSuccessSignals := `{"successMessage-42":""}`
+	billettholder := models.Billettholder{ID: 42, FirstName: "Kari", LastName: "Nordmann"}
+
+	// When
+	doc := templtest.Render(t, billettholderCard(billettholder, "", nil))
+	actualErrorSignals, _ := doc.Find(`strong[data-text="$errorMessage-42"]`).Attr("data-signals")
+	actualSuccessSignals, _ := doc.Find(`strong[data-text="$successMessage-42"]`).Attr("data-signals")
+
+	// Then
+	if actualErrorSignals != expectedErrorSignals {
+		t.Fatalf("error message signals mismatch\nexpected: %s\nactual:   %s", expectedErrorSignals, actualErrorSignals)
+	}
+	if actualSuccessSignals != expectedSuccessSignals {
+		t.Fatalf("success message signals mismatch\nexpected: %s\nactual:   %s", expectedSuccessSignals, actualSuccessSignals)
+	}
+}
+
 func TestBillettholderCard_UsesDatastarStateForInterestDialogOpenState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at et billettholderkort har en interessedialog.",
