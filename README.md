@@ -284,6 +284,8 @@ if event == nil {
 
 See [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-support/) for detailed IDE support information.
 
+VS Code setup, the templ binary version on Windows and Prettier for `<style>` blocks live in [documentation/editor-setup.md](documentation/editor-setup.md).
+
 Neovim-specific setup lives in [documentation/neovim-setup.md](documentation/neovim-setup.md).
 
 ## Troubleshooting
