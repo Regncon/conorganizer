@@ -7,6 +7,68 @@ when adding names check domeneordbok.md instead of translating to english
 - Emails may only be used to *create* links, in the CheckIn flows: "Hent billetter" and the login sync (`checkIn.ImportUserTickets`), admin order conversion, and adding or deleting a manual email. See documentation/billettholdere.md.
 - Look users up by `users.external_id` (the Descope id), never by email.
 
+## Read the docs first
+Before changing an area, read its doc in documentation/ and update it in the same PR as the behavior change. When a doc disagrees with the code, the code wins.
+- pulje status, publishing and the interest UI: pulje-status-and-publishing.md
+- billettholdere and CheckIn: billettholdere.md
+- rooms and room maps: room-assignment.md
+- live pages and Broadcast: live-update-lifecycle.md
+- signals and dialogs: datastar-signals.md
+- access and the 401/403/404 pages: access-control-and-error-pages.md
+- tests: automated-tests.md
+- migrations: migrations.md
+- CSS classes and focus states: ui-conventions.md
+- deploy, CI and servers: deployment.md
+- SQLite, startup checks and health endpoints: sqlite-and-health.md
+
+Skills live in `.agents/skills/<name>/` (SKILL.md, references/, agents/openai.yaml). `go tool task setup:skills` links them into .claude/skills.
+
+## Text and names
+- User-facing text is bokmål, never nynorsk. The one nynorsk exception is the external link https://www.regncon.no/vanlege-sporsmal/.
+- An event is "annonsert", never "publisert". "Publisert" is for the program, the puljefordeling and the romfordeling (domeneordbok.md). Forkastet is `EventStatusArchived`; there is no Avvist.
+- When you change a user-facing string, grep the tests and the «»-quoted text in documentation/testing/*.md for the old text, and add a negative `!strings.Contains` check for it.
+- Use made-up names in test fixtures (Kari Nordmann, Ola Nordmann, @example.com), never real people's names.
+
+## Dev setup
+- `*_templ.go` files are gitignored; commit only `.templ`. Never hand-edit `*_templ.go`.
+- In the main checkout the dev server (`go tool task start`, which Docker also runs) regenerates them. Don't run `go tool templ generate`, `go tool task build`, `make generate` or `make check` next to it.
+- A .claude/worktrees checkout has no watcher: run `go tool templ generate` there before `go build` or `go test`.
+- Never open database/events.db with the host sqlite3 while Docker runs; the container then fails with "unable to open database file (14)". Use `docker compose exec -T webserver sqlite3 database/events.db "..."`. Copy a database with `.backup`, never cp.
+- Run tests with `go test ./<pkg>/...`. Don't run `go tool task test` or `make test` on the Windows host: they run the host sqlite3 on events.db and rewrite schema.sql, and in a worktree without database/events.db they empty it. Never commit a schema.sql change without a migration; restore it with `git checkout -- schema.sql`.
+- .claude/worktrees/ holds other sessions' checkouts. Scope repo-wide searches and replacements to `git ls-files` or exclude `.claude/`, and stage only your own files.
+- Docker serves https://localhost:7331; port 7332 is only reachable inside compose. http://localhost:8080 is the native default.
+- Put throwaway Go programs in tmp/ (gitignored).
+- Never print .env values.
+
+## Routes and access
+- The router a Setup*Route receives in router.go sets its tier: publicRouter, authenticatedRouter, isLoggedInRouter or routerAdmin. Admin endpoints hang off routerAdmin, in the `/admin` block of SetupAdminRoute (pages/admin/admin.go) or in SetupBillettholderAdminRoute. A second `Route("/admin")` or `Route("/profile")` panics at startup, because chi refuses to mount an existing path.
+- Route handlers often live in .templ files. When you look for a route or handler, grep `*.go` and `*.templ`, excluding `*_templ.go` and `.claude/`.
+- Menu links exist twice in components/header/menu.templ (desktop dropdown and mobile dialog), and menu_test.go asserts the exact hrefs per role. A new admin tool also needs an `adminToolCard` in pages/admin/admin_page.templ, a graphic in static/admin/ and an entry in pages/admin/admin_landing_integration_test.go.
+- Every SSE, API and mutation endpoint enforces the same owner-or-admin rule as its page GET. Hiding a control in templ is not a check.
+- `userctx.GetUserRequestInfo(ctx).Id` is the Descope id (users.external_id), not users.id. Get users.id with `userctx.GetUserIDFromExternalIDFromContext`.
+- Admin means the Descope `Admin` role (`userInfo.IsAdmin` or `authctx.GetAdminFromUserToken`). users.is_admin is only synced at login; never use it for authorization.
+
+## Live updates and Datastar
+- After a durable write, broadcast every live bucket whose subscribers render the changed data. Room assignment broadcasts rooms and events; tildelinger broadcast events, interests and rooms. The subscription table in live-update-lifecycle.md drifts, so trust the code, and update the table when you add a subscriber or broadcaster.
+- Validate input and send `http.Error` before `datastar.NewSSE(w, r)`. NewSSE flushes the 200 at once, so after it report errors with an errorfeedback signal patch or `sse.ConsoleError`.
+- Datastar is client v1.0.4 (static/datastar.js) with datastar-go v1.2.2. Use colon syntax (`data-on:click`, `data-init`). The old hyphen form (`data-on-click`) is silently ignored, and `data-on-load` does not exist.
+- Signals starting with `_` stay in the browser and never reach `ReadSignals`.
+- Pass server values into data-signals with `components.DataSignals(map)`, not `fmt.Sprintf("'%s'")`. Never leave `<pre data-json-signals>` debug dumps in templates.
+
+## Go code
+- Import edges that exist today: layouts imports components/header; userctx imports layouts and authctx; testutil imports service; pages import service packages. So header and layouts cannot import userctx, authctx cannot import userctx, package service cannot import testutil (testutil/bdd is fine), and service packages never import pages.
+- New service packages take `db *sql.DB` like their neighbours, return wrapped errors without logging them, and export sentinel errors (like `feedback.ErrNotFound`) so handlers can map them to 404.
+- golangci-lint runs with `tests: false`, so a production function that only tests call is reported as unused. Error strings start lowercase (ST1005).
+- Don't reformat untouched code. Keep the blank line between stdlib and module imports.
+- Don't add code comments unless they are needed. Keep the `// Given`, `// When`, `// Then` markers and notes on magic numbers.
+
+## Database
+- Goose is not a go.mod tool. Run `go run github.com/pressly/goose/v3/cmd/goose@v3.28.0 -env /dev/null -dir migrations ...` (documentation/migrations.md).
+- A migration PR also commits the regenerated schema.sql. Databases are migrated in place with their data (main and demo by hand after the merge, previews by CI), so added columns need `NOT NULL DEFAULT`. Goose never re-runs an applied migration, so don't edit one that is already on main; add a new one.
+- relation_events_players.source is lowercase `manual`/`solver` on purpose. Use `SourceManual` and `SourceSolver`, and capitalized values for new enum-like columns.
+- Removing an event from a pulje keeps its relation_event_puljer row and room_id with is_in_pulje=0, so readers of assignments and rooms filter on is_in_pulje=1.
+- Don't add age back into the puljefordeling solver (board decision, #618 reversed #524). Age is handled by `FinnAldersvarsler` and the "Plasser likevel" confirmation.
+
 # CSS rules
 
 ### Required CSS style
@@ -30,8 +92,16 @@ when adding names check domeneordbok.md instead of translating to english
 - Keep selectors shallow and readable.
 - Avoid Sass-style CSS that does not work natively in browsers.
 - Avoid viewport media queries for components. Use `@container` instead. Media queries about the device, like `(hover: hover)`, are fine.
-- Avoid min-width and max-with in range syntax
+- In container and media queries write `(width > 600px)`, not `(min-width: 600px)`. The `min-width` property itself is fine.
 - Use viewport media queries only for page-level/global layout concerns.
+
+### Backgrounds and tokens
+- Pick backgrounds by Level (the `--level-*` tokens in static/css/index.css): containers on base are Level 1; non-clickable boxes inside Level 1 are Level 2; clickable items on base use the Level 2 states; clickable items and form fields on Level 1 use Level 3; anything inside Level 2 is Level 3; Level 1 edges use `--level-3-border`. Ask when a case isn't covered.
+- Keep the Figma design tokens in index.css even when unused; remove only legacy ones. Retired names must not return: `--bg-surface*`, `--bg-item*`, `--color-secondary*`, `--color-disabled`, `--item-flat-active`, `btn--outline`, `label-small`.
+- Use `.surface-pane` for panels, not the legacy `.card` or the deprecated `.form-card` (documentation/ui-conventions.md).
+- `style="display: none;"` next to `data-show` is intentional: it stops a flash before Datastar loads. Don't move it into CSS.
+- Shadow-DOM web components adopt only index.css and buttons.css (`BASE_STYLE_URLS` in static/js/conorganizer.js), so card, chip, choice and layout classes don't apply inside them. Link a new global stylesheet in layouts/base.templ.
+- Custom properties don't work in `@container` or `@media` conditions; write the literal `600px` or `1200px`.
 
 ## Go test structure
 When writing or cleaning up Go tests, prefer behavior-focused tests that read from intent to verification.
@@ -50,6 +120,7 @@ When writing or cleaning up Go tests, prefer behavior-focused tests that read fr
 - Start the `// Given` section with the expected output or expected result. This makes the test's purpose clear before setup details.
 - Keep test names specific to one behavior. Prefer splitting creation, duplicate/idempotency, validation, and error cases into separate tests.
 - Move noisy setup SQL and repeated assertions into local test helpers when that makes the test read like behavior.
+- `bdd.Behavior` must be a top-level statement in the Test function with plain string literals; cmd/testreport skips calls inside `t.Run` and concatenated strings.
 
 Example shape:
 
@@ -147,6 +218,18 @@ For more details and live examples, refer to the Datastar documentation on web c
 
 ### Sub Agents
 Use subagents when this task would be faster or more reliable with them.
+
+## Festival year
+Year-bound values change every festival:
+- the CheckIn event id in the GraphQL query and `regnConDate` (the 18+ cutoff) in service/checkIn/cache.go
+- `TicketTypeMiddag` in service/checkIn/ticket.go
+- `checkInTicketsURL` in pages/profile/tickets/tickets_page.templ
+- "Regncon 2026" in pages/login/login.go
+
+## Git
+- Commit subjects are imperative English and describe the user-visible outcome, keeping Norwegian domain words. No Co-Authored-By trailer.
+- Bring a branch up to date by merging main into it, not by rebasing.
+- Don't edit the preview block CI adds to the PR body (between the `preview-deployment-url` markers).
 
 ## finishing instructions
 When done reading this you will output "Done reading AGENTS.MD file."
