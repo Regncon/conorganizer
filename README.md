@@ -284,6 +284,14 @@ if event == nil {
 
 See [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-support/) for detailed IDE support information.
 
+On every platform, run this once after cloning and again whenever `go.mod` bumps templ:
+
+```bash
+go tool task setup:editor
+```
+
+It installs the templ version from `go.mod` globally, because VS Code falls back to the templ binary on `PATH`, and the Prettier version CI uses for formatting `<style>` and `<script>` blocks. `go tool task check:editor` shows what is on `PATH` next to what the repository expects.
+
 VS Code setup, the templ binary version on Windows and Prettier for `<style>` blocks live in [documentation/editor-setup.md](documentation/editor-setup.md).
 
 Neovim-specific setup lives in [documentation/neovim-setup.md](documentation/neovim-setup.md).

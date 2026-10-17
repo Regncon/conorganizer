@@ -3,7 +3,7 @@ TASK := go tool task
 .DEFAULT_GOAL := help
 
 .PHONY: help build generate start dev run debug test download download-main download-demo kill \
-        lint fmt fmt-check vet tidy check clean
+        lint fmt fmt-check vet tidy check clean setup-editor check-editor
 
 help: ## Show this help
 	@echo "Targets:"
@@ -54,6 +54,12 @@ fmt: ## Format all Go code and .templ files
 
 fmt-check: ## Fail when .templ files are not formatted (needs prettier)
 	$(TASK) check:templ-fmt
+
+setup-editor: ## Install the go.mod templ version and the CI Prettier version globally
+	$(TASK) setup:editor
+
+check-editor: ## Compare templ and Prettier on PATH with what the repo expects
+	$(TASK) check:editor
 
 vet: ## Run go vet
 	go vet ./...

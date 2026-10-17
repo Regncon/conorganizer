@@ -6,6 +6,11 @@ dotenv:
 env:
     STATIC_DIR: "static"
 
+vars:
+    # Prettier formats <style> and <script> bodies for templ fmt. CI and
+    # setup:prettier install this version, so bump it here only.
+    PRETTIER_VERSION: "3.9.10"
+
 tasks:
     # The `build:` tasks below are used together for "production" builds of your project
     build:templ:
@@ -306,3 +311,46 @@ tasks:
               platforms: [windows]
             - cmd: ./scripts/link-skills.sh
               platforms: [linux, darwin]
+
+    # Editors run their own templ binary and Prettier. templ's version comes from
+    # go.mod, Prettier's from PRETTIER_VERSION, so the docs never name a version.
+    setup:prettier:
+        desc: Install the Prettier version CI uses for templ fmt
+        cmds:
+            - npm install -g prettier@{{.PRETTIER_VERSION}}
+
+    setup:editor:
+        desc: Install the go.mod templ version and Prettier globally for the editor
+        vars:
+            TEMPL_VERSION:
+                sh: v="$(go list -m github.com/a-h/templ)"; echo "${v##* }"
+        cmds:
+            - go install github.com/a-h/templ/cmd/templ@{{.TEMPL_VERSION}}
+            - task: setup:prettier
+            - task: check:editor
+
+    check:editor:
+        desc: Compare templ and Prettier on PATH with the versions the repo expects
+        silent: true
+        vars:
+            TEMPL_VERSION:
+                sh: v="$(go list -m github.com/a-h/templ)"; echo "${v##* }"
+        cmds:
+            - |
+              set -eu
+              have_templ="$(templ version 2>/dev/null || echo missing)"
+              have_prettier="$(prettier --version 2>/dev/null || echo missing)"
+              status=0
+              if [ "$have_templ" = "{{.TEMPL_VERSION}}" ]; then
+                echo "templ on PATH: $have_templ (matches go.mod)"
+              else
+                echo "templ on PATH: $have_templ, go.mod wants {{.TEMPL_VERSION}}. Run: go tool task setup:editor" >&2
+                status=1
+              fi
+              if [ "$have_prettier" = "{{.PRETTIER_VERSION}}" ]; then
+                echo "prettier on PATH: $have_prettier (matches CI)"
+              else
+                echo "prettier on PATH: $have_prettier, CI uses {{.PRETTIER_VERSION}}. Run: go tool task setup:prettier" >&2
+                status=1
+              fi
+              exit $status

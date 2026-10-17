@@ -57,8 +57,9 @@ jobs:
                   go-version: "1.27"
                   cache: false
             # templ fmt formats <style> and <script> bodies through prettier,
-            # so the check needs the same prettier as developers use.
+            # so the check needs the same prettier as developers use. The
+            # version is PRETTIER_VERSION in the Taskfile.
             - name: Install prettier
-              run: npm install -g prettier@3.9.10
+              run: go tool task setup:prettier
             - name: Check templ formatting
               run: go tool task check:templ-fmt
