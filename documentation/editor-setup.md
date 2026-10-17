@@ -2,6 +2,8 @@
 
 The repository pins templ in `go.mod`, and CI, the Taskfile and the Dockerfile run that version as `go tool templ`. Editors start their own templ binary for the language server, so the editor can drift from the pinned version. This page covers VS Code. Neovim lives in [neovim-setup.md](neovim-setup.md).
 
+The machine that runs your editor needs Go and Node.js with `npm`, on every platform. Node is only there to install Prettier; the app itself does not use it.
+
 ## Keep the templ binary on the go.mod version
 
 The VS Code extension (`a-h.templ`) picks the templ binary in this order: the `templ.executablePath` setting, then `go tool -n templ` run from the workspace, then `templ` on `PATH`, then a few well-known paths such as `~/go/bin`.

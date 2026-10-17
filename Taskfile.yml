@@ -317,7 +317,12 @@ tasks:
     setup:prettier:
         desc: Install the Prettier version CI uses for templ fmt
         cmds:
-            - npm install -g prettier@{{.PRETTIER_VERSION}}
+            - |
+              if ! command -v npm >/dev/null 2>&1; then
+                echo "npm not found. Install Node.js first, see README Quick Start." >&2
+                exit 1
+              fi
+              npm install -g prettier@{{.PRETTIER_VERSION}}
 
     setup:editor:
         desc: Install the go.mod templ version and Prettier globally for the editor
