@@ -9,23 +9,27 @@ const (
 	TicketHolderUnselected selected = "notSelected"
 )
 
+var ticketHolderButtonStylesOnce = templ.NewOnceHandle()
+
 // Takes a `selected` parameter to highlight the selected ticket holder
 templ TicketHolderButton(currentBillettHolder BillettHolder) {
 	{{ initials := GetInitials(currentBillettHolder.Name) }}
 	{{ shortName := GetFirstNameAndLastInitial(currentBillettHolder.Name) }}
 	{{ currentBillettHolderJSON, _ := templ.JSONString(currentBillettHolder) }}
-	<style>
-		.ticket-holder-picker {
-			padding-inline: var(--border-outline-width);
-			.card-clickable {
-				place-content: start;
-				height: 3.125rem;
-				width: 9.1rem;
-				width: stretch;
-				width: -webkit-fill-available;
+	@ticketHolderButtonStylesOnce.Once() {
+		<style>
+			.ticket-holder-picker {
+				padding-inline: var(--border-outline-width);
+				.card-clickable {
+					place-content: start;
+					height: 3.125rem;
+					width: 9.1rem;
+					width: stretch;
+					width: -webkit-fill-available;
+				}
 			}
-		}
-	</style>
+		</style>
+	}
 	<div class="ticket-holder-picker">
 		<div
 			role="button"

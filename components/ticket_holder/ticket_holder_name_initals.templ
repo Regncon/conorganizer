@@ -2,19 +2,23 @@ package ticketholder
 
 import "fmt"
 
+var initialsStylesOnce = templ.NewOnceHandle()
+
 templ Initials(initials string, color BillettholderColor) {
-	<style>
-		.initials {
-			display: flex;
-			place-content: center;
-			place-items: center;
-			color: var(--color-text-strong);
-			font-size: 12px;
-			border-radius: 50%;
-			min-inline-size: 1.5rem;
-			min-block-size: 1.5rem;
-		}
-	</style>
+	@initialsStylesOnce.Once() {
+		<style>
+			.initials {
+				display: flex;
+				place-content: center;
+				place-items: center;
+				color: var(--color-text-strong);
+				font-size: 12px;
+				border-radius: 50%;
+				min-inline-size: 1.5rem;
+				min-block-size: 1.5rem;
+			}
+		</style>
+	}
 	<span
 		class="initials"
 		style={ templ.SafeCSS(fmt.Sprintf("background-color: hsl(from %s h s l / 0.5);", color)),
@@ -24,21 +28,25 @@ templ Initials(initials string, color BillettholderColor) {
 	</span>
 }
 
-templ NameInitials(name string, initials string, color BillettholderColor) {
-	<style>
-		.name-initials {
-			display: inline-flex;
-			place-items: center;
-			gap: var(--spacing-2x);
-			min-width: 0;
+var nameInitialsStylesOnce = templ.NewOnceHandle()
 
-			.name {
+templ NameInitials(name string, initials string, color BillettholderColor) {
+	@nameInitialsStylesOnce.Once() {
+		<style>
+			.name-initials {
+				display: inline-flex;
+				place-items: center;
+				gap: var(--spacing-2x);
 				min-width: 0;
-				overflow: clip;
-				white-space: nowrap;
+
+				.name {
+					min-width: 0;
+					overflow: clip;
+					white-space: nowrap;
+				}
 			}
-		}
-	</style>
+		</style>
+	}
 	<div class="name-initials">
 		@Initials(initials, color)
 		<p class="name">{ name }</p>
