@@ -23,15 +23,24 @@ Use ordinary names for server-provided data and selections sent to an endpoint.
 This is the project's naming convention; the prefix does not grant access or
 replace validation on the server.
 
-`data-signals__ifmissing` supplies defaults without overwriting an existing
+The `__ifmissing` modifier supplies defaults without overwriting an existing
 selection or a newer endpoint response. Plain `data-signals` applies the value
 when Datastar processes the attribute, including when a live HTML patch changes
 its value. Choose plain initialization when the server should replace the value.
 
+The key goes before the modifier: `data-signals:save-message__ifmissing="''"`,
+or the object form `data-signals__ifmissing="{saveMessage: ''}"`. The bundled
+Datastar v1.0.4 splits the attribute name at `__` first, so in
+`data-signals__ifmissing:save-message` the key ends up inside the modifier. That
+attribute declares no signal, is not if-missing, and spreads a string value into
+signals named `0`, `1` and so on. Many older attributes in the repo use that
+order; do not copy them. Write keys in kebab-case: HTML lowercases attribute
+names, so `data-signals:saveMessage` declares `$savemessage`.
+
 ## Example: expand details in the browser
 
 ```html
-<section data-signals__ifmissing:_details-open="false">
+<section data-signals:_details-open__ifmissing="false">
     <button data-on:click="$_detailsOpen = !$_detailsOpen">
         Show details
     </button>
@@ -49,7 +58,7 @@ lets the user's choice survive later HTML updates that retain this component.
 Initialize a server-provided message and bind it to the UI:
 
 ```html
-<div data-signals__ifmissing:save-message="''">
+<div data-signals:save-message__ifmissing="''">
     <button data-on:click="@post('/example/save')">Save</button>
     <p role="status" data-text="$saveMessage"></p>
 </div>
@@ -97,7 +106,7 @@ carries the initializer.
 `data-effect` runs initially and when signals it reads change. For example:
 
 ```html
-<div data-signals__ifmissing:search-text="''"
+<div data-signals:search-text__ifmissing="''"
      data-effect="if ($searchText.length >= 3) { @get('/example/search') }">
     <input data-bind:search-text />
 </div>
@@ -142,10 +151,11 @@ Current users include `components/event_components/programpulje_interests.templ`
 `pages/admin/rooms/rooms_assignment_page.templ`, `pages/event/event_rooms.templ`
 and `components/header/menu.templ`.
 
-Declare browser-owned selections with `data-signals__ifmissing` so a morph does
-not reset them. For example, the billettholder interest dialog keeps the
-selected pulje tab in `billettholderInterestActivePulje` while it stays open.
-The open button sets it explicitly to that billettholder's first pulje.
+Declare browser-owned selections with `__ifmissing`, key first, so a morph does
+not reset them. The billettholder interest dialog keeps the selected pulje tab
+in `billettholderInterestActivePulje` while it stays open. Its declaration still
+uses the modifier-first order and declares nothing; the tab survives because the
+open button sets the signal explicitly to that billettholder's first pulje.
 
 ## Native modal dialogs in live fragments
 
@@ -169,7 +179,7 @@ When the dialog must be inside a live fragment, use this pattern:
 5. `data-preserve-attr="open"` keeps morphs from stripping `open`.
 
 ```html
-<div data-signals__ifmissing:billettholder-interest-open-dialog-id="''">
+<div data-signals:billettholder-interest-open-dialog-id__ifmissing="''">
     <button data-on:click="$billettholderInterestOpenDialogId = 'billettholder-interests-42'">
         Interesser
     </button>

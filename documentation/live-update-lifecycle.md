@@ -95,10 +95,10 @@ The bucket list should stay small. `service/live` defines exactly four buckets. 
 
 | Bucket | Purpose | Typical broadcasters | Typical subscribers |
 | --- | --- | --- | --- |
-| `events` | Event, program, pulje, publishing, and event-form data. | Event form updates, event creation and submission, approval status changes, program publishing, puljeoppsett changes, pulje status and closing-warning changes, puljefordeling seat changes. | Root page, event details, profile, profile event form, admin dashboard, admin approval, admin event edit, room assignment, puljeoppsett, puljefordeling. |
-| `interests` | Interest choices, first-choice data, player/GM assignment state, and views that show who is interested in an event. | User interest updates on the event page, admin interest changes in puljefordeling, tildelinger. | Event details, profile, admin approval, puljefordeling, admin billettholder overview. |
-| `billettholders` | Billettholder data and billettholder emails. | Add/remove billettholder emails (admin and profile), ticket conversion, ticket fetch on the profile tickets page. | Header menu, profile, profile tickets, admin approval, admin billettholder overview, add billettholder page. |
-| `rooms` | Room data and room assignment choices. | Create, update, delete room; assign or remove a room for an event in a pulje; publish or unpublish a pulje's room assignment. | Event details, admin rooms, room assignment, profile event form, admin event edit. |
+| `events` | Event, program, pulje, publishing, and event-form data. | Event form updates, event creation and submission, approval status changes, program publishing, puljeoppsett changes, pulje status and closing-warning changes, puljefordeling seat changes, room assignment and removal, room publishing. | Root page, event details, profile, profile event form, admin dashboard, admin approval, admin event edit, room assignment, puljeoppsett, puljefordeling. |
+| `interests` | Interest choices, first-choice data, player/GM assignment state, and views that show who is interested in an event. | User interest updates on the event page, admin interest changes in puljefordeling, tildelinger, GM removal in puljefordeling. | Root page, event details, profile, admin approval, puljefordeling, admin billettholder overview. |
+| `billettholders` | Billettholder data and billettholder emails. | Add/remove billettholder emails (admin and profile), ticket conversion, ticket fetch on the profile tickets page, ticket sync after login. | Root page, header menu, profile, profile tickets, admin approval, admin billettholder overview, add billettholder page. |
+| `rooms` | Room data and room assignment choices. | Create, update, delete room; assign or remove a room for an event in a pulje; publish or unpublish a pulje's room assignment; save a puljefordeling; tildelinger; GM removal in puljefordeling. | Event details, admin rooms, room assignment, profile event form, admin event edit. |
 
 Dev hot reload does not use a live bucket. It is a separate in-process hub in `dev_reload.go` (build tag `dev`), with a `/reload` SSE endpoint and a `/hotreload` trigger.
 
@@ -119,7 +119,7 @@ A pulje status or closing-warning change broadcasts `events`, so open event page
 
 | Page | Live endpoint | Buckets | Notes |
 | --- | --- | --- | --- |
-| `/` | `/root/api` | `events` | Keeps the selected program day through the `date` query parameter. |
+| `/` | `/root/api` | `events`, `interests`, `billettholders` | Keeps the selected program day through the `date` query parameter. |
 | `/event/{id}` | `/event/api/{id}` | `events`, `interests`, `rooms` | The page's query string is passed to the live endpoint. |
 | `/profile` | `/profile/api` | `events`, `interests`, `billettholders` | Uses `DatastarInitExpression` to pass `window.location.search`. Patches only `#profile-main-column`. |
 | `/profile/new/{id}` | `/profile/api/new/{id}` | `events`, `rooms` | Event form with pulje and room choices. |
