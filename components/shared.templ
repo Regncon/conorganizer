@@ -13,17 +13,17 @@ type Breadcrumb struct {
 
 templ BreadcrumbMenu(pathList []Breadcrumb) {
 	<style>
-	.breadcrumb-menu {
-		width: 100%;
-		display: flex;
-		gap: 4px;
-		color: var(--color-primary-text);
-		padding: 0.5rem;
-		a {
+		.breadcrumb-menu {
+			width: 100%;
+			display: flex;
+			gap: 4px;
 			color: var(--color-primary-text);
-			text-decoration: none;
-		};
-	}
+			padding: 0.5rem;
+			a {
+				color: var(--color-primary-text);
+				text-decoration: none;
+			}
+		}
 	</style>
 	<div class="breadcrumb-menu">
 		for _, breadcumb := range pathList {

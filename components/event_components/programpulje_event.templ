@@ -9,85 +9,89 @@ import (
 // ProgramEventTimeHint replaces the pulje time for programarrangementer, which run on their own schedule given in the description.
 const ProgramEventTimeHint = "Se beskrivelse for tidspunkt."
 
+var programPuljeEventStylesOnce = templ.NewOnceHandle()
+
 templ ProgramPuljeEvent(eventID string, imageCardUrl string, imageBannerUrl string, title string, description string, eventType models.EventType, isGM bool, isInPuljefordeling bool) {
-	<style>
-		.programpulje-event-container {
-			--linear-gradient-mask: linear-gradient(
-				to left,
-				black 19%,
-				transparent 85%
-			);
+	@programPuljeEventStylesOnce.Once() {
+		<style>
+			.programpulje-event-container {
+				--linear-gradient-mask: linear-gradient(
+					to left,
+					black 19%,
+					transparent 85%
+				);
 
-      position: relative;
-      padding: 0;
-      overflow: hidden;
-		}
+			    position: relative;
+			    padding: 0;
+			    overflow: hidden;
+			}
 
-    .programpulje-event-user-is-gamemaster {
-      position: absolute;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      top: var(--spacing-2x);
-      right: var(--spacing-2x);
-      background-color: var(--bg-tooltip);
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      z-index: 2;
-    }
+			  .programpulje-event-user-is-gamemaster {
+			    position: absolute;
+			    display: flex;
+			    align-items: center;
+			    justify-content: center;
+			    top: var(--spacing-2x);
+			    right: var(--spacing-2x);
+			    background-color: var(--bg-tooltip);
+			    border-radius: 50%;
+			    width: 28px;
+			    height: 28px;
+			    z-index: 2;
+			  }
 
-    .programpulje-event-container-text {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-3x);
-      padding: var(--spacing-4x);
-      z-index: 1;
-      overflow: hidden;
-      width: calc(100% - 150px);
-      max-width: 580px;
-      min-width: 260px;
-    }
+			  .programpulje-event-container-text {
+			    display: flex;
+			    flex-direction: column;
+			    gap: var(--spacing-3x);
+			    padding: var(--spacing-4x);
+			    z-index: 1;
+			    overflow: hidden;
+			    width: calc(100% - 150px);
+			    max-width: 580px;
+			    min-width: 260px;
+			  }
 
 
 
-    .event-container-clip-text {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+			  .event-container-clip-text {
+			    white-space: nowrap;
+			    overflow: hidden;
+			    text-overflow: ellipsis;
+			  }
 
-    .programpulje-event-container-text-title {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-1x);
-      overflow: hidden;
-      .text-event-name {
-        font-weight: 700;
-        font-size: var(--text-body);
-        color: var(--color-text-strong);
-      }
-      .text-event-type {
-        color: var(--color-primary);
-        font-size: var(--text-heading-4);
-      }
-      .text-event-time-hint {
-        color: var(--color-text-soft);
-        font-size: var(--text-body-small);
-      }
-    }
+			  .programpulje-event-container-text-title {
+			    display: flex;
+			    flex-direction: column;
+			    gap: var(--spacing-1x);
+			    overflow: hidden;
+			    .text-event-name {
+			      font-weight: 700;
+			      font-size: var(--text-body);
+			      color: var(--color-text-strong);
+			    }
+			    .text-event-type {
+			      color: var(--color-primary);
+			      font-size: var(--text-heading-4);
+			    }
+			    .text-event-time-hint {
+			      color: var(--color-text-soft);
+			      font-size: var(--text-body-small);
+			    }
+			  }
 
-		.programpulje-event-container-image {
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-				mask-image: var(--linear-gradient-mask);
-				-webkit-mask-image: var(--linear-gradient-mask);
-        filter: opacity(0.5);
-        object-fit: cover;
-        object-position: center;
-	</style>
+			.programpulje-event-container-image {
+			      position: absolute;
+			      top: 0;
+			      right: 0;
+			      bottom: 0;
+					mask-image: var(--linear-gradient-mask);
+					-webkit-mask-image: var(--linear-gradient-mask);
+			      filter: opacity(0.5);
+			      object-fit: cover;
+			      object-position: center;
+		</style>
+	}
 	<a href={ templ.URL(fmt.Sprintf("/event/%s", eventID)) } class="item-card profile-event-bar programpulje-event-container">
 		if (isGM) {
 			<div class="programpulje-event-user-is-gamemaster" data-tippy-content="Du er arrangøren">

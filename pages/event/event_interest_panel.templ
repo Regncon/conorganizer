@@ -10,110 +10,109 @@ import (
 
 templ eventInterestPanelFrame() {
 	<style>
-    .event-interest-picker-container {
-        container-type: inline-size;
-        container-name: event-interest-picker;
-    }
-
-    .event-interest-picker {
-        display: flex;
-        align-items: center;
-        flex-direction: column;
-        gap: var(--spacing-4x);
-        padding: var(--spacing-4x);
-
-        .inline-link {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--spacing-1x);
-            text-decoration: none;
-            width: fit-content;
-            .link-text {
-                text-decoration: underline;
-            }
-        }
-
-	    }
-
-	    .event-interest-available-content {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-4x);
-		width: 100%;
-	    }
-
-	    .event-interest-available-actions {
-		display: flex;
-		align-items: center;
-		flex-direction: column;
-		gap: var(--spacing-4x);
-
-		>button {
-		    width: 100%;
-		    align-self: flex-end;
+		.event-interest-picker-container {
+			container-type: inline-size;
+			container-name: event-interest-picker;
 		}
-	    }
 
-	    .event-interest-helper {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-2x);
-		color: var(--color-text-soft);
-	    }
+		.event-interest-picker {
+			display: flex;
+			align-items: center;
+			flex-direction: column;
+			gap: var(--spacing-4x);
+			padding: var(--spacing-4x);
 
-	    .event-interest-helper .inline-icon {
-		flex: 0 0 auto;
-	    }
+			.inline-link {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--spacing-1x);
+				text-decoration: none;
+				width: fit-content;
+				.link-text {
+					text-decoration: underline;
+				}
+			}
+		}
 
-	    .event-interest-helper.pulje-interest-state--warning {
+		.event-interest-available-content {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-4x);
+			width: 100%;
+		}
+
+		.event-interest-available-actions {
+			display: flex;
+			align-items: center;
+			flex-direction: column;
+			gap: var(--spacing-4x);
+
+			> button {
+				width: 100%;
+				align-self: flex-end;
+			}
+		}
+
+		.event-interest-helper {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-2x);
+			color: var(--color-text-soft);
+		}
+
+		.event-interest-helper .inline-icon {
+			flex: 0 0 auto;
+		}
+
+		.event-interest-helper.pulje-interest-state--warning {
 			color: var(--color-accent-yellow);
-	    }
-
-	    .event-interest-helper.pulje-interest-state--locked {
-		color: var(--color-accent-blue);
-	    }
-
-	    .event-interest-helper.pulje-interest-state--completed {
-		color: var(--color-accent-green);
-	    }
-
-    /* We need some inline sizing to do the flex-layout of this component */
-    @container event-interest-picker (width > 600px) {
-        .event-interest-picker {
-            flex-direction: row;
 		}
 
-		.event-interest-available-actions {
-			flex-direction: row;
+		.event-interest-helper.pulje-interest-state--locked {
+			color: var(--color-accent-blue);
+		}
 
-			>button {
-				align-self: center;
-            }
-        }
-    }
+		.event-interest-helper.pulje-interest-state--completed {
+			color: var(--color-accent-green);
+		}
 
-    /* And this could technically be outside of here, it is layouting on the parent component */
-    @container event-container (width >=37.5rem) {
-        .event-interest-picker-container {
-            order: 1;
-            width: 100%;
-            height: fit-content;
-        }
+		/* We need some inline sizing to do the flex-layout of this component */
+		@container event-interest-picker (width > 600px) {
+			.event-interest-picker {
+				flex-direction: row;
+			}
 
-		.event-interest-available-actions {
-            >button {
-                max-width: 200px;
-                flex-shrink: 0;
-            }
-        }
-    }
+			.event-interest-available-actions {
+				flex-direction: row;
 
-    @container event-container (width > 65.0625rem) {
-        .event-interest-picker-container {
-            grid-area: interests;
-        }
-    }
-</style>
+				> button {
+					align-self: center;
+				}
+			}
+		}
+
+		/* And this could technically be outside of here, it is layouting on the parent component */
+		@container event-container (width >=37.5rem) {
+			.event-interest-picker-container {
+				order: 1;
+				width: 100%;
+				height: fit-content;
+			}
+
+			.event-interest-available-actions {
+				> button {
+					max-width: 200px;
+					flex-shrink: 0;
+				}
+			}
+		}
+
+		@container event-container (width > 65.0625rem) {
+			.event-interest-picker-container {
+				grid-area: interests;
+			}
+		}
+	</style>
 	<div class="event-interest-picker-container">
 		<div class="card event-interest-picker">
 			{ children... }

@@ -273,20 +273,51 @@ templ printStyles() {
 		#print-page {
 			margin-inline: auto;
 			inline-size: min(100%, 900px);
-			.print-day { margin-block: 2rem; }
-			.print-group { margin-block: 1.5rem; }
-			.print-event-sheet { margin-block: 1rem 2rem; }
-			.print-sheet-heading { display: flex; gap: 1rem; }
-			.print-room-list { display: grid; gap: 0.5rem; }
-			.print-room p { margin-block: 0 0.25rem; }
-			.print-room-map img { display: block; inline-size: auto; max-inline-size: 100%; max-block-size: 70mm; }
+			.print-day {
+				margin-block: 2rem;
+			}
+			.print-group {
+				margin-block: 1.5rem;
+			}
+			.print-event-sheet {
+				margin-block: 1rem 2rem;
+			}
+			.print-sheet-heading {
+				display: flex;
+				gap: 1rem;
+			}
+			.print-room-list {
+				display: grid;
+				gap: 0.5rem;
+			}
+			.print-room p {
+				margin-block: 0 0.25rem;
+			}
+			.print-room-map img {
+				display: block;
+				inline-size: auto;
+				max-inline-size: 100%;
+				max-block-size: 70mm;
+			}
 		}
 
 		@media print {
-			@page { size: A4; margin: 12mm; }
-			html { color-scheme: light; background: #fff; }
-			body { margin: 0; background: #fff; color: #000; }
-			main { padding: 0; }
+			@page {
+				size: A4;
+				margin: 12mm;
+			}
+			html {
+				color-scheme: light;
+				background: #fff;
+			}
+			body {
+				margin: 0;
+				background: #fff;
+				color: #000;
+			}
+			main {
+				padding: 0;
+			}
 			#print-page {
 				--bg-base: #fff;
 				--level-1-background: #fff;
@@ -298,23 +329,44 @@ templ printStyles() {
 				inline-size: 100%;
 				color: #000;
 				font-size: 10pt;
-				.print-page-title, .print-day-title, .print-group-title { display: none; }
-				.print-day, .print-group { margin: 0; }
+				.print-page-title,
+				.print-day-title,
+				.print-group-title {
+					display: none;
+				}
+				.print-day,
+				.print-group {
+					margin: 0;
+				}
 				.print-event-sheet {
 					break-after: page;
 					margin: 0;
 					color: #000;
-					* { color: #000; }
+					* {
+						color: #000;
+					}
 				}
-				.print-day:last-of-type .print-group:last-of-type .print-event-sheet:last-of-type { break-after: auto; }
-				.print-sheet-heading { font-size: 11pt; font-weight: bold; margin-block-end: 3mm; }
+				.print-day:last-of-type .print-group:last-of-type .print-event-sheet:last-of-type {
+					break-after: auto;
+				}
+				.print-sheet-heading {
+					font-size: 11pt;
+					font-weight: bold;
+					margin-block-end: 3mm;
+				}
 				.event-page-wrapper {
 					display: block;
 					inline-size: 100%;
 					padding: 0;
 					margin: 0;
-					.stack { display: block; }
-					.event-image { inline-size: 100%; block-size: 44mm; object-fit: cover; }
+					.stack {
+						display: block;
+					}
+					.event-image {
+						inline-size: 100%;
+						block-size: 44mm;
+						object-fit: cover;
+					}
 					.event-header {
 						position: relative;
 						margin: -10mm 6mm 0;
@@ -322,8 +374,16 @@ templ printStyles() {
 						background: #fff;
 						text-align: start;
 					}
-					.title { font-size: 21pt; white-space: normal; overflow: visible; }
-					.intro { display: block; line-clamp: unset; overflow: visible; }
+					.title {
+						font-size: 21pt;
+						white-space: normal;
+						overflow: visible;
+					}
+					.intro {
+						display: block;
+						line-clamp: unset;
+						overflow: visible;
+					}
 					.event-information {
 						display: grid;
 						grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -334,23 +394,51 @@ templ printStyles() {
 						margin-block-start: 5mm;
 						padding: 0;
 					}
-					.event-details-pane { display: contents; }
-					.surface-pane-title { display: none; }
+					.event-details-pane {
+						display: contents;
+					}
+					.surface-pane-title {
+						display: none;
+					}
 					.event-details {
 						grid-area: details;
 						display: grid;
 						grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 						gap: 6mm;
-						hr { display: none; }
+						hr {
+							display: none;
+						}
 					}
-					.event-details-section { gap: 2mm; padding: 0; }
-					.description { grid-area: description; padding: 0; }
-					.description p { margin-block: 1mm; }
+					.event-details-section {
+						gap: 2mm;
+						padding: 0;
+					}
+					.description {
+						grid-area: description;
+						padding: 0;
+					}
+					.description p {
+						margin-block: 1mm;
+					}
 				}
-				.print-room-list { grid-area: rooms; display: grid; gap: 3mm; }
-				.print-room { min-inline-size: 0; break-inside: avoid; }
-				.print-room-map img { inline-size: 100%; max-block-size: 95mm; object-fit: contain; filter: invert(1); }
-				.print-room-list:has(.print-room:nth-child(2)) .print-room-map img { max-block-size: 55mm; }
+				.print-room-list {
+					grid-area: rooms;
+					display: grid;
+					gap: 3mm;
+				}
+				.print-room {
+					min-inline-size: 0;
+					break-inside: avoid;
+				}
+				.print-room-map img {
+					inline-size: 100%;
+					max-block-size: 95mm;
+					object-fit: contain;
+					filter: invert(1);
+				}
+				.print-room-list:has(.print-room:nth-child(2)) .print-room-map img {
+					max-block-size: 55mm;
+				}
 			}
 		}
 	</style>

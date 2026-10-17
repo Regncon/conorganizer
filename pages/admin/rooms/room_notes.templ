@@ -85,104 +85,104 @@ templ roomNotesPopover(roomID int64, roomNumber, publicNotes, adminNotes string)
 
 templ roomNotesStyles() {
 	<style>
-        .room-notes {
-            display: grid;
-            gap: var(--spacing-2x);
-            margin: 0;
+		.room-notes {
+			display: grid;
+			gap: var(--spacing-2x);
+			margin: 0;
 
-            dt {
-                display: flex;
-                place-items: center;
-                gap: var(--spacing-1x);
-                font-weight: 600;
-                font-size: var(--text-body-small);
-            }
+			dt {
+				display: flex;
+				place-items: center;
+				gap: var(--spacing-1x);
+				font-weight: 600;
+				font-size: var(--text-body-small);
+			}
 
-            dd {
-                margin: 0;
-                font-size: var(--text-body-small);
-                white-space: pre-wrap;
-                overflow-wrap: anywhere;
-            }
-        }
+			dd {
+				margin: 0;
+				font-size: var(--text-body-small);
+				white-space: pre-wrap;
+				overflow-wrap: anywhere;
+			}
+		}
 
-        .room-note-label {
-            display: flex;
-            place-items: center;
-            gap: var(--spacing-1x);
-        }
+		.room-note-label {
+			display: flex;
+			place-items: center;
+			gap: var(--spacing-1x);
+		}
 
-        .room-note-icon {
-            display: inline-flex;
-            flex: 0 0 auto;
-        }
+		.room-note-icon {
+			display: inline-flex;
+			flex: 0 0 auto;
+		}
 
-        .room-notes-toggle {
-            display: flex;
-            place-content: center;
-            place-items: center;
-            gap: 2px;
-            flex: 0 0 auto;
-            min-inline-size: 28px;
-            min-block-size: 28px;
-            padding-inline: 4px;
-            border: 1px solid var(--level-3-border);
-            border-radius: var(--border-radius-1x);
-            background: var(--level-3-background);
-            font-size: var(--text-body-small);
-            cursor: pointer;
-            pointer-events: auto;
+		.room-notes-toggle {
+			display: flex;
+			place-content: center;
+			place-items: center;
+			gap: 2px;
+			flex: 0 0 auto;
+			min-inline-size: 28px;
+			min-block-size: 28px;
+			padding-inline: 4px;
+			border: 1px solid var(--level-3-border);
+			border-radius: var(--border-radius-1x);
+			background: var(--level-3-background);
+			font-size: var(--text-body-small);
+			cursor: pointer;
+			pointer-events: auto;
 
-            &:hover {
-                background: var(--level-3-background-hover);
-            }
+			&:hover {
+				background: var(--level-3-background-hover);
+			}
 
-            &:focus-visible {
-                outline: 2px solid var(--color-primary);
-                outline-offset: 2px;
-            }
-        }
+			&:focus-visible {
+				outline: 2px solid var(--color-primary);
+				outline-offset: 2px;
+			}
+		}
 
-        .room-notes-popover {
-            inline-size: min(22rem, calc(100% - 32px));
-            padding: var(--responsive-pane-padding);
-            border: none;
-            border-radius: var(--border-radius-2x);
-            background: var(--level-1-background);
-            box-shadow: var(--shadow-dialog);
-            color: var(--color-text-strong);
-        }
+		.room-notes-popover {
+			inline-size: min(22rem, calc(100% - 32px));
+			padding: var(--responsive-pane-padding);
+			border: none;
+			border-radius: var(--border-radius-2x);
+			background: var(--level-1-background);
+			box-shadow: var(--shadow-dialog);
+			color: var(--color-text-strong);
+		}
 
-        .room-notes-popover-heading {
-            display: flex;
-            place-content: center space-between;
-            place-items: center;
-            gap: var(--spacing-1x);
-            margin-block-end: var(--spacing-2x);
+		.room-notes-popover-heading {
+			display: flex;
+			place-content: center space-between;
+			place-items: center;
+			gap: var(--spacing-1x);
+			margin-block-end: var(--spacing-2x);
 
-            p {
-                margin: 0;
-                font-weight: 600;
-            }
+			p {
+				margin: 0;
+				font-weight: 600;
+			}
 
-            button {
-                display: grid;
-                place-items: center;
-                border: none;
-                background: transparent;
-                padding: 0;
-                cursor: pointer;
-                color: var(--color-text-soft);
-            }
-        }
+			button {
+				display: grid;
+				place-items: center;
+				border: none;
+				background: transparent;
+				padding: 0;
+				cursor: pointer;
+				color: var(--color-text-soft);
+			}
+		}
 
-        @supports (position-area: bottom) {
-            .room-notes-popover {
-                position-area: bottom span-left;
-                margin: var(--spacing-1x);
-                inset: auto;
-                position-try-fallbacks: flip-block, flip-inline;
-            }
-        }
-    </style>
+		@supports (position-area: bottom) {
+			.room-notes-popover {
+				position-area: bottom span-left;
+				margin: var(--spacing-1x);
+				inset: auto;
+				position-try-fallbacks: flip-block, flip-inline;
+			}
+		}
+	</style>
 }

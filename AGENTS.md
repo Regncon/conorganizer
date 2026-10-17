@@ -32,6 +32,7 @@ when adding names check domeneordbok.md instead of translating to english
 - Avoid viewport media queries for components. Use `@container` instead. Media queries about the device, like `(hover: hover)`, are fine.
 - Avoid min-width and max-with in range syntax
 - Use viewport media queries only for page-level/global layout concerns.
+- A component rendered in a loop wraps its `<style>` block in a package-level `templ.NewOnceHandle()` so the style tag renders once per page; a component rendered once keeps a plain `<style>` block. See documentation/ui-conventions.md.
 
 ## Go test structure
 When writing or cleaning up Go tests, prefer behavior-focused tests that read from intent to verification.

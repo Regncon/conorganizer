@@ -9,6 +9,8 @@ See [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-suppo
 
 The repository pins templ as a Go tool in `go.mod`. To make the templ language server match that version, configure it to run `go tool templ lsp` from the repository root instead of a globally installed `templ`.
 
+The language server formats `<style>` and `<script>` bodies through Prettier when it is on `PATH`. `go tool task setup:prettier` installs the version CI uses, and `go tool task check:editor` reports what is on `PATH` next to what the repository expects. See [editor-setup.md](editor-setup.md) for the details.
+
 ## SQL Support with Dadbod
 
 Add these plugins to your Neovim configuration:
