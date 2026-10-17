@@ -12,7 +12,7 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestValidateEventExists_WhenEventBelongsToUser_Succeeds(t *testing.T) {
+func TestValidateEventOwnedByUser_WhenEventBelongsToUser_Succeeds(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at arrangementet tilhører brukeren.",
 		When:  "Når skjema-ruten validerer tilgang.",
@@ -27,7 +27,7 @@ func TestValidateEventExists_WhenEventBelongsToUser_Succeeds(t *testing.T) {
 	insertNewEventPageEvent(t, db, "owned-event", 501, models.EventStatusDraft)
 
 	// When
-	err, actualStatusCode := validateEventExists(db, "owned-event", "ekstern-kari-eier")
+	err, actualStatusCode := validateEventOwnedByUser(db, "owned-event", "ekstern-kari-eier")
 
 	// Then
 	if err != nil {
@@ -38,7 +38,7 @@ func TestValidateEventExists_WhenEventBelongsToUser_Succeeds(t *testing.T) {
 	}
 }
 
-func TestValidateEventExists_WhenEventBelongsToAnotherUser_ReturnsNotFound(t *testing.T) {
+func TestValidateEventOwnedByUser_WhenEventBelongsToAnotherUser_ReturnsNotFound(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at arrangementet tilhører en annen bruker.",
 		When:  "Når skjema-ruten validerer tilgang.",
@@ -54,7 +54,7 @@ func TestValidateEventExists_WhenEventBelongsToAnotherUser_ReturnsNotFound(t *te
 	insertNewEventPageEvent(t, db, "foreign-event", 501, models.EventStatusDraft)
 
 	// When
-	err, actualStatusCode := validateEventExists(db, "foreign-event", "ekstern-per-annen")
+	err, actualStatusCode := validateEventOwnedByUser(db, "foreign-event", "ekstern-per-annen")
 
 	// Then
 	if err == nil {

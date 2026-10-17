@@ -30,7 +30,7 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 			return
 		}
 
-		selectErr, statusCode := validateEventExists(db, eventId, userctx.GetUserRequestInfo(r.Context()).Id)
+		selectErr, statusCode := validateEventOwnedByUser(db, eventId, userctx.GetUserRequestInfo(r.Context()).Id)
 		if selectErr != nil && statusCode == http.StatusInternalServerError {
 			http.Error(w, selectErr.Error(), http.StatusInternalServerError)
 			return
@@ -83,7 +83,7 @@ func RequireEventOwnerOrAdmin(db *sql.DB, logger *slog.Logger) func(http.Handler
 			}
 
 			eventId := chi.URLParam(r, "id")
-			selectErr, statusCode := validateEventExists(db, eventId, userInfo.Id)
+			selectErr, statusCode := validateEventOwnedByUser(db, eventId, userInfo.Id)
 			if selectErr != nil && statusCode == http.StatusInternalServerError {
 				logger.Error(selectErr.Error(), "request_id", middleware.GetReqID(ctx), "event_id", eventId, "user_id", userInfo.Id)
 				http.Error(w, "Klarte ikke å sjekke tilgangen til arrangementet", http.StatusInternalServerError)
@@ -100,7 +100,7 @@ func RequireEventOwnerOrAdmin(db *sql.DB, logger *slog.Logger) func(http.Handler
 	}
 }
 
-func validateEventExists(db *sql.DB, eventId string, externalUserId string) (error, int) {
+func validateEventOwnedByUser(db *sql.DB, eventId string, externalUserId string) (error, int) {
 	var exists bool
 	queryErr := db.QueryRow(`
 		SELECT EXISTS(
