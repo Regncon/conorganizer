@@ -23,6 +23,7 @@ tmp-gocache/
 
 # Ai folder
 .codex/*
+!.codex/config.toml
 
 # graphify (knowledge graph tooling - local only)
 .graphifyignore
@@ -71,6 +72,7 @@ tmp/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/launch.json
+!.vscode/mcp.json
 !.vscode/settings.json
 .idea
 .DS_Store

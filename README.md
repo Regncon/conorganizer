@@ -402,15 +402,23 @@ New-Item -ItemType SymbolicLink -Path "$agentSkillsFolder" -Target ".agents\skil
 
 ## Grafana MCP Server
 
-`.mcp.json` registers Grafana's [MCP server](https://github.com/grafana/mcp-grafana)
-for `https://grafana.regncon.no`, so Claude Code can query production logs in
-Loki, metrics in Prometheus and dashboards. It runs read-only
-(`--disable-write`) with usage statistics turned off, and starts through
-`go run` at a pinned version, so it only needs Go.
+The repository registers Grafana's [MCP server](https://github.com/grafana/mcp-grafana)
+for `https://grafana.regncon.no`, so agents can query production logs in Loki,
+metrics in Prometheus and dashboards. Each agent reads its own file:
+
+| Agent | File |
+| --- | --- |
+| Claude Code | `.mcp.json` |
+| Codex | `.codex/config.toml` |
+| GitHub Copilot in VS Code | `.vscode/mcp.json` |
+
+All three run the same server read-only (`--disable-write`) with usage
+statistics turned off, and start it through `go run` at a pinned version, so
+it only needs Go. Bump the version in all three files together.
 
 The first start compiles the server, which takes a few minutes and can exceed
-Claude Code's MCP startup timeout. Build it once in the repository folder
-before the first use, or after a version bump in `.mcp.json`:
+the agents' MCP startup timeout. Build it once in the repository folder before
+the first use, or after a version bump:
 
 ```bash
 go run github.com/grafana/mcp-grafana/v2/cmd/mcp-grafana@v2.0.2 --help
@@ -418,10 +426,9 @@ go run github.com/grafana/mcp-grafana/v2/cmd/mcp-grafana@v2.0.2 --help
 
 ### Service account token
 
-Each developer uses their own token. The server reads it from the
-`GRAFANA_SERVICE_ACCOUNT_TOKEN` environment variable. It is not read from
-`.env`, because Claude Code fills in `.mcp.json` only from the environment it
-was started with.
+Each developer uses their own token. Claude Code and Codex read it from the
+`GRAFANA_SERVICE_ACCOUNT_TOKEN` environment variable, not from `.env`. VS Code
+asks for it instead (see [Check that it works](#check-that-it-works)).
 
 A Grafana admin creates the token:
 
@@ -444,22 +451,22 @@ Windows PowerShell:
 setx GRAFANA_SERVICE_ACCOUNT_TOKEN "glsa_paste_your_token_here"
 ```
 
-`setx` only affects programs started afterwards, so restart the Claude desktop
-app or open a new terminal before starting `claude`.
+`setx` only affects programs started afterwards, so restart the Claude or
+Codex desktop app, or open a new terminal before starting `claude` or `codex`.
 
 Linux: add the line below to `~/.profile`, then log out and in again so both
 terminals and desktop apps see it.
 
-macOS: add it to `~/.zprofile`, then open a new terminal and start `claude`
-from it.
+macOS: add it to `~/.zprofile`, then open a new terminal and start `claude` or
+`codex` from it.
 
 ```bash
 export GRAFANA_SERVICE_ACCOUNT_TOKEN="glsa_paste_your_token_here"
 ```
 
 On macOS, apps opened from the Dock or Finder do not read `~/.zprofile`. If the
-Claude desktop app reports the variable as missing, run this and restart the
-app. It lasts until the next reboot:
+Claude or Codex desktop app reports the variable as missing, run this and
+restart the app. It lasts until the next reboot:
 
 ```bash
 launchctl setenv GRAFANA_SERVICE_ACCOUNT_TOKEN "glsa_paste_your_token_here"
@@ -474,8 +481,29 @@ it, then run:
 claude mcp list
 ```
 
-`grafana` should show as connected. A 401 in its log means the token is
-missing or expired.
+`grafana` should show as connected.
+
+Codex reads `.codex/config.toml` only in a project you have marked as trusted;
+Codex asks the first time you open the folder. Then run:
+
+```bash
+codex mcp get grafana
+```
+
+Codex passes only a short list of environment variables to MCP servers, so
+`.codex/config.toml` forwards the token and Go's own settings such as
+`GOCACHE`. Without them, `go run` would use a different build cache, rebuild
+the server and miss Codex's 60-second startup limit.
+
+In VS Code, open `.vscode/mcp.json` and click **Start** above `grafana`.
+VS Code asks for the token once, hides what you type and stores it. VS Code
+calls `.vscode/mcp.json` deprecated in favour of a root `.mcp.json`, but it
+only reads the root file with the experimental
+`chat.mcp.workspaceRootConfig.enabled` setting, so keep using
+`.vscode/mcp.json` for now.
+
+In every agent, a 401 in the server's log means the token is missing or
+expired.
 
 Production logs carry the labels `app="conorganizer"`,
 `job="systemd-journal"` and `service="conorganizer-main"`, and each line is
