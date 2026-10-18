@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strconv"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/billettholder"
 )
@@ -121,8 +122,10 @@ templ billettholderAdminOverview(db *sql.DB, logger *slog.Logger, filters billet
 	</style>
 	<section
 		class="billettholder-admin-overview"
-		data-signals:filter-without-first-choice={ fmt.Sprintf("%t", filters.WithoutFirstChoice) }
-		data-signals:filter-gm-or-dm={ fmt.Sprintf("%t", filters.GMOrDM) }
+		data-signals={ components.DataSignals(map[string]bool{
+			"filterWithoutFirstChoice": filters.WithoutFirstChoice,
+			"filterGmOrDm":             filters.GMOrDM,
+		}) }
 	>
 		<p class="page-heading-help-text">Her kan du se en oversikt over alle billettholdere</p>
 		<div class="billettholder-admin-overview-counts" aria-label="Billettholderstatistikk">

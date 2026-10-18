@@ -3,6 +3,7 @@ package rooms
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
@@ -655,7 +656,7 @@ templ roomsPublishControl(db *sql.DB, pulje models.Pulje) {
 	if roomsPublishedErr != nil {
 		<p class="rooms-publish-error">Kunne ikke hente publiseringsstatus: { roomsPublishedErr.Error() }</p>
 	} else {
-		<div class="rooms-publish-control" data-signals:rooms-published={ fmt.Sprintf("%t", roomsPublished) }>
+		<div class="rooms-publish-control" data-signals={ components.DataSignals(map[string]bool{"roomsPublished": roomsPublished}) }>
 			<div class="rooms-publish-control-body">
 				<div class="rooms-publish-state">
 					<span class="rooms-publish-state-label">Publiser romfordeling</span>

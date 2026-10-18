@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 )
@@ -170,7 +171,7 @@ templ billettholderInterestDialog(
 		class="billettholder-interest-dialog"
 		aria-labelledby={ dialogID + "-title" }
 		data-preserve-attr="open"
-		data-signals__ifmissing:billettholder-interest-active-pulje={ fmt.Sprintf("'%s'", billettholderFirstPuljeID(sections)) }
+		data-signals__ifmissing={ components.DataSignals(map[string]models.Pulje{"billettholderInterestActivePulje": billettholderFirstPuljeID(sections)}) }
 		data-effect={ fmt.Sprintf("if ($billettholderInterestOpenDialogId == '%s' && !el.open) { el.showModal(); } if ($billettholderInterestOpenDialogId != '%s' && el.open) { el.close(); }", dialogID, dialogID) }
 		data-on:close={ fmt.Sprintf("if ($billettholderInterestOpenDialogId == '%s') { $billettholderInterestOpenDialogId = ''; }", dialogID) }
 	>

@@ -197,30 +197,32 @@ templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, 
 		id="puljefordeling-page"
 		class="page-content-container flex flex-col"
 		data-init={ live.DatastarInit(fmt.Sprintf("/admin/api/puljefordeling/%s", current)) }
-		data-signals__ifmissing:assignment-event-id="''"
-		data-signals__ifmissing:assignment-pulje-id="''"
-		data-signals__ifmissing:assignment-billettholder-id="0"
-		data-signals__ifmissing:assignment-picker-gm-only="false"
-		data-signals__ifmissing:assignment-picker-title="'Administrer deltaker'"
-		data-signals__ifmissing:assignment-interest-level="''"
-		data-signals__ifmissing:assignment-close-dialog="false"
-		data-signals__ifmissing:assignment-action-completed="false"
-		data-signals__ifmissing:clear-input="0"
-		data-signals__ifmissing:_pulje-list="''"
-		data-signals__ifmissing:dragged-billettholder-id="0"
-		data-signals__ifmissing:dragged-event-id="''"
-		data-signals__ifmissing:dragged-manual-seat="false"
-		data-signals__ifmissing:drag-over-event="''"
-		data-signals__ifmissing:assignment-age-confirmed="false"
-		data-signals__ifmissing:age-warning-text="''"
-		data-signals__ifmissing:age-warning-billettholder-id="0"
-		data-signals__ifmissing:age-warning-event-id="''"
-		data-signals__ifmissing:age-warning-pulje-id="''"
-		data-signals__ifmissing:age-warning-role="'Player'"
-		data-signals__ifmissing:age-warning-from-add-menu="false"
-		data-signals__ifmissing:age-warning-from-event-id="''"
-		data-signals__ifmissing:age-warning-from-manual-seat="false"
-		data-signals__ifmissing:_puljefordeling-assign-dialog-open="false"
+		data-signals__ifmissing={ components.DataSignals(map[string]any{
+			"assignmentEventId":               "",
+			"assignmentPuljeId":               "",
+			"assignmentBillettholderId":       0,
+			"assignmentPickerGmOnly":          false,
+			"assignmentPickerTitle":           "Administrer deltaker",
+			"assignmentInterestLevel":         "",
+			"assignmentCloseDialog":           false,
+			"assignmentActionCompleted":       false,
+			"clearInput":                      0,
+			"_puljeList":                      "",
+			"draggedBillettholderId":          0,
+			"draggedEventId":                  "",
+			"draggedManualSeat":               false,
+			"dragOverEvent":                   "",
+			"assignmentAgeConfirmed":          false,
+			"ageWarningText":                  "",
+			"ageWarningBillettholderId":       0,
+			"ageWarningEventId":               "",
+			"ageWarningPuljeId":               "",
+			"ageWarningRole":                  models.EventPlayerRolePlayer,
+			"ageWarningFromAddMenu":           false,
+			"ageWarningFromEventId":           "",
+			"ageWarningFromManualSeat":        false,
+			"_puljefordelingAssignDialogOpen": false,
+		}) }
 	>
 		<style>
 			.pulje-tabs {
@@ -882,7 +884,7 @@ templ puljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 	<section
 		id="puljefordeling-tab"
 		class="pulje-section"
-		data-signals:pulje-status={ fmt.Sprintf("'%s'", string(row.Status)) }
+		data-signals={ components.DataSignals(map[string]models.PuljeStatus{"puljeStatus": row.Status}) }
 	>
 		if hasRow {
 			<h2>{ row.Name }</h2>
