@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
@@ -43,14 +44,16 @@ templ puljeTildelingsDialog() {
 		closedBy="any"
 		aria-labelledby="tildeling-dialog-title"
 		data-preserve-attr="open"
-		data-signals:tildeling-open__ifmissing="false"
-		data-signals:save-confirmation__ifmissing="''"
-		data-signals:assignment-confirmation__ifmissing="''"
-		data-signals:assignment-from-add-menu__ifmissing="false"
-		data-signals:assignment-from-event-id__ifmissing="''"
-		data-signals:assignment-from-manual-seat__ifmissing="false"
-		data-signals:assignment-role__ifmissing="'Player'"
-		data-signals:assignment-remove__ifmissing="false"
+		data-signals__ifmissing={ components.DataSignals(map[string]any{
+			"tildelingOpen":            false,
+			"saveConfirmation":         "",
+			"assignmentConfirmation":   "",
+			"assignmentFromAddMenu":    false,
+			"assignmentFromEventId":    "",
+			"assignmentFromManualSeat": false,
+			"assignmentRole":           models.EventPlayerRolePlayer,
+			"assignmentRemove":         false,
+		}) }
 		data-effect="$tildelingOpen ? (!el.open && el.showModal()) : (el.open && el.close())"
 		data-on:close="$tildelingOpen = false; $assignmentConfirmation = ''"
 		data-on:click__stop="if (evt.target === el) $tildelingOpen = false"

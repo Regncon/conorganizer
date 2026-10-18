@@ -197,30 +197,32 @@ templ puljefordelingPage(db *sql.DB, logger *slog.Logger, current models.Pulje, 
 		id="puljefordeling-page"
 		class="page-content-container flex flex-col"
 		data-init={ live.DatastarInit(fmt.Sprintf("/admin/api/puljefordeling/%s", current)) }
-		data-signals:assignment-event-id__ifmissing="''"
-		data-signals:assignment-pulje-id__ifmissing="''"
-		data-signals:assignment-billettholder-id__ifmissing="0"
-		data-signals:assignment-picker-gm-only__ifmissing="false"
-		data-signals:assignment-picker-title__ifmissing="'Administrer deltaker'"
-		data-signals:assignment-interest-level__ifmissing="''"
-		data-signals:assignment-close-dialog__ifmissing="false"
-		data-signals:assignment-action-completed__ifmissing="false"
-		data-signals:clear-input__ifmissing="0"
-		data-signals:_pulje-list__ifmissing="''"
-		data-signals:dragged-billettholder-id__ifmissing="0"
-		data-signals:dragged-event-id__ifmissing="''"
-		data-signals:dragged-manual-seat__ifmissing="false"
-		data-signals:drag-over-event__ifmissing="''"
-		data-signals:assignment-age-confirmed__ifmissing="false"
-		data-signals:age-warning-text__ifmissing="''"
-		data-signals:age-warning-billettholder-id__ifmissing="0"
-		data-signals:age-warning-event-id__ifmissing="''"
-		data-signals:age-warning-pulje-id__ifmissing="''"
-		data-signals:age-warning-role__ifmissing="'Player'"
-		data-signals:age-warning-from-add-menu__ifmissing="false"
-		data-signals:age-warning-from-event-id__ifmissing="''"
-		data-signals:age-warning-from-manual-seat__ifmissing="false"
-		data-signals:_puljefordeling-assign-dialog-open__ifmissing="false"
+		data-signals__ifmissing={ components.DataSignals(map[string]any{
+			"assignmentEventId":               "",
+			"assignmentPuljeId":               "",
+			"assignmentBillettholderId":       0,
+			"assignmentPickerGmOnly":          false,
+			"assignmentPickerTitle":           "Administrer deltaker",
+			"assignmentInterestLevel":         "",
+			"assignmentCloseDialog":           false,
+			"assignmentActionCompleted":       false,
+			"clearInput":                      0,
+			"_puljeList":                      "",
+			"draggedBillettholderId":          0,
+			"draggedEventId":                  "",
+			"draggedManualSeat":               false,
+			"dragOverEvent":                   "",
+			"assignmentAgeConfirmed":          false,
+			"ageWarningText":                  "",
+			"ageWarningBillettholderId":       0,
+			"ageWarningEventId":               "",
+			"ageWarningPuljeId":               "",
+			"ageWarningRole":                  models.EventPlayerRolePlayer,
+			"ageWarningFromAddMenu":           false,
+			"ageWarningFromEventId":           "",
+			"ageWarningFromManualSeat":        false,
+			"_puljefordelingAssignDialogOpen": false,
+		}) }
 	>
 		<style>
 			.pulje-tabs {

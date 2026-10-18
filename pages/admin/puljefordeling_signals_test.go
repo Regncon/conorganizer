@@ -10,25 +10,25 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestPuljefordelingIndex_DeclaresSignalDefaultsWithKeyBeforeModifier(t *testing.T) {
+func TestPuljefordelingIndex_DeclaresSignalDefaultsAsIfMissingJSON(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt puljefordelingssiden med tildelingsdialogen.",
 		When:  "Når siden rendres.",
-		Then:  "Så skal signal-standardverdiene skrives som data-signals:navn__ifmissing, slik at Datastar leser navnet.",
+		Then:  "Så skal signal-standardverdiene ligge som JSON i data-signals__ifmissing, slik at Datastar leser navnene.",
 	})
 
 	// Given
-	expectedAttrs := []struct {
+	expectedSignals := []struct {
 		selector string
 		name     string
-		value    string
+		value    any
 	}{
-		{"#puljefordeling-page", "data-signals:assignment-picker-title__ifmissing", "'Administrer deltaker'"},
-		{"#puljefordeling-page", "data-signals:assignment-billettholder-id__ifmissing", "0"},
-		{"#puljefordeling-page", "data-signals:age-warning-role__ifmissing", "'Player'"},
-		{"#puljefordeling-page", "data-signals:_puljefordeling-assign-dialog-open__ifmissing", "false"},
-		{"#tildeling-dialog", "data-signals:assignment-role__ifmissing", "'Player'"},
-		{"#tildeling-dialog", "data-signals:tildeling-open__ifmissing", "false"},
+		{"#puljefordeling-page", "assignmentPickerTitle", "Administrer deltaker"},
+		{"#puljefordeling-page", "assignmentBillettholderId", float64(0)},
+		{"#puljefordeling-page", "ageWarningRole", string(models.EventPlayerRolePlayer)},
+		{"#puljefordeling-page", "_puljefordelingAssignDialogOpen", false},
+		{"#tildeling-dialog", "assignmentRole", string(models.EventPlayerRolePlayer)},
+		{"#tildeling-dialog", "tildelingOpen", false},
 	}
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_signal_defaults")
 
@@ -36,10 +36,10 @@ func TestPuljefordelingIndex_DeclaresSignalDefaultsWithKeyBeforeModifier(t *test
 	doc := templtest.Render(t, puljefordelingIndex(db, logger, models.PuljeFredagKveld, nil))
 
 	// Then
-	for _, expected := range expectedAttrs {
-		actual, ok := doc.Find(expected.selector).Attr(expected.name)
-		if !ok || actual != expected.value {
-			t.Fatalf("%s %s = %q (present %t), want %q", expected.selector, expected.name, actual, ok, expected.value)
+	for _, expected := range expectedSignals {
+		signals := templtest.SignalsObject(t, doc.Find(expected.selector), "data-signals__ifmissing")
+		if actual, ok := signals[expected.name]; !ok || actual != expected.value {
+			t.Fatalf("%s %s = %v (present %t), want %v", expected.selector, expected.name, actual, ok, expected.value)
 		}
 	}
 	if names := templtest.SignalsAttrsWithModifierBeforeKey(doc); len(names) > 0 {
