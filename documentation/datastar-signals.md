@@ -23,19 +23,17 @@ Use ordinary names for server-provided data and selections sent to an endpoint.
 This is the project's naming convention; the prefix does not grant access or
 replace validation on the server.
 
-The `__ifmissing` modifier supplies defaults without overwriting an existing
+`data-signals__ifmissing` supplies defaults without overwriting an existing
 selection or a newer endpoint response. Plain `data-signals` applies the value
 when Datastar processes the attribute, including when a live HTML patch changes
 its value. Choose plain initialization when the server should replace the value.
 
-The key goes before the modifier: `data-signals:save-message__ifmissing="''"`,
-or the object form `data-signals__ifmissing="{saveMessage: ''}"`. The bundled
-Datastar v1.0.4 splits the attribute name at `__` first, so in
-`data-signals__ifmissing:save-message` the key ends up inside the modifier. That
-attribute declares no signal, is not if-missing, and spreads a string value into
-signals named `0`, `1` and so on. Many older attributes in the repo use that
-order; do not copy them. Write keys in kebab-case: HTML lowercases attribute
-names, so `data-signals:saveMessage` declares `$savemessage`.
+Put the modifier after the key: `data-signals:save-message__ifmissing="''"`.
+Datastar splits the attribute name on `__` before it reads the key, so
+`data-signals__ifmissing:save-message` is read as a keyless `data-signals` with
+the key inside the modifier name. The modifier is dropped and the value is
+spread into the signals, so `'Player'` becomes signals `0` to `5`. The keyless
+form takes an object: `data-signals__ifmissing={ components.DataSignals(map...) }`.
 
 ## Example: expand details in the browser
 
@@ -151,11 +149,10 @@ Current users include `components/event_components/programpulje_interests.templ`
 `pages/admin/rooms/rooms_assignment_page.templ`, `pages/event/event_rooms.templ`
 and `components/header/menu.templ`.
 
-Declare browser-owned selections with `__ifmissing`, key first, so a morph does
-not reset them. The billettholder interest dialog keeps the selected pulje tab
-in `billettholderInterestActivePulje` while it stays open. Its declaration still
-uses the modifier-first order and declares nothing; the tab survives because the
-open button sets the signal explicitly to that billettholder's first pulje.
+Declare browser-owned selections with `data-signals__ifmissing` so a morph does
+not reset them. For example, the billettholder interest dialog keeps the
+selected pulje tab in `billettholderInterestActivePulje` while it stays open.
+The open button sets it explicitly to that billettholder's first pulje.
 
 ## Native modal dialogs in live fragments
 

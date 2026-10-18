@@ -123,7 +123,7 @@ Details and the client-side lifecycle are in `references/errorfeedback-and-toast
 
 - A handler whose broadcast is required needs a real manager in its route test: embedded NATS plus `live.NewManager`, as in `pages/admin/rooms_assignment_route_test.go` and the `newMaxPlayersTestLiveManager` helper in `components/formsubmission/other_details_test.go`. `&live.Manager{}` has no buckets, so `Broadcast` returns `unknown live bucket`; it only fits handlers that treat the broadcast as best effort, tests that stop before it, or a test that checks the broadcast-failure path on purpose.
 - A route test that checks status and database still passes when the `Broadcast` line is deleted. To prove that another open page re-renders, open the stream over `httptest.NewServer`, read the first patch, wait until the stream's NATS watcher exists, then run the mutation and read the next patch. A broadcast between the first patch and the watcher start is missed by design, so a test without the wait is flaky. `references/live-page-skeleton.md` has the helpers.
-- Markup rules are asserted with `templtest.Render`, as `TestBillettholderCard_UsesDatastarStateForInterestDialogOpenState` does for the dialog attributes.
+- Markup rules are asserted with `templtest.Render`, as `TestBillettholderCard_UsesDatastarStateForInterestDialogOpenState` does for the dialog attributes. On main, `templtest.SignalsObject` parses a JSON `data-signals` attribute and `templtest.SignalsAttrsWithModifierBeforeKey` finds `__ifmissing` written before the key; `pages/admin/puljefordeling_signals_test.go` uses both.
 - `service/live/live_test.go` uses an in-memory fake KV. Keep NATS out of it.
 - Use `bdd.Behavior` and Given/When/Then sections as AGENTS.md describes.
 
