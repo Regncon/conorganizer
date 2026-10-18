@@ -1,0 +1,4 @@
+interface:
+  display_name: "Conorganizer Datastar Live"
+  short_description: "Live updates (NATS buckets, SSE) and Datastar markup in Go and templ code"
+  default_prompt: "Add or review a mutation handler, live page or Datastar markup in conorganizer so it broadcasts the right live buckets, keeps the SSE response order and survives morphs."
