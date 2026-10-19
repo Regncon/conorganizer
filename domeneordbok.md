@@ -1,19 +1,25 @@
 # Domeneordbok
+Domene or følger DDD domain-driven design, og må være det samme i alle deler av systemet, frontend, backend, database, dokumentasjon  etc. 
 
-## Ord
+Ikke domeneord bør være på engelsk i kode, database og dokumentasjon, men kan være på norsk i tekster som vises til brukere, for eksempel i feilmeldinger.
+
+Ikke domenoord kan godt være egene services eller tabeller etc. For eksepel ticket og ticket service. 
+
+## Domeneord
 Interesse
-Interesser
-Interessenivå
 Førstevalg
-Påmelding
-Billettholder
-Billettholdere
 Pulje
-Puljer
 Puljefordeling
+
+
+## Ikke domeneord
+Påmelding
+Deltager
+Interessenivå
+Pujlearrangement
+Programarrangement
 Arrangement
 Arrangementer
-Programarrangement
 Kladd
 Innsendt
 Godkjent
@@ -27,6 +33,11 @@ Fredag Kveld
 Lordag Morgen
 Lordag Kveld
 Sondag Morgen
+
+## Deprecated
+Billettholder -> skal bli til deltager. 
+Billettholdere
+
 
 ## Billettholder
 En billettholder er en CheckIn billett
