@@ -41,7 +41,7 @@ Most lookup and enum-like values stored in SQLite are capitalized strings, and s
 | `relation_events_players.role` | `Player`, `GM` |
 | `relation_billettholder_emails.kind` | `Ticket`, `Associated`, `Manual` |
 
-The convention is not universal: `relation_events_players.source` uses lowercase `manual` and `solver`. Use capitalized values for new enum-like columns. For the meaning of the event statuses, see [domeneordbok.md](../domeneordbok.md#arrangementstatus).
+The convention is not universal: `relation_events_players.source` uses lowercase `manual` and `solver`. Use capitalized values for new enum-like columns. For the meaning of the event statuses, see [event-status.md](event-status.md).
 
 ## Changing CHECK constraints
 

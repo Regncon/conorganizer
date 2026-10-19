@@ -1,7 +1,6 @@
 # Billettholdere
 
-A billettholder is a CheckIn ticket that is not of type "Middag" (see
-[domeneordbok.md](../domeneordbok.md#billettholder)). This page covers how
+A billettholder is a CheckIn ticket that is not of type "Middag". This page covers how
 billettholdere are imported from CheckIn, how they are linked to logged-in users
 through e-post, and how the admin billettholder page reads them.
 
@@ -60,7 +59,7 @@ Code lives in `service/checkIn`.
   solver does not use the flag, so it can seat a billettholder under 18 on an
   18+ arrangement (`AgeGroupAdultsOnly`). The admin puljefordeling page uses it
   to warn about such seats, and to ask for confirmation before a manual pin. See
-  [domeneordbok.md](../domeneordbok.md#aldersgrense-18).
+  [age-limit.md](age-limit.md).
 - `ConvertOrderToBillettholdere(ctx, ticketID, db, logger)` is the admin
   conversion. It fetches all tickets, converts every non-Middag ticket in the
   order `ticketID` belongs to (the shared `convertOrders`, also used by

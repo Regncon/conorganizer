@@ -529,6 +529,8 @@ Project documentation in `documentation/`:
 - [Billettholdere](documentation/billettholdere.md)
 - [Room assignment](documentation/room-assignment.md)
 - [Access control and error pages](documentation/access-control-and-error-pages.md)
+- [Event status](documentation/event-status.md)
+- [Age limit (18+)](documentation/age-limit.md)
 - [UI conventions](documentation/ui-conventions.md)
 - [Automated tests](documentation/automated-tests.md)
 - [Manual tests](documentation/testing/index.md)
