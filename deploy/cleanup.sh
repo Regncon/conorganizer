@@ -69,7 +69,9 @@ run rm -rf "$BRANCH_DATA_DIR"
 echo "[cleanup] Reloading systemd and Caddy"
 run systemctl daemon-reload || true
 # A unit that was in the failed state stays listed as not-found until reset.
-run systemctl reset-failed "$SERVICE_NAME" || true
+if systemctl is-failed --quiet "$SERVICE_NAME"; then
+  run systemctl reset-failed "$SERVICE_NAME" || true
+fi
 # A failed reload leaves the old route live in Caddy, so let it fail the job.
 run systemctl reload caddy
 
