@@ -10,6 +10,8 @@ vars:
     # Prettier formats <style> and <script> bodies for templ fmt. CI and
     # setup:prettier install this version, so bump it here only.
     PRETTIER_VERSION: "3.9.10"
+    # The Grafana MCP server the agent configs run, installed by setup:mcp.
+    MCP_GRAFANA_VERSION: "v2.0.2"
 
 tasks:
     # The `build:` tasks below are used together for "production" builds of your project
@@ -333,6 +335,19 @@ tasks:
             - go install github.com/a-h/templ/cmd/templ@{{.TEMPL_VERSION}}
             - task: setup:prettier
             - task: check:editor
+
+    setup:mcp:
+        desc: Install the mcp-grafana version the agents' Grafana MCP server runs
+        cmds:
+            - go install github.com/grafana/mcp-grafana/v2/cmd/mcp-grafana@{{.MCP_GRAFANA_VERSION}}
+            - |
+              if ! command -v mcp-grafana >/dev/null 2>&1; then
+                bin="$(go env GOBIN)"
+                [ -n "$bin" ] || bin="$(go env GOPATH)/bin"
+                echo "mcp-grafana is installed but not on PATH. Add $bin to PATH." >&2
+                exit 1
+              fi
+              mcp-grafana --version
 
     check:editor:
         desc: Compare templ and Prettier on PATH with the versions the repo expects
