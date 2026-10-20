@@ -30,12 +30,12 @@ Each environment has the same layout:
 
 ## CI/CD jobs
 
-- **`build`** runs on every push to `main` and on every PR event except `closed`. It runs `go tool templ generate`, then the tests with the behavior report (`go run ./cmd/testreport`), then builds the `conorganizer` binary and a Goose v3.28.0 binary (`go install github.com/pressly/goose/v3/cmd/goose@v3.28.0`) and uploads both as an artifact.
+- **`build`** runs on every push to `main` and on every PR `opened`, `reopened`, `synchronize` and `ready_for_review` event. It runs `go tool templ generate`, then the tests with the behavior report (`go run ./cmd/testreport`), then builds the `conorganizer` binary and a Goose v3.28.0 binary (`go install github.com/pressly/goose/v3/cmd/goose@v3.28.0`) and uploads both as an artifact.
 - **`deploy-fixed`** runs on pushes to `main`. It is a matrix over `[main, demo, restored]` with `fail-fast: false`, so the three environments deploy in parallel and a failure in one does not cancel the others. This is safe because each environment has its own app dir, binary, service and data dir, and fixed deploys install no generated Caddy or systemd files, so they share no files. Each matrix entry uploads the binary, `goose`, `migrations/*.sql` and `deploy.sh` to `/opt/conorganizer/<name>/` and runs `sudo deploy.sh <name>`. CI never runs Goose against a fixed environment; the deployed files are used by the manual `conorganizer-sqlite-migrate` (see [migrations.md](migrations.md)).
 - **`deploy`** builds a PR preview. It only runs for PRs that are open, not drafts, and come from this repository (fork PRs have no secrets). A draft gets a preview when it is marked ready for review.
-- **`cleanup-preview`** runs when a same-repo PR is closed, merged or not. See [Preview cleanup](#preview-cleanup).
+- **`cleanup-preview`** runs when a same-repo PR is closed, merged or not. It is the only job that runs on the `pull_request_target` event. See [Preview cleanup](#preview-cleanup).
 
-Runs are serialized per ref with a `concurrency` group on `${{ github.workflow }}-${{ github.ref }}` and `cancel-in-progress: false`. A deploy that has started is never interrupted halfway through moving the binary or restarting the service. GitHub keeps only the newest pending run, so the latest commit is always deployed last.
+Runs are serialized per PR, and pushes per ref, with a `concurrency` group on `${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}` and `cancel-in-progress: false`. A deploy that has started is never interrupted halfway through moving the binary or restarting the service, and a PR's cleanup waits for that PR's running deploy. GitHub keeps only the newest pending run, so the latest commit is always deployed last. The group uses the PR number, not `github.ref`, because a merged PR's close event has `github.ref` `refs/heads/main`. In main's group, the next merge cancelled the pending cleanup.
 
 ## Production environment and SSH secrets
 
@@ -97,13 +97,17 @@ Both keep 14 days of backups and are run by systemd timers from `configuration-a
 
 `cleanup-preview` uploads `deploy/cleanup.sh` to the preview's app dir and runs `sudo cleanup.sh <PR_NUMBER>-merge`. The script stops and disables the service, removes the unit, the Caddy site, the data dir and the app dir, and reloads systemd and Caddy. Every removal tolerates a target that is already gone, so running it twice, after a failed deploy, or for a draft that never got a preview, is safe. A failed Caddy reload fails the job, because Caddy then still serves the old route.
 
+The job runs on `pull_request_target`, not `pull_request`, because GitHub runs no `pull_request` workflow for a PR with merge conflicts, not even when it is closed. `pull_request_target` runs the base branch's workflow with the secrets, so the job only checks out the base branch and never runs PR code.
+
 The job needs the `deploy` user's sudoers entry for `/opt/conorganizer/*/cleanup.sh`, which `hetzner/scripts/setup_deploy_user.sh` writes. Check it on the server with `sudo -l -U deploy`. Without it the job fails at the `sudo` line and the preview stays.
 
-To see what the script would remove without changing anything, run it as a dry run. A dry run needs no root:
+To see what the script would remove without changing anything, run a copy of `deploy/cleanup.sh` as a dry run. A live preview's app dir has no copy, because CI only uploads the script when the PR closes. A dry run needs no root:
 
 ```bash
-DRY_RUN=true bash /opt/conorganizer/<PR_NUMBER>-merge/cleanup.sh <PR_NUMBER>-merge
+DRY_RUN=true bash cleanup.sh <PR_NUMBER>-merge
 ```
+
+Never write `DRY_RUN=true sudo ...`: sudo drops `DRY_RUN`, so the script removes the preview.
 
 Safety notes:
 
@@ -112,23 +116,24 @@ Safety notes:
 
 ### Remove stale previews by hand
 
-A preview whose cleanup job failed or never ran stays on the server: Caddy keeps its route and certificate and logs a `502` with `connection refused` for every request once its service is gone. To find and remove such previews, first list the open PRs on your own machine:
+A preview whose cleanup job failed, was cancelled or never ran stays on the server: Caddy keeps its route and certificate and logs a `502` with `connection refused` for every request once its service is gone. To find and remove such previews, first list the open PRs on your own machine:
 
 ```bash
 gh pr list --repo Regncon/conorganizer --state open --limit 200 --json number --jq '[.[].number] | join(" ")'
 ```
 
-Then, on the server, collect every preview that still has a Caddy site, a unit, an app dir or a data dir, and leave out the open PRs. Paste the numbers into `OPEN_PRS`, or leave it empty when no PR is open:
+Then, on the server, collect every preview that still has a Caddy site, a unit, an app dir or a data dir, and leave out the open PRs. Paste the numbers into `OPEN_PRS` (any separator works). Leave it empty only when no PR is open, because every preview left out of it is removed:
 
 ```bash
 OPEN_PRS=""
+open=" $(echo "$OPEN_PRS" | grep -oE '[0-9]+' | tr '\n' ' ')"
 stale=$(
   {
     sudo ls /etc/caddy/sites-enabled | sed -nE 's/^conorganizer-([0-9]+-merge)\.caddy$/\1/p'
     sudo ls /etc/systemd/system | sed -nE 's/^conorganizer-([0-9]+-merge)\.service$/\1/p'
     sudo ls /opt/conorganizer /mnt/HC_Volume_103911252/environments | grep -E '^[0-9]+-merge$'
   } | sort -un | while read -r name; do
-    case " $OPEN_PRS " in *" ${name%-merge} "*) ;; *) echo "$name" ;; esac
+    case "$open" in *" ${name%-merge} "*) ;; *) echo "$name" ;; esac
   done
 )
 echo $stale

@@ -8,6 +8,7 @@ set -euo pipefail
 #
 # DRY_RUN=true only logs what would be removed and needs no root:
 #   DRY_RUN=true bash cleanup.sh <PR_NUMBER>-merge
+# sudo drops DRY_RUN, so `DRY_RUN=true sudo cleanup.sh` removes the preview.
 DRY_RUN="${DRY_RUN:-false}"
 
 DATA_ROOT="/mnt/HC_Volume_103911252/environments"
