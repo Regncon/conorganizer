@@ -940,7 +940,7 @@
       "id": 53,
       "type": "stat",
       "title": "Root filesystem usage",
-      "description": "Used space on / (/dev/sda1, 40 GB). Loki's data is not on this disk: it lives in /tmp/loki, and /tmp is a separate 1 GB tmpfs in RAM.",
+      "description": "Used space on / (/dev/sda1, 40 GB). Loki keeps its data on this disk in /var/lib/loki, up to 120 days of logs.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"

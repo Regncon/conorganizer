@@ -26,7 +26,7 @@ Observability services:
 | Service | Address | Notes |
 | --- | --- | --- |
 | Grafana | `127.0.0.1:3400` | Public at `grafana.regncon.no` through Caddy |
-| Loki | `127.0.0.1:3500` | Not the Loki default `3100` |
+| Loki | `127.0.0.1:3500` | Not the Loki default `3100`. Data in `/var/lib/loki`, kept for 120 days (see [Loki storage](#loki-storage)) |
 | Promtail | `:9080` | No bind address set. Tails `/var/log/messages` and pushes to Loki |
 | Prometheus | `127.0.0.1:9090` | OS package, config from this repo |
 | node_exporter | `127.0.0.1:9100` | OS package, config from this repo |
@@ -52,7 +52,7 @@ The production repository is stored at:
 | `loki` | `/etc/loki/config.yml` |
 | `prometheus` | `/etc/prometheus/prometheus.yml`, `/etc/prometheus/blackbox.yml` and `/etc/default/prometheus-node-exporter` |
 | `promtail` | `/etc/promtail/config.yml` |
-| `systemd` | `/etc/systemd/system/` units for the app instances, the backup services and timers, `loki.service` and `promtail.service` |
+| `systemd` | `/etc/systemd/system/` units for the app instances, the backup services and timers, `loki.service`, its `loki.service.d` drop-in and `promtail.service` |
 
 Prometheus, `prometheus-node-exporter` and `prometheus-blackbox-exporter` are installed as OS packages; only their config comes from the `prometheus` package. `/etc/default/prometheus-node-exporter` is the only `/etc/default` override in the repository. It binds node_exporter to `127.0.0.1:9100`, enables `--collector.systemd`, and uses a filesystem mount-point exclude that does not exclude `/mnt`, so the mounted volume is visible.
 
@@ -102,6 +102,62 @@ Both timers use `Persistent=true`, so a run missed while the server was down hap
 The SQLite backup runs `PRAGMA integrity_check` and checks that the `users` and `events` tables exist before it keeps the file.
 
 Log lines start with `conorganizer-sqlite-backup:` or `conorganizer-images-backup:` and end with `completed successfully` on success. The Grafana backup panels depend on these strings.
+
+## Loki storage
+
+Loki stores its chunks, index and write-ahead log in `/var/lib/loki` on the root disk. The drop-in `loki.service.d/state-directory.conf` creates the folder for the `loki` user, with mode 0700 (`StateDirectory=loki`). It is a drop-in because the Loki package overwrites `/etc/systemd/system/loki.service` on upgrade, which would undo changes to the unit itself.
+
+The compactor deletes logs older than `retention_period` (120 days). Without `compactor.retention_enabled`, Loki ignores `retention_period` and keeps everything. Enabling retention also enables Loki's log-deletion API, without authentication. `deletion_mode: disabled` turns that API off, and retention does not need it.
+
+On `/tmp`, Loki grew about 15 MB a day over its first 30 hours. It grows less on quiet days and more while people run queries, because about half of what Loki stores is its own query logs. At 15 MB a day, 120 days comes to roughly 2 GB. That takes `/` from about 84% to about 89% used, just under the 90% red line of the "Root filesystem usage" panel, and no alert watches it. Run `sudo du -sh /var/lib/loki` a week after the move, and lower `retention_period` if Loki grows faster than 15 MB a day.
+
+Loki used to keep this data in `/tmp/loki`, because the repository's config started from the example file the Loki package installs (`cmd/loki/loki-local-config.yaml`). On this server `/tmp` is a 1 GB tmpfs in RAM, so every reboot wiped all logs. The originals in the systemd journal and `/var/log/syslog*` were never affected.
+
+### Moving from /tmp/loki
+
+To move without losing the logs collected since the last reboot, run all of this in one go, from `/srv/configuration-as-code-repo/conorganizer`. Pulling the change switches `/etc/loki/config.yml` to `/var/lib/loki` at once, because it is a stow symlink into the checkout. If Loki restarted before systemd knew about the drop-in, it could not create its folder and would stay down. So stop Loki before you pull, and don't pull this change on the server without running these steps.
+
+First check what the pull brings, and that the installed Loki accepts the new config:
+
+```bash
+cd /srv/configuration-as-code-repo/conorganizer
+git fetch
+git diff --stat HEAD origin/main -- configuration-as-code/stow
+git show origin/main:configuration-as-code/stow/loki/etc/loki/config.yml > /tmp/loki-config-new.yml
+/usr/bin/loki -config.file=/tmp/loki-config-new.yml -verify-config
+```
+
+The diff lists every stowed file the pull changes. Changes to the Caddyfile or to other units take effect the next time those services reload.
+
+Then stop Loki, pull, copy the data and start Loki again:
+
+```bash
+sudo systemctl stop loki
+git pull --ff-only
+test -e /var/lib/loki && echo "/var/lib/loki already exists: do not copy, check it first" || sudo cp -a /tmp/loki /var/lib/loki
+sudo stow --dir=configuration-as-code/stow --target=/ --restow loki systemd
+sudo systemctl daemon-reload
+sudo systemctl start loki
+```
+
+`cp -a` creates `/var/lib/loki` with the owner of `/tmp/loki`. The Loki package creates no `loki` group, so don't create the folder with `install -g loki`.
+
+If Loki does not start, `/tmp/loki` is untouched. To go back to the old path, run `git checkout HEAD@{1} -- configuration-as-code/stow/loki/etc/loki/config.yml`, then `sudo systemctl start loki`. The drop-in is harmless with the old path and can stay.
+
+Alloy retries each batch 10 times, with backoff growing from 0.5 s to 5 min, so nothing is dropped as long as Loki is back within about 4 minutes. The journal keeps every line either way. Check the result:
+
+```bash
+systemctl status loki --no-pager
+for i in $(seq 30); do curl -fsS http://127.0.0.1:3500/ready && break; sleep 2; done
+curl -fsS http://127.0.0.1:3500/config | grep -E 'path_prefix|working_directory|active_index_directory|retention_enabled|deletion_mode'
+sudo du -sh /var/lib/loki
+sudo journalctl -u loki -n 50 --no-pager -o cat | grep -E "level=(error|warn)"
+curl -fsS http://127.0.0.1:12345/metrics | grep '^loki_write_dropped_entries_total'
+```
+
+The last command should show only 0 values.
+
+In Grafana, logs from before the move should still be there. Re-import `grafana-dashboards/conorganizer-production-health.json` (see [Manual Import](grafana-dashboards/README.md#manual-import)), so the "Root filesystem usage" description no longer says Loki's data is in `/tmp/loki`. `/tmp/loki` can then be deleted, or left for the next reboot to clear.
 
 ## Caddy hostnames
 

@@ -129,7 +129,7 @@ See the [production stack overview](../README.md#production-stack-overview) for 
 - The `blackbox_https` job probes `https://main.lekeplassen.regncon.no/` and `https://grafana.regncon.no/` through `127.0.0.1:9115`, and relabels `instance` to the probed URL.
 - `configuration-as-code/stow/prometheus/etc/prometheus/blackbox.yml` defines an `http_2xx` module with `fail_if_not_ssl: true`, redirects enabled, IPv4 preferred, and a 5 second timeout.
 - `configuration-as-code/stow/prometheus/etc/default/prometheus-node-exporter` binds node_exporter to `127.0.0.1:9100`, enables `--collector.systemd`, and keeps `/mnt` from being excluded by the filesystem collector.
-- `configuration-as-code/stow/loki/etc/loki/config.yml` configures Loki on `127.0.0.1:3500` (not the default `3100`) with filesystem storage and `retention_period: 120d`.
+- `configuration-as-code/stow/loki/etc/loki/config.yml` configures Loki on `127.0.0.1:3500` (not the default `3100`) with filesystem storage in `/var/lib/loki` and `retention_period: 120d`, enforced by the compactor.
 - `configuration-as-code/stow/promtail/etc/promtail/config.yml` pushes to `http://localhost:3500/loki/api/v1/push`, labels logs with `job=varlogs`, and tails `/var/log/messages`. This is not how the app's logs reach Loki: Alloy's journald source ships them (see Historical Server Notes), and in Grafana they carry `job="systemd-journal"`, `app="conorganizer"` and `service="conorganizer-main"` (checked 2026-09-30). Query with those labels, not `job=varlogs`.
 - The repo contains Loki and Promtail systemd unit files. It does not contain an Alloy config file.
 - No Caddy native metrics endpoint or Caddy access-log format is configured in the checked-in Caddyfile.
