@@ -28,6 +28,9 @@ jobs:
         # Nothing to build when a PR is merely closed (cleanup-preview handles that).
         if: github.event.action != 'closed'
         runs-on: ubuntu-latest
+        env:
+            # Also pinned in documentation/migrations.md and AGENTS.md.
+            GOOSE_VERSION: v3.28.0
 
         steps:
             - name: Checkout
@@ -79,9 +82,26 @@ jobs:
             # Preview deploys run goose against their cloned database. Fixed
             # environments (main, demo, restored) only receive goose and the
             # migrations for the manual conorganizer-sqlite-migrate; CI never
-            # runs goose there.
+            # runs goose there. The Go cache above is saved before this step,
+            # so goose is cached as a finished binary instead, keyed on the
+            # goose and Go versions, and only built when one of them changes.
+            - name: Restore goose
+              id: goose-cache
+              uses: actions/cache/restore@v5
+              with:
+                  path: goose
+                  key: goose-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOSE_VERSION }}-go${{ steps.setup-go.outputs.go-version }}
+
             - name: Build goose
-              run: GOBIN="$PWD" go install github.com/pressly/goose/v3/cmd/goose@v3.28.0
+              if: steps.goose-cache.outputs.cache-hit != 'true'
+              run: GOBIN="$PWD" go install "github.com/pressly/goose/v3/cmd/goose@$GOOSE_VERSION"
+
+            - name: Save goose
+              if: steps.goose-cache.outputs.cache-hit != 'true'
+              uses: actions/cache/save@v5
+              with:
+                  path: goose
+                  key: ${{ steps.goose-cache.outputs.cache-primary-key }}
 
             - name: Upload binary artifact
               uses: actions/upload-artifact@v4

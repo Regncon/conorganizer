@@ -6,7 +6,7 @@ The only exception is PR preview environments. On every PR deploy, `deploy/deplo
 
 ## Create a migration
 
-From the repository root, create a SQL migration with the same Goose version that CI uses:
+From the repository root, create a SQL migration with the same Goose version that CI uses (`GOOSE_VERSION` in `.github/workflows/buildAndTest.yml`; bump it there, here and in AGENTS.md together):
 
 ```console
 go run github.com/pressly/goose/v3/cmd/goose@v3.28.0 -dir migrations create <brief-description> sql
