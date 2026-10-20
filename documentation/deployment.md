@@ -95,7 +95,17 @@ Both keep 14 days of backups and are run by systemd timers from `configuration-a
 
 ## Preview cleanup
 
-`cleanup-preview` uploads `deploy/cleanup.sh` to the preview's app dir and runs `sudo cleanup.sh <PR_NUMBER>-merge`. The script stops and disables the service, removes the unit, the Caddy site, the data dir and the app dir, and reloads systemd and Caddy. Every removal tolerates a target that is already gone, so running it twice, after a failed deploy, or for a draft that never got a preview, is safe. A failed Caddy reload fails the job, because Caddy then still serves the old route.
+`cleanup-preview` uploads `deploy/cleanup.sh` to the preview's app dir and runs `sudo cleanup.sh <PR_NUMBER>-merge`. The script removes everything a preview deploy creates, in this order:
+
+1. Stops and disables the service. If the service is still active after that, the script exits without removing anything, so a running preview never loses its files.
+2. Removes the unit and its `multi-user.target.wants` link. `systemctl disable` only removes the link while the unit file exists, so the script removes both itself.
+3. Removes the Caddy site and the data dir (`database/`, `event-images/`, everything the app wrote there).
+4. Reloads systemd, resets the unit's failed state so it stops showing as `not-found`, and reloads Caddy. A failed Caddy reload fails the job, because Caddy then still serves the old route.
+5. Removes the app dir last, because it holds the script itself.
+
+`/run/conorganizer-<name>/` is the unit's `RuntimeDirectory` and holds the NATS store; systemd removes it when the service stops. Two things stay on purpose: Caddy's certificate for the host, which Caddy deletes from its storage after it expires, and the journal entries of the unit, which follow the journal's own retention.
+
+Every removal tolerates a target that is already gone, so running it twice, after a failed deploy, or for a draft that never got a preview, is safe.
 
 The job runs on `pull_request_target`, not `pull_request`, because GitHub runs no `pull_request` workflow for a PR with merge conflicts, not even when it is closed. `pull_request_target` runs main's workflow with the secrets, whatever the PR's base branch, so the job only checks out main and never runs PR code. A change to `cleanup-preview` or `cleanup.sh` therefore only takes effect once it is merged to main.
 
@@ -146,4 +156,4 @@ for name in $stale; do DRY_RUN=true bash /tmp/cleanup.sh "$name"; done
 for name in $stale; do sudo DRY_RUN=false bash /tmp/cleanup.sh "$name"; done
 ```
 
-Put `DRY_RUN=false` after `sudo`, because sudo resets the environment.
+Put `DRY_RUN=false` after `sudo`, because sudo resets the environment. When the last site file is gone, Caddy's `import /etc/caddy/sites-enabled/*.caddy` only logs a warning, so the reload still succeeds.

@@ -27,6 +27,7 @@ fi
 
 SERVICE_NAME="conorganizer-${SAFE_NAME}.service"
 SERVICE_UNIT="/etc/systemd/system/$SERVICE_NAME"
+SERVICE_WANTS_LINK="/etc/systemd/system/multi-user.target.wants/$SERVICE_NAME"
 CADDY_SITE_DEST="/etc/caddy/sites-enabled/conorganizer-${SAFE_NAME}.caddy"
 APP_DIR="/opt/conorganizer/${SAFE_NAME}"
 BRANCH_DATA_DIR="$DATA_ROOT/$SAFE_NAME"
@@ -50,8 +51,14 @@ echo "[cleanup] Stopping and disabling $SERVICE_NAME"
 run systemctl stop "$SERVICE_NAME" || true
 run systemctl disable "$SERVICE_NAME" || true
 
+if [[ "$DRY_RUN" != "true" ]] && systemctl is-active --quiet "$SERVICE_NAME"; then
+  echo "[cleanup] ERROR: $SERVICE_NAME is still active after stop; leaving its files in place." >&2
+  exit 1
+fi
+
+# disable removes the wants link only while the unit file still exists.
 echo "[cleanup] Removing systemd unit: $SERVICE_UNIT"
-run rm -f "$SERVICE_UNIT"
+run rm -f "$SERVICE_UNIT" "$SERVICE_WANTS_LINK"
 
 echo "[cleanup] Removing Caddy site: $CADDY_SITE_DEST"
 run rm -f "$CADDY_SITE_DEST"
@@ -61,6 +68,8 @@ run rm -rf "$BRANCH_DATA_DIR"
 
 echo "[cleanup] Reloading systemd and Caddy"
 run systemctl daemon-reload || true
+# A unit that was in the failed state stays listed as not-found until reset.
+run systemctl reset-failed "$SERVICE_NAME" || true
 # A failed reload leaves the old route live in Caddy, so let it fail the job.
 run systemctl reload caddy
 
