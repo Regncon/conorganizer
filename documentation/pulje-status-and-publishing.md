@@ -1,6 +1,22 @@
 # Pulje status and program publishing
 
-This document describes how pulje status and program publishing control interest, the event page, puljefordeling and Mitt festivalprogram, and how the per-pulje publish switch for the room assignment fits in. For the meaning of domain words such as pulje, interesse, billettholder and "publisert", see [domeneordbok.md](../domeneordbok.md).
+This document describes how pulje status and program publishing control interest, the event page, puljefordeling and Mitt festivalprogram, and how the per-pulje publish switch for the room assignment fits in. For the meaning of domain words such as pulje, interesse and billettholder, see [domeneordbok.md](../domeneordbok.md). For event statuses, including `Annonsert`, see [event-status.md](event-status.md).
+
+## What "publisert" means
+
+"Publisert" means several different things in the code. Keep them apart:
+
+1. **The event is announced**: `events.status = 'Annonsert'` (`models.EventStatusAnnounced`). The event is public. Call this "annonsert", never "publisert". See [event-status.md](event-status.md).
+2. **The program is published**: `program_publishing_state.is_published`, one row with `id = 1`, read by `program.IsPublished`. It covers the whole program: the front page with days and puljer, interest, Mitt festivalprogram, and the puljer, times and rooms on event pages. Toggled with "Publiser program" on `/admin`.
+3. **The puljefordeling is published**: `puljer.status = 'Completed'`, shown as "Puljefordeling publisert" in admin. The assignments in that pulje are published, and the commit and tildeling paths refuse changes (`ErrPuljeCompleted`) while the pulje stays `Completed`. An admin can untick step 3 to move the pulje back to `Locked` and allow changes again.
+4. **The room assignment is published**: `puljer.rooms_published`, per pulje, toggled with the "Publiser romfordeling" switch on `/admin/rooms/assignment/{pulje}` ("Synlig for alle" / "Ikke publisert"). Only then are the room and the room map for that pulje shown on the event page and the print-friendly page, to admins too, and the event page also shows the room's public notes. The event page also requires the program to be published. The flag is not tied to `puljer.status`.
+5. **`relation_event_puljer.is_published`**: a legacy column per event and pulje. No production code reads it, and `SetEventInPulje` deliberately leaves it untouched. Do not build new behavior on it.
+
+These fields are not about publishing, but are easy to confuse with it:
+
+- `relation_event_puljer.is_in_pulje`: whether the event is set up in the pulje. `v_event_puljer_active` filters on `is_in_pulje = 1`, and `v_events_by_pulje_active` also filters on status `Annonsert`.
+- `events.is_in_puljefordeling`: whether the event takes part in the puljefordeling, or is a [program event](#program-events-outside-the-puljefordeling).
+- `puljer.status` (`Open`, `Locked`, `Completed`) publishes only the puljefordeling (item 3). It does not control which events are shown publicly or in the previous/next navigation.
 
 ## Independent settings
 
@@ -113,9 +129,22 @@ Code locations:
 
 The warning is informational. An admin turns it on manually (step 1 above), it never blocks editing, and locking or completing clears it.
 
+## Program events outside the puljefordeling
+
+There is no separate "påmelding" (sign-up) feature. Long-running events that anyone can join, such as "Blood on the Clocktower" or "Cosplay", are entered as program events (programarrangementer): events with `events.is_in_puljefordeling = 0`. Admins set this with the "Med i puljefordeling" checkbox in the "Puljefordeling" card of the event form (`puljefordeling` in `components/formsubmission/puljefordeling.templ`, rendered only for admins, saved by `PUT /profile/api/new/{id}/is-in-puljefordeling`). A program event is still placed in one or more puljer with `is_in_pulje = 1`, so that it appears on the right day.
+
+A program event behaves differently from an event in the puljefordeling:
+
+- The event page shows `ProgramEventInterestPanel` (`pages/event/event_interest_panel.templ`) instead of the interest panel: "Dette er et programarrangement som er åpent for alle. Du trenger ikke melde interesse eller reservere plass." When the viewer's billettholdere have interests in the selected pulje, the panel also warns that they may be picked for one of those events, with a link to `/profile`. The interest dialog is never rendered (`canShowInterestControls` requires `is_in_puljefordeling = 1`), and `updateInterest` rejects interest for it.
+- The front page lists each day's program events once, under the heading "Programoversikt" above the pulje blocks (`pages/root/event_list.templ`). `program.GetDays` (`service/program/days.go`) links a program event to its first pulje on that day, and `PuljeBlock.RaffleEvents` leaves program events out of the pulje blocks.
+- Times: program events run on their own schedule, given in the description. The event page rooms and the print-friendly page show `ProgramEventTimeHint` ("Se beskrivelse for tidspunkt.") instead of the pulje time. In Mitt festivalprogram the program event's card (`ProgramPuljeEvent`) shows the hint as an extra line, while the pulje heading keeps the pulje time.
+- The solver only loads events with `is_in_puljefordeling = 1` (`loadEligibleEvents` in `service/puljefordeling/emulate.go`).
+
+The UI still uses the word "påmelding" for showing interest in three places: the "Publiser program" card on `/admin` says "Publiser programmet for festivalen, og åpne for ønsker og påmeldinger.", "Påmelding" is a feedback topic (`service/feedback/topic.go`), and the feedback form's placeholder (`pages/feedback/feedback_page.templ`) begins "F.eks. «Påmeldingen var enkel, …»". All of them mean interesse, not a separate sign-up.
+
 ## Event page interest panel and dialog
 
-For an event that is in puljefordeling (`events.is_in_puljefordeling = 1`), the event page (`pages/event/event_page.templ`) has two separate parts: the outer panel and the "Meld interesse" dialog. Events that are not in puljefordeling show `ProgramEventInterestPanel` instead, which says that no interest is needed. For which users can see an event at all, see [access-control-and-error-pages.md](./access-control-and-error-pages.md).
+For an event that is in puljefordeling (`events.is_in_puljefordeling = 1`), the event page (`pages/event/event_page.templ`) has two separate parts: the outer panel and the "Meld interesse" dialog. Events that are not in puljefordeling show `ProgramEventInterestPanel` instead, which says that no interest is needed. See [Program events outside the puljefordeling](#program-events-outside-the-puljefordeling). For which users can see an event at all, see [access-control-and-error-pages.md](./access-control-and-error-pages.md).
 
 ### Outer panel (`EventInterestPanel`)
 

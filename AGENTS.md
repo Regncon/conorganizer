@@ -17,6 +17,8 @@ Before changing an area, read its doc in documentation/ and update it in the sam
 - live pages and Broadcast: live-update-lifecycle.md
 - signals and dialogs: datastar-signals.md
 - access and the 401/403/404 pages: access-control-and-error-pages.md
+- event statuses, the status card and the approval page: event-status.md
+- the 18+ age limit and aldersvarsler: age-limit.md
 - tests: automated-tests.md
 - migrations: migrations.md
 - CSS classes and focus states: ui-conventions.md
@@ -27,7 +29,7 @@ Skills live in `.agents/skills/<name>/` (SKILL.md, references/, agents/openai.ya
 
 ## Text and names
 - User-facing text is bokmål, never nynorsk. The one nynorsk exception is the external link https://www.regncon.no/vanlege-sporsmal/.
-- An event is "annonsert", never "publisert". "Publisert" is for the program, the puljefordeling and the romfordeling (domeneordbok.md). Forkastet is `EventStatusArchived`; there is no Avvist.
+- An event is "annonsert", never "publisert". "Publisert" is for the program, the puljefordeling and the romfordeling (documentation/pulje-status-and-publishing.md). Forkastet is `EventStatusArchived`; there is no Avvist.
 - When you change a user-facing string, grep the tests and the «»-quoted text in documentation/testing/*.md for the old text, and add a negative `!strings.Contains` check for it.
 - Use made-up names in test fixtures (Kari Nordmann, Ola Nordmann, @example.com), never real people's names.
 
@@ -70,7 +72,7 @@ Skills live in `.agents/skills/<name>/` (SKILL.md, references/, agents/openai.ya
 - A migration PR also commits the regenerated schema.sql. Databases are migrated in place with their data (main and demo by hand after the merge, previews by CI), so added columns need `NOT NULL DEFAULT`. Goose never re-runs an applied migration, so don't edit one that is already on main; add a new one.
 - relation_events_players.source is lowercase `manual`/`solver` on purpose. Use `SourceManual` and `SourceSolver`, and capitalized values for new enum-like columns.
 - Removing an event from a pulje keeps its relation_event_puljer row and room_id with is_in_pulje=0, so readers of assignments and rooms filter on is_in_pulje=1.
-- Don't add age back into the puljefordeling solver (board decision, #618 reversed #524). Age is handled by `FinnAldersvarsler` and the "Plasser likevel" confirmation.
+- Don't add age back into the puljefordeling solver (board decision, #618 reversed #524). Age is handled by `FinnAldersvarsler` and the "Plasser likevel" confirmation (documentation/age-limit.md).
 
 # CSS rules
 
