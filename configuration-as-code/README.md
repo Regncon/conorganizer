@@ -52,7 +52,7 @@ The production repository is stored at:
 | `loki` | `/etc/loki/config.yml` |
 | `prometheus` | `/etc/prometheus/prometheus.yml`, `/etc/prometheus/blackbox.yml` and `/etc/default/prometheus-node-exporter` |
 | `promtail` | `/etc/promtail/config.yml` |
-| `systemd` | `/etc/systemd/system/` units for the app instances, the backup services and timers, `loki.service`, its `loki.service.d` drop-in and `promtail.service` |
+| `systemd` | `/etc/systemd/system/` units for the app instances, the backup services and timers, `promtail.service`, and the `loki.service.d` drop-in. `loki.service` itself comes from the Loki package (see [Units that come from a package](#units-that-come-from-a-package)) |
 
 Prometheus, `prometheus-node-exporter` and `prometheus-blackbox-exporter` are installed as OS packages; only their config comes from the `prometheus` package. `/etc/default/prometheus-node-exporter` is the only `/etc/default` override in the repository. It binds node_exporter to `127.0.0.1:9100`, enables `--collector.systemd`, and uses a filesystem mount-point exclude that does not exclude `/mnt`, so the mounted volume is visible.
 
@@ -67,6 +67,65 @@ From the repository root:
 The script runs `sudo stow --dir=stow --target=/ --restow <package>` for these packages, in order: `scripts`, `caddy`, `grafana`, `loki`, `prometheus`, `promtail`, `systemd`. A missing package directory prints `Skipping missing Stow package: <name>` instead of failing. It then runs `sudo systemctl daemon-reload`.
 
 The script does not enable, start or restart any service. Restart the affected services yourself after a config change, and enable new units or timers with `sudo systemctl enable --now <unit>`.
+
+## Units that come from a package
+
+The repository does not stow `loki.service`. The Loki package installs `/etc/systemd/system/loki.service` itself, as an ordinary package file rather than a config file, and writes it again on every upgrade. When the repository stowed its own copy, each Loki upgrade replaced the stow link with the package's file. The next `stow --restow systemd` then stopped for every unit in the package with:
+
+```text
+cannot stow .../loki.service over existing target etc/systemd/system/loki.service since neither a link nor a directory and --adopt not specified
+```
+
+That happened on 2026-10-20. The repository's copy was byte for byte the same as the package's, so it never changed anything. Now the package owns `loki.service`, and the repository owns only the changes, in a drop-in.
+
+### Changing the Loki unit
+
+Don't edit `/etc/systemd/system/loki.service` on the server, and don't use `systemctl edit --full`; the next upgrade overwrites both. Plain `systemctl edit loki` is no better: `loki.service.d` is a stow link into the checkout, so its `override.conf` would end up in the checkout as an untracked file owned by root. Add a drop-in to the repository instead: a file in `configuration-as-code/stow/systemd/etc/systemd/system/loki.service.d/` whose name ends in `.conf`, with a `[Service]` section that holds only the settings to add or change. systemd merges every drop-in into the package's unit, and the package never touches them. `state-directory.conf` is the existing example.
+
+Most settings just need the new value. For example, to cap Loki's memory:
+
+```ini
+[Service]
+MemoryMax=600M
+Environment=GOMEMLIMIT=450MiB
+```
+
+`ExecStart` is a list, so a drop-in that changes the command has to clear the package's value first with an empty line:
+
+```ini
+[Service]
+ExecStart=
+ExecStart=/usr/bin/loki -config.file /etc/loki/config.yml -log.level=warn
+```
+
+To apply a drop-in, update the checkout, then run from the repository root:
+
+```bash
+sudo stow --dir=configuration-as-code/stow --target=/ --restow systemd
+sudo systemctl daemon-reload
+sudo systemctl restart loki
+```
+
+`systemctl cat loki --no-pager` shows the package's unit followed by every drop-in, and `systemctl show loki -p MemoryMax` shows the value in effect.
+
+The package's upgrade script does nothing (`upgrade()` in Loki's `tools/packaging/loki-postinstall.sh`). After `apt` upgrades Loki, run `sudo systemctl daemon-reload` and `sudo systemctl restart loki` yourself, then check with `systemctl cat loki --no-pager` that the drop-ins still fit the new unit.
+
+The same applies to any other unit a package installs. Before stowing a unit, check whether a package owns it: `dpkg -S /etc/systemd/system/<unit>` names the package if one does. `promtail.service` in the repository is byte for byte the unit the Promtail package installs at the same path, so it has the same problem. No new Promtail package is built anymore, so it stays until Promtail itself is removed. Units that no package provides, like `conorganizer-*.service` and the backup timers, stay complete files in the repository.
+
+### Switching an existing server
+
+Until this change, `/etc/systemd/system/loki.service` on the server was a stow link to the repository's copy, and on 2026-10-20 the package's own file was moved to `/root/loki.service.package-backup`. When the checkout no longer has `loki.service`, the link points at nothing. Loki keeps running, but after the next `systemctl daemon-reload` it can't be restarted and won't start at boot, and the next `stow --restow systemd` deletes the link. So move the package's file back right after updating the checkout, from `/srv/configuration-as-code-repo/conorganizer`:
+
+```bash
+sudo -u gerhard git fetch origin
+sudo -u gerhard git checkout --detach origin/main
+sudo mv /root/loki.service.package-backup /etc/systemd/system/loki.service
+sudo systemctl daemon-reload
+sudo stow --dir=configuration-as-code/stow --target=/ --restow systemd
+ls -l /etc/systemd/system/loki.service
+```
+
+`mv` replaces the link, or takes its place if a restow has already deleted it. `ls -l` should show a plain file owned by root. Don't move it back before updating the checkout: while the checkout still has `loki.service`, `stow --restow systemd` stops on the plain file, as it did on 2026-10-20.
 
 ## Fix permissions
 
@@ -107,7 +166,7 @@ Before logging `completed successfully`, each script writes Prometheus metrics t
 
 ## Loki storage
 
-Loki stores its chunks, index and write-ahead log in `/var/lib/loki` on the root disk. The drop-in `loki.service.d/state-directory.conf` creates the folder for the `loki` user, with mode 0700 (`StateDirectory=loki`). It is a drop-in because the Loki package overwrites `/etc/systemd/system/loki.service` on upgrade, which would undo changes to the unit itself.
+Loki stores its chunks, index and write-ahead log in `/var/lib/loki` on the root disk. The drop-in `loki.service.d/state-directory.conf` creates the folder for the `loki` user, with mode 0700 (`StateDirectory=loki`). It is a drop-in because the Loki package owns `loki.service` (see [Units that come from a package](#units-that-come-from-a-package)).
 
 The compactor deletes logs older than `retention_period` (120 days). Without `compactor.retention_enabled`, Loki ignores `retention_period` and keeps everything. Enabling retention also enables Loki's log-deletion API, without authentication. `deletion_mode: disabled` turns that API off, and retention does not need it.
 

@@ -134,7 +134,7 @@ See the [production stack overview](../README.md#production-stack-overview) for 
 - node_exporter's textfile collector reads `/var/lib/prometheus/node-exporter/*.prom`. The backup scripts write the [backup metrics](#backup-metrics) there.
 - `configuration-as-code/stow/loki/etc/loki/config.yml` configures Loki on `127.0.0.1:3500` (not the default `3100`) with filesystem storage in `/var/lib/loki` and `retention_period: 120d`, enforced by the compactor.
 - `configuration-as-code/stow/promtail/etc/promtail/config.yml` pushes to `http://localhost:3500/loki/api/v1/push`, labels logs with `job=varlogs`, and tails `/var/log/messages`. This is not how the app's logs reach Loki: Alloy's journald source ships them (see Historical Server Notes), and in Grafana they carry `job="systemd-journal"`, `app="conorganizer"` and `service="conorganizer-main"` (checked 2026-09-30). Query with those labels, not `job=varlogs`.
-- The repo contains Loki and Promtail systemd unit files. It does not contain an Alloy config file.
+- The repo contains the Promtail systemd unit and a drop-in for the Loki package's own unit (see [Units that come from a package](../README.md#units-that-come-from-a-package)). It does not contain an Alloy config file.
 - No Caddy native metrics endpoint or Caddy access-log format is configured in the checked-in Caddyfile.
 - No app Prometheus instrumentation or `/metrics` route exists. The app exposes `/healthz` and `/readyz`; the public health panels still use blackbox probes for outside-in symptoms.
 - Grafana config exists under `configuration-as-code/stow/grafana/etc/grafana/grafana.ini` (`http_port = 3400`, `root_url = https://grafana.regncon.no/`), but no Grafana datasource or dashboard provisioning is added for these JSON files.
