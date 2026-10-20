@@ -230,16 +230,33 @@ sum(count_over_time({job=~"$loki_job"} |~ "conorganizer-main.service|conorganize
 quantile_over_time(0.95, {job=~"$loki_job"} |= "http request completed" | json | unwrap duration_ms | __error__="" [5m])
 ```
 
-## Optional Future Metrics
+## Backup Metrics
 
-These would make the dashboards more precise if added through node_exporter textfile collector, a custom exporter, or app instrumentation:
+The backup scripts publish their results through node_exporter's textfile collector. After a successful run, each script writes a `.prom` file to `/var/lib/prometheus/node-exporter/`, the OS package's default textfile directory, next to the package's own `apt.prom`, `nvme.prom` and `smartmon.prom`. node_exporter serves those metrics with its own, so they carry `job="node"` and `instance="127.0.0.1:9100"`.
 
-- `conorganizer_sqlite_db_size_bytes`
-- `conorganizer_sqlite_wal_size_bytes`
-- `conorganizer_sqlite_backup_size_bytes`
-- `conorganizer_sqlite_backup_last_success_timestamp_seconds`
-- `conorganizer_images_backup_last_success_timestamp_seconds`
-- `conorganizer_backup_directory_size_bytes`
+| Metric | Written by | Value |
+| --- | --- | --- |
+| `conorganizer_sqlite_backup_last_success_timestamp_seconds` | `conorganizer-sqlite-backup` | Unix time when the last successful SQLite backup finished |
+| `conorganizer_sqlite_backup_size_bytes` | `conorganizer-sqlite-backup` | Size of the newest `events-<timestamp>.db.zst` |
+| `conorganizer_sqlite_db_size_bytes` | `conorganizer-sqlite-backup` | Size of main's `events.db` |
+| `conorganizer_sqlite_wal_size_bytes` | `conorganizer-sqlite-backup` | Size of main's `events.db-wal`, 0 when there is none |
+| `conorganizer_backup_directory_size_bytes` | `conorganizer-sqlite-backup` | Disk space used by `/mnt/HC_Volume_103911252/backups`, SQLite and image backups together |
+| `conorganizer_images_backup_last_success_timestamp_seconds` | `conorganizer-images-backup` | Unix time when the last successful image backup finished |
+
+The files are `conorganizer-sqlite-backup.prom` and `conorganizer-images-backup.prom`. Backup age is `time()` minus a last-success timestamp, for example `(time() - max(conorganizer_sqlite_backup_last_success_timestamp_seconds{instance=~"$node_instance"})) / 3600` in hours.
+
+A failed run exits before it writes its file, so the old values stay: the last-success timestamps stop moving, and the sizes stop changing until the next successful SQLite backup. The sizes are measured when the backup finishes, so they are at most about 15 minutes old.
+
+Each script writes to a temporary file in the same directory and moves it into place with `mv`, so node_exporter never reads half a file. The temporary name does not end in `.prom`, so node_exporter skips it. `mktemp` creates files with mode 0600 and node_exporter runs as the `prometheus` user, so the scripts `chmod 0644` the file before the move. An unreadable file sets `node_textfile_scrape_error` to 1.
+
+If writing the metrics fails, the run fails without logging `completed successfully`, even though the backup file is already on disk.
+
+To check the metrics, query `{__name__=~"conorganizer_.*"}` in Grafana Explore, or call the grafana MCP server's `list_prometheus_metric_names` with the regex `conorganizer_.*`. On the server:
+
+```bash
+cat /var/lib/prometheus/node-exporter/conorganizer-*.prom
+curl -fsS http://127.0.0.1:9100/metrics | grep -E '^(conorganizer_|node_textfile_scrape_error)'
+```
 
 ## Validating Labels and Metrics
 

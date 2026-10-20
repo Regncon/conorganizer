@@ -93,6 +93,8 @@ Scheduled backups of main are written to `/mnt/HC_Volume_103911252/backups`:
 
 Both keep 14 days of backups and are run by systemd timers from `configuration-as-code`. See [configuration-as-code/README.md](../configuration-as-code/README.md#backups) for the timers, and [sqlite-and-health.md](sqlite-and-health.md) for why backups use SQLite `.backup`.
 
+After each successful run the scripts write `conorganizer_*` metrics for the Grafana backup panels to node_exporter's textfile directory. See [Backup Metrics](../configuration-as-code/grafana-dashboards/README.md#backup-metrics).
+
 ## Preview cleanup
 
 `cleanup-preview` uploads `deploy/cleanup.sh` to the preview's app dir and runs it with the preview name. That script stops and disables the service, removes the unit, the Caddy site, the data dir and the app dir, and reloads systemd and Caddy. Every step tolerates a target that is already gone, so running it twice, or after a failed deploy, is safe.

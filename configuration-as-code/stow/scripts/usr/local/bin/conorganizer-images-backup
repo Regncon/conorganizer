@@ -4,6 +4,7 @@ set -euo pipefail
 image_directory="/mnt/HC_Volume_103911252/environments/main/event-images"
 backup_directory="/mnt/HC_Volume_103911252/backups/images"
 backup_retention_days="14"
+metrics_file="/var/lib/prometheus/node-exporter/conorganizer-images-backup.prom"
 
 timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 backup_file="${backup_directory}/event-images-${timestamp}.tar.zst"
@@ -30,4 +31,17 @@ find "$backup_directory" \
     -delete
 
 echo "conorganizer-images-backup: created ${backup_file}"
+
+completed_at_seconds="$(date +%s)"
+
+metrics_temporary_file="$(mktemp "${metrics_file}.XXXXXX")"
+cat > "$metrics_temporary_file" <<EOF
+# HELP conorganizer_images_backup_last_success_timestamp_seconds Unix time when the last successful image backup of main completed.
+# TYPE conorganizer_images_backup_last_success_timestamp_seconds gauge
+conorganizer_images_backup_last_success_timestamp_seconds ${completed_at_seconds}
+EOF
+# mktemp creates the file as 0600, and node_exporter reads it as the prometheus user.
+chmod 0644 "$metrics_temporary_file"
+mv "$metrics_temporary_file" "$metrics_file"
+
 echo "conorganizer-images-backup: completed successfully"
