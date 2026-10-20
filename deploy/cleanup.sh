@@ -1,20 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Tear down a preview environment created by deploy.sh. Dry-run cleanup can run
-# unprivileged from CI; real teardown must run as root. Idempotent: every removal
-# tolerates an already-absent target, so a double-close or a close-after-failed
-# deploy does not error.
+# Tear down a PR preview environment created by deploy.sh. Runs as root (via
+# sudo) from the cleanup-preview CI job when a PR closes. Idempotent: every
+# removal tolerates an already-absent target, so a double-close or a
+# close-after-failed deploy does not error.
 #
-# SAFETY — DRY RUN BY DEFAULT:
-# DRY_RUN defaults to "true", so this script only LOGS what it would remove.
-# That makes the first PR close after rollout a harmless no-op which still
-# proves the CI -> server wiring (SSH, sudo, upload, script run) end to end.
-# Once you have seen a clean dry-run log AND patched the live server's sudoers
-# for cleanup.sh, flip the default below to "false" (one-line change, committed)
-# to enable real teardown. You can also force a single real run manually with
-# `DRY_RUN=false sudo cleanup.sh <safe_name>`.
-DRY_RUN="${DRY_RUN:-true}"
+# DRY_RUN=true only logs what would be removed and needs no root:
+#   DRY_RUN=true bash cleanup.sh <PR_NUMBER>-merge
+DRY_RUN="${DRY_RUN:-false}"
 
 DATA_ROOT="/mnt/HC_Volume_103911252/environments"
 
@@ -25,8 +19,8 @@ if [[ -z "$SAFE_NAME" ]]; then
   exit 1
 fi
 
-if [[ "$SAFE_NAME" == "main" || "$SAFE_NAME" == "demo" ]]; then
-  echo "[cleanup] ERROR: refusing to clean up fixed environment SAFE_NAME=$SAFE_NAME." >&2
+if [[ ! "$SAFE_NAME" =~ ^[0-9]+-merge$ ]]; then
+  echo "[cleanup] ERROR: refusing to clean up SAFE_NAME=$SAFE_NAME; only PR previews named <PR_NUMBER>-merge can be removed." >&2
   exit 1
 fi
 
@@ -66,7 +60,8 @@ run rm -rf "$BRANCH_DATA_DIR"
 
 echo "[cleanup] Reloading systemd and Caddy"
 run systemctl daemon-reload || true
-run systemctl reload caddy || true
+# A failed reload leaves the old route live in Caddy, so let it fail the job.
+run systemctl reload caddy
 
 # Remove the app dir last; it holds this very script. On Linux the running
 # process keeps its open inode, so removing the directory mid-run is safe.

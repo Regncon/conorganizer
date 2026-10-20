@@ -95,17 +95,50 @@ Both keep 14 days of backups and are run by systemd timers from `configuration-a
 
 ## Preview cleanup
 
-`cleanup-preview` uploads `deploy/cleanup.sh` to the preview's app dir and runs it with the preview name. That script stops and disables the service, removes the unit, the Caddy site, the data dir and the app dir, and reloads systemd and Caddy. Every step tolerates a target that is already gone, so running it twice, or after a failed deploy, is safe.
+`cleanup-preview` uploads `deploy/cleanup.sh` to the preview's app dir and runs `sudo cleanup.sh <PR_NUMBER>-merge`. The script stops and disables the service, removes the unit, the Caddy site, the data dir and the app dir, and reloads systemd and Caddy. Every removal tolerates a target that is already gone, so running it twice, after a failed deploy, or for a draft that never got a preview, is safe. A failed Caddy reload fails the job, because Caddy then still serves the old route.
 
-**Cleanup is currently a dry run.** `cleanup.sh` defaults to `DRY_RUN=true`, and the workflow also passes `DRY_RUN=true` explicitly. Closing a PR therefore only logs what would be removed. Preview services keep running, and their units, Caddy sites and data dirs pile up on the server until someone removes them by hand:
+The job needs the `deploy` user's sudoers entry for `/opt/conorganizer/*/cleanup.sh`, which `hetzner/scripts/setup_deploy_user.sh` writes. Check it on the server with `sudo -l -U deploy`. Without it the job fails at the `sudo` line and the preview stays.
+
+To see what the script would remove without changing anything, run it as a dry run. A dry run needs no root:
 
 ```bash
-sudo DRY_RUN=false bash /opt/conorganizer/<PR_NUMBER>-merge/cleanup.sh <PR_NUMBER>-merge
+DRY_RUN=true bash /opt/conorganizer/<PR_NUMBER>-merge/cleanup.sh <PR_NUMBER>-merge
 ```
-
-Put `DRY_RUN=false` after `sudo`. `DRY_RUN=false sudo ...` normally still dry-runs, because sudo resets the environment. Real teardown needs root. To turn it on in CI, first add a sudoers entry for `cleanup.sh` on the server, then change the default in the script and remove `DRY_RUN=true` from the workflow.
 
 Safety notes:
 
 - The job takes the target name from the PR number (`<PR_NUMBER>-merge`), not from `github.ref_name`. On the close event of a merged PR, `github.ref_name` can resolve to `main`, so never use it to pick the cleanup target.
-- `cleanup.sh` refuses to run for `main` and `demo`. It does **not** refuse `restored`. `restored` is only safe because the workflow always passes `<PR_NUMBER>-merge`. Never run the script by hand with a fixed environment's name.
+- `cleanup.sh` refuses every name that is not `<digits>-merge`, so it cannot remove `main`, `demo`, `restored` or anything outside the preview paths.
+
+### Remove stale previews by hand
+
+A preview whose cleanup job failed or never ran stays on the server: Caddy keeps its route and certificate and logs a `502` with `connection refused` for every request once its service is gone. To find and remove such previews, first list the open PRs on your own machine:
+
+```bash
+gh pr list --repo Regncon/conorganizer --state open --limit 200 --json number --jq '[.[].number] | join(" ")'
+```
+
+Then, on the server, collect every preview that still has a Caddy site, a unit, an app dir or a data dir, and leave out the open PRs. Paste the numbers into `OPEN_PRS`, or leave it empty when no PR is open:
+
+```bash
+OPEN_PRS=""
+stale=$(
+  {
+    sudo ls /etc/caddy/sites-enabled | sed -nE 's/^conorganizer-([0-9]+-merge)\.caddy$/\1/p'
+    sudo ls /etc/systemd/system | sed -nE 's/^conorganizer-([0-9]+-merge)\.service$/\1/p'
+    sudo ls /opt/conorganizer /mnt/HC_Volume_103911252/environments | grep -E '^[0-9]+-merge$'
+  } | sort -un | while read -r name; do
+    case " $OPEN_PRS " in *" ${name%-merge} "*) ;; *) echo "$name" ;; esac
+  done
+)
+echo $stale
+```
+
+Copy `deploy/cleanup.sh` from an up-to-date `main` to the server, for example with `scp deploy/cleanup.sh <user>@<server>:/tmp/cleanup.sh`. Don't `git pull` the configuration-as-code checkout for this: the script reloads Caddy, which would also put any pulled Caddyfile change live. Then run it for each stale preview, first as a dry run, then for real:
+
+```bash
+for name in $stale; do DRY_RUN=true bash /tmp/cleanup.sh "$name"; done
+for name in $stale; do sudo DRY_RUN=false bash /tmp/cleanup.sh "$name"; done
+```
+
+Put `DRY_RUN=false` after `sudo`, because sudo resets the environment.
