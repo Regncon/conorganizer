@@ -30,12 +30,12 @@ Each environment has the same layout:
 
 ## CI/CD jobs
 
-- **`build`** runs on every push to `main` and on every PR event except `closed`. It runs `go tool templ generate`, then the tests with the behavior report (`go run ./cmd/testreport`), then builds the `conorganizer` binary and uploads it together with a Goose binary as an artifact. The Goose version is `GOOSE_VERSION` in the job's `env` (v3.28.0, the same as in [migrations.md](migrations.md)). The finished `goose` binary is restored from the Actions cache with a key made of the OS, the arch, `GOOSE_VERSION` and the Go version, and `go install github.com/pressly/goose/v3/cmd/goose@$GOOSE_VERSION` only runs, followed by a cache save, when that key has no cache. The Go module and build caches are saved before the tests and never contain Goose, so bumping Goose or Go is what triggers a rebuild.
+- **`build`** runs on every push to `main` and on every PR `opened`, `reopened`, `synchronize` and `ready_for_review` event. It runs `go tool templ generate`, then the tests with the behavior report (`go run ./cmd/testreport`), then builds the `conorganizer` binary and uploads it together with a Goose binary as an artifact. The Goose version is `GOOSE_VERSION` in the job's `env` (v3.28.0, the same as in [migrations.md](migrations.md)). The finished `goose` binary is restored from the Actions cache with a key made of the OS, the arch, `GOOSE_VERSION` and the Go version, and `go install github.com/pressly/goose/v3/cmd/goose@$GOOSE_VERSION` only runs, followed by a cache save, when that key has no cache. The Go module and build caches are saved before the tests and never contain Goose, so bumping Goose or Go is what triggers a rebuild.
 - **`deploy-fixed`** runs on pushes to `main`. It is a matrix over `[main, demo, restored]` with `fail-fast: false`, so the three environments deploy in parallel and a failure in one does not cancel the others. This is safe because each environment has its own app dir, binary, service and data dir, and fixed deploys install no generated Caddy or systemd files, so they share no files. Each matrix entry uploads the binary, `goose`, `migrations/*.sql` and `deploy.sh` to `/opt/conorganizer/<name>/` and runs `sudo deploy.sh <name>`. CI never runs Goose against a fixed environment; the deployed files are used by the manual `conorganizer-sqlite-migrate` (see [migrations.md](migrations.md)).
 - **`deploy`** builds a PR preview. It only runs for PRs that are open, not drafts, and come from this repository (fork PRs have no secrets). A draft gets a preview when it is marked ready for review.
-- **`cleanup-preview`** runs when a same-repo PR is closed, merged or not. See [Preview cleanup](#preview-cleanup).
+- **`cleanup-preview`** runs when a same-repo PR is closed, merged or not. It is the only job that runs on the `pull_request_target` event. See [Preview cleanup](#preview-cleanup).
 
-Runs are serialized per ref with a `concurrency` group on `${{ github.workflow }}-${{ github.ref }}` and `cancel-in-progress: false`. A deploy that has started is never interrupted halfway through moving the binary or restarting the service. GitHub keeps only the newest pending run, so the latest commit is always deployed last.
+Runs are serialized per PR, and pushes per ref, with a `concurrency` group on `${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}` and `cancel-in-progress: false`. A deploy that has started is never interrupted halfway through moving the binary or restarting the service, and a PR's cleanup waits for that PR's running deploy. GitHub keeps only the newest pending run, so the latest commit is always deployed last. The group uses the PR number, not `github.ref`, because a merged PR's close event has `github.ref` `refs/heads/main`. In main's group, the next merge cancelled the pending cleanup.
 
 ## Production environment and SSH secrets
 
@@ -97,17 +97,65 @@ After each successful run the scripts write `conorganizer_*` metrics for the Gra
 
 ## Preview cleanup
 
-`cleanup-preview` uploads `deploy/cleanup.sh` to the preview's app dir and runs it with the preview name. That script stops and disables the service, removes the unit, the Caddy site, the data dir and the app dir, and reloads systemd and Caddy. Every step tolerates a target that is already gone, so running it twice, or after a failed deploy, is safe.
+`cleanup-preview` uploads `deploy/cleanup.sh` to the preview's app dir and runs `sudo cleanup.sh <PR_NUMBER>-merge`. The script removes everything a preview deploy creates, in this order:
 
-**Cleanup is currently a dry run.** `cleanup.sh` defaults to `DRY_RUN=true`, and the workflow also passes `DRY_RUN=true` explicitly. Closing a PR therefore only logs what would be removed. Preview services keep running, and their units, Caddy sites and data dirs pile up on the server until someone removes them by hand:
+1. Stops and disables the service. If the service is still active after that, the script exits without removing anything, so a running preview never loses its files.
+2. Removes the unit and its `multi-user.target.wants` link. `systemctl disable` only removes the link while the unit file exists, so the script removes both itself.
+3. Removes the Caddy site and the data dir (`database/`, `event-images/`, everything the app wrote there).
+4. Reloads systemd, resets the unit's failed state so it stops showing as `not-found`, and reloads Caddy. A failed Caddy reload fails the job, because Caddy then still serves the old route.
+5. Removes the app dir last, because it holds the script itself.
+
+`/run/conorganizer-<name>/` is the unit's `RuntimeDirectory` and holds the NATS store; systemd removes it when the service stops. Two things stay on purpose: Caddy's certificate for the host, which Caddy deletes from its storage after it expires, and the journal entries of the unit, which follow the journal's own retention.
+
+Every removal tolerates a target that is already gone, so running it twice, after a failed deploy, or for a draft that never got a preview, is safe.
+
+The job runs on `pull_request_target`, not `pull_request`, because GitHub runs no `pull_request` workflow for a PR with merge conflicts, not even when it is closed. `pull_request_target` runs main's workflow with the secrets, whatever the PR's base branch, so the job only checks out main and never runs PR code. A change to `cleanup-preview` or `cleanup.sh` therefore only takes effect once it is merged to main.
+
+The job needs the `deploy` user's sudoers entry for `/opt/conorganizer/*/cleanup.sh`, which `hetzner/scripts/setup_deploy_user.sh` writes. Check it on the server with `sudo -l -U deploy`. Without it the job fails at the `sudo` line and the preview stays.
+
+To see what the script would remove without changing anything, run a copy of `deploy/cleanup.sh` as a dry run. A live preview's app dir has no copy, because CI only uploads the script when the PR closes. A dry run needs no root:
 
 ```bash
-sudo DRY_RUN=false bash /opt/conorganizer/<PR_NUMBER>-merge/cleanup.sh <PR_NUMBER>-merge
+DRY_RUN=true bash cleanup.sh <PR_NUMBER>-merge
 ```
 
-Put `DRY_RUN=false` after `sudo`. `DRY_RUN=false sudo ...` normally still dry-runs, because sudo resets the environment. Real teardown needs root. To turn it on in CI, first add a sudoers entry for `cleanup.sh` on the server, then change the default in the script and remove `DRY_RUN=true` from the workflow.
+Never write `DRY_RUN=true sudo ...`: sudo drops `DRY_RUN`, so the script removes the preview.
 
 Safety notes:
 
 - The job takes the target name from the PR number (`<PR_NUMBER>-merge`), not from `github.ref_name`. On the close event of a merged PR, `github.ref_name` can resolve to `main`, so never use it to pick the cleanup target.
-- `cleanup.sh` refuses to run for `main` and `demo`. It does **not** refuse `restored`. `restored` is only safe because the workflow always passes `<PR_NUMBER>-merge`. Never run the script by hand with a fixed environment's name.
+- `cleanup.sh` refuses every name that is not `<digits>-merge`, so it cannot remove `main`, `demo`, `restored` or anything outside the preview paths.
+
+### Remove stale previews by hand
+
+A preview whose cleanup job failed, was cancelled or never ran stays on the server: Caddy keeps its route and certificate and logs a `502` with `connection refused` for every request once its service is gone. To find and remove such previews, first list the open PRs on your own machine:
+
+```bash
+gh pr list --repo Regncon/conorganizer --state open --limit 200 --json number --jq '[.[].number] | join(" ")'
+```
+
+Then, on the server, collect every preview that still has a Caddy site, a unit, an app dir or a data dir, and leave out the open PRs. Paste the numbers into `OPEN_PRS` (any separator works). Leave it empty only when no PR is open, because every preview left out of it is removed:
+
+```bash
+OPEN_PRS=""
+open=" $(echo "$OPEN_PRS" | grep -oE '[0-9]+' | tr '\n' ' ')"
+stale=$(
+  {
+    sudo ls /etc/caddy/sites-enabled | sed -nE 's/^conorganizer-([0-9]+-merge)\.caddy$/\1/p'
+    sudo ls /etc/systemd/system | sed -nE 's/^conorganizer-([0-9]+-merge)\.service$/\1/p'
+    sudo ls /opt/conorganizer /mnt/HC_Volume_103911252/environments | grep -E '^[0-9]+-merge$'
+  } | sort -un | while read -r name; do
+    case "$open" in *" ${name%-merge} "*) ;; *) echo "$name" ;; esac
+  done
+)
+echo $stale
+```
+
+Copy `deploy/cleanup.sh` from an up-to-date `main` to the server, for example with `scp deploy/cleanup.sh <user>@<server>:/tmp/cleanup.sh`. Don't `git pull` the configuration-as-code checkout for this: the script reloads Caddy, which would also put any pulled Caddyfile change live. Then run it for each stale preview, first as a dry run, then for real:
+
+```bash
+for name in $stale; do DRY_RUN=true bash /tmp/cleanup.sh "$name"; done
+for name in $stale; do sudo DRY_RUN=false bash /tmp/cleanup.sh "$name"; done
+```
+
+Put `DRY_RUN=false` after `sudo`, because sudo resets the environment. When the last site file is gone, Caddy's `import /etc/caddy/sites-enabled/*.caddy` only logs a warning, so the reload still succeeds.
