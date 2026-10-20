@@ -171,7 +171,7 @@
       "targetBlank": false,
       "title": "Production Health",
       "tooltip": "Open the production platform dashboard",
-      "type": "dashboard",
+      "type": "link",
       "url": "/d/conorganizer-production-health/conorganizer-production-health"
     },
     {
@@ -183,7 +183,7 @@
       "targetBlank": false,
       "title": "Main Service Debugging",
       "tooltip": "Open the main service debugging dashboard",
-      "type": "dashboard",
+      "type": "link",
       "url": "/d/conorganizer-main-service-debugging/conorganizer-main-service-debugging"
     }
   ],
