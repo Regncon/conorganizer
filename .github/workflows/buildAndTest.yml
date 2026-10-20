@@ -7,15 +7,25 @@ on:
 
     pull_request:
         branches: ["**"]
-        types: [opened, reopened, synchronize, ready_for_review, closed]
+        types: [opened, reopened, synchronize, ready_for_review]
 
-# Serialize runs per ref so rapid pushes to a PR (or main) never race on the
-# same binary/service during deploy. cancel-in-progress is intentionally false:
-# a running deploy is never interrupted mid mv/restart (which could leave the
-# service on a missing binary). GitHub keeps only the newest pending run, so the
-# latest commit always deploys last.
+    # Closing uses pull_request_target because GitHub runs no pull_request
+    # workflow for a PR with merge conflicts, not even on close. Only
+    # cleanup-preview runs on it, and it checks out main, never PR code.
+    pull_request_target:
+        branches: ["**"]
+        types: [closed]
+
+# Serialize runs per PR (or per ref for pushes) so rapid pushes never race on
+# the same binary/service during deploy, and a PR's cleanup waits for its own
+# running deploy. Key on the PR number, not github.ref: a merged PR's close
+# event has github.ref refs/heads/main, and in main's group it was cancelled by
+# the next merge. cancel-in-progress is intentionally false: a running deploy is
+# never interrupted mid mv/restart (which could leave the service on a missing
+# binary). GitHub keeps only the newest pending run, so the latest commit always
+# deploys last.
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
     cancel-in-progress: false
 
 permissions:
@@ -347,10 +357,12 @@ jobs:
         # Tear down a preview environment when its PR closes (merged or not).
         # Same-repo only; forks never created a preview.
         if: >
-            github.event_name == 'pull_request' &&
+            github.event_name == 'pull_request_target' &&
             github.event.action == 'closed' &&
             github.event.pull_request.head.repo.full_name == github.repository
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
         environment:
             name: Production
 
@@ -401,4 +413,5 @@ jobs:
                       APP_DIR="/opt/conorganizer/$SAFE_NAME"
 
                       echo "Cleaning up preview SAFE_NAME=$SAFE_NAME"
-                      DRY_RUN=true bash "$APP_DIR/cleanup.sh" "$SAFE_NAME"
+                      sudo chmod +x "$APP_DIR/cleanup.sh"
+                      sudo "$APP_DIR/cleanup.sh" "$SAFE_NAME"
