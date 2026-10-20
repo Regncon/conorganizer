@@ -103,6 +103,8 @@ The SQLite backup runs `PRAGMA integrity_check` and checks that the `users` and 
 
 Log lines start with `conorganizer-sqlite-backup:` or `conorganizer-images-backup:` and end with `completed successfully` on success. The Grafana backup panels depend on these strings.
 
+Before logging `completed successfully`, each script writes Prometheus metrics to `/var/lib/prometheus/node-exporter/conorganizer-sqlite-backup.prom` or `conorganizer-images-backup.prom`, which node_exporter's textfile collector serves. They hold the time of the last successful backup and, from the SQLite backup, the database, WAL, backup and backup directory sizes. See [Backup Metrics](grafana-dashboards/README.md#backup-metrics).
+
 ## Caddy hostnames
 
 Hostnames in the checked-in Caddyfile:
