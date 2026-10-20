@@ -414,17 +414,18 @@ metrics in Prometheus and dashboards. Each agent reads its own file:
 | Codex | `.codex/config.toml` |
 | GitHub Copilot in VS Code | `.vscode/mcp.json` |
 
-All three run the same server read-only (`--disable-write`) with usage
-statistics turned off, and start it through `go run` at a pinned version, so
-it only needs Go. Bump the version in all three files together.
-
-The first start compiles the server, which takes a few minutes and can exceed
-the agents' MCP startup timeout. Build it once in the repository folder before
-the first use, or after a version bump:
+All three run the `mcp-grafana` program from `PATH`, read-only
+(`--disable-write`) with usage statistics turned off. Install it once, and
+again whenever `MCP_GRAFANA_VERSION` in `Taskfile.yml` changes:
 
 ```bash
-go run github.com/grafana/mcp-grafana/v2/cmd/mcp-grafana@v2.0.2 --help
+go tool task setup:mcp
 ```
+
+The task runs `go install` for the pinned version and prints it. It fails if
+Go's `bin` folder is not on `PATH`, and says which folder to add. The agents do
+not use `go run`: it takes about 15 seconds to check its build on every start,
+which can exceed Claude Code's 30-second MCP startup limit.
 
 ### Service account token
 
@@ -493,9 +494,7 @@ codex mcp get grafana
 ```
 
 Codex passes only a short list of environment variables to MCP servers, so
-`.codex/config.toml` forwards the token and Go's own settings such as
-`GOCACHE`. Without them, `go run` would use a different build cache, rebuild
-the server and miss Codex's 60-second startup limit.
+`.codex/config.toml` forwards the token with `env_vars`.
 
 In VS Code, open `.vscode/mcp.json` and click **Start** above `grafana`.
 VS Code asks for the token once, hides what you type and stores it. VS Code

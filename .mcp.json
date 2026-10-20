@@ -1,13 +1,8 @@
 {
   "mcpServers": {
     "grafana": {
-      "command": "go",
-      "args": [
-        "run",
-        "github.com/grafana/mcp-grafana/v2/cmd/mcp-grafana@v2.0.2",
-        "--disable-write",
-        "--usage-stats=disabled"
-      ],
+      "command": "mcp-grafana",
+      "args": ["--disable-write", "--usage-stats=disabled"],
       "env": {
         "GRAFANA_URL": "https://grafana.regncon.no",
         "GRAFANA_SERVICE_ACCOUNT_TOKEN": "${GRAFANA_SERVICE_ACCOUNT_TOKEN}"
