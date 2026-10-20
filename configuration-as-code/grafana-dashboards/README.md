@@ -278,7 +278,7 @@ Each script writes to a temporary file in the same directory and moves it into p
 
 If writing the metrics fails, the run fails without logging `completed successfully`, even though the backup file is already on disk.
 
-To check the metrics, query `{__name__=~"conorganizer_.*"}` in Grafana Explore, or call the grafana MCP server's `list_prometheus_metric_names` with the regex `conorganizer_.*`. On the server:
+To check the metrics, query `{__name__=~"conorganizer_.*"}` in Grafana Explore, or call the `grafana-conorganizer` MCP server's `list_prometheus_metric_names` with the regex `conorganizer_.*`. On the server:
 
 ```bash
 cat /var/lib/prometheus/node-exporter/conorganizer-*.prom

@@ -8,7 +8,7 @@
     }
   ],
   "servers": {
-    "grafana": {
+    "grafana-conorganizer": {
       "type": "stdio",
       "command": "mcp-grafana",
       "args": ["--disable-write", "--usage-stats=disabled"],

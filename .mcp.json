@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "grafana": {
+    "grafana-conorganizer": {
       "command": "mcp-grafana",
       "args": ["--disable-write", "--usage-stats=disabled"],
       "env": {
