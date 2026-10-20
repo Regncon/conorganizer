@@ -137,6 +137,16 @@
         }
       },
       {
+        "name": "app_service",
+        "label": "App log service",
+        "type": "constant",
+        "query": "conorganizer-main",
+        "current": {
+          "text": "conorganizer-main",
+          "value": "conorganizer-main"
+        }
+      },
+      {
         "name": "caddy_service",
         "label": "Caddy service",
         "type": "constant",
@@ -214,7 +224,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "### Purpose\nFocused debugging for `conorganizer-main.service` and the public main website.\n\nRecommended workflow:\n1. Confirm the service is active.\n2. Check the current error signal.\n3. Inspect error/panic/database logs.\n4. Look at request rate, status codes, and latency.\n5. Use slow/failing request logs to find concrete routes and request IDs.\n\nDesign choices:\n- Service panels follow RED / Golden Signals: request rate, errors, duration/latency, and saturation proxies.\n- HTTP behavior is log-derived from `msg=\"http request completed\"`, `component=\"http\"`, `method`, `path`, `status_code`, `duration_ms`, and optional `request_id`.\n- The repo defines app `/healthz` and `/readyz`, but no `/metrics`; public probe panels still check the main host through blackbox_exporter.\n- No app Prometheus metric names are invented. Optional app-metric panels can be added later when `/metrics` exists.\n- Loki queries start broad enough for `job=varlogs`; narrow `loki_job` or replace with exact journal labels after import.\n\nUseful external examples:\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/\n- Logging Dashboard via Loki v2: https://grafana.com/grafana/dashboards/18042-logging-dashboard-via-loki-v2/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/"
+        "content": "### Purpose\nFocused debugging for `conorganizer-main.service` and the public main website.\n\nRecommended workflow:\n1. Confirm the service is active.\n2. Check the current error signal.\n3. Inspect error/panic/database logs.\n4. Look at request rate, status codes, and latency.\n5. Use slow/failing request logs to find concrete routes and request IDs.\n\nDesign choices:\n- Service panels follow RED / Golden Signals: request rate, errors, duration/latency, and saturation proxies.\n- HTTP behavior is log-derived from `msg=\"http request completed\"`, `component=\"http\"`, `method`, `path`, `status_code`, `duration_ms`, and optional `request_id`.\n- The repo defines app `/healthz` and `/readyz`, but no `/metrics`; public probe panels still check the main host through blackbox_exporter.\n- No app Prometheus metric names are invented. Optional app-metric panels can be added later when `/metrics` exists.\n- Logs come from the systemd journal through Alloy (`job=\"systemd-journal\"`). App panels select `service=\"conorganizer-main\"`; systemd's own lines about the unit (Started, Main process exited) have no `service` label and are selected with `service=\"\"`.\n\nUseful external examples:\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/\n- Logging Dashboard via Loki v2: https://grafana.com/grafana/dashboards/18042-logging-dashboard-via-loki-v2/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/"
       }
     },
     {
@@ -309,7 +319,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Main service active-state changes",
-      "description": "Proxy for restarts or service flapping. Requires node_exporter systemd collector metrics.",
+      "description": "How often the active state flipped in the last hour, as seen by the 15 s node_exporter scrape. Restarts that finish between two scrapes (deploys, most single crashes with RestartSec=5) do not show here; use App starts for restart counts.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -402,7 +412,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "probe_success{instance=~\".*${main_host:regex}.*\"}",
+          "expr": "probe_success{instance=\"https://${main_host}/\"}",
           "legendFormat": "{{instance}}"
         }
       ],
@@ -481,7 +491,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max(probe_http_status_code{instance=~\".*${main_host:regex}.*\"})",
+          "expr": "max(probe_http_status_code{instance=\"https://${main_host}/\"})",
           "queryType": "timeSeriesQuery"
         }
       ],
@@ -533,10 +543,176 @@
       }
     },
     {
+      "id": 48,
+      "type": "timeseries",
+      "title": "App starts",
+      "description": "Times systemd started conorganizer-main.service (its \"Started\" journal line). Counts every restart, including crash-loop restarts that exit before the app logs \"Starting server\", like the 259 restarts on 2 October.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 18,
+        "x": 0,
+        "y": 15
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "sum(count_over_time({job=~\"$loki_job\", service=\"\"} |= \"Started $main_service\" [$__interval])) or vector(0)",
+          "legendFormat": "starts",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 49,
+      "type": "stat",
+      "title": "App starts in range",
+      "description": "Times systemd started conorganizer-main.service in the selected time range, including crash-loop restarts. More than a few means something is restarting it.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 15
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "sum(count_over_time({job=~\"$loki_job\", service=\"\"} |= \"Started $main_service\" [$__range])) or vector(0)",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "0",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      }
+    },
+    {
       "id": 8,
       "type": "logs",
       "title": "Recent main service logs",
-      "description": "Fallback selector for app/service logs. Replace with exact journal label selectors if available after import.",
+      "description": "All conorganizer-main app lines (A) and systemd's own lines about conorganizer-main.service, such as Started, Stopping and Main process exited (B).",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -545,12 +721,17 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 15
+        "y": 21
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"conorganizer-main.service|conorganizer-main|http request completed|component.:.http|component.:.http_server\"",
+          "expr": "{service=\"$app_service\"}",
+          "queryType": "range"
+        },
+        {
+          "refId": "B",
+          "expr": "{job=~\"$loki_job\", service=\"\"} |= \"$main_service\"",
           "queryType": "range"
         }
       ],
@@ -578,12 +759,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 15
+        "y": 21
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"conorganizer-main.service|conorganizer-main|error running server|could not initialize DB|event image directory|failed|panic|Main process exited\"",
+          "expr": "{job=~\"$loki_job\", service=~\"$app_service|\"} |~ \"conorganizer-main.service|error running server|could not initialize DB|event image directory|error setting up routes|panic\"",
           "queryType": "range"
         }
       ],
@@ -607,7 +788,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 29
       },
       "panels": []
     },
@@ -624,12 +805,12 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 24
+        "y": 30
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"conorganizer-main.service|conorganizer-main|http request completed|level.:.ERROR|database is locked|database is busy|panic\" |~ \"ERROR|error|failed|panic|status_code.:5[0-9][0-9]|database is locked|database is busy\" [5m]))",
+          "expr": "sum(count_over_time({service=\"$app_service\"} |~ `\"level\":\"ERROR\"|database is locked|database is busy|panic` !~ `context canceled|connection reset by peer|broken pipe|http: Server closed` [5m])) or vector(0)",
           "queryType": "range"
         }
       ],
@@ -639,7 +820,19 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "0",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -685,12 +878,12 @@
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 24
+        "y": 30
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"conorganizer-main.service|conorganizer-main|http request completed|level.:.ERROR|database is locked|database is busy|panic\" |~ \"ERROR|error|failed|panic|status_code.:5[0-9][0-9]|database is locked|database is busy\" [5m]))",
+          "expr": "sum(count_over_time({service=\"$app_service\"} |~ `\"level\":\"ERROR\"|database is locked|database is busy|panic` !~ `context canceled|connection reset by peer|broken pipe|http: Server closed` [5m])) or vector(0)",
           "legendFormat": "errors",
           "queryType": "range"
         }
@@ -753,6 +946,172 @@
       }
     },
     {
+      "id": 46,
+      "type": "stat",
+      "title": "Real errors",
+      "description": "ERROR lines from conorganizer-main in the selected time range, without the noise from visitors disconnecting and from shutdowns (context canceled, connection reset, broken pipe, Server closed).",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 36
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "sum(count_over_time({service=\"$app_service\"} |= `\"level\":\"ERROR\"` !~ `context canceled|connection reset by peer|broken pipe|http: Server closed` [$__range]))",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "0",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 47,
+      "type": "timeseries",
+      "title": "Real errors by component",
+      "description": "Same filter as Real errors, split by the component field.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 18,
+        "x": 6,
+        "y": 36
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "sum by (component) (count_over_time({service=\"$app_service\"} |= `\"level\":\"ERROR\"` !~ `context canceled|connection reset by peer|broken pipe|http: Server closed` | json [$__interval]))",
+          "legendFormat": "{{component}}",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
       "id": 13,
       "type": "logs",
       "title": "Server error logs",
@@ -765,12 +1124,12 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 42
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"conorganizer-main.service|conorganizer-main|http request completed|level.:.ERROR|database is locked|database is busy|panic\" |~ \"ERROR|error|failed|panic|status_code.:5[0-9][0-9]\"",
+          "expr": "{service=\"$app_service\"} |~ `\"level\":\"ERROR\"|database is locked|database is busy|panic`",
           "queryType": "range"
         }
       ],
@@ -798,12 +1157,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 42
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |= \"panic\"",
+          "expr": "{service=\"$app_service\"} |= \"panic\"",
           "queryType": "range"
         }
       ],
@@ -831,12 +1190,12 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 38
+        "y": 50
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"database is locked|database is busy\" [5m]))",
+          "expr": "sum(count_over_time({service=\"$app_service\"} |~ \"database is locked|database is busy\" [5m]))",
           "queryType": "range"
         }
       ],
@@ -846,7 +1205,19 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "0",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -892,12 +1263,12 @@
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 38
+        "y": 50
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"database is locked|database is busy\"",
+          "expr": "{service=\"$app_service\"} |~ \"database is locked|database is busy\"",
           "queryType": "range"
         }
       ],
@@ -921,7 +1292,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 56
       },
       "panels": []
     },
@@ -938,12 +1309,12 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 45
+        "y": 57
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate({job=~\"$loki_job\"} |= \"http request completed\" [5m]))",
+          "expr": "sum(rate({service=\"$app_service\"} |= \"http request completed\" [$__auto]))",
           "legendFormat": "requests",
           "queryType": "range"
         }
@@ -1003,7 +1374,8 @@
           "placement": "bottom",
           "calcs": []
         }
-      }
+      },
+      "interval": "5m"
     },
     {
       "id": 19,
@@ -1018,12 +1390,12 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 45
+        "y": 57
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (status_code) (rate({job=~\"$loki_job\"} |= \"http request completed\" | json [5m]))",
+          "expr": "sum by (status_code) (rate({service=\"$app_service\"} |= \"http request completed\" | json [$__auto]))",
           "legendFormat": "{{status_code}}",
           "queryType": "range"
         }
@@ -1083,7 +1455,8 @@
           "placement": "bottom",
           "calcs": []
         }
-      }
+      },
+      "interval": "5m"
     },
     {
       "id": 20,
@@ -1098,12 +1471,12 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 45
+        "y": 57
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"http request completed\" | json | status_code >= 500 [5m]))",
+          "expr": "sum(count_over_time({service=\"$app_service\"} |= \"http request completed\" | json | status_code >= 500 [$__auto])) or vector(0)",
           "legendFormat": "5xx",
           "queryType": "range"
         }
@@ -1163,7 +1536,8 @@
           "placement": "bottom",
           "calcs": []
         }
-      }
+      },
+      "interval": "5m"
     },
     {
       "id": 21,
@@ -1178,12 +1552,12 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 63
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(10, sum by (path) (count_over_time({job=~\"$loki_job\"} |= \"http request completed\" | json | status_code >= 500 [1h])))",
+          "expr": "topk(10, sum by (path) (count_over_time({service=\"$app_service\"} |= \"http request completed\" | json | status_code >= 500 [1h])))",
           "legendFormat": "{{path}}",
           "queryType": "range"
         }
@@ -1258,12 +1632,12 @@
         "h": 6,
         "w": 6,
         "x": 12,
-        "y": 51
+        "y": 63
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"http request completed\" | json | status_code >= 400 | status_code < 500 [5m]))",
+          "expr": "sum(count_over_time({service=\"$app_service\"} |= \"http request completed\" | json | status_code >= 400 | status_code < 500 [$__auto])) or vector(0)",
           "legendFormat": "4xx",
           "queryType": "range"
         }
@@ -1323,7 +1697,8 @@
           "placement": "bottom",
           "calcs": []
         }
-      }
+      },
+      "interval": "5m"
     },
     {
       "id": 23,
@@ -1338,12 +1713,12 @@
         "h": 6,
         "w": 6,
         "x": 18,
-        "y": 51
+        "y": 63
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "probe_duration_seconds{instance=~\".*${main_host:regex}.*\"}",
+          "expr": "probe_duration_seconds{instance=\"https://${main_host}/\"}",
           "legendFormat": "{{instance}}"
         }
       ],
@@ -1414,7 +1789,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 57
+        "y": 69
       },
       "panels": []
     },
@@ -1422,7 +1797,7 @@
       "id": 25,
       "type": "timeseries",
       "title": "p50 request latency",
-      "description": "Log-derived p50 latency from duration_ms. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
+      "description": "Log-derived p50 latency from duration_ms. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import. Excludes GET on /api paths, which are long-lived live streams.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1431,12 +1806,12 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 58
+        "y": 70
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "quantile_over_time(0.50, {job=~\"$loki_job\"} |= \"http request completed\" | json | unwrap duration_ms | __error__=\"\" [5m])",
+          "expr": "quantile_over_time(0.50, {service=\"$app_service\"} |= \"http request completed\" | json | (method != \"GET\" or path !~ `.*/api.*`) | unwrap duration_ms | __error__=\"\" [$__auto]) by (service)",
           "legendFormat": "p50",
           "queryType": "range"
         }
@@ -1497,13 +1872,14 @@
           "placement": "bottom",
           "calcs": []
         }
-      }
+      },
+      "interval": "5m"
     },
     {
       "id": 26,
       "type": "timeseries",
       "title": "p95 request latency",
-      "description": "Log-derived p95 latency from duration_ms. Tail latency is often the first useful saturation symptom. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
+      "description": "Log-derived p95 latency from duration_ms. Tail latency is often the first useful saturation symptom. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import. Excludes GET on /api paths, which are long-lived live streams.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1512,12 +1888,12 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 58
+        "y": 70
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "quantile_over_time(0.95, {job=~\"$loki_job\"} |= \"http request completed\" | json | unwrap duration_ms | __error__=\"\" [5m])",
+          "expr": "quantile_over_time(0.95, {service=\"$app_service\"} |= \"http request completed\" | json | (method != \"GET\" or path !~ `.*/api.*`) | unwrap duration_ms | __error__=\"\" [$__auto]) by (service)",
           "legendFormat": "p95",
           "queryType": "range"
         }
@@ -1578,13 +1954,14 @@
           "placement": "bottom",
           "calcs": []
         }
-      }
+      },
+      "interval": "5m"
     },
     {
       "id": 27,
       "type": "timeseries",
       "title": "p99 request latency",
-      "description": "Log-derived p99 latency from duration_ms. Investigate spikes with the slow request logs below. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
+      "description": "Log-derived p99 latency from duration_ms. Investigate spikes with the slow request logs below. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import. Excludes GET on /api paths, which are long-lived live streams.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1593,12 +1970,12 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 58
+        "y": 70
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "quantile_over_time(0.99, {job=~\"$loki_job\"} |= \"http request completed\" | json | unwrap duration_ms | __error__=\"\" [5m])",
+          "expr": "quantile_over_time(0.99, {service=\"$app_service\"} |= \"http request completed\" | json | (method != \"GET\" or path !~ `.*/api.*`) | unwrap duration_ms | __error__=\"\" [$__auto]) by (service)",
           "legendFormat": "p99",
           "queryType": "range"
         }
@@ -1659,13 +2036,14 @@
           "placement": "bottom",
           "calcs": []
         }
-      }
+      },
+      "interval": "5m"
     },
     {
       "id": 28,
       "type": "logs",
       "title": "Slow request logs > 1000 ms",
-      "description": "Request logs slower than 1 second. Inspect path, method, status_code, duration_ms, and request_id. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
+      "description": "Request logs slower than 1 second. Inspect path, method, status_code, duration_ms, and request_id. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import. Excludes GET on /api paths, which are long-lived live streams.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1674,12 +2052,12 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 64
+        "y": 76
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |= \"http request completed\" | json | duration_ms > 1000",
+          "expr": "{service=\"$app_service\"} |= \"http request completed\" | json | (method != \"GET\" or path !~ `.*/api.*`) | duration_ms > 1000",
           "queryType": "range"
         }
       ],
@@ -1703,7 +2081,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 72
+        "y": 84
       },
       "panels": []
     },
@@ -1711,7 +2089,7 @@
       "id": 30,
       "type": "timeseries",
       "title": "Requests per minute",
-      "description": "Log-derived request volume.",
+      "description": "Log-derived request volume. Includes the uptime probe, about 4 per minute.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1720,12 +2098,12 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 73
+        "y": 85
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"http request completed\" [1m]))",
+          "expr": "sum(rate({service=\"$app_service\"} |= \"http request completed\" [$__interval])) * 60 or vector(0)",
           "legendFormat": "requests/min",
           "queryType": "range"
         }
@@ -1785,12 +2163,13 @@
           "placement": "bottom",
           "calcs": []
         }
-      }
+      },
+      "interval": "1m"
     },
     {
       "id": 31,
-      "type": "timeseries",
-      "title": "Requests by route",
+      "type": "bargauge",
+      "title": "Top routes in range",
       "description": "Top request paths from JSON request logs. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
@@ -1800,48 +2179,19 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 73
+        "y": 85
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(10, sum by (path) (count_over_time({job=~\"$loki_job\"} |= \"http request completed\" | json [5m])))",
-          "legendFormat": "{{path}}",
-          "queryType": "range"
+          "expr": "topk(10, sum by (path) (count_over_time({service=\"$app_service\"} |= \"http request completed\" | json [$__range])))",
+          "queryType": "instant",
+          "legendFormat": "{{path}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "barAlignment": 0,
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false,
-            "showPoints": "never",
-            "pointSize": 5,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1855,15 +2205,15 @@
         "overrides": []
       },
       "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": []
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         }
       }
     },
@@ -1880,12 +2230,12 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 73
+        "y": 85
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (method) (count_over_time({job=~\"$loki_job\"} |= \"http request completed\" | json [5m]))",
+          "expr": "sum by (method) (count_over_time({service=\"$app_service\"} |= \"http request completed\" | json [5m]))",
           "legendFormat": "{{method}}",
           "queryType": "range"
         }
@@ -1951,7 +2301,7 @@
       "id": 33,
       "type": "timeseries",
       "title": "Top slow routes",
-      "description": "Maximum duration_ms by path in the last 15 minutes. Use with caution: a single outlier can dominate. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
+      "description": "Maximum duration_ms by path in the last 15 minutes. Use with caution: a single outlier can dominate. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import. Excludes GET on /api paths, which are long-lived live streams.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1960,12 +2310,12 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 79
+        "y": 91
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(10, max by (path) (max_over_time({job=~\"$loki_job\"} |= \"http request completed\" | json | unwrap duration_ms | __error__=\"\" [15m])))",
+          "expr": "topk(10, max by (path) (max_over_time({service=\"$app_service\"} |= \"http request completed\" | json | (method != \"GET\" or path !~ `.*/api.*`) | unwrap duration_ms | __error__=\"\" [15m])))",
           "legendFormat": "{{path}}",
           "queryType": "range"
         }
@@ -2041,12 +2391,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 79
+        "y": 91
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |= \"http request completed\" | json | status_code >= 400",
+          "expr": "{service=\"$app_service\"} |= \"http request completed\" | json | status_code >= 400",
           "queryType": "range"
         }
       ],
@@ -2070,7 +2420,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 87
+        "y": 99
       },
       "panels": []
     },
@@ -2078,7 +2428,7 @@
       "id": 36,
       "type": "timeseries",
       "title": "DB-related error count",
-      "description": "Log-derived DB symptom count. Includes app and migration-like messages.",
+      "description": "Database problems in conorganizer-main's log: locked or busy database, disk I/O error (the 2 October outage), corrupt database, constraint failures and failed startup. Plain mentions of SQLite, like the startup line, do not count.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2087,12 +2437,12 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 88
+        "y": 100
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"database is locked|database is busy|sqlite|SQLite|constraint failed|FOREIGN KEY|migration\" [5m]))",
+          "expr": "sum(count_over_time({service=\"$app_service\"} |~ \"database is locked|database is busy|disk I/O error|database disk image is malformed|constraint failed|FOREIGN KEY|could not initialize DB|integrity check failed\" [5m])) or vector(0)",
           "legendFormat": "db errors",
           "queryType": "range"
         }
@@ -2158,7 +2508,7 @@
       "id": 37,
       "type": "logs",
       "title": "SQLite error logs",
-      "description": "SQLite and database errors from app logs.",
+      "description": "Database problems in conorganizer-main's log: locked or busy database, disk I/O error (the 2 October outage), corrupt database, constraint failures and failed startup. Plain mentions of SQLite, like the startup line, do not count.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2167,12 +2517,12 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 88
+        "y": 100
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"database is locked|database is busy|sqlite|SQLite|constraint failed|FOREIGN KEY\"",
+          "expr": "{service=\"$app_service\"} |~ \"database is locked|database is busy|disk I/O error|database disk image is malformed|constraint failed|FOREIGN KEY|could not initialize DB|integrity check failed\"",
           "queryType": "range"
         }
       ],
@@ -2190,8 +2540,8 @@
     {
       "id": 38,
       "type": "logs",
-      "title": "Migration or startup DB logs",
-      "description": "DB startup/migration/integrity logs that can explain service boot failures.",
+      "title": "Startup DB logs",
+      "description": "Each start of conorganizer-main logs the SQLite file it opened (SQLite database initialized). A failed start logs could not initialize DB with the reason. Migrations for main run by hand with goose and are not in this log.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2200,12 +2550,12 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 88
+        "y": 100
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"migration|migrate|schema|could not initialize DB|integrity check\"",
+          "expr": "{service=\"$app_service\"} |~ \"SQLite database initialized|could not initialize DB\"",
           "queryType": "range"
         }
       ],
@@ -2233,7 +2583,7 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 96
+        "y": 108
       },
       "targets": [
         {
@@ -2312,7 +2662,7 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 96
+        "y": 108
       },
       "targets": [
         {
@@ -2391,7 +2741,7 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 96
+        "y": 108
       },
       "targets": [
         {
@@ -2429,7 +2779,7 @@
               "legend": false
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "dashed"
             }
           },
           "thresholds": {
@@ -2453,7 +2803,12 @@
               }
             ]
           },
-          "decimals": 1
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       },
@@ -2479,7 +2834,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 102
+        "y": 114
       },
       "panels": []
     },
@@ -2496,12 +2851,12 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 103
+        "y": 115
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"conorganizer-main|http request completed|component.:.http|component.:.main\"",
+          "expr": "{job=~\"$loki_job\", service=~\"$app_service|\"} | regexp `(?P<unit>conorganizer-main\\.service)` | service=\"$app_service\" or unit!=\"\"",
           "queryType": "range"
         }
       ],
@@ -2529,12 +2884,12 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 103
+        "y": 115
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"conorganizer-main.service|conorganizer-main|http request completed|level.:.WARN|level.:.ERROR|panic|failed|error\" |~ \"WARN|ERROR|warning|error|failed|panic|status_code.:5[0-9][0-9]\"",
+          "expr": "{job=~\"$loki_job\", service=~\"$app_service|\"} | regexp `(?P<unit>conorganizer-main\\.service)` | service=\"$app_service\" or unit!=\"\" |~ `level.:.(WARN|ERROR)|panic|(?i:failed|failure)|status_code.:5[0-9][0-9]`",
           "queryType": "range"
         }
       ],
@@ -2562,12 +2917,12 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 112
+        "y": 124
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |= \"http request completed\" | json",
+          "expr": "{service=\"$app_service\"} |= \"http request completed\" | json",
           "queryType": "range"
         }
       ],
