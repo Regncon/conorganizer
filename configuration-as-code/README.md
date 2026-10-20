@@ -103,6 +103,8 @@ The SQLite backup runs `PRAGMA integrity_check` and checks that the `users` and 
 
 Log lines start with `conorganizer-sqlite-backup:` or `conorganizer-images-backup:` and end with `completed successfully` on success. The Grafana backup panels depend on these strings.
 
+Before logging `completed successfully`, each script writes Prometheus metrics to `/var/lib/prometheus/node-exporter/conorganizer-sqlite-backup.prom` or `conorganizer-images-backup.prom`, which node_exporter's textfile collector serves. They hold the time of the last successful backup and, from the SQLite backup, the database, WAL, backup and backup directory sizes. See [Backup Metrics](grafana-dashboards/README.md#backup-metrics).
+
 ## Loki storage
 
 Loki stores its chunks, index and write-ahead log in `/var/lib/loki` on the root disk. The drop-in `loki.service.d/state-directory.conf` creates the folder for the `loki` user, with mode 0700 (`StateDirectory=loki`). It is a drop-in because the Loki package overwrites `/etc/systemd/system/loki.service` on upgrade, which would undo changes to the unit itself.
@@ -115,25 +117,25 @@ Loki used to keep this data in `/tmp/loki`, because the repository's config star
 
 ### Moving from /tmp/loki
 
-To move without losing the logs collected since the last reboot, run all of this in one go, from `/srv/configuration-as-code-repo/conorganizer`. Pulling the change switches `/etc/loki/config.yml` to `/var/lib/loki` at once, because it is a stow symlink into the checkout. If Loki restarted before systemd knew about the drop-in, it could not create its folder and would stay down. So stop Loki before you pull, and don't pull this change on the server without running these steps.
+To move without losing the logs collected since the last reboot, run all of this in one go, from `/srv/configuration-as-code-repo/conorganizer`. That checkout belongs to `gerhard` and is kept on a detached `origin/main`, so git runs as `sudo -u gerhard`. Updating the checkout switches `/etc/loki/config.yml` to `/var/lib/loki` at once, because it is a stow symlink into the checkout. If Loki restarted before systemd knew about the drop-in, it could not create its folder and would stay down. So stop Loki before you update the checkout, and don't update it past this change without running these steps.
 
-First check what the pull brings, and that the installed Loki accepts the new config:
+First check what the update brings, and that the installed Loki accepts the new config:
 
 ```bash
 cd /srv/configuration-as-code-repo/conorganizer
-git fetch
-git diff --stat HEAD origin/main -- configuration-as-code/stow
-git show origin/main:configuration-as-code/stow/loki/etc/loki/config.yml > /tmp/loki-config-new.yml
+sudo -u gerhard git fetch origin
+sudo -u gerhard git diff --stat HEAD origin/main -- configuration-as-code/stow
+sudo -u gerhard git show origin/main:configuration-as-code/stow/loki/etc/loki/config.yml > /tmp/loki-config-new.yml
 /usr/bin/loki -config.file=/tmp/loki-config-new.yml -verify-config
 ```
 
-The diff lists every stowed file the pull changes. Changes to the Caddyfile or to other units take effect the next time those services reload.
+The diff lists every stowed file the update changes. Changes to the Caddyfile or to other units take effect the next time those services reload.
 
-Then stop Loki, pull, copy the data and start Loki again:
+Then stop Loki, update the checkout, copy the data and start Loki again:
 
 ```bash
 sudo systemctl stop loki
-git pull --ff-only
+sudo -u gerhard git checkout --detach origin/main
 test -e /var/lib/loki && echo "/var/lib/loki already exists: do not copy, check it first" || sudo cp -a /tmp/loki /var/lib/loki
 sudo stow --dir=configuration-as-code/stow --target=/ --restow loki systemd
 sudo systemctl daemon-reload
@@ -142,7 +144,7 @@ sudo systemctl start loki
 
 `cp -a` creates `/var/lib/loki` with the owner of `/tmp/loki`. The Loki package creates no `loki` group, so don't create the folder with `install -g loki`.
 
-If Loki does not start, `/tmp/loki` is untouched. To go back to the old path, run `git checkout HEAD@{1} -- configuration-as-code/stow/loki/etc/loki/config.yml`, then `sudo systemctl start loki`. The drop-in is harmless with the old path and can stay.
+If Loki does not start, `/tmp/loki` is untouched. To go back to the old path, run `sudo -u gerhard git checkout HEAD@{1} -- configuration-as-code/stow/loki/etc/loki/config.yml`, then `sudo systemctl start loki`. The drop-in is harmless with the old path and can stay.
 
 Alloy retries each batch 10 times, with backoff growing from 0.5 s to 5 min, so nothing is dropped as long as Loki is back within about 4 minutes. The journal keeps every line either way. Check the result:
 

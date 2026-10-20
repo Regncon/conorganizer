@@ -171,7 +171,7 @@
       "targetBlank": false,
       "title": "Production Health",
       "tooltip": "Open the production platform dashboard",
-      "type": "dashboard",
+      "type": "link",
       "url": "/d/conorganizer-production-health/conorganizer-production-health"
     },
     {
@@ -183,7 +183,7 @@
       "targetBlank": false,
       "title": "Main Service Debugging",
       "tooltip": "Open the main service debugging dashboard",
-      "type": "dashboard",
+      "type": "link",
       "url": "/d/conorganizer-main-service-debugging/conorganizer-main-service-debugging"
     }
   ],
@@ -214,7 +214,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "### Purpose\nAt-a-glance production platform health and restore confidence for Conorganizer.\n\nUse this dashboard from top to bottom: **current status -> backups -> filesystem capacity -> VPS resources -> SQLite -> HTTP/TLS -> system errors**.\n\nDesign choices:\n- Infrastructure panels follow USE: utilization, saturation, and errors.\n- Service-facing panels use public blackbox probes for symptoms before digging into causes.\n- Backup freshness status uses Loki success logs first; precise backup age panels require future custom/textfile metrics.\n- Loki panels should work with broad `job` labels; narrow `loki_job` after import if labels are available.\n- Prometheus panels require node_exporter, blackbox_exporter, and systemd collector metrics.\n- Optional SQLite/backup size panels require future textfile/custom metrics.\n\nUseful external examples:\n- Node Exporter Full: https://grafana.com/grafana/dashboards/1860-node-exporter-full/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/\n- Caddy Monitoring: https://grafana.com/grafana/dashboards/22806-caddy-monitoring/\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/"
+        "content": "### Purpose\nAt-a-glance production platform health and restore confidence for Conorganizer.\n\nUse this dashboard from top to bottom: **current status -> backups -> filesystem capacity -> VPS resources -> SQLite -> HTTP/TLS -> system errors**.\n\nDesign choices:\n- Infrastructure panels follow USE: utilization, saturation, and errors.\n- Service-facing panels use public blackbox probes for symptoms before digging into causes.\n- Backup freshness status uses Loki success logs first; the backup age panels read the `conorganizer_*` textfile metrics that the backup scripts write after each successful run.\n- Loki panels should work with broad `job` labels; narrow `loki_job` after import if labels are available.\n- Prometheus panels require node_exporter, blackbox_exporter, and systemd collector metrics.\n- SQLite, WAL, backup and backup directory sizes come from the same textfile metrics and update with every successful SQLite backup.\n\nUseful external examples:\n- Node Exporter Full: https://grafana.com/grafana/dashboards/1860-node-exporter-full/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/\n- Caddy Monitoring: https://grafana.com/grafana/dashboards/22806-caddy-monitoring/\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/"
       }
     },
     {
@@ -534,7 +534,7 @@
       "id": 8,
       "type": "stat",
       "title": "SQLite backups, 2h",
-      "description": "Log-derived count of successful SQLite backups in the last 2 hours using the stable backup prefix. Green means at least one recent success; \"SQLite backup: hours since last run\" below shows when the timer last fired. Red 0 means no successful backup in 2 hours.",
+      "description": "Log-derived count of successful SQLite backups in the last 2 hours using the stable backup prefix. Green means at least one recent success; \"SQLite backup age\" below shows the exact time since the last success. Red 0 means no successful backup in 2 hours.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -596,7 +596,7 @@
       "id": 9,
       "type": "stat",
       "title": "Image backups, 26h",
-      "description": "Log-derived count of successful image backups in the last 26 hours using the stable backup prefix. Green means at least one recent success; \"Image backup: hours since last run\" below shows when the timer last fired. Red 0 means no successful backup in 26 hours.",
+      "description": "Log-derived count of successful image backups in the last 26 hours using the stable backup prefix. Green means at least one recent success; \"Image backup age\" below shows the exact time since the last success. Red 0 means no successful backup in 26 hours.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1247,7 +1247,7 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 30
       },
@@ -1319,16 +1319,16 @@
     {
       "id": 18,
       "type": "timeseries",
-      "title": "SQLite backup: hours since last run",
-      "description": "Hours since the SQLite backup timer last ran. It runs every 15 minutes, so the line should stay under 0.25 h; above the red line at 0.5 h the timer has stopped. Whether a run succeeded shows in Backup failure count and Failed services.",
+      "title": "SQLite backup age",
+      "description": "Hours since the last successful SQLite backup, from conorganizer_sqlite_backup_last_success_timestamp_seconds. conorganizer-sqlite-backup runs every 15 minutes, so the line should stay under 0.25 h. Above the red line at 0.5 h a run has failed or the timer has stopped; Backup failure logs shows why.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 6,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 6,
         "y": 30
       },
       "targets": [
@@ -1338,8 +1338,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "legendFormat": "hours since last run",
-          "expr": "(time() - max(node_systemd_timer_last_trigger_seconds{instance=~\"$node_instance\",name=\"conorganizer-sqlite-backup.timer\"})) / 3600"
+          "legendFormat": "hours since last success",
+          "expr": "(time() - max(conorganizer_sqlite_backup_last_success_timestamp_seconds{instance=~\"$node_instance\"})) / 3600"
         }
       ],
       "fieldConfig": {
@@ -1407,16 +1407,16 @@
     {
       "id": 19,
       "type": "timeseries",
-      "title": "Image backup: hours since last run",
-      "description": "Hours since the image backup timer last ran. It runs daily at 03:30, so the line should stay under 24 h; above the red line at 26 h a run was missed. Whether a run succeeded shows in Backup failure count and Failed services.",
+      "title": "Image backup age",
+      "description": "Hours since the last successful image backup, from conorganizer_images_backup_last_success_timestamp_seconds. conorganizer-images-backup runs daily at 03:30, so the line should stay under 24 h. Above the red line at 26 h a run has failed or was missed; Backup failure logs shows why.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 6,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 12,
         "y": 30
       },
       "targets": [
@@ -1426,8 +1426,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "legendFormat": "hours since last run",
-          "expr": "(time() - max(node_systemd_timer_last_trigger_seconds{instance=~\"$node_instance\",name=\"conorganizer-images-backup.timer\"})) / 3600"
+          "legendFormat": "hours since last success",
+          "expr": "(time() - max(conorganizer_images_backup_last_success_timestamp_seconds{instance=~\"$node_instance\"})) / 3600"
         }
       ],
       "fieldConfig": {
@@ -1493,10 +1493,93 @@
       }
     },
     {
+      "id": 56,
+      "type": "timeseries",
+      "title": "Backup directory size",
+      "description": "Disk space used by /mnt/HC_Volume_103911252/backups (SQLite and image backups), from conorganizer_backup_directory_size_bytes. conorganizer-sqlite-backup measures it after each successful run. Backups older than 14 days are deleted, so the line should level off; steady growth means the cleanup is not working or the backups are getting larger.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 30
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "legendFormat": "backup directory",
+          "expr": "conorganizer_backup_directory_size_bytes{instance=~\"$node_instance\"}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
       "id": 20,
       "type": "timeseries",
       "title": "Successful backups",
-      "description": "Successful backup runs per interval, from the backup services' own log lines. The SQLite backup should appear 4 times an hour and the image backup once a day; a gap means missed backups. Backup directory size needs a textfile metric that is not set up yet.",
+      "description": "Successful backup runs per interval, from the backup services' own log lines. The SQLite backup should appear 4 times an hour and the image backup once a day; a gap means missed backups.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2591,7 +2674,7 @@
       "id": 36,
       "type": "timeseries",
       "title": "SQLite DB file size",
-      "description": "Optional future custom/textfile metric for /mnt/HC_Volume_103911252/environments/main/database/events.db.",
+      "description": "Size of /mnt/HC_Volume_103911252/environments/main/database/events.db, from conorganizer_sqlite_db_size_bytes. conorganizer-sqlite-backup measures it after each successful run, every 15 minutes.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -2670,7 +2753,7 @@
       "id": 37,
       "type": "timeseries",
       "title": "SQLite WAL file size",
-      "description": "Optional future custom/textfile metric. A fast-growing WAL can indicate checkpoint or write pressure issues.",
+      "description": "Size of main's events.db-wal, from conorganizer_sqlite_wal_size_bytes, measured after each successful SQLite backup. 0 means there was no WAL file. A fast-growing WAL can indicate checkpoint or write pressure issues.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -2749,7 +2832,7 @@
       "id": 38,
       "type": "timeseries",
       "title": "SQLite backup size",
-      "description": "Optional future custom/textfile metric. Useful for spotting backup truncation or unusual DB growth.",
+      "description": "Size of the newest compressed SQLite backup, from conorganizer_sqlite_backup_size_bytes. Useful for spotting unusual database growth or a backup that is much smaller than the one before.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
