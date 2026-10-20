@@ -477,26 +477,28 @@ launchctl setenv GRAFANA_SERVICE_ACCOUNT_TOKEN "glsa_paste_your_token_here"
 
 ### Check that it works
 
-Claude Code asks once whether to trust the project's `grafana` server. Approve
-it, then run:
+Claude Code asks once whether to trust the project's `grafana-conorganizer`
+server. Approve it, then run:
 
 ```bash
 claude mcp list
 ```
 
-`grafana` should show as connected.
+`grafana-conorganizer` should show as connected. The server was called
+`grafana` until October 2026; if you set it up then, Claude Code asks again
+under the new name.
 
 Codex reads `.codex/config.toml` only in a project you have marked as trusted;
 Codex asks the first time you open the folder. Then run:
 
 ```bash
-codex mcp get grafana
+codex mcp get grafana-conorganizer
 ```
 
 Codex passes only a short list of environment variables to MCP servers, so
 `.codex/config.toml` forwards the token with `env_vars`.
 
-In VS Code, open `.vscode/mcp.json` and click **Start** above `grafana`.
+In VS Code, open `.vscode/mcp.json` and click **Start** above `grafana-conorganizer`.
 VS Code asks for the token once, hides what you type and stores it. VS Code
 calls `.vscode/mcp.json` deprecated in favour of a root `.mcp.json`, but it
 only reads the root file with the experimental
