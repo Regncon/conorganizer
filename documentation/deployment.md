@@ -97,7 +97,7 @@ Both keep 14 days of backups and are run by systemd timers from `configuration-a
 
 `cleanup-preview` uploads `deploy/cleanup.sh` to the preview's app dir and runs `sudo cleanup.sh <PR_NUMBER>-merge`. The script stops and disables the service, removes the unit, the Caddy site, the data dir and the app dir, and reloads systemd and Caddy. Every removal tolerates a target that is already gone, so running it twice, after a failed deploy, or for a draft that never got a preview, is safe. A failed Caddy reload fails the job, because Caddy then still serves the old route.
 
-The job runs on `pull_request_target`, not `pull_request`, because GitHub runs no `pull_request` workflow for a PR with merge conflicts, not even when it is closed. `pull_request_target` runs the base branch's workflow with the secrets, so the job only checks out the base branch and never runs PR code.
+The job runs on `pull_request_target`, not `pull_request`, because GitHub runs no `pull_request` workflow for a PR with merge conflicts, not even when it is closed. `pull_request_target` runs main's workflow with the secrets, whatever the PR's base branch, so the job only checks out main and never runs PR code. A change to `cleanup-preview` or `cleanup.sh` therefore only takes effect once it is merged to main.
 
 The job needs the `deploy` user's sudoers entry for `/opt/conorganizer/*/cleanup.sh`, which `hetzner/scripts/setup_deploy_user.sh` writes. Check it on the server with `sudo -l -U deploy`. Without it the job fails at the `sudo` line and the preview stays.
 
