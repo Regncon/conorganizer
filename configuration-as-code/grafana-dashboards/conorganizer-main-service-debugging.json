@@ -2573,8 +2573,8 @@
     {
       "id": 39,
       "type": "timeseries",
-      "title": "Optional SQLite DB size",
-      "description": "Optional future textfile/custom metric. Not expected until app or node textfile instrumentation is added.",
+      "title": "SQLite DB size",
+      "description": "Size of main's events.db, from conorganizer_sqlite_db_size_bytes. conorganizer-sqlite-backup measures it after each successful run, every 15 minutes.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -2652,8 +2652,8 @@
     {
       "id": 40,
       "type": "timeseries",
-      "title": "Optional SQLite WAL size",
-      "description": "Optional future textfile/custom metric. WAL growth can explain write pressure or backup/checkpoint issues.",
+      "title": "SQLite WAL size",
+      "description": "Size of main's events.db-wal, from conorganizer_sqlite_wal_size_bytes, measured after each successful SQLite backup. WAL growth can explain write pressure or backup/checkpoint issues.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"

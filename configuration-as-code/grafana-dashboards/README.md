@@ -96,7 +96,7 @@ Both go from overview to detail: stat panels at the top, time series for trends,
 - `Bps` for network.
 - `ms` for log-derived request latency, `s` for probe duration.
 - `reqps` for log-derived request rates.
-- `d` (days) for TLS expiry, `h` (hours) for the optional backup-age panels.
+- `d` (days) for TLS expiry, `h` (hours) for the backup-age panels.
 
 ### Thresholds
 
@@ -113,7 +113,7 @@ The top-row backup stats in Production Health read Loki success logs, so they wo
 - `SQLite backups, 2h` counts `conorganizer-sqlite-backup: completed successfully` over the last 2 hours.
 - `Image backups, 26h` counts `conorganizer-images-backup: completed successfully` over the last 26 hours.
 
-Both are green when the count is 1 or more. The precise `SQLite backup age`, `Image backup age` and backup size panels need the [optional future metrics](#optional-future-metrics), which nothing exports yet.
+Both are green when the count is 1 or more. `SQLite backup age`, `Image backup age`, `Backup directory size` and the SQLite size panels read the [backup metrics](#backup-metrics) instead.
 
 ### PromQL Rules
 
@@ -129,6 +129,7 @@ See the [production stack overview](../README.md#production-stack-overview) for 
 - The `blackbox_https` job probes `https://main.lekeplassen.regncon.no/` and `https://grafana.regncon.no/` through `127.0.0.1:9115`, and relabels `instance` to the probed URL.
 - `configuration-as-code/stow/prometheus/etc/prometheus/blackbox.yml` defines an `http_2xx` module with `fail_if_not_ssl: true`, redirects enabled, IPv4 preferred, and a 5 second timeout.
 - `configuration-as-code/stow/prometheus/etc/default/prometheus-node-exporter` binds node_exporter to `127.0.0.1:9100`, enables `--collector.systemd`, and keeps `/mnt` from being excluded by the filesystem collector.
+- node_exporter's textfile collector reads `/var/lib/prometheus/node-exporter/*.prom`. The backup scripts write the [backup metrics](#backup-metrics) there.
 - `configuration-as-code/stow/loki/etc/loki/config.yml` configures Loki on `127.0.0.1:3500` (not the default `3100`) with filesystem storage and `retention_period: 120d`.
 - `configuration-as-code/stow/promtail/etc/promtail/config.yml` pushes to `http://localhost:3500/loki/api/v1/push`, labels logs with `job=varlogs`, and tails `/var/log/messages`. This is not how the app's logs reach Loki: Alloy's journald source ships them (see Historical Server Notes), and in Grafana they carry `job="systemd-journal"`, `app="conorganizer"` and `service="conorganizer-main"` (checked 2026-09-30). Query with those labels, not `job=varlogs`.
 - The repo contains Loki and Promtail systemd unit files. It does not contain an Alloy config file.
@@ -189,8 +190,7 @@ Prometheus panels:
 - `caddy.service` and `conorganizer-main.service` systemd status panels.
 - Root and mounted-volume filesystem usage, inode usage, and available bytes.
 - CPU, memory, load, and network panels.
-- Hours since each backup timer last ran, from `node_systemd_timer_last_trigger_seconds`.
-- Optional SQLite DB/WAL/backup size panels, which stay empty until the `conorganizer_*` metrics below exist.
+- Backup age, backup directory size and SQLite DB/WAL/backup size panels, from the `conorganizer_*` [backup metrics](#backup-metrics).
 
 Loki panels:
 
@@ -224,14 +224,13 @@ Caddy native metrics:
 
 Application metrics:
 
-- The app exposes no Prometheus metrics.
+- The app exposes no Prometheus metrics. The `conorganizer_*` metrics come from the backup scripts, not the app.
 - The debugging dashboard intentionally uses Loki request logs for request rate, status-code mix, route usage, and latency.
 - Do not add common HTTP metric names such as `http_requests_total` unless the app actually exposes them later.
 
 Log-derived data:
 
 - Backup freshness in the top row and the "Successful backups" bars are log-derived from the backup services' `completed successfully` lines.
-- The backup age panels measure when the systemd timer last ran, not when a run last succeeded. A failed run shows in "Backup failure count" and "Failed services" instead.
 - App request rate can work with text-only request completion logs.
 - Status-code, route, and latency panels require parseable JSON request logs with `status_code`, `path`, `method`, and `duration_ms`.
 
@@ -293,6 +292,7 @@ In Grafana Explore:
 - Loki: try `{job=~".+"} |= "conorganizer-sqlite-backup:"` for backup logs.
 - Loki: if labels such as `unit`, `systemd_unit`, or `__journal__systemd_unit` exist, narrow app panels to `conorganizer-main.service`.
 - Prometheus: try `up`, `node_uname_info`, `node_filesystem_avail_bytes`, `probe_success`, and `node_systemd_unit_state`.
+- Prometheus: try `{__name__=~"conorganizer_.*"}` for the backup metrics.
 
 If JSON parsing panels are empty but text log panels work, inspect whether Loki lines begin with raw JSON or include a syslog prefix before the JSON payload.
 
@@ -326,11 +326,11 @@ sudo sqlite3 /var/lib/grafana/grafana.db 'select uid, name, type, url from data_
 
 These are documented only. No alert rules are provisioned.
 
-- DB backup success missing for more than 2 hours.
-- Image backup success missing for more than 26 hours.
+- DB backup success missing for more than 2 hours: `time() - conorganizer_sqlite_backup_last_success_timestamp_seconds > 2 * 3600`.
+- Image backup success missing for more than 26 hours: `time() - conorganizer_images_backup_last_success_timestamp_seconds > 26 * 3600`.
 - Mounted volume disk usage over 80%.
 - Mounted volume disk usage over 90%.
-- WAL file larger than expected after future WAL metrics exist.
+- WAL file larger than expected, from `conorganizer_sqlite_wal_size_bytes`.
 - `conorganizer-main.service` not active.
 - `caddy.service` not active.
 - Caddy reload/start failure.
