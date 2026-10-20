@@ -232,7 +232,7 @@ quantile_over_time(0.95, {job=~"$loki_job"} |= "http request completed" | json |
 
 ## Backup Metrics
 
-The backup scripts publish their results through node_exporter's textfile collector. After a successful run, each script writes a `.prom` file to `/var/lib/prometheus/node-exporter/`, the OS package's default textfile directory, next to the package's own `apt.prom`, `nvme.prom` and `smartmon.prom`. node_exporter serves those metrics with its own, so they carry `job="node"` and `instance="127.0.0.1:9100"`.
+The backup scripts publish their results through node_exporter's textfile collector. After a successful run, each script writes a `.prom` file to `/var/lib/prometheus/node-exporter/`, the OS package's default textfile directory, next to the existing `apt.prom`, `nvme.prom` and `smartmon.prom`. node_exporter serves those metrics with its own, so they carry `job="node"` and `instance="127.0.0.1:9100"`.
 
 | Metric | Written by | Value |
 | --- | --- | --- |
