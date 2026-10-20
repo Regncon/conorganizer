@@ -89,6 +89,8 @@ There are two dashboards, each with one job:
 
 Both go from overview to detail: stat panels at the top, time series for trends, then logs for investigation. Keep to these two dashboards and do not duplicate panels across them.
 
+The links at the top of each dashboard point to the other dashboard with `"type": "link"` and a `url`. Grafana allows only `link` and `dashboards` as link types. An import accepts any other value, but moving or saving the dashboard then fails with `Validation failed ... DashboardSpec.links.0.type: Invalid value`.
+
 ### Units
 
 - `percent` for usage: disk, inodes, CPU, memory.
