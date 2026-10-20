@@ -248,7 +248,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max(probe_success{instance=~\".*${main_host:regex}.*\"})",
+          "expr": "max(probe_success{instance=\"https://${main_host}/\"})",
           "queryType": "timeSeriesQuery"
         }
       ],
@@ -323,7 +323,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max(probe_success{instance=~\".*${grafana_host:regex}.*\"})",
+          "expr": "max(probe_success{instance=\"https://${grafana_host}/\"})",
           "queryType": "timeSeriesQuery"
         }
       ],
@@ -534,7 +534,7 @@
       "id": 8,
       "type": "stat",
       "title": "SQLite backups, 2h",
-      "description": "Log-derived count of successful SQLite backups in the last 2 hours using the stable backup prefix. Green means at least one recent success; the precise age panel below requires a future metric.",
+      "description": "Log-derived count of successful SQLite backups in the last 2 hours using the stable backup prefix. Green means at least one recent success; \"SQLite backup: hours since last run\" below shows when the timer last fired. Red 0 means no successful backup in 2 hours.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -548,7 +548,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"conorganizer-sqlite-backup: completed successfully\" [2h]))",
+          "expr": "sum(count_over_time({job=~\"$loki_job\", service=\"conorganizer-sqlite-backup\"} |= \"conorganizer-sqlite-backup: completed successfully\" [2h])) or vector(0)",
           "queryType": "range"
         }
       ],
@@ -596,7 +596,7 @@
       "id": 9,
       "type": "stat",
       "title": "Image backups, 26h",
-      "description": "Log-derived count of successful image backups in the last 26 hours using the stable backup prefix. Green means at least one recent success; exact age requires a future metric.",
+      "description": "Log-derived count of successful image backups in the last 26 hours using the stable backup prefix. Green means at least one recent success; \"Image backup: hours since last run\" below shows when the timer last fired. Red 0 means no successful backup in 26 hours.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -610,7 +610,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"conorganizer-images-backup: completed successfully\" [26h]))",
+          "expr": "sum(count_over_time({job=~\"$loki_job\", service=\"conorganizer-images-backup\"} |= \"conorganizer-images-backup: completed successfully\" [26h])) or vector(0)",
           "queryType": "range"
         }
       ],
@@ -728,7 +728,7 @@
       "id": 11,
       "type": "stat",
       "title": "Backup failures, 24h",
-      "description": "Log-derived backup failure count from the stable backup script prefixes. Green should be zero.",
+      "description": "Failed backup runs in the last 24 hours, counted from the 'Failed with result' line systemd writes once for every failed SQLite or image backup run, whatever the cause. Green should be zero.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -742,7 +742,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"conorganizer-\" |~ \"failed|does not exist|sanity check failed|integrity check failed|ERROR|error\" [24h]))",
+          "expr": "sum(count_over_time({job=~\"$loki_job\", service=\"\"} |~ \"conorganizer-(sqlite|images)-backup.service: Failed with result\" [24h])) or vector(0)",
           "queryType": "range"
         }
       ],
@@ -752,7 +752,19 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "0",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -789,7 +801,7 @@
       "id": 12,
       "type": "stat",
       "title": "Critical system log signal, 1h",
-      "description": "Broad platform error search. Treat non-zero as a prompt to inspect the System errors row.",
+      "description": "Signs of serious trouble in the last hour: units failing to start, crash-loop restarts (Scheduled restart job), I/O errors, full disks and Go panics. Ignores openipmi, which always fails on this VPS. Green should be zero.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -803,7 +815,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"Failed to start|failed with result|Start request repeated too quickly|kernel.*error|no space left on device|panic\" [1h]))",
+          "expr": "sum(count_over_time({job=~\"$loki_job\", service!~\"loki|grafana-server\"} |~ \"Failed to start|Scheduled restart job|Start request repeated too quickly|I/O error|(?i:no space left on device)|panic:\" != \"openipmi\" [1h])) or vector(0)",
           "queryType": "range"
         }
       ],
@@ -813,7 +825,19 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "0",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -864,7 +888,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(max(probe_ssl_earliest_cert_expiry{instance=~\".*${main_host:regex}.*\"}) - time()) / 86400",
+          "expr": "(max(probe_ssl_earliest_cert_expiry{instance=\"https://${main_host}/\"}) - time()) / 86400",
           "queryType": "timeSeriesQuery"
         }
       ],
@@ -913,6 +937,227 @@
       }
     },
     {
+      "id": 53,
+      "type": "stat",
+      "title": "Root filesystem usage",
+      "description": "Used space on / (/dev/sda1, 40 GB). Loki's data is not on this disk: it lives in /tmp/loki, and /tmp is a separate 1 GB tmpfs in RAM.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 17
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "100 * (1 - (node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"/\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"} / node_filesystem_size_bytes{instance=~\"$node_instance\",mountpoint=\"/\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"}))",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 54,
+      "type": "stat",
+      "title": "Logs reaching Loki",
+      "description": "conorganizer-main log lines in the last 5 minutes. The uptime check alone writes about 20. No logs means Alloy is not shipping the journal: check alloy.service.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 17
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "sum(count_over_time({job=~\"$loki_job\", service=\"conorganizer-main\"}[5m]))",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No logs",
+                  "color": "red",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 55,
+      "type": "stat",
+      "title": "Failed services",
+      "description": "Our systemd services in the failed state. Run systemctl --failed on the server to see which.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 17
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "count(node_systemd_unit_state{instance=~\"$node_instance\",state=\"failed\",name=~\"conorganizer-.*|caddy.service|alloy.service|loki.service|prometheus.service|prometheus-node-exporter.service|grafana-server.service\"} == 1) or vector(0)",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      }
+    },
+    {
       "id": 14,
       "type": "row",
       "title": "Backups and restore confidence",
@@ -921,7 +1166,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 21
       },
       "panels": []
     },
@@ -938,12 +1183,12 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 22
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |= \"conorganizer-sqlite-backup:\"",
+          "expr": "{job=~\"$loki_job\", service=\"conorganizer-sqlite-backup\"}",
           "queryType": "range"
         }
       ],
@@ -971,12 +1216,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 22
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |= \"conorganizer-images-backup:\"",
+          "expr": "{job=~\"$loki_job\", service=\"conorganizer-images-backup\"}",
           "queryType": "range"
         }
       ],
@@ -995,7 +1240,7 @@
       "id": 17,
       "type": "timeseries",
       "title": "Backup failure count",
-      "description": "Log-derived backup failure trend. Non-zero values should be investigated.",
+      "description": "Failed backup runs per 15 minutes, from the 'Failed with result' line systemd writes for each failed SQLite or image backup run. A flat 0 line means no failures.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1004,12 +1249,12 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 26
+        "y": 30
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"conorganizer-\" |~ \"failed|does not exist|sanity check failed|integrity check failed|ERROR|error\" [15m]))",
+          "expr": "sum(count_over_time({job=~\"$loki_job\", service=\"\"} |~ \"conorganizer-(sqlite|images)-backup.service: Failed with result\" [15m])) or vector(0)",
           "legendFormat": "failures",
           "queryType": "range"
         }
@@ -1074,8 +1319,8 @@
     {
       "id": 18,
       "type": "timeseries",
-      "title": "SQLite backup age",
-      "description": "Optional future metric from textfile collector/custom exporter. Shows hours since last successful SQLite backup.",
+      "title": "SQLite backup: hours since last run",
+      "description": "Hours since the SQLite backup timer last ran. It runs every 15 minutes, so the line should stay under 0.25 h; above the red line at 0.5 h the timer has stopped. Whether a run succeeded shows in Backup failure count and Failed services.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -1084,13 +1329,17 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 26
+        "y": 30
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "(time() - conorganizer_sqlite_backup_last_success_timestamp_seconds) / 3600",
-          "legendFormat": "sqlite backup age"
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "legendFormat": "hours since last run",
+          "expr": "(time() - max(node_systemd_timer_last_trigger_seconds{instance=~\"$node_instance\",name=\"conorganizer-sqlite-backup.timer\"})) / 3600"
         }
       ],
       "fieldConfig": {
@@ -1122,7 +1371,7 @@
               "legend": false
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "dashed"
             }
           },
           "thresholds": {
@@ -1131,6 +1380,10 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.5
               }
             ]
           },
@@ -1154,8 +1407,8 @@
     {
       "id": 19,
       "type": "timeseries",
-      "title": "Image backup age",
-      "description": "Optional future metric from textfile collector/custom exporter. Shows hours since last successful image backup.",
+      "title": "Image backup: hours since last run",
+      "description": "Hours since the image backup timer last ran. It runs daily at 03:30, so the line should stay under 24 h; above the red line at 26 h a run was missed. Whether a run succeeded shows in Backup failure count and Failed services.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -1164,13 +1417,17 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 26
+        "y": 30
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "(time() - conorganizer_images_backup_last_success_timestamp_seconds) / 3600",
-          "legendFormat": "image backup age"
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "legendFormat": "hours since last run",
+          "expr": "(time() - max(node_systemd_timer_last_trigger_seconds{instance=~\"$node_instance\",name=\"conorganizer-images-backup.timer\"})) / 3600"
         }
       ],
       "fieldConfig": {
@@ -1202,7 +1459,7 @@
               "legend": false
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "dashed"
             }
           },
           "thresholds": {
@@ -1211,6 +1468,10 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 26
               }
             ]
           },
@@ -1234,34 +1495,39 @@
     {
       "id": 20,
       "type": "timeseries",
-      "title": "Backup directory size",
-      "description": "Optional future metric for /mnt/HC_Volume_103911252/backups. Useful for restore confidence and capacity trend tracking.",
+      "title": "Successful backups",
+      "description": "Successful backup runs per interval, from the backup services' own log lines. The SQLite backup should appear 4 times an hour and the image backup once a day; a gap means missed backups. Backup directory size needs a textfile metric that is not set up yet.",
       "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "type": "loki",
+        "uid": "${DS_LOKI}"
       },
       "gridPos": {
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 36
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "conorganizer_backup_directory_size_bytes{instance=~\"$node_instance\"}",
-          "legendFormat": "backup dir"
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "queryType": "range",
+          "legendFormat": "{{service}}",
+          "expr": "sum by (service) (count_over_time({job=~\"$loki_job\", service=~\"conorganizer-sqlite-backup|conorganizer-images-backup\"} |= \"completed successfully\" [$__interval]))"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes",
+          "unit": "short",
           "custom": {
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "lineInterpolation": "linear",
             "barAlignment": 0,
             "lineWidth": 1,
-            "fillOpacity": 10,
+            "fillOpacity": 60,
             "gradientMode": "none",
             "spanNulls": false,
             "showPoints": "never",
@@ -1308,13 +1574,14 @@
           "placement": "bottom",
           "calcs": []
         }
-      }
+      },
+      "interval": "1h"
     },
     {
       "id": 21,
       "type": "logs",
       "title": "Backup failure logs",
-      "description": "Detailed logs for backup failures. This uses broad filters so it works before journal labels are refined.",
+      "description": "Every line the backup jobs wrote except the three normal ones (started, created, completed successfully): script errors, integrity-check output and stderr from sqlite3, zstd, tar or cp. Empty (No data) means no backup problems.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1323,12 +1590,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 36
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |= \"conorganizer-\" |~ \"failed|does not exist|sanity check failed|integrity check failed|ERROR|error\"",
+          "expr": "{job=~\"$loki_job\", service=~\"conorganizer-sqlite-backup|conorganizer-images-backup\"} !~ \"^conorganizer-(sqlite|images)-backup: (started|created .*|completed successfully)$\"",
           "queryType": "range"
         }
       ],
@@ -1352,7 +1619,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 44
       },
       "panels": []
     },
@@ -1369,7 +1636,7 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 41
+        "y": 45
       },
       "targets": [
         {
@@ -1407,7 +1674,7 @@
               "legend": false
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line+area"
             }
           },
           "thresholds": {
@@ -1431,7 +1698,12 @@
               }
             ]
           },
-          "decimals": 1
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       },
@@ -1461,7 +1733,7 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 41
+        "y": 45
       },
       "targets": [
         {
@@ -1499,7 +1771,7 @@
               "legend": false
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line+area"
             }
           },
           "thresholds": {
@@ -1523,7 +1795,10 @@
               }
             ]
           },
-          "decimals": 1
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          }
         },
         "overrides": []
       },
@@ -1553,7 +1828,7 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 41
+        "y": 45
       },
       "targets": [
         {
@@ -1632,7 +1907,7 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 47
+        "y": 51
       },
       "targets": [
         {
@@ -1670,7 +1945,7 @@
               "legend": false
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line+area"
             }
           },
           "thresholds": {
@@ -1694,7 +1969,10 @@
               }
             ]
           },
-          "decimals": 1
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          }
         },
         "overrides": []
       },
@@ -1724,7 +2002,7 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 47
+        "y": 51
       },
       "targets": [
         {
@@ -1762,7 +2040,7 @@
               "legend": false
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line+area"
             }
           },
           "thresholds": {
@@ -1786,7 +2064,10 @@
               }
             ]
           },
-          "decimals": 1
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          }
         },
         "overrides": []
       },
@@ -1816,7 +2097,7 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 47
+        "y": 51
       },
       "targets": [
         {
@@ -1891,7 +2172,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 57
       },
       "panels": []
     },
@@ -1908,7 +2189,7 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 54
+        "y": 58
       },
       "targets": [
         {
@@ -1988,7 +2269,7 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 54
+        "y": 58
       },
       "targets": [
         {
@@ -2068,7 +2349,7 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 54
+        "y": 58
       },
       "targets": [
         {
@@ -2148,7 +2429,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 60
+        "y": 64
       },
       "targets": [
         {
@@ -2227,7 +2508,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 60
+        "y": 64
       },
       "targets": [
         {
@@ -2302,7 +2583,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 70
       },
       "panels": []
     },
@@ -2319,7 +2600,7 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 67
+        "y": 71
       },
       "targets": [
         {
@@ -2398,7 +2679,7 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 67
+        "y": 71
       },
       "targets": [
         {
@@ -2477,7 +2758,7 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 67
+        "y": 71
       },
       "targets": [
         {
@@ -2547,7 +2828,7 @@
       "id": 39,
       "type": "timeseries",
       "title": "Database symptom count",
-      "description": "Log-derived database symptom count from app and backup logs.",
+      "description": "Database problems in conorganizer-main's log: locked or busy database, disk I/O error (the 2 October outage), corrupt database, constraint failures and failed startup. Plain mentions of SQLite, like the startup line, do not count.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2556,12 +2837,12 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 73
+        "y": 77
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"sqlite|SQLite|database is locked|database is busy|integrity check|constraint failed|FOREIGN KEY\" [5m]))",
+          "expr": "sum(count_over_time({job=~\"$loki_job\", service=\"conorganizer-main\"} |~ \"database is locked|database is busy|disk I/O error|database disk image is malformed|constraint failed|FOREIGN KEY|could not initialize DB|integrity check failed\" [$__auto])) or vector(0)",
           "legendFormat": "db symptoms",
           "queryType": "range"
         }
@@ -2627,7 +2908,7 @@
       "id": 40,
       "type": "logs",
       "title": "SQLite and database logs",
-      "description": "Detailed DB symptom logs. This catches app errors and backup integrity-check messages.",
+      "description": "Database problems in conorganizer-main's log: locked or busy database, disk I/O error (the 2 October outage), corrupt database, constraint failures and failed startup. Plain mentions of SQLite, like the startup line, do not count.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2636,12 +2917,12 @@
         "h": 8,
         "w": 16,
         "x": 8,
-        "y": 73
+        "y": 77
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"sqlite|SQLite|database is locked|database is busy|integrity check|constraint failed|FOREIGN KEY\"",
+          "expr": "{job=~\"$loki_job\", service=\"conorganizer-main\"} |~ \"database is locked|database is busy|disk I/O error|database disk image is malformed|constraint failed|FOREIGN KEY|could not initialize DB|integrity check failed\"",
           "queryType": "range"
         }
       ],
@@ -2665,7 +2946,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 85
       },
       "panels": []
     },
@@ -2682,18 +2963,18 @@
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 82
+        "y": 86
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "(probe_ssl_earliest_cert_expiry{instance=~\".*${main_host:regex}.*\"} - time()) / 86400",
+          "expr": "(probe_ssl_earliest_cert_expiry{instance=\"https://${main_host}/\"} - time()) / 86400",
           "legendFormat": "{{instance}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "d",
+          "unit": "suffix: days",
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
@@ -2720,7 +3001,7 @@
               "legend": false
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line+area"
             }
           },
           "thresholds": {
@@ -2740,7 +3021,10 @@
               }
             ]
           },
-          "decimals": 1
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          }
         },
         "overrides": []
       },
@@ -2770,18 +3054,18 @@
         "h": 6,
         "w": 6,
         "x": 6,
-        "y": 82
+        "y": 86
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "(probe_ssl_earliest_cert_expiry{instance=~\".*${grafana_host:regex}.*\"} - time()) / 86400",
+          "expr": "(probe_ssl_earliest_cert_expiry{instance=\"https://${grafana_host}/\"} - time()) / 86400",
           "legendFormat": "{{instance}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "d",
+          "unit": "suffix: days",
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
@@ -2808,7 +3092,7 @@
               "legend": false
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line+area"
             }
           },
           "thresholds": {
@@ -2828,7 +3112,10 @@
               }
             ]
           },
-          "decimals": 1
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          }
         },
         "overrides": []
       },
@@ -2858,12 +3145,12 @@
         "h": 6,
         "w": 6,
         "x": 12,
-        "y": 82
+        "y": 86
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "probe_duration_seconds{instance=~\".*(${main_host:regex}|${grafana_host:regex}).*\"}",
+          "expr": "probe_duration_seconds{instance=~\"https://(${main_host}|${grafana_host})/\"}",
           "legendFormat": "{{instance}}"
         }
       ],
@@ -2938,12 +3225,12 @@
         "h": 6,
         "w": 6,
         "x": 18,
-        "y": 82
+        "y": 86
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "probe_http_status_code{instance=~\".*(${main_host:regex}|${grafana_host:regex}).*\"}",
+          "expr": "probe_http_status_code{instance=~\"https://(${main_host}|${grafana_host})/\"}",
           "legendFormat": "{{instance}}"
         }
       ],
@@ -3017,12 +3304,12 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 88
+        "y": 92
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "probe_success{instance=~\".*(${main_host:regex}|${grafana_host:regex}).*\"}",
+          "expr": "probe_success{instance=~\"https://(${main_host}|${grafana_host})/\"}",
           "legendFormat": "{{instance}}"
         }
       ],
@@ -3092,7 +3379,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 94
+        "y": 98
       },
       "panels": []
     },
@@ -3109,12 +3396,12 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 95
+        "y": 99
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"caddy|Caddy\" |~ \"error|ERROR|failed|502|503|panic|reload\"",
+          "expr": "{job=~\"$loki_job\", service=\"caddy\"} |~ \"error|ERROR|failed|502|503|panic|reload\" !~ `\"level\":\"info\"|\"host\":\"[0-9]+-merge[.]|context canceled`",
           "queryType": "range"
         }
       ],
@@ -3142,12 +3429,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 95
+        "y": 99
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"Failed to start|failed with result|Start request repeated too quickly|Main process exited|code=exited\"",
+          "expr": "{job=~\"$loki_job\", service!~\"loki|grafana-server\"} |~ \"Failed to start|Failed with result|Start request repeated too quickly|Main process exited|code=exited\"",
           "queryType": "range"
         }
       ],
@@ -3175,12 +3462,12 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 103
+        "y": 107
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"loki|promtail|alloy|Alloy\" |~ \"error|ERROR|failed|connection refused|no space left on device\"",
+          "expr": "{job=~\"$loki_job\", service=~\"loki|alloy|promtail\"} |~ \"level=(error|warn)\" !~ \"context canceled|caller=(scheduler_processor|spanlogger|retry)[.]go\"",
           "queryType": "range"
         }
       ],
@@ -3208,12 +3495,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 103
+        "y": 107
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"critical|CRITICAL|panic|no space left on device|read-only file system|segfault|OOM|Out of memory\"",
+          "expr": "{job=~\"$loki_job\", service!~\"loki|grafana-server\"} |~ \"critical|CRITICAL|panic|no space left on device|read-only file system|segfault|OOM|Out of memory\" !~ \"with drm panic\"",
           "queryType": "range"
         }
       ],
@@ -3226,6 +3513,113 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
+      }
+    },
+    {
+      "id": 52,
+      "type": "timeseries",
+      "title": "Log shipping (lines/s, Alloy → Loki)",
+      "description": "Lines Alloy reads from the journal and sends to Loki. Sent dropping to 0 means logs stop reaching Loki, like the two weeks in October when Alloy looped on a damaged journal file.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 115
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(loki_source_journal_target_lines_total[$__rate_interval]))",
+          "legendFormat": "read from journal",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(loki_write_sent_entries_total[$__rate_interval]))",
+          "legendFormat": "sent to Loki",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(loki_write_dropped_entries_total[$__rate_interval]))",
+          "legendFormat": "dropped",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
       }
     }
   ]

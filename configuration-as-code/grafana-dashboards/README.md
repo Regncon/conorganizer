@@ -32,11 +32,14 @@ The JSON defaults datasource variable values to `Prometheus` and `Loki` for norm
 - Is root and mounted-volume capacity safe?
 - Are TLS certificates close to expiry?
 - Are there system, backup, Caddy, Loki, Promtail, Alloy, SQLite, or critical log errors?
+- Are logs reaching Loki, and is Alloy shipping the journal? (Loki was empty for two weeks in October 2026 while Alloy looped on a damaged journal file.)
+- Has any of our systemd services failed?
 
 `Conorganizer Main Service Debugging` is focused on `conorganizer-main.service`:
 
 - Is the service active and publicly reachable?
-- Is the current app error signal zero?
+- How often did the app start? Many starts close together mean a crash loop, like the 259 restarts on 2 October 2026.
+- Is the current app error signal zero, and how many real errors remain once client disconnects and shutdowns are filtered out?
 - Are there panics, 5xx request logs, or database lock/busy errors?
 - What are request rate, status mix, route usage, and latency when JSON request logs are parseable?
 - Which recent app logs, failed requests, or slow requests should be inspected next?
@@ -53,8 +56,29 @@ Constants, edited in the dashboard settings:
 - `main_host`: `main.lekeplassen.regncon.no`.
 - `grafana_host`: `grafana.regncon.no`.
 - `main_service`: `conorganizer-main.service`.
+- `app_service` (Main Service Debugging only): `conorganizer-main`, the Loki `service` label of the app's own log lines.
 - `caddy_service`: `caddy.service`.
 - `volume_mountpoint`: `/mnt/HC_Volume_103911252`.
+
+Don't put `${main_host:regex}` or another `:regex` variable inside a double-quoted PromQL string. Grafana escapes the dots as `\.`, and Prometheus rejects that with `unknown escape sequence`, which shows as "No data" with a red warning icon. The probe panels match the blackbox `instance` label exactly instead, for example `instance="https://${main_host}/"`.
+
+### Loki selectors
+
+Every Loki query names the `service` it is about. `{job=~"$loki_job"}` alone matches every service on the server, which causes two problems:
+
+- PR previews (`conorganizer-<n>-merge`), demo and restored log the same `http request completed` lines as main. In October 2026 only a third of those lines came from main.
+- Loki and Grafana log the text of every query they run. A search such as `|= "completed successfully"` or `|~ "error"` then matches its own query log, so a dashboard that is open counts itself. Before the fix, "Backup failures, 24h" showed about 18,000 failures that were all query logs.
+
+Use `service="$app_service"` for the app's lines. systemd's own lines about a unit (`Started conorganizer-main.service`) have no `service` label, so panels that show both use `service=~"$app_service|"`. System-wide searches exclude `service!~"loki|grafana-server"`.
+
+Count failures and restarts from systemd's own lines (`service=""`), not from the app's or the backup scripts' output:
+
+- `conorganizer-sqlite-backup.service: Failed with result` (capital F) appears once for every failed run, whatever failed. A failing `sqlite3`, `zstd`, `tar` or `cp` writes stderr without the `conorganizer-` prefix, so prefix searches miss it.
+- `Started conorganizer-main.service` appears on every restart. The app's own `Starting server` line does not appear in a crash loop like 2 October, because the app exits before it gets that far.
+
+Graphs use `[$__auto]` or `[$__interval]` with a panel `interval` instead of a fixed `[5m]`. On the 7 and 30 day ranges, one point covers 15 to 60 minutes, and a fixed `[5m]` would count only the last 5 minutes of each. Threshold colours on a time series only show when `custom.thresholdsStyle` is set.
+
+Count graphs end with `or vector(0)`, so a quiet period draws a 0 line instead of "No data". The database symptom panels search for real problems only (locked or busy database, disk I/O error, corrupt database, constraint failures, failed startup). A plain `sqlite` match would also count the startup line `SQLite database initialized` and the backup job's own lines.
 
 ## Dashboard Design
 
@@ -165,7 +189,8 @@ Prometheus panels:
 - `caddy.service` and `conorganizer-main.service` systemd status panels.
 - Root and mounted-volume filesystem usage, inode usage, and available bytes.
 - CPU, memory, load, and network panels.
-- Optional SQLite DB/WAL/backup size and precise backup-age panels.
+- Hours since each backup timer last ran, from `node_systemd_timer_last_trigger_seconds`.
+- Optional SQLite DB/WAL/backup size panels, which stay empty until the `conorganizer_*` metrics below exist.
 
 Loki panels:
 
@@ -205,7 +230,8 @@ Application metrics:
 
 Log-derived data:
 
-- Backup freshness in the top row is log-derived from backup success prefixes.
+- Backup freshness in the top row and the "Successful backups" bars are log-derived from the backup services' `completed successfully` lines.
+- The backup age panels measure when the systemd timer last ran, not when a run last succeeded. A failed run shows in "Backup failure count" and "Failed services" instead.
 - App request rate can work with text-only request completion logs.
 - Status-code, route, and latency panels require parseable JSON request logs with `status_code`, `path`, `method`, and `duration_ms`.
 
@@ -214,20 +240,20 @@ Log-derived data:
 Prometheus:
 
 ```promql
-max(probe_success{instance=~".*${main_host:regex}.*"})
+max(probe_success{instance="https://${main_host}/"})
 max(node_systemd_unit_state{instance=~"$node_instance",name="$main_service",state="active"})
 100 * (1 - (node_filesystem_avail_bytes{instance=~"$node_instance",mountpoint="$volume_mountpoint",fstype!~"tmpfs|overlay|squashfs|ramfs"} / node_filesystem_size_bytes{instance=~"$node_instance",mountpoint="$volume_mountpoint",fstype!~"tmpfs|overlay|squashfs|ramfs"}))
-(probe_ssl_earliest_cert_expiry{instance=~".*${main_host:regex}.*"} - time()) / 86400
+(probe_ssl_earliest_cert_expiry{instance="https://${main_host}/"} - time()) / 86400
 ```
 
 Loki:
 
 ```logql
-{job=~"$loki_job"} |= "conorganizer-sqlite-backup:"
-{job=~"$loki_job"} |= "conorganizer-images-backup:"
-sum(count_over_time({job=~"$loki_job"} |= "conorganizer-sqlite-backup: completed successfully" [2h]))
-sum(count_over_time({job=~"$loki_job"} |~ "conorganizer-main.service|conorganizer-main|http request completed|level.:.ERROR|database is locked|database is busy|panic" |~ "ERROR|error|failed|panic|status_code.:5[0-9][0-9]|database is locked|database is busy" [5m]))
-quantile_over_time(0.95, {job=~"$loki_job"} |= "http request completed" | json | unwrap duration_ms | __error__="" [5m])
+{job=~"$loki_job", service="conorganizer-sqlite-backup"} |= "conorganizer-sqlite-backup:"
+sum(count_over_time({job=~"$loki_job", service="conorganizer-sqlite-backup"} |= "conorganizer-sqlite-backup: completed successfully" [2h]))
+sum(count_over_time({service="$app_service"} |= `"level":"ERROR"` !~ `context canceled|connection reset by peer|broken pipe|http: Server closed` [$__range]))
+sum(count_over_time({service="$app_service"} |= `Starting server` [$__interval]))
+quantile_over_time(0.95, {service="$app_service"} |= "http request completed" | json | (method != "GET" or path !~ `.*/api.*`) | unwrap duration_ms | __error__="" [5m]) by (service)
 ```
 
 ## Optional Future Metrics
