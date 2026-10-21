@@ -133,7 +133,7 @@ tasks:
               --build.entrypoint "$binary_path" \
               --build.args_bin "-dbp $app_db_path -image-path $app_image_path" \
               --build.delay "200" \
-              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,data,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
+              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,data,hetzner,local-event-images,configuration-as-code,documentation,migrations,plans,testutil,.gocache" \
               --build.include_ext "go" \
               --build.include_file ".env" \
               --build.poll "true" \
@@ -150,7 +150,7 @@ tasks:
               --build.cmd "curl -fsS --retry 30 --retry-delay 1 --retry-all-errors --retry-max-time 30 --connect-timeout 2 --max-time 5 $hot_reload_url >/dev/null 2>&1 || true" \
               --build.entrypoint "/bin/true" \
               --build.delay "200" \
-              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,data,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
+              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,data,hetzner,local-event-images,configuration-as-code,documentation,migrations,plans,testutil,.gocache" \
               --build.include_dir "$STATIC_DIR" \
               --build.include_ext "js,css,html,svg,webp,ico,png,jpg,jpeg,avif" \
               --build.poll "true" \

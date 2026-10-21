@@ -12,14 +12,15 @@ SSHD_CONFIG="/etc/ssh/sshd_config"
 SUDOERS_FILE="/etc/sudoers.d/deploy-conorganizer"
 SSH_SERVICE="ssh"   # Ubuntu default
 
-echo "[setup] Creating user '$DEPLOY_USER' (if missing)"
-
-if ! id -u "$DEPLOY_USER" >/dev/null 2>&1; then
-  # system user with specified home
-  adduser --system --home "$APP_DIR" --group "$DEPLOY_USER"
-else
-  echo "[setup] User '$DEPLOY_USER' already exists, skipping creation"
+# Fresh servers only: on an existing account every chown, chmod and cp below
+# would follow whatever the deploy user has put in its home.
+if id -u "$DEPLOY_USER" >/dev/null 2>&1; then
+  echo "[setup] User '$DEPLOY_USER' already exists. This script is for a fresh server; edit $SUDOERS_FILE with 'visudo -f' instead (hetzner/hetzner-admin.md)." >&2
+  exit 1
 fi
+
+echo "[setup] Creating user '$DEPLOY_USER'"
+adduser --system --home "$APP_DIR" --group "$DEPLOY_USER"
 
 echo "[setup] Ensuring '$DEPLOY_USER' has a usable shell (/bin/bash)"
 usermod -s /bin/bash "$DEPLOY_USER"
@@ -73,21 +74,35 @@ else
   echo "[setup] Match block for $DEPLOY_USER already present in $SSHD_CONFIG"
 fi
 
-# Minimal sudo rights
+# Minimal sudo rights. This writes the final state only; an existing sudoers
+# file is edited with `visudo -f` instead.
 echo "[setup] Writing sudoers file: $SUDOERS_FILE"
-cat > "$SUDOERS_FILE" <<EOF
-# Minimal sudo rights for GitHub Actions deploy user 'deploy'
+SUDOERS_TMP="$(mktemp)"
+cat > "$SUDOERS_TMP" <<EOF
+# Minimal sudo rights for GitHub Actions deploy user 'deploy'.
+# Only these two scripts may run as root. Stow installs them from the admin
+# checkout /srv/configuration-as-code-repo/conorganizer, which root already
+# trusts for the backup units. They validate the environment name themselves,
+# so nothing the deploy user can write ever runs as root.
 deploy ALL=(root) NOPASSWD: \
-    /usr/bin/mv, \
-    /usr/bin/chown, \
-    /usr/bin/chmod, \
-    /usr/bin/systemctl, \
-    /opt/conorganizer/*/deploy.sh, \
-    /opt/conorganizer/*/cleanup.sh
+    /usr/local/bin/conorganizer-deploy, \
+    /usr/local/bin/conorganizer-cleanup
 EOF
 
-chmod 440 "$SUDOERS_FILE"
-visudo -cf "$SUDOERS_FILE"
+visudo -cf "$SUDOERS_TMP"
+install -m 0440 -o root -g root "$SUDOERS_TMP" "$SUDOERS_FILE"
+rm -f "$SUDOERS_TMP"
+sudo -l -U "$DEPLOY_USER"
+
+# conorganizer-deploy refuses preview deploys unless the data root is a
+# root-owned directory that only root can write.
+DATA_ROOT="/mnt/HC_Volume_103911252/environments"
+if mountpoint -q "$(dirname "$DATA_ROOT")"; then
+  echo "[setup] Ensuring $DATA_ROOT is root-owned and writable only by root"
+  install -d -o root -g root -m 0755 "$DATA_ROOT"
+else
+  echo "[setup] WARNING: $(dirname "$DATA_ROOT") is not mounted; create $DATA_ROOT as root:root 0755 after mounting it" >&2
+fi
 
 echo
 echo "=============================================================="

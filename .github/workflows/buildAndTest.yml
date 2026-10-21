@@ -11,7 +11,8 @@ on:
 
     # Closing uses pull_request_target because GitHub runs no pull_request
     # workflow for a PR with merge conflicts, not even on close. Only
-    # cleanup-preview runs on it, and it checks out main, never PR code.
+    # cleanup-preview runs on it; it checks out nothing and only calls the
+    # server's own cleanup script with the PR number.
     pull_request_target:
         branches: ["**"]
         types: [closed]
@@ -137,7 +138,7 @@ jobs:
                 safe_name: [main, demo, restored]
 
         steps:
-            - name: Checkout repo (for deploy files)
+            - name: Checkout repo (for migrations)
               uses: actions/checkout@v4
 
             - name: Download build artifact
@@ -155,7 +156,6 @@ jobs:
                   cp artifacts/goose deploy_bundle/goose
                   mkdir -p deploy_bundle/migrations
                   cp migrations/*.sql deploy_bundle/migrations/
-                  cp deploy/deploy.sh deploy_bundle/deploy.sh
 
                   ls -l deploy_bundle
 
@@ -178,6 +178,9 @@ jobs:
                   target: "/opt/conorganizer/${{ matrix.safe_name }}"
                   strip_components: 1
 
+            # conorganizer-deploy is installed on the server from
+            # configuration-as-code; the deploy user may only run it, and it
+            # validates the name itself.
             - name: Promote binary and restart fixed service
               uses: appleboy/ssh-action@v1.2.0
               with:
@@ -189,16 +192,9 @@ jobs:
                   script: |
                       set -euo pipefail
                       SAFE_NAME="${{ matrix.safe_name }}"
-                      APP_DIR="/opt/conorganizer/$SAFE_NAME"
 
-                      echo "SAFE_NAME=$SAFE_NAME"
-                      echo "APP_DIR=$APP_DIR"
-
-                      echo "Making deploy.sh executable"
-                      sudo chmod +x "$APP_DIR/deploy.sh"
-
-                      echo "Running deploy script with SAFE_NAME argument"
-                      sudo "$APP_DIR/deploy.sh" "$SAFE_NAME"
+                      echo "Deploying SAFE_NAME=$SAFE_NAME"
+                      sudo -n /usr/local/bin/conorganizer-deploy "$SAFE_NAME"
 
             - name: Echo fixed deployment URL
               run: |
@@ -235,16 +231,14 @@ jobs:
 
                   SAFE_NAME="${PR_NUMBER}-merge"
 
-                  BASE_PORT=20000
-                  PORT=$((BASE_PORT + PR_NUMBER))
-
+                  # The port (20000 + PR number) is derived on the server by
+                  # conorganizer-deploy; CI only needs the host for the URL.
                   HOST="${SAFE_NAME}.lekeplassen.regncon.no"
 
                   echo "safe_name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
-                  echo "port=$PORT" >> "$GITHUB_OUTPUT"
                   echo "host=$HOST" >> "$GITHUB_OUTPUT"
 
-            - name: Checkout repo (for deploy files)
+            - name: Checkout repo (for migrations)
               uses: actions/checkout@v4
 
             - name: Download build artifact
@@ -253,11 +247,12 @@ jobs:
                   name: conorganizer
                   path: artifacts
 
+            # The preview's systemd unit and Caddy site are rendered on the
+            # server by conorganizer-deploy from the templates installed next
+            # to it, so a PR cannot define what root installs.
             - name: Prepare deploy bundle
               run: |
                   set -euo pipefail
-                  SAFE_NAME="${{ steps.instance.outputs.safe_name }}"
-                  PORT="${{ steps.instance.outputs.port }}"
 
                   mkdir -p deploy_bundle
 
@@ -265,20 +260,6 @@ jobs:
                   cp artifacts/goose deploy_bundle/goose
                   mkdir -p deploy_bundle/migrations
                   cp migrations/*.sql deploy_bundle/migrations/
-
-                  sed \
-                    -e "s/%SAFE_NAME%/$SAFE_NAME/g" \
-                    -e "s/%PORT%/$PORT/g" \
-                    deploy/conorganizer.service.tmpl \
-                    > deploy_bundle/conorganizer-${SAFE_NAME}.service
-
-                  cp deploy/deploy.sh deploy_bundle/deploy.sh
-
-                  sed \
-                    -e "s/%HOST%/${{ steps.instance.outputs.host }}/g" \
-                    -e "s/%PORT%/$PORT/g" \
-                    deploy/caddy-site.tmpl \
-                    > deploy_bundle/caddy-${SAFE_NAME}.caddy
 
                   ls -l deploy_bundle
 
@@ -301,7 +282,7 @@ jobs:
                   target: "/opt/conorganizer/${{ steps.instance.outputs.safe_name }}"
                   strip_components: 1
 
-            - name: Install service, Caddy site, and run deploy script on Hetzner
+            - name: Deploy preview on Hetzner
               uses: appleboy/ssh-action@v1.2.0
               with:
                   host: ${{ secrets.HETZNER_HOST }}
@@ -312,16 +293,9 @@ jobs:
                   script: |
                       set -euo pipefail
                       SAFE_NAME="${{ steps.instance.outputs.safe_name }}"
-                      APP_DIR="/opt/conorganizer/$SAFE_NAME"
 
-                      echo "SAFE_NAME=$SAFE_NAME"
-                      echo "APP_DIR=$APP_DIR"
-
-                      echo "Making deploy.sh executable"
-                      sudo chmod +x "$APP_DIR/deploy.sh"
-
-                      echo "Running deploy script with SAFE_NAME argument"
-                      sudo "$APP_DIR/deploy.sh" "$SAFE_NAME"
+                      echo "Deploying SAFE_NAME=$SAFE_NAME"
+                      sudo -n /usr/local/bin/conorganizer-deploy "$SAFE_NAME"
 
             - name: Echo deployment URL
               run: |
@@ -381,8 +355,9 @@ jobs:
             github.event.action == 'closed' &&
             github.event.pull_request.head.repo.full_name == github.repository
         runs-on: ubuntu-latest
-        permissions:
-            contents: read
+        # Nothing is checked out: conorganizer-cleanup on the server does the
+        # work, so the job needs no token permissions at all.
+        permissions: {}
         environment:
             name: Production
 
@@ -397,9 +372,6 @@ jobs:
 
                   echo "safe_name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
 
-            - name: Checkout repo (for cleanup script)
-              uses: actions/checkout@v4
-
             - name: Check that HETZNER_SSH_KEY is set
               run: |
                   if [ -z "${{ secrets.HETZNER_SSH_KEY }}" ]; then
@@ -407,17 +379,6 @@ jobs:
                     exit 1
                   fi
                   echo "HETZNER_SSH_KEY is set (value is masked in logs)."
-
-            - name: Upload cleanup script to Hetzner
-              uses: appleboy/scp-action@v0.1.7
-              with:
-                  host: ${{ secrets.HETZNER_HOST }}
-                  username: ${{ secrets.HETZNER_USER }}
-                  key: ${{ secrets.HETZNER_SSH_KEY }}
-                  port: 22
-                  source: "deploy/cleanup.sh"
-                  target: "/opt/conorganizer/${{ steps.instance.outputs.safe_name }}"
-                  strip_components: 1
 
             - name: Run cleanup script on Hetzner
               uses: appleboy/ssh-action@v1.2.0
@@ -430,8 +391,6 @@ jobs:
                   script: |
                       set -euo pipefail
                       SAFE_NAME="${{ steps.instance.outputs.safe_name }}"
-                      APP_DIR="/opt/conorganizer/$SAFE_NAME"
 
                       echo "Cleaning up preview SAFE_NAME=$SAFE_NAME"
-                      sudo chmod +x "$APP_DIR/cleanup.sh"
-                      sudo "$APP_DIR/cleanup.sh" "$SAFE_NAME"
+                      sudo -n /usr/local/bin/conorganizer-cleanup "$SAFE_NAME"
