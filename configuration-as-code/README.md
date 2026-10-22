@@ -231,7 +231,6 @@ Hostnames in the checked-in Caddyfile:
 | `demo.lekeplassen.regncon.no` | `127.0.0.1:19081` |
 | `restored.lekeplassen.regncon.no` | `127.0.0.1:19082` |
 | `grafana.regncon.no` | `127.0.0.1:3400` |
-| `meetup-january-2026.lekeplassen.regncon.no` | `127.0.0.1:8080` |
 
 The Caddyfile ends with `import /etc/caddy/sites-enabled/*.caddy`. That directory is not in the repository. `deploy/deploy.sh` writes one site file per PR preview there. The fixed environments (main, demo, restored) do not use it.
 

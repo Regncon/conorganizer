@@ -79,10 +79,6 @@
 	HTML 503
 }
 
-meetup-january-2026.lekeplassen.regncon.no {
-	reverse_proxy 127.0.0.1:8080
-}
-
 grafana.regncon.no {
 	reverse_proxy 127.0.0.1:3400
 }
