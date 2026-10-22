@@ -231,10 +231,62 @@ Hostnames in the checked-in Caddyfile:
 | `demo.lekeplassen.regncon.no` | `127.0.0.1:19081` |
 | `restored.lekeplassen.regncon.no` | `127.0.0.1:19082` |
 | `grafana.regncon.no` | `127.0.0.1:3400` |
+| `regncon.no` | The Regncon website: the static files in `/opt/www.regncon.no/`, served with `file_server`, `templates` and `encode gzip`, see [The regncon.no website](#the-regnconno-website) |
+| `regncon.lekeplassen.regncon.no` | Same block as `regncon.no` |
+| `www.regncon.no` | Permanent (301) redirect of every request to `https://regncon.no{uri}` |
 
-The Caddyfile ends with `import /etc/caddy/sites-enabled/*.caddy`. That directory is not in the repository. `deploy/deploy.sh` writes one site file per PR preview there. The fixed environments (main, demo, restored) do not use it.
+The Caddyfile ends with `import /etc/caddy/sites-enabled/*.caddy`. That directory is not in the repository. `deploy/deploy.sh` writes one site file per PR preview there, and nothing else belongs there. The fixed environments (main, demo, restored) and the website do not use it.
 
 Blackbox probes and the TLS-expiry panels only check `https://main.lekeplassen.regncon.no/` and `https://grafana.regncon.no/`.
+
+### The regncon.no website
+
+The website on `regncon.no` is split between two repositories. The private repository [Regncon/nettside](https://github.com/Regncon/nettside) holds the site itself: static HTML, CSS and JS with no build step. Its workflow `.github/workflows/deploy.yml` rsyncs `src/` to `/opt/www.regncon.no/` on the server, as the `deploy` user, on every push to `master`. Nothing else writes to that directory, and each deploy makes it an exact copy of `src/`: a file added there by hand is deleted, and a file changed there by hand is overwritten, on the next push. Change the site in Regncon/nettside instead. The files are not in this repository, and this repository's CI never touches them.
+
+The Caddy block that serves the files is in this repository's Caddyfile, like every other fixed host. `templates` lets the pages use Caddy's template functions, `file_server` serves the files and `encode gzip` compresses the responses. Caddy hides the Caddyfile itself from every `file_server` it defines, so the block needs no `hide` directive.
+
+Nothing in this repository creates `/opt/www.regncon.no/` or lets nettside log in. On a new server, after `hetzner/scripts/setup_deploy_user.sh` has created `deploy`, create the directory owned by `deploy` (`sudo install -d -o deploy -g deploy -m 0755 /opt/www.regncon.no`). Owned, not only writable: rsync also sets the directory's own times and mode, which only the owner may do, so every nettside deploy would otherwise fail with exit code 23. Then put a key that `deploy` accepts into the `HETZNER_SSH_KEY` secret of nettside's `Production` environment. The setup script replaces `authorized_keys` with the key it generates, so either use that key or append nettside's own public key to `deploy`'s `authorized_keys` after the script has run. Finally, once `regncon.no` resolves to the new server, push a commit to nettside's `master` (`git commit --allow-empty` is enough): the workflow has no manual trigger, GitHub re-runs an old run only for 30 days, and the workflow connects to `deploy@regncon.no` and accepts whatever host key it finds there, so a run before the DNS switch deploys to the old server. Until then Caddy answers 404 on `regncon.no`.
+
+#### Moving the hand-made website file
+
+Until the block was added to the Caddyfile, it lived in a hand-made `/etc/caddy/sites-enabled/www.regncon.no.caddy` that no repository deployed, so a server rebuilt from this repository lost the hosts. This section applies while that file exists. `/etc/caddy/Caddyfile` is a stow link into the checkout, so updating the checkout past this change puts a second definition of the hosts on disk at once, and Caddy refuses a config that defines the same host twice. Until the hand-made file is gone, every Caddy reload fails, including the ones preview deploys and cleanups run, and a Caddy restart, a Caddy upgrade or a reboot leaves Caddy stopped with every host down. Moving the file before updating the checkout is wrong too: a reload in between drops the website. So do both in one sitting, and don't update the checkout past this change any other way.
+
+Start when no deploy or cleanup job is running in Actions. First look, without changing anything:
+
+```bash
+cd /srv/configuration-as-code-repo/conorganizer
+sudo cat /etc/caddy/sites-enabled/www.regncon.no.caddy
+sudo -u gerhard git fetch origin
+sudo -u gerhard git diff --stat HEAD origin/main -- configuration-as-code/stow
+```
+
+The `cat` must show only the two website blocks that are now in the Caddyfile; anything else in the file has to move into the Caddyfile first. The diff should list only the Caddyfile. If it lists other stowed files, run their own procedures right after the checkout below, in the same sitting, because their own `checkout --detach origin/main` would also bring in this change (for a removed `loki.service`, see [Switching an existing server](#switching-an-existing-server)).
+
+Then update the checkout and move the file in one line, so that the file only moves when the website block really is on disk:
+
+```bash
+old=$(sudo -u gerhard git rev-parse HEAD); echo "$old"
+sudo -v
+sudo -u gerhard git checkout --detach origin/main \
+ && grep -qxF 'regncon.no, regncon.lekeplassen.regncon.no {' /etc/caddy/Caddyfile \
+ && sudo mv /etc/caddy/sites-enabled/www.regncon.no.caddy /root/www.regncon.no.caddy.bak
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+curl -sS -o /dev/null -w '%{http_code}\n' https://regncon.no/
+```
+
+If the chained line stops before the `mv`, nothing live has changed and the validate and reload after it are harmless: fix the cause and run the block again. If validate or the reload fails, or curl prints anything but `200`, Caddy may still serve the old config, but the files on disk won't load, so put both back before leaving the server:
+
+```bash
+sudo mv /root/www.regncon.no.caddy.bak /etc/caddy/sites-enabled/www.regncon.no.caddy
+sudo -u gerhard git checkout "$old" -- configuration-as-code/stow/caddy/etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+Restoring only that file keeps everything else the update brought. `$old` must be from before this change; if the checkout had already been moved past it, use the last commit before this change instead. `origin/main` still defines the hosts, so fix the cause, or revert this change on main, before anyone updates the checkout again.
+
+A deploy or cleanup job that reloads Caddy between the `checkout` and the `mv` fails. Re-run it afterwards: `cleanup.sh` is idempotent and only then removes the app directory in `/opt/conorganizer/` it left behind. `sites-enabled` then holds only PR preview sites again, and once `regncon.no` answers `200`, `/root/www.regncon.no.caddy.bak` can be deleted.
 
 ## Maintenance mode
 

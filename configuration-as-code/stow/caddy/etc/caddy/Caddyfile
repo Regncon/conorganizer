@@ -83,6 +83,22 @@ grafana.regncon.no {
 	reverse_proxy 127.0.0.1:3400
 }
 
+# The Regncon website. The repo Regncon/nettside pushes the files to /opt/www.regncon.no/
+# (rsync on every push to its master). This Caddy block, like the rest of this file, is
+# owned by the conorganizer repo (configuration-as-code/stow/caddy/etc/caddy/Caddyfile),
+# so change it there, not on the server. See configuration-as-code/README.md,
+# "The regncon.no website".
+regncon.no, regncon.lekeplassen.regncon.no {
+	root * /opt/www.regncon.no/
+	templates
+	file_server
+	encode gzip
+}
+
+www.regncon.no {
+	redir https://regncon.no{uri} permanent
+}
+
 program.regncon.no {
 	# The con is over, so every request goes to the old programme page on
 	# regncon.no. 302 keeps the redirect temporary: browsers do not cache it,
