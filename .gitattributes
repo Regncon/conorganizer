@@ -4,3 +4,7 @@
 # Explicit overrides
 *.sh text eol=lf
 scripts/download-environment text eol=lf
+
+# Stowed into /etc and /usr/local on the server and checked out there by whichever
+# admin took the checkout over, so their core.autocrlf must never write CRLF
+configuration-as-code/** eol=lf

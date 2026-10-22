@@ -42,6 +42,15 @@ The production repository is stored at:
 /srv/configuration-as-code-repo/conorganizer/configuration-as-code
 ```
 
+The checkout `/srv/configuration-as-code-repo/conorganizer` is kept on a detached `origin/main` and belongs to whichever admin last worked in it. Git refuses to run in a checkout owned by someone else, so before you run git there, take it over, and make sure it fetches over HTTPS. Both lines can be run every time:
+
+```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer
+git -C /srv/configuration-as-code-repo/conorganizer remote set-url origin https://github.com/Regncon/conorganizer.git
+```
+
+Run these, and the git commands after them, from your own login shell, not from a root shell (`sudo -i`, `sudo -s`, `sudo su`): there `$USER` is root, so the checkout would become root-owned. The repository is public, so the checkout fetches anonymously over HTTPS, needs no GitHub key on the server, and cannot push. The procedures in this README write git as plain `git`. The stow links keep working whoever owns the files: Caddy, Loki and the other services only need them to stay world-readable (see [Fix permissions](#fix-permissions)). Never commit or push from this checkout; change the repository through a pull request and move the checkout with `git fetch origin` and `git checkout --detach origin/main`. Before an admin's account is removed, take the checkout over from them (see [Remove a user](../hetzner/hetzner-admin.md#remove-a-user)).
+
 ## Stow packages
 
 | Package | Installs |
@@ -98,7 +107,7 @@ ExecStart=
 ExecStart=/usr/bin/loki -config.file /etc/loki/config.yml -log.level=warn
 ```
 
-To apply a drop-in, update the checkout, then run from the repository root:
+To apply a drop-in, update the checkout (see [Repository location](#repository-location)), then run from the repository root:
 
 ```bash
 sudo stow --dir=configuration-as-code/stow --target=/ --restow systemd
@@ -117,9 +126,8 @@ The same applies to any other unit a package installs. Before stowing a unit, ch
 Until this change, `/etc/systemd/system/loki.service` on the server was a stow link to the repository's copy, and on 2026-10-20 the package's own file was moved to `/root/loki.service.package-backup`. When the checkout no longer has `loki.service`, the link points at nothing. Loki keeps running, but after the next `systemctl daemon-reload` it can't be restarted and won't start at boot, and the next `stow --restow systemd` deletes the link. So move the package's file back right after updating the checkout, from `/srv/configuration-as-code-repo/conorganizer`:
 
 ```bash
-sudo -u gerhard git fetch origin
-sudo -u gerhard git checkout --detach origin/main
-sudo mv /root/loki.service.package-backup /etc/systemd/system/loki.service
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
+git fetch origin && git checkout --detach origin/main && sudo mv /root/loki.service.package-backup /etc/systemd/system/loki.service
 sudo systemctl daemon-reload
 sudo stow --dir=configuration-as-code/stow --target=/ --restow systemd
 ls -l /etc/systemd/system/loki.service
@@ -176,15 +184,16 @@ Loki used to keep this data in `/tmp/loki`, because the repository's config star
 
 ### Moving from /tmp/loki
 
-To move without losing the logs collected since the last reboot, run all of this in one go, from `/srv/configuration-as-code-repo/conorganizer`. That checkout belongs to `gerhard` and is kept on a detached `origin/main`, so git runs as `sudo -u gerhard`. Updating the checkout switches `/etc/loki/config.yml` to `/var/lib/loki` at once, because it is a stow symlink into the checkout. If Loki restarted before systemd knew about the drop-in, it could not create its folder and would stay down. So stop Loki before you update the checkout, and don't update it past this change without running these steps.
+To move without losing the logs collected since the last reboot, run all of this in one go, from `/srv/configuration-as-code-repo/conorganizer`. That checkout is kept on a detached `origin/main`; take it over first, then git runs as you (see [Repository location](#repository-location)). Updating the checkout switches `/etc/loki/config.yml` to `/var/lib/loki` at once, because it is a stow symlink into the checkout. If Loki restarted before systemd knew about the drop-in, it could not create its folder and would stay down. So stop Loki before you update the checkout, and don't update it past this change without running these steps.
 
 First check what the update brings, and that the installed Loki accepts the new config:
 
 ```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
 cd /srv/configuration-as-code-repo/conorganizer
-sudo -u gerhard git fetch origin
-sudo -u gerhard git diff --stat HEAD origin/main -- configuration-as-code/stow
-sudo -u gerhard git show origin/main:configuration-as-code/stow/loki/etc/loki/config.yml > /tmp/loki-config-new.yml
+git fetch origin
+git diff --stat HEAD origin/main -- configuration-as-code/stow
+git show origin/main:configuration-as-code/stow/loki/etc/loki/config.yml > /tmp/loki-config-new.yml
 /usr/bin/loki -config.file=/tmp/loki-config-new.yml -verify-config
 ```
 
@@ -193,8 +202,9 @@ The diff lists every stowed file the update changes. Changes to the Caddyfile or
 Then stop Loki, update the checkout, copy the data and start Loki again:
 
 ```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
 sudo systemctl stop loki
-sudo -u gerhard git checkout --detach origin/main
+git checkout --detach origin/main
 test -e /var/lib/loki && echo "/var/lib/loki already exists: do not copy, check it first" || sudo cp -a /tmp/loki /var/lib/loki
 sudo stow --dir=configuration-as-code/stow --target=/ --restow loki systemd
 sudo systemctl daemon-reload
@@ -203,7 +213,7 @@ sudo systemctl start loki
 
 `cp -a` creates `/var/lib/loki` with the owner of `/tmp/loki`. The Loki package creates no `loki` group, so don't create the folder with `install -g loki`.
 
-If Loki does not start, `/tmp/loki` is untouched. To go back to the old path, run `sudo -u gerhard git checkout HEAD@{1} -- configuration-as-code/stow/loki/etc/loki/config.yml`, then `sudo systemctl start loki`. The drop-in is harmless with the old path and can stay.
+If Loki does not start, `/tmp/loki` is untouched. To go back to the old path, run `git checkout HEAD@{1} -- configuration-as-code/stow/loki/etc/loki/config.yml`, then `sudo systemctl start loki`. The drop-in is harmless with the old path and can stay.
 
 Alloy retries each batch 10 times, with backoff growing from 0.5 s to 5 min, so nothing is dropped as long as Loki is back within about 4 minutes. The journal keeps every line either way. Check the result:
 
@@ -254,10 +264,11 @@ Until the block was added to the Caddyfile, it lived in a hand-made `/etc/caddy/
 Start when no deploy or cleanup job is running in Actions. First look, without changing anything:
 
 ```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
 cd /srv/configuration-as-code-repo/conorganizer
 sudo cat /etc/caddy/sites-enabled/www.regncon.no.caddy
-sudo -u gerhard git fetch origin
-sudo -u gerhard git diff --stat HEAD origin/main -- configuration-as-code/stow
+git fetch origin
+git diff --stat HEAD origin/main -- configuration-as-code/stow
 ```
 
 The `cat` must show only the two website blocks that are now in the Caddyfile; anything else in the file has to move into the Caddyfile first. The diff should list only the Caddyfile. If it lists other stowed files, run their own procedures right after the checkout below, in the same sitting, because their own `checkout --detach origin/main` would also bring in this change (for a removed `loki.service`, see [Switching an existing server](#switching-an-existing-server)).
@@ -265,9 +276,10 @@ The `cat` must show only the two website blocks that are now in the Caddyfile; a
 Then update the checkout and move the file in one line, so that the file only moves when the website block really is on disk:
 
 ```bash
-old=$(sudo -u gerhard git rev-parse HEAD); echo "$old"
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
+old=$(git rev-parse HEAD); echo "$old"
 sudo -v
-sudo -u gerhard git checkout --detach origin/main \
+git checkout --detach origin/main \
  && grep -qxF 'regncon.no, regncon.lekeplassen.regncon.no {' /etc/caddy/Caddyfile \
  && sudo mv /etc/caddy/sites-enabled/www.regncon.no.caddy /root/www.regncon.no.caddy.bak
 sudo caddy validate --config /etc/caddy/Caddyfile
@@ -278,8 +290,9 @@ curl -sS -o /dev/null -w '%{http_code}\n' https://regncon.no/
 If the chained line stops before the `mv`, nothing live has changed and the validate and reload after it are harmless: fix the cause and run the block again. If validate or the reload fails, or curl prints anything but `200`, Caddy may still serve the old config, but the files on disk won't load, so put both back before leaving the server:
 
 ```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
 sudo mv /root/www.regncon.no.caddy.bak /etc/caddy/sites-enabled/www.regncon.no.caddy
-sudo -u gerhard git checkout "$old" -- configuration-as-code/stow/caddy/etc/caddy/Caddyfile
+git checkout "$old" -- configuration-as-code/stow/caddy/etc/caddy/Caddyfile
 sudo caddy validate --config /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 ```
