@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Tears down a PR preview environment created by conorganizer-deploy. CI runs
+# it as root through sudo when the PR closes. Idempotent: every removal
+# tolerates an already-absent target, so a double close or a close after a
+# failed deploy does not error.
+#
+# --dry-run only logs what would be removed and needs no root:
+#   conorganizer-cleanup --dry-run <PR_NUMBER>-merge
+readonly data_root="/mnt/HC_Volume_103911252/environments"
+readonly app_root="/opt/conorganizer"
+readonly usage="usage: conorganizer-cleanup [--dry-run] <PR_NUMBER>-merge (only PR previews can be removed)"
+
+dry_run=false
+if [[ "${1:-}" == "--dry-run" ]]; then
+    dry_run=true
+    shift
+fi
+environment="${1:-}"
+
+log() {
+    printf 'conorganizer-cleanup: %s\n' "$*" >&2
+}
+
+die() {
+    log "ERROR: $*"
+    exit 1
+}
+
+# run executes a command, or only logs it in a dry run.
+run() {
+    if [[ "$dry_run" == "true" ]]; then
+        log "DRY RUN: would run: $*"
+    else
+        "$@"
+    fi
+}
+
+if [[ "$#" -ne 1 || ! "$environment" =~ ^[1-9][0-9]{0,4}-merge$ ]]; then
+    die "$usage"
+fi
+
+if [[ "$dry_run" != "true" && "$EUID" -ne 0 ]]; then
+    die "run it as root through sudo, or pass --dry-run to only log what would be removed"
+fi
+
+readonly service_name="conorganizer-${environment}.service"
+readonly service_unit="/etc/systemd/system/${service_name}"
+readonly service_wants_link="/etc/systemd/system/multi-user.target.wants/${service_name}"
+readonly caddy_site="/etc/caddy/sites-enabled/conorganizer-${environment}.caddy"
+readonly app_dir="${app_root}/${environment}"
+readonly environment_data_dir="${data_root}/${environment}"
+
+if [[ "$dry_run" == "true" ]]; then
+    log "DRY RUN enabled, nothing will be changed for ${environment}"
+else
+    log "tearing down preview ${environment}"
+fi
+
+log "stopping and disabling ${service_name}"
+run systemctl stop "$service_name" || true
+run systemctl disable "$service_name" || true
+
+if [[ "$dry_run" != "true" ]] && systemctl is-active --quiet "$service_name"; then
+    die "${service_name} is still active after stop; leaving its files in place"
+fi
+
+# disable removes the wants link only while the unit file still exists. The
+# .tmp and .previous files are conorganizer-deploy's, left behind only when a
+# deploy was killed halfway.
+log "removing systemd unit ${service_unit}"
+run rm -f "$service_unit" "${service_unit}.tmp" "$service_wants_link"
+
+log "removing Caddy site ${caddy_site}"
+run rm -f "$caddy_site" "${caddy_site}.tmp" "${caddy_site}.previous"
+
+log "removing data directory ${environment_data_dir}"
+run rm -rf "$environment_data_dir"
+
+log "reloading systemd and Caddy"
+run systemctl daemon-reload || true
+# A unit that was in the failed state stays listed as not-found until reset.
+if systemctl is-failed --quiet "$service_name"; then
+    run systemctl reset-failed "$service_name" || true
+fi
+# A failed reload leaves the old route live in Caddy, so let it fail the job.
+run systemctl reload caddy
+
+log "removing app directory ${app_dir}"
+run rm -rf "$app_dir"
+
+if [[ "$dry_run" == "true" ]]; then
+    log "DRY RUN complete, nothing was removed for ${environment}"
+else
+    log "removed preview ${environment}"
+fi

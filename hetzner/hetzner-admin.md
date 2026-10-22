@@ -34,8 +34,20 @@ database files and `event-images` directories listed below.
 ## Deploy user
 `hetzner/scripts/setup_deploy_user.sh` creates the restricted `deploy` user
 that GitHub Actions deploys as. Its home is `/opt/conorganizer`, SSH login is
-key-only, and sudo is limited to `mv`, `chown`, `chmod`, `systemctl` and the
-`deploy.sh`/`cleanup.sh` scripts in `/opt/conorganizer/*/`. The script
+key-only, and sudo is limited to the two scripts
+`/usr/local/bin/conorganizer-deploy` and `/usr/local/bin/conorganizer-cleanup`,
+which Stow installs from the admin-owned server checkout
+`/srv/configuration-as-code-repo/conorganizer`. CI uploads only the binary,
+`goose` and the migrations into `/opt/conorganizer/<env>/`; everything that
+runs as root comes from that checkout, so the deploy user can trigger a deploy
+or a cleanup but cannot change what either does (see
+[Service user and ownership](../documentation/deployment.md#service-user-and-ownership)).
+The script is for a fresh server and refuses to run when the `deploy` user
+already exists, because its chown, chmod and cp steps would follow whatever
+that user has put in its home. It validates the sudoers file with `visudo -cf`
+before installing it. On a server that is set up, edit the live file with
+`sudo visudo -f /etc/sudoers.d/deploy-conorganizer` and check it with
+`sudo -l -U deploy`. The script
 generates an SSH keypair and prints the values for the `HETZNER_HOST`,
 `HETZNER_USER`, `HETZNER_SSH_KEY` and `HETZNER_SSH_PORT` GitHub secrets.
 The workflow only reads the first three; it hard-codes `port: 22`
@@ -51,6 +63,10 @@ workflow change.
 | restored | `conorganizer-restored.service` | `19082` | `/mnt/HC_Volume_103911252/environments/restored/` |
 
 Each data directory holds `database/events.db` and `event-images/`. The
+directory above them, `/mnt/HC_Volume_103911252/environments`, must be owned
+by `root:root` with mode 755 (`stat -c '%U:%G %a'`), or `conorganizer-deploy`
+refuses to deploy a preview; `setup_deploy_user.sh` creates it that way when
+the volume is mounted. The
 binaries live in `/opt/conorganizer/<env>/`, next to the `goose` binary and
 `migrations/` that CI deploys for `conorganizer-sqlite-migrate`, and the
 services run as `deploy:www-data`. The systemd units and Caddy config are managed in

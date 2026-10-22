@@ -1,0 +1,224 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Deploys the binary, goose and migrations that CI uploaded to
+# /opt/conorganizer/<environment> and restarts the service. CI runs it as root
+# through sudo. Root only validates the name, creates a preview's data
+# directory, installs the unit and Caddy site it renders from the templates
+# next to this script, and calls systemctl. Everything inside the deploy
+# user's directories runs as the service user, so nothing the deploy user can
+# write is executed or followed as root.
+readonly data_root="/mnt/HC_Volume_103911252/environments"
+readonly app_root="/opt/conorganizer"
+readonly template_directory="/usr/local/share/conorganizer"
+readonly service_user="deploy"
+readonly service_group="www-data"
+readonly preview_domain="lekeplassen.regncon.no"
+readonly preview_base_port=20000
+# Keeps the preview port below 65536.
+readonly preview_max_pr_number=45535
+readonly usage="usage: conorganizer-deploy main|demo|restored|<PR_NUMBER>-merge"
+
+environment="${1:-}"
+
+log() {
+    printf 'conorganizer-deploy: %s\n' "$*" >&2
+}
+
+die() {
+    log "ERROR: $*"
+    exit 1
+}
+
+as_service_user() {
+    runuser -u "$service_user" -g "$service_group" -- "$@"
+}
+
+render_template() {
+    sed \
+        -e "s/%SAFE_NAME%/${environment}/g" \
+        -e "s/%PORT%/${port}/g" \
+        -e "s/%HOST%/${host}/g" \
+        "$1"
+}
+
+install_rendered() {
+    local template="$1" destination="$2"
+
+    [[ -f "$template" ]] || die "template not found: ${template}"
+    render_template "$template" > "${destination}.tmp"
+    chmod 644 "${destination}.tmp"
+    mv -f -T "${destination}.tmp" "$destination"
+}
+
+ensure_preview_data_dir() {
+    local data_root_owner data_root_mode
+
+    [[ -d "$data_root" && ! -L "$data_root" ]] || die "data root is not a directory: ${data_root}"
+    data_root_owner="$(stat -c '%U' "$data_root")"
+    data_root_mode="$(stat -c '%a' "$data_root")"
+    [[ "$data_root_owner" == "root" ]] || die "data root must be owned by root, not ${data_root_owner}: ${data_root}"
+    (( (8#$data_root_mode & 8#022) == 0 )) || die "data root must not be writable by group or others (mode ${data_root_mode}): ${data_root}"
+
+    [[ ! -L "$environment_data_dir" ]] || die "data directory is a symlink: ${environment_data_dir}"
+    if [[ ! -e "$environment_data_dir" ]]; then
+        log "creating data directory ${environment_data_dir}"
+        install -d -o "$service_user" -g "$service_group" "$environment_data_dir"
+    elif [[ ! -d "$environment_data_dir" || "$(stat -c '%U' "$environment_data_dir")" != "$service_user" ]]; then
+        die "data directory is not a directory owned by ${service_user}: ${environment_data_dir}; remove the preview with conorganizer-cleanup ${environment} and deploy again"
+    fi
+}
+
+clone_main_database() {
+    local quick_check_result
+
+    log "cloning main database into ${environment_db_path}"
+    as_service_user mkdir -p "$environment_db_dir"
+    as_service_user rm -f "$clone_db_path" "${environment_db_path}-wal" "${environment_db_path}-shm"
+    if ! as_service_user sqlite3 "$main_db_path" ".backup '${clone_db_path}'"; then
+        as_service_user rm -f "$clone_db_path"
+        die "failed to back up ${main_db_path} into ${clone_db_path}"
+    fi
+    quick_check_result="$(as_service_user sqlite3 "$clone_db_path" "PRAGMA quick_check;" 2>&1)" || true
+    if [[ "$quick_check_result" != "ok" ]]; then
+        as_service_user rm -f "$clone_db_path"
+        log "$quick_check_result"
+        die "database clone failed quick_check"
+    fi
+    as_service_user mv -f -T "$clone_db_path" "$environment_db_path"
+}
+
+# Caddy keeps the old config when a reload fails, but a bad site file left in
+# sites-enabled would fail every later reload and the next start. So the
+# previous site file is put back before the script fails.
+install_caddy_site() {
+    local previous_site="${caddy_site}.previous"
+
+    mkdir -p /etc/caddy/sites-enabled
+    rm -f "$previous_site"
+    if [[ -f "$caddy_site" ]]; then
+        cp -p "$caddy_site" "$previous_site"
+    fi
+    install_rendered "${template_directory}/preview.caddy.tmpl" "$caddy_site"
+
+    log "reloading Caddy"
+    if ! systemctl reload caddy; then
+        if [[ -f "$previous_site" ]]; then
+            mv -f -T "$previous_site" "$caddy_site"
+        else
+            rm -f "$caddy_site"
+        fi
+        systemctl reload caddy || true
+        die "Caddy refused the new config; the previous site file for ${environment} is back in place"
+    fi
+    rm -f "$previous_site"
+}
+
+[[ "$#" -eq 1 ]] || die "$usage"
+
+case "$environment" in
+    main|demo|restored)
+        fixed_environment=true
+        ;;
+    *)
+        [[ "$environment" =~ ^[1-9][0-9]{0,4}-merge$ ]] || die "$usage"
+        pr_number=$((10#${environment%-merge}))
+        (( pr_number <= preview_max_pr_number )) || die "PR number ${pr_number} is above ${preview_max_pr_number}, its port would not fit"
+        fixed_environment=false
+        ;;
+esac
+
+[[ "$EUID" -eq 0 ]] || die "run it as root through sudo"
+
+readonly app_dir="${app_root}/${environment}"
+readonly new_binary="${app_dir}/conorganizer.new"
+readonly current_binary="${app_dir}/conorganizer-${environment}"
+readonly old_binary="${current_binary}.old"
+readonly goose_path="${app_dir}/goose"
+readonly migrations_directory="${app_dir}/migrations"
+
+readonly service_name="conorganizer-${environment}.service"
+readonly service_unit="/etc/systemd/system/${service_name}"
+readonly caddy_site="/etc/caddy/sites-enabled/conorganizer-${environment}.caddy"
+
+readonly main_data_dir="${data_root}/main"
+readonly main_db_path="${main_data_dir}/database/events.db"
+readonly main_image_dir="${main_data_dir}/event-images"
+readonly environment_data_dir="${data_root}/${environment}"
+readonly environment_db_dir="${environment_data_dir}/database"
+readonly environment_db_path="${environment_db_dir}/events.db"
+readonly clone_db_path="${environment_db_path}.clone"
+readonly environment_image_dir="${environment_data_dir}/event-images"
+
+log "deploying ${environment} from ${app_dir}"
+
+[[ -f "$new_binary" ]] || die "new binary not found: ${new_binary}"
+[[ -f "$goose_path" ]] || die "goose not found: ${goose_path}"
+[[ -d "$migrations_directory" ]] || die "migrations not found: ${migrations_directory}"
+
+# Artifacts lose the executable bit. Previews run goose below; fixed
+# environments keep it for conorganizer-sqlite-migrate.
+as_service_user chmod +x "$goose_path"
+
+if [[ "$fixed_environment" == "false" ]]; then
+    command -v sqlite3 >/dev/null 2>&1 || die "sqlite3 is required"
+    [[ -f "$main_db_path" ]] || die "main database does not exist: ${main_db_path}"
+    [[ -d "$main_image_dir" ]] || die "main event-images directory does not exist: ${main_image_dir}"
+
+    port=$((preview_base_port + pr_number))
+    host="${environment}.${preview_domain}"
+
+    ensure_preview_data_dir
+
+    if [[ ! -s "$environment_db_path" ]]; then
+        clone_main_database
+    else
+        log "database already exists: ${environment_db_path}"
+    fi
+
+    if [[ ! -d "$environment_image_dir" ]]; then
+        log "copying main event-images into ${environment_image_dir}"
+        as_service_user cp -a "$main_image_dir" "${environment_data_dir}/"
+    else
+        log "event-images directory already exists: ${environment_image_dir}"
+    fi
+
+    # Runs on every preview deploy so later PR pushes get their new migrations.
+    # -allow-missing applies migrations older than the current version, e.g.
+    # from main merged into the PR.
+    log "applying migrations to ${environment_db_path}"
+    as_service_user "$goose_path" -env /dev/null -dir "$migrations_directory" sqlite3 "$environment_db_path" up -allow-missing
+
+    log "installing systemd unit ${service_unit}"
+    install_rendered "${template_directory}/preview.service.tmpl" "$service_unit"
+
+    log "installing Caddy site ${caddy_site}"
+    install_caddy_site
+else
+    log "${environment} is a fixed environment: keeping its checked-in unit, Caddy route and data"
+fi
+
+log "promoting ${new_binary} to ${current_binary}"
+if [[ -f "$current_binary" ]]; then
+    as_service_user mv -f -T "$current_binary" "$old_binary"
+fi
+as_service_user mv -f -T "$new_binary" "$current_binary"
+as_service_user chmod +x "$current_binary"
+
+if [[ "$environment" == "restored" && ! -f "$environment_db_path" ]]; then
+    log "restored database has not been selected yet; binary deployed without starting ${service_name}"
+    log "run conorganizer-sqlite-restore <backup-file> to initialize it"
+    exit 0
+fi
+
+log "restarting ${service_name}"
+systemctl daemon-reload || true
+systemctl enable "$service_name" || true
+systemctl restart "$service_name"
+
+if ! systemctl is-active --quiet "$service_name"; then
+    journalctl -u "$service_name" -n 50 --no-pager || true
+    die "${service_name} failed to start"
+fi
+
+log "deployed ${environment}: ${service_name} runs ${current_binary}"

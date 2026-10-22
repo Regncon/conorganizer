@@ -46,7 +46,7 @@ The production repository is stored at:
 
 | Package | Installs |
 | --- | --- |
-| `scripts` | `/usr/local/bin/conorganizer-*` and `/usr/local/share/conorganizer/anonymize-export.sql` |
+| `scripts` | `/usr/local/bin/conorganizer-*`, `/usr/local/share/conorganizer/anonymize-export.sql` and the PR preview templates `/usr/local/share/conorganizer/preview.service.tmpl` and `preview.caddy.tmpl` |
 | `caddy` | `/etc/caddy/Caddyfile` |
 | `grafana` | `/etc/grafana/grafana.ini` |
 | `loki` | `/etc/loki/config.yml` |
@@ -147,6 +147,23 @@ The `scripts` Stow package installs the database maintenance commands in
 - `conorganizer-sqlite-migrate` backs up the demo database, then runs the deployed Goose migrations against demo and main. See [documentation/migrations.md](../documentation/migrations.md).
 - `conorganizer-maintenance-mode on|off` shows or hides the maintenance page for `program.regncon.no`. Without an argument it prints the current state.
 
+## Deploy scripts
+
+The `scripts` package also installs the two commands that CI runs through sudo as the `deploy` user. They are the only commands that user may run as root (`hetzner/scripts/setup_deploy_user.sh`), and they validate the environment name and build every path from it, so CI can trigger a deploy or a cleanup but cannot change what either does. See [Service user and ownership](../documentation/deployment.md#service-user-and-ownership) for what runs as root and what runs as the service user.
+
+- `conorganizer-deploy main|demo|restored|<PR_NUMBER>-merge` promotes the binary that CI uploaded to `/opt/conorganizer/<name>/conorganizer.new` and restarts the service. For a PR preview it also clones main's database when the preview has none (or an empty one), copies main's `event-images/` when the preview has none, runs the deployed migrations, and renders the preview's unit and Caddy site from `/usr/local/share/conorganizer/preview.service.tmpl` and `preview.caddy.tmpl`, with port `20000 + PR_NUMBER` and host `<name>.lekeplassen.regncon.no`.
+- `conorganizer-cleanup [--dry-run] <PR_NUMBER>-merge` removes a PR preview. `--dry-run` only logs what would be removed and needs no root.
+
+Both are links into this checkout, like every other `conorganizer-*` script, so root runs whatever the checkout holds. Keep the checkout on `origin/main` and clean (`git status --short` prints nothing), review `git diff --stat HEAD origin/main -- configuration-as-code/stow` before updating it, and make sure no component of these paths, nor of the data root, is writable by `deploy` or `www-data`:
+
+```bash
+namei -l /usr/local/bin/conorganizer-deploy /usr/local/bin/conorganizer-cleanup /usr/local/share/conorganizer/preview.service.tmpl /usr/local/share/conorganizer/preview.caddy.tmpl /mnt/HC_Volume_103911252/environments
+```
+
+`conorganizer-deploy` refuses to deploy a preview unless `/mnt/HC_Volume_103911252/environments` itself is owned by root and not writable by group or others. If it is not, run `sudo chown root:root /mnt/HC_Volume_103911252/environments && sudo chmod 755 /mnt/HC_Volume_103911252/environments` on that directory only, not with `-R`; the environments below it stay `deploy:www-data`.
+
+A change to these scripts or templates is live as soon as the checkout is updated; a new or removed file also needs `sudo stow --dir=configuration-as-code/stow --target=/ --restow scripts`. CI calls them by the same names before and after, so a change must keep working with the workflow on `main` until both sides are updated: change the script first in a way the current workflow still works with, then switch the workflow once the checkout is updated.
+
 ## Backups
 
 Backups of the main environment run from systemd timers:
@@ -233,7 +250,7 @@ Hostnames in the checked-in Caddyfile:
 | `grafana.regncon.no` | `127.0.0.1:3400` |
 | `meetup-january-2026.lekeplassen.regncon.no` | `127.0.0.1:8080` |
 
-The Caddyfile ends with `import /etc/caddy/sites-enabled/*.caddy`. That directory is not in the repository. `deploy/deploy.sh` writes one site file per PR preview there. The fixed environments (main, demo, restored) do not use it.
+The Caddyfile ends with `import /etc/caddy/sites-enabled/*.caddy`. That directory is not in the repository. `conorganizer-deploy` writes one site file per PR preview there and `conorganizer-cleanup` removes it. The fixed environments (main, demo, restored) do not use it.
 
 Blackbox probes and the TLS-expiry panels only check `https://main.lekeplassen.regncon.no/` and `https://grafana.regncon.no/`.
 

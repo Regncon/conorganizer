@@ -181,7 +181,7 @@ Manual server notes dated 2026-05-28. Keep them as historical context only; veri
 - The dashboards assume blackbox `instance` labels contain the full probed URL, matching the checked-in Prometheus relabeling.
 - Loki JSON parsing panels require request logs to arrive as parseable JSON lines. If Promtail scrapes syslog-prefixed lines, text-only log panels may work while `| json` panels show no data.
 - Current Loki labels are server-dependent. Start broad with `loki_job=All`, then narrow the variable or edit selectors after inspecting labels.
-- The main host is in the checked-in Caddyfile. The Caddyfile also imports server-local `/etc/caddy/sites-enabled/*.caddy`, which `deploy/deploy.sh` uses for PR previews; those hosts are not visible in the repo.
+- The main host is in the checked-in Caddyfile. The Caddyfile also imports server-local `/etc/caddy/sites-enabled/*.caddy`, which `conorganizer-deploy` uses for PR previews; those hosts are not visible in the repo.
 - Server runtime state, installed packages, open ports, and active services require manual server verification.
 
 ## Panel Dependencies

@@ -2,7 +2,7 @@
 
 Conorganizer database migrations use [Goose](https://pressly.github.io/goose/). They are applied manually; do not add automatic migrations to application startup, health checks, readiness checks, or systemd startup.
 
-The only exception is PR preview environments. On every PR deploy, `deploy/deploy.sh` runs `goose up -allow-missing` against the preview database, which is cloned from main on the first deploy. The main, demo, and restored environments are never migrated by CI; main and demo are migrated with the procedure below. Goose does not re-run a migration that has already been applied, so if a PR edits one, delete that preview's database to make the next deploy clone it again.
+The only exception is PR preview environments. On every PR deploy, `conorganizer-deploy` (see [deployment.md](deployment.md#pr-previews)) runs `goose up -allow-missing` against the preview database, which is cloned from main on the first deploy. The main, demo, and restored environments are never migrated by CI; main and demo are migrated with the procedure below. Goose does not re-run a migration that has already been applied, so if a PR edits one, delete that preview's `database/events.db` to make the next deploy clone it again; the deploy removes a stale `-wal` and `-shm` itself.
 
 ## Create a migration
 
@@ -94,7 +94,7 @@ Every push to main deploys Goose and `migrations/*.sql` next to each fixed envir
     sudo conorganizer-maintenance-mode off
     ```
 
-Apart from PR previews, nothing else runs migrations. `deploy/deploy.sh` only runs Goose for preview databases, and `conorganizer-sqlite-restore` does not run it at all, so a backup from before the migration that is restored into the `restored` environment keeps the old schema.
+Apart from PR previews, nothing else runs migrations. `conorganizer-deploy` only runs Goose for preview databases, and `conorganizer-sqlite-restore` does not run it at all, so a backup from before the migration that is restored into the `restored` environment keeps the old schema.
 
 ## Troubleshooting
 
