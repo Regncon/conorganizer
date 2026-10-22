@@ -68,7 +68,9 @@ After a successful deploy, CI adds a `Preview deployment` block with the URL to 
 
 ## Caddy routing
 
-The root Caddyfile is `configuration-as-code/stow/caddy/etc/caddy/Caddyfile`. Routing for `program.regncon.no`, `main.lekeplassen.regncon.no`, `demo.lekeplassen.regncon.no`, `restored.lekeplassen.regncon.no` and `grafana.regncon.no` is always defined there. `demo` and `restored` proxy straight to `127.0.0.1:19081` and `127.0.0.1:19082`.
+The root Caddyfile is `configuration-as-code/stow/caddy/etc/caddy/Caddyfile`. Routing for `program.regncon.no`, `main.lekeplassen.regncon.no`, `demo.lekeplassen.regncon.no`, `restored.lekeplassen.regncon.no`, `grafana.regncon.no` and the website hosts `regncon.no`, `regncon.lekeplassen.regncon.no` and `www.regncon.no` is always defined there. `demo` and `restored` proxy straight to `127.0.0.1:19081` and `127.0.0.1:19082`.
+
+`regncon.no` and `regncon.lekeplassen.regncon.no` serve the static website files in `/opt/www.regncon.no/`, and `www.regncon.no` redirects (301) to `regncon.no`. The files are deployed by the private repository `Regncon/nettside`, which rsyncs them to the server on every push to its `master` branch; they are not in this repository and this pipeline never touches them. See [The regncon.no website](../configuration-as-code/README.md#the-regnconno-website).
 
 Only PR preview sites live in `/etc/caddy/sites-enabled/conorganizer-<name>.caddy`. `deploy.sh` installs them and `cleanup.sh` removes them. The root Caddyfile loads them with:
 
