@@ -1,0 +1,21 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "grafana-token",
+      "description": "Grafana service account token (glsa_…)",
+      "password": true
+    }
+  ],
+  "servers": {
+    "grafana-conorganizer": {
+      "type": "stdio",
+      "command": "mcp-grafana",
+      "args": ["--disable-write", "--usage-stats=disabled"],
+      "env": {
+        "GRAFANA_URL": "https://grafana.regncon.no",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "${input:grafana-token}"
+      }
+    }
+  }
+}

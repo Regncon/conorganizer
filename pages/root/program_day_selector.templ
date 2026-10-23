@@ -46,7 +46,9 @@ templ programDaySelector(days []program.Day, selectedIndex int) {
 				<a
 					href={ templ.URL(program.ProgramDateURL(day.QueryValue())) }
 					class={ "btn btn--secondary", templ.KV("is-active", index == selectedIndex) }
-					aria-current={ templ.KV("page", index == selectedIndex) }
+					if index == selectedIndex {
+						aria-current="page"
+					}
 				>{ day.Label() }</a>
 			}
 		</div>

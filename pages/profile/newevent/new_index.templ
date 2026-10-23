@@ -12,9 +12,12 @@ import (
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
 )
+
+const eventNotFoundMessage = "Fant ikke arrangementet."
 
 func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +30,7 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 			return
 		}
 
-		selectErr, statusCode := validateEventExists(db, eventId, userID)
+		selectErr, statusCode := validateEventOwnedByUser(db, eventId, userctx.GetUserRequestInfo(r.Context()).Id)
 		if selectErr != nil && statusCode == http.StatusInternalServerError {
 			http.Error(w, selectErr.Error(), http.StatusInternalServerError)
 			return
@@ -48,8 +51,8 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 		if err := layouts.Base(
 			title,
 			userctx.GetUserRequestInfo(ctx),
-            db,
-            logger,
+			db,
+			logger,
 			newEventIndex(eventId, userID, ctx, db, eventImageDir, logger),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render new-event page: %w", err).Error(), "event_id", eventId, "user_id", userID)
@@ -68,11 +71,47 @@ templ newEventIndex(eventId string, userID string, ctx context.Context, db *sql.
 	</div>
 }
 
-func validateEventExists(db *sql.DB, eventId string, userId string) (error, int) {
+func RequireEventOwnerOrAdmin(db *sql.DB, logger *slog.Logger) func(http.Handler) http.Handler {
+	logger = logger.With("component", "new_event")
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			userInfo := userctx.GetUserRequestInfo(ctx)
+			if userInfo.IsAdmin {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			eventId := chi.URLParam(r, "id")
+			selectErr, statusCode := validateEventOwnedByUser(db, eventId, userInfo.Id)
+			if selectErr != nil && statusCode == http.StatusInternalServerError {
+				logger.Error(selectErr.Error(), "request_id", middleware.GetReqID(ctx), "event_id", eventId, "user_id", userInfo.Id)
+				http.Error(w, "Klarte ikke å sjekke tilgangen til arrangementet", http.StatusInternalServerError)
+				return
+			}
+			if selectErr != nil {
+				logger.Warn("User is neither owner nor admin of event", "request_id", middleware.GetReqID(ctx), "path", r.URL.Path, "event_id", eventId, "user_id", userInfo.Id)
+				http.Error(w, eventNotFoundMessage, http.StatusNotFound)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func validateEventOwnedByUser(db *sql.DB, eventId string, externalUserId string) (error, int) {
 	var exists bool
-	queryErr := db.QueryRow("SELECT EXISTS(SELECT 1 FROM events WHERE id = ? AND user_id = ?)", eventId, userId).Scan(&exists)
+	queryErr := db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1
+			FROM events
+			JOIN users ON users.id = events.user_id
+			WHERE events.id = ? AND users.external_id = ?
+		)
+	`, eventId, externalUserId).Scan(&exists)
 	if queryErr != nil {
-		return queryErr, http.StatusInternalServerError
+		return fmt.Errorf("check owner of event %q: %w", eventId, queryErr), http.StatusInternalServerError
 	}
 
 	if !exists {

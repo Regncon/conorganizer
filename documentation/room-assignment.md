@@ -17,7 +17,7 @@ A room is linked to an event in a pulje through `relation_event_puljer.room_id`.
 
 `rooms.max_concurrent_games` and `rooms.is_disabled` are legacy columns. The application has no capacity control and no way to disable a room, and no application code reads either column.
 
-- Both are still in `schema.sql` and `initialize.sql`. `max_concurrent_games` is `NOT NULL` with no default, and `is_disabled` is `NOT NULL DEFAULT 0`.
+- Both are still in `schema.sql`. `max_concurrent_games` is `NOT NULL` with no default, and `is_disabled` is `NOT NULL DEFAULT 0`.
 - The views `v_events_by_pulje_active` and `v_event_puljer_active` still select them as `room_max_concurrent_games` and `room_is_disabled`.
 - `rooms.CreateRoom` (`service/rooms/rooms.go`) writes `0` to both.
 - Test fixtures that insert rooms with raw SQL must set `max_concurrent_games` explicitly, because the column is `NOT NULL` (see `pages/admin/rooms_assignment_route_test.go`).
@@ -112,7 +112,7 @@ When there are no such events, the dialog shows "Ingen godkjente arrangementer."
 4. It broadcasts the `rooms` and `events` live buckets.
 5. It responds with a script that closes `#assignment-dialog` and dispatches `room-saved` on `window`.
 
-The endpoint does **not** change the legacy `relation_event_puljer.is_published` flag. A new row keeps the database default `0`, and an existing row keeps its value (checked in `pages/admin/rooms_assignment_route_test.go`). The dialog text says events from other puljer are "lagt til og publisert i denne puljen", but what the endpoint actually sets is `is_in_pulje = 1`. Whether the program is published is a separate global flag in `program_publishing_state`.
+The endpoint does **not** change the legacy `relation_event_puljer.is_published` flag. A new row keeps the database default `0`, and an existing row keeps its value (checked in `pages/admin/rooms_assignment_route_test.go`). The dialog text says events from other puljer are "lagt til i denne puljen", which is what `is_in_pulje = 1` means; it does not announce the event. Whether the program is published is a separate global flag in `program_publishing_state`.
 
 ### `DELETE /admin/rooms/api/assignment/{pulje}/{event}/{room}`
 

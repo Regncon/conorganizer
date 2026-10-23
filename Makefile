@@ -3,7 +3,7 @@ TASK := go tool task
 .DEFAULT_GOAL := help
 
 .PHONY: help build generate start dev run debug test download download-main download-demo kill \
-        lint fmt vet tidy check clean
+        lint fmt fmt-check vet tidy check clean setup-editor check-editor
 
 help: ## Show this help
 	@echo "Targets:"
@@ -48,8 +48,18 @@ lint: ## Run golangci-lint (external binary)
 		|| { echo "golangci-lint not found; see https://golangci-lint.run/welcome/install/"; exit 1; }
 	golangci-lint run
 
-fmt: ## Format all Go code
+fmt: ## Format all Go code and .templ files
 	go fmt ./...
+	$(TASK) fmt:templ
+
+fmt-check: ## Fail when .templ files are not formatted (needs prettier)
+	$(TASK) check:templ-fmt
+
+setup-editor: ## Install the go.mod templ version and the CI Prettier version globally
+	$(TASK) setup:editor
+
+check-editor: ## Compare templ and Prettier on PATH with what the repo expects
+	$(TASK) check:editor
 
 vet: ## Run go vet
 	go vet ./...
@@ -57,7 +67,7 @@ vet: ## Run go vet
 tidy: ## Tidy go.mod / go.sum
 	go mod tidy
 
-check: generate vet test lint ## Generate, vet, test and lint (pre-commit gate)
+check: generate fmt-check vet test lint ## Generate, check templ formatting, vet, test and lint (pre-commit gate)
 
 clean: ## Remove build artifacts
 	rm -rf bin tmp/bin

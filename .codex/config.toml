@@ -1,0 +1,5 @@
+[mcp_servers.grafana-conorganizer]
+command = "mcp-grafana"
+args = ["--disable-write", "--usage-stats=disabled"]
+env = { GRAFANA_URL = "https://grafana.regncon.no" }
+env_vars = ["GRAFANA_SERVICE_ACCOUNT_TOKEN"]

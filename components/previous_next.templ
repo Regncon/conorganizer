@@ -36,21 +36,10 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 			container-name: prev-next-button-container;
 		}
 		.previous-next-buttons {
-			--linear-gradient-mask: linear-gradient(
-				to left,
-				black 19%,
-				transparent 63%
-			);
-            --linear-gradient-mask-right: linear-gradient(
-				to right,
-				black 19%,
-				transparent 63%
-			);
+			--linear-gradient-mask: linear-gradient(to left, black 19%, transparent 63%);
+			--linear-gradient-mask-right: linear-gradient(to right, black 19%, transparent 63%);
 			--prev-next-max-width: 25.3125rem;
-			--prev-next-responsive-max-width: min(
-				100%,
-				var(--prev-next-max-width)
-			);
+			--prev-next-responsive-max-width: min(100%, var(--prev-next-max-width));
 
 			display: flex;
 			flex-direction: column;
@@ -128,27 +117,19 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 }
 
 templ previousButton(title string, disabled bool, imgurl string) {
-	<div style="display: grid; grid-template-rows: 1fr; height: 100%;">
-		<div class="text-container" style="display: flex; align-items: center; grid-row: 1 / 2; grid-column: 1 / 2;">
+	<div style="display: grid; grid-template-rows: 1fr; height: 100%">
+		<div class="text-container" style="display: flex; align-items: center; grid-row: 1 / 2; grid-column: 1 / 2">
 			<div class="prev-next-button-icon">
 				@icons.Icon(icons.ChevronLeft, icons.Size32)
 			</div>
 			<div
-				style="
-                display: flex;
-                flex-direction: column;
-                gap: 0.25rem;
-                overflow: clip;
-                "
+				style="display: flex; flex-direction: column; gap: 0.25rem; overflow: clip"
 			>
 				if !disabled {
-					<span style="color: var(--color-text-soft); font-size:12px;height: 1lh;">Forrige arrangement</span>
+					<span style="color: var(--color-text-soft); font-size: 12px; height: 1lh">Forrige arrangement</span>
 				}
 				<strong
-					style="
-                        height: 1lh;
-                        word-break: break-all;
-                    "
+					style="height: 1lh; word-break: break-all"
 				>{ title }</strong>
 			</div>
 		</div>
@@ -161,21 +142,21 @@ templ previousButton(title string, disabled bool, imgurl string) {
 				title={ title }
 				height="70px"
 				style="
-                    grid-row: 1 / 2;
-                    grid-column: 1 / 2;
-                    mask-image: var(--linear-gradient-mask);
-                    -webkit-mask-image: var(--linear-gradient-mask);
-                    filter:opacity(0.5);
-                    place-self: end;
-                    border-radius: var(--border-radius-2x);
-                "
+		grid-row: 1 / 2;
+		grid-column: 1 / 2;
+		mask-image: var(--linear-gradient-mask);
+		-webkit-mask-image: var(--linear-gradient-mask);
+		filter: opacity(0.5);
+		place-self: end;
+		border-radius: var(--border-radius-2x);
+	"
 			/>
 		}
 	</div>
 }
 
 templ nextButton(title string, disabled bool, imgurl string) {
-	<div style="display: grid; grid-template-rows: 1fr; height: 100%;">
+	<div style="display: grid; grid-template-rows: 1fr; height: 100%">
 		if disabled {
 			<div></div>
 		}
@@ -185,46 +166,32 @@ templ nextButton(title string, disabled bool, imgurl string) {
 				title={ title }
 				height="70px"
 				style="
-				grid-row: 1 / 2;
-                grid-column: 1 / 2;
-				mask-image: var(--linear-gradient-mask-right);
-				-webkit-mask-image: var(--linear-gradient-mask-right);
-                filter:opacity(0.5);
-                place-self: start;
-                border-radius: var(--border-radius-2x);
-			"
+		grid-row: 1 / 2;
+		grid-column: 1 / 2;
+		mask-image: var(--linear-gradient-mask-right);
+		-webkit-mask-image: var(--linear-gradient-mask-right);
+		filter: opacity(0.5);
+		place-self: start;
+		border-radius: var(--border-radius-2x);
+	"
 			/>
 		}
-		<div class="text-container" style="display: flex; flex-direction: row-reverse; align-items: center; grid-row: 1 / 2; grid-column: 1 / 2;">
+		<div class="text-container" style="display: flex; flex-direction: row-reverse; align-items: center; grid-row: 1 / 2; grid-column: 1 / 2">
 			<div class="prev-next-button-icon">
 				@icons.Icon(icons.ChevronRight, icons.Size32)
 			</div>
 			<div
-				style="
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.25rem;
-                    overflow: clip;
-                "
+				style="display: flex; flex-direction: column; gap: 0.25rem; overflow: clip"
 			>
 				if !disabled {
 					<span
-						style="
-                            color: var(--color-text-soft);
-                            font-size:12px;
-                            text-align:right;
-                            height: 1lh;
-                        "
+						style="color: var(--color-text-soft); font-size: 12px; text-align: right; height: 1lh"
 					>
 						Neste arrangement
 					</span>
 				}
 				<strong
-					style="
-                        height: 1lh;
-                        text-align: right;
-                        word-break: break-all;
-                    "
+					style="height: 1lh; text-align: right; word-break: break-all"
 				>{ title }</strong>
 			</div>
 		</div>

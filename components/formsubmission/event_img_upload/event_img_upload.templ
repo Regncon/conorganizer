@@ -246,185 +246,188 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	@toast.Render("Lagret", icons.ProgressComplete)
 	<script type="module" src="/static/js/custom-actions/upload-with-progress.js"></script>
 	<style>
+		@keyframes cropper-loading-spin {
+			to {
+				rotate: 1turn;
+			}
+		}
+		.page-content-container {
+			max-width: 1020px;
+		}
 
-        @keyframes cropper-loading-spin {
-            to {
-                rotate: 1turn;
-            }
-        }
-        .page-content-container {
-            max-width: 1020px;
-        }
+		.back-button {
+			font-size: unset;
+			margin-block-start: var(--spacing-10x);
+		}
 
-        .back-button {
-            font-size: unset;
-            margin-block-start: var(--spacing-10x);
-        }
+		h1 {
+			margin-block: var(--spacing-5x) var(--spacing-10x);
+		}
 
-        h1 {
-            margin-block: var(--spacing-5x) var(--spacing-10x);
-        }
+		.img-upload-form-content {
+			display: flex;
+			flex-direction: column;
+			gap: var(--responsive-pane-column-spacing);
 
-        .img-upload-form-content {
-            display: flex;
-            flex-direction: column;
-            gap: var(--responsive-pane-column-spacing);
+			.info-text-content {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-5x);
 
-            .info-text-content {
-                display: flex;
-                flex-direction: column;
-                gap: var(--spacing-5x);
+				.image-upload-info-label {
+					font-weight: 700;
+				}
+			}
 
-                .image-upload-info-label {
-                    font-weight: 700;
-                }
-            }
+			.image-upload-content {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-5x);
 
-            .image-upload-content {
-                display: flex;
-                flex-direction: column;
-                gap: var(--spacing-5x);
+				.image-upload-card {
+					display: flex;
+					flex-direction: column;
+					place-items: center;
+					place-content: center;
+					height: 208px;
+					position: relative;
+					text-align: center;
+					outline: 2px dashed transparent;
+					outline-offset: -8px;
+					background-color: var(--level-3-background);
+					transition:
+						background-color 0.2s,
+						outline-color 0.2s,
+						box-shadow 0.2s;
 
-                .image-upload-card {
-                    display: flex;
-                    flex-direction: column;
-                    place-items: center;
-                    place-content: center;
-                    height: 208px;
-                    position: relative;
-                    text-align: center;
-                    outline: 2px dashed transparent;
-                    outline-offset: -8px;
-                    background-color: var(--level-3-background);
-                    transition: background-color 0.2s, outline-color 0.2s, box-shadow 0.2s;
+					&:is(.is-drag-over) {
+						background-color: color-mix(in srgb, var(--color-primary) 12%, var(--level-3-background));
+						outline-color: var(--color-primary);
+						box-shadow: inset 0 0 32px color-mix(in srgb, var(--color-primary) 10%, transparent);
 
-                    &:is(.is-drag-over) {
-                        background-color: color-mix(in srgb, var(--color-primary) 12%, var(--level-3-background));
-                        outline-color: var(--color-primary);
-                        box-shadow: inset 0 0 32px color-mix(in srgb, var(--color-primary) 10%, transparent);
+						.image-upload-icon-wrapper {
+							translate: 0 -4px;
+							scale: 1.1;
+						}
+					}
 
-                        .image-upload-icon-wrapper {
-                            translate: 0 -4px;
-                            scale: 1.1;
-                        }
-                    }
+					&:is([aria-busy="true"]) {
+						cursor: progress;
+					}
 
-                    &:is([aria-busy="true"]) {
-                        cursor: progress;
-                    }
+					p + p {
+						margin-block-start: var(--spacing-3x);
+					}
+					p:last-child {
+						margin: 0;
+					}
 
-                    p+p {
-                        margin-block-start: var(--spacing-3x)
-                    }
-                    p:last-child {
-                        margin:0;
-                    }
+					input[type="file"] {
+						block-size: 100%;
+						inline-size: 100%;
+						position: absolute;
+						inset: 0;
+						z-index: 1;
+						opacity: 0;
+						cursor: pointer;
 
-                    input[type="file"] {
-                        block-size: 100%;
-                        inline-size: 100%;
-                        position: absolute;
-                        inset: 0;
-                        z-index: 1;
-                        opacity: 0;
-                        cursor: pointer;
+						&:disabled {
+							pointer-events: none;
+						}
+					}
 
-                        &:disabled {
-                            pointer-events: none;
-                        }
-                    }
+					.image-upload-icon-wrapper {
+						height: 40px;
+						width: 40px;
+						border-radius: 100vw;
+						background-color: var(--color-primary-hover);
+						display: grid;
+						place-content: center;
+						margin-block-end: var(--spacing-5x);
+						transition:
+							translate 0.2s,
+							scale 0.2s;
+					}
+				}
 
-                    .image-upload-icon-wrapper {
-                        height: 40px;
-                        width: 40px;
-                        border-radius: 100vw;
-                        background-color: var(--color-primary-hover);
-                        display: grid;
-                        place-content: center;
-                        margin-block-end: var(--spacing-5x);
-                        transition: translate 0.2s, scale 0.2s;
-                    }
+				.image-upload-progress-wrapper {
+					display: grid;
+					padding-inline: var(--spacing-4x);
+					inline-size: 100%;
+					gap: var(--spacing-3x);
+					text-align: center;
 
-                }
+					.image-upload-progress {
+						position: relative;
+						height: 8px;
+						background-color: var(--level-3-background-hover);
+						border: 1px solid var(--level-3-border);
+						border-radius: var(--border-radius-2x);
 
-                .image-upload-progress-wrapper {
-                    display: grid;
-                    padding-inline: var(--spacing-4x);
-                    inline-size: 100%;
-                    gap: var(--spacing-3x);
-                    text-align: center;
+						.progress-bar {
+							position: absolute;
+							inset: 0;
+							width: calc(var(--progress) * 1%);
+							background-color: var(--color-primary);
+							border-radius: var(--border-radius-2x);
 
-                    .image-upload-progress {
-                        position: relative;
-                        height: 8px;
-                        background-color: var(--level-3-background-hover);
-                        border: 1px solid var(--level-3-border);
-                        border-radius: var(--border-radius-2x);
+							transition: width 0.4s ease-out;
+						}
 
-                        .progress-bar {
-                            position: absolute;
-                            inset: 0;
-                            width: calc(var(--progress) * 1%);
-                            background-color: var(--color-primary);
-                            border-radius: var(--border-radius-2x);
+						span {
+							text-align: center;
+						}
+					}
+				}
+				.item-card:is(:not(.file-info)) {
+					padding: 0;
+					border-radius: var(--border-radius-1x);
+					border: 1px solid var(--level-3-border);
+				}
+			}
 
-                            transition: width 0.4s ease-out;
-                        }
+			.banner-cropper {
+				.cropper-actions {
+					display: grid;
+					grid-template-columns: 1fr auto;
+					place-items: center start;
+					gap: var(--spacing-4x);
 
-                        span {
-                            text-align: center;
-                        }
-                    }
-                }
-                .item-card:is(:not(.file-info)) {
-                    padding: 0;
-                    border-radius: var(--border-radius-1x);
-                    border: 1px solid var(--level-3-border)
-                }
-            }
+					button {
+						grid-column: 2;
+						place-self: end;
+					}
+				}
 
-            .banner-cropper {
-                .cropper-actions {
-                    display: grid;
-                    grid-template-columns: 1fr auto;
-                    place-items: center start;
-                    gap: var(--spacing-4x);
+				inline-size: min-content;
+				block-size: max-content;
 
-                    button {
-                        grid-column: 2;
-                        place-self: end;
-                    }
-                }
+				.cropper-placeholder-canvas {
+					display: grid;
+					place-content: center;
+					inline-size: var(--cropper-placeholder-inline-size);
+					block-size: var(--cropper-placeholder-block-size);
+					color: var(--color-primary);
+					background: var(--level-2-background);
+					border-radius: var(--border-radius-2x);
 
-                inline-size: min-content;
-                block-size: max-content;
+					.inline-icon {
+						animation: cropper-loading-spin 1s linear infinite;
+					}
+				}
 
-                .cropper-placeholder-canvas {
-                    display: grid;
-                    place-content: center;
-                    inline-size: var(--cropper-placeholder-inline-size);
-                    block-size: var(--cropper-placeholder-block-size);
-                    color: var(--color-primary);
-                    background: var(--level-2-background);
-                    border-radius: var(--border-radius-2x);
+				&:is(.cropper-placeholder--banner) {
+					--cropper-placeholder-inline-size: 980px;
+					--cropper-placeholder-block-size: 229px;
+				}
 
-                    .inline-icon {
-                        animation: cropper-loading-spin 1s linear infinite;
-                    }
-                }
-
-                &:is(.cropper-placeholder--banner) {
-                    --cropper-placeholder-inline-size: 980px;
-                    --cropper-placeholder-block-size: 229px;
-                }
-
-                &:is(.cropper-placeholder--card) {
-                    --cropper-placeholder-inline-size: 540px;
-                    --cropper-placeholder-block-size: 200px;
-                }
-            }
-        }
-    </style>
+				&:is(.cropper-placeholder--card) {
+					--cropper-placeholder-inline-size: 540px;
+					--cropper-placeholder-block-size: 200px;
+				}
+			}
+		}
+	</style>
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: "/profile/"},
@@ -500,7 +503,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						data-on:change="if (el.files.length) el.form.requestSubmit()"
 						data-attr:disabled="$_imageBusy"
 						data-show="!$_cropperImageLoading"
-						style="display: none;"
+						style="display: none"
 						type="file"
 						name="image"
 						accept="image/*"
@@ -514,34 +517,34 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					</div>
 					<p
 						data-show="$_cropperImageLoading"
-						style="display: none;"
+						style="display: none"
 					>Laster bilde. Vær vennlig og vent...</p>
-					<p style="display: none; margin: 0px;" data-show="$sourceImageUrl !== '' && !$_uploading  && !$_cropperImageLoading">Klikk eller dra og slipp for å bytte bilde</p>
-					<p style="display: none;" data-show="$sourceImageUrl === '' && !$_uploading && !$_cropperImageLoading" data-text="$_add_drag_over ? 'Slipp bildet her' : 'Klikk her eller dra et bilde inn for å laste det opp.'">
+					<p style="display: none; margin: 0px" data-show="$sourceImageUrl !== '' && !$_uploading  && !$_cropperImageLoading">Klikk eller dra og slipp for å bytte bilde</p>
+					<p style="display: none" data-show="$sourceImageUrl === '' && !$_uploading && !$_cropperImageLoading" data-text="$_add_drag_over ? 'Slipp bildet her' : 'Klikk her eller dra et bilde inn for å laste det opp.'">
 						Klikk her eller dra et bilde inn for å laste det opp.
 					</p>
-					<p style="display: none;" data-show="$sourceImageUrl === '' && !$_uploading && !$_cropperImageLoading">
+					<p style="display: none" data-show="$sourceImageUrl === '' && !$_uploading && !$_cropperImageLoading">
 						Støttede formater: PNG, JPG, ...
 					</p>
-					<div class="image-upload-progress-wrapper" style="display: none;" data-show="$_uploading">
+					<div class="image-upload-progress-wrapper" style="display: none" data-show="$_uploading">
 						<div class="image-upload-progress" role="progressbar" aria-label="Laster opp bilde" aria-valuemin="0" aria-valuemax="100" data-attr:aria-valuenow="$_uploadProgress">
 							<div class="progress-bar" data-style="{'--progress': $_uploadProgress}"></div>
 						</div>
 						<span data-text="$_uploadProgress === 100 ? 'Laster bilde. Vær vennlig og vent...' : ''"></span>
 					</div>
-					<p class="feedback-error" style="display: none;" data-show="$_uploadError" data-text="$_uploadError"></p>
+					<p class="feedback-error" style="display: none" data-show="$_uploadError" data-text="$_uploadError"></p>
 				</form>
 			</div>
 			<div
 				class="surface-pane image-upload-content"
-				style="display: none;"
+				style="display: none"
 				data-show="$_cropperImageError"
 			>
-				<p class="feedback-error" style="display: none;" data-text="$_cropperImageError"></p>
+				<p class="feedback-error" style="display: none" data-text="$_cropperImageError"></p>
 			</div>
 			<div
 				class="surface-pane banner-cropper cropper-placeholder--banner"
-				style="display: none;"
+				style="display: none"
 				data-show="$_cropperImageLoading"
 			>
 				<div
@@ -554,11 +557,11 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			</div>
 			<div
 				class="surface-pane banner-cropper cropper-placeholder--card"
-				style="display: none;"
+				style="display: none"
 				data-show="$_cropperImageLoading"
 			>
 				<div
-					class="cropper-placeholder-canvas "
+					class="cropper-placeholder-canvas"
 					role="status"
 					aria-label="Laster bilde"
 				>
@@ -574,7 +577,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 // The component owns canvas operations; Datastar owns requests and feedback.
 templ imageCropper(eventID, kind, label, width, height, previewWidth, previewHeight, stateName, indicator string) {
 	{{ state := "$" + stateName }}
-	<div class="surface-pane banner-cropper" style="display: none;" data-show="$_cropperImageReady">
+	<div class="surface-pane banner-cropper" style="display: none" data-show="$_cropperImageReady">
 		<banner-cropper
 			width={ width }
 			height={ height }
@@ -600,9 +603,9 @@ templ imageCropper(eventID, kind, label, width, height, previewWidth, previewHei
 				<input type="file" name="image" hidden required/>
 				<input type="hidden" name="kind" value={ kind }/>
 				<div aria-live="polite">
-					<span data-show={ fmt.Sprintf("%s.exporting || $%s", state, indicator) } style="display: none;">Laster opp...</span>
-					<span data-show={ state + ".saved" } style="display: none;">Lastet opp</span>
-					<span class="feedback-error" data-show={ state + ".saveError" } data-text={ state + ".saveError" } style="display: none;"></span>
+					<span data-show={ fmt.Sprintf("%s.exporting || $%s", state, indicator) } style="display: none">Laster opp...</span>
+					<span data-show={ state + ".saved" } style="display: none">Lastet opp</span>
+					<span class="feedback-error" data-show={ state + ".saveError" } data-text={ state + ".saveError" } style="display: none"></span>
 				</div>
 				<button
 					type="button"

@@ -1,20 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Tear down a preview environment created by deploy.sh. Dry-run cleanup can run
-# unprivileged from CI; real teardown must run as root. Idempotent: every removal
-# tolerates an already-absent target, so a double-close or a close-after-failed
-# deploy does not error.
+# Tear down a PR preview environment created by deploy.sh. Runs as root (via
+# sudo) from the cleanup-preview CI job when a PR closes. Idempotent: every
+# removal tolerates an already-absent target, so a double-close or a
+# close-after-failed deploy does not error.
 #
-# SAFETY — DRY RUN BY DEFAULT:
-# DRY_RUN defaults to "true", so this script only LOGS what it would remove.
-# That makes the first PR close after rollout a harmless no-op which still
-# proves the CI -> server wiring (SSH, sudo, upload, script run) end to end.
-# Once you have seen a clean dry-run log AND patched the live server's sudoers
-# for cleanup.sh, flip the default below to "false" (one-line change, committed)
-# to enable real teardown. You can also force a single real run manually with
-# `DRY_RUN=false sudo cleanup.sh <safe_name>`.
-DRY_RUN="${DRY_RUN:-true}"
+# DRY_RUN=true only logs what would be removed and needs no root:
+#   DRY_RUN=true bash cleanup.sh <PR_NUMBER>-merge
+# sudo drops DRY_RUN, so `DRY_RUN=true sudo cleanup.sh` removes the preview.
+DRY_RUN="${DRY_RUN:-false}"
 
 DATA_ROOT="/mnt/HC_Volume_103911252/environments"
 
@@ -25,13 +20,14 @@ if [[ -z "$SAFE_NAME" ]]; then
   exit 1
 fi
 
-if [[ "$SAFE_NAME" == "main" || "$SAFE_NAME" == "demo" ]]; then
-  echo "[cleanup] ERROR: refusing to clean up fixed environment SAFE_NAME=$SAFE_NAME." >&2
+if [[ ! "$SAFE_NAME" =~ ^[0-9]+-merge$ ]]; then
+  echo "[cleanup] ERROR: refusing to clean up SAFE_NAME=$SAFE_NAME; only PR previews named <PR_NUMBER>-merge can be removed." >&2
   exit 1
 fi
 
 SERVICE_NAME="conorganizer-${SAFE_NAME}.service"
 SERVICE_UNIT="/etc/systemd/system/$SERVICE_NAME"
+SERVICE_WANTS_LINK="/etc/systemd/system/multi-user.target.wants/$SERVICE_NAME"
 CADDY_SITE_DEST="/etc/caddy/sites-enabled/conorganizer-${SAFE_NAME}.caddy"
 APP_DIR="/opt/conorganizer/${SAFE_NAME}"
 BRANCH_DATA_DIR="$DATA_ROOT/$SAFE_NAME"
@@ -55,8 +51,14 @@ echo "[cleanup] Stopping and disabling $SERVICE_NAME"
 run systemctl stop "$SERVICE_NAME" || true
 run systemctl disable "$SERVICE_NAME" || true
 
+if [[ "$DRY_RUN" != "true" ]] && systemctl is-active --quiet "$SERVICE_NAME"; then
+  echo "[cleanup] ERROR: $SERVICE_NAME is still active after stop; leaving its files in place." >&2
+  exit 1
+fi
+
+# disable removes the wants link only while the unit file still exists.
 echo "[cleanup] Removing systemd unit: $SERVICE_UNIT"
-run rm -f "$SERVICE_UNIT"
+run rm -f "$SERVICE_UNIT" "$SERVICE_WANTS_LINK"
 
 echo "[cleanup] Removing Caddy site: $CADDY_SITE_DEST"
 run rm -f "$CADDY_SITE_DEST"
@@ -66,7 +68,12 @@ run rm -rf "$BRANCH_DATA_DIR"
 
 echo "[cleanup] Reloading systemd and Caddy"
 run systemctl daemon-reload || true
-run systemctl reload caddy || true
+# A unit that was in the failed state stays listed as not-found until reset.
+if systemctl is-failed --quiet "$SERVICE_NAME"; then
+  run systemctl reset-failed "$SERVICE_NAME" || true
+fi
+# A failed reload leaves the old route live in Caddy, so let it fail the job.
+run systemctl reload caddy
 
 # Remove the app dir last; it holds this very script. On Linux the running
 # process keeps its open inode, so removing the directory mid-run is safe.

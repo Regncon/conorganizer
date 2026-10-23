@@ -10,8 +10,8 @@ import (
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/icons"
-	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/feedback"
 	"github.com/Regncon/conorganizer/service/program"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -300,9 +300,21 @@ templ feedbackAdminPage(entries []feedback.Entry, activeCategory feedback.Catego
 			<a href="/admin/tilbakemeldinger/qr" class="btn btn--secondary">Skriv ut QR-kode</a>
 		</div>
 		<nav class="feedback-filter-tabs" aria-label="Filtrer tilbakemeldinger">
-			<a href="/admin/tilbakemeldinger/" class="btn btn--secondary" if activeCategory == "" { aria-current="page" }>Alle</a>
+			<a
+				href="/admin/tilbakemeldinger/"
+				class="btn btn--secondary"
+				if activeCategory == "" {
+					aria-current="page"
+				}
+			>Alle</a>
 			for _, category := range feedback.Categories {
-				<a href={ feedbackFilterHref(category) } class="btn btn--secondary" if activeCategory == category { aria-current="page" }>{ category.Label() }</a>
+				<a
+					href={ feedbackFilterHref(category) }
+					class="btn btn--secondary"
+					if activeCategory == category {
+						aria-current="page"
+					}
+				>{ category.Label() }</a>
 			}
 		</nav>
 		@feedbackAdminContent(entries, activeCategory)

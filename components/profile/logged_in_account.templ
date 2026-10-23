@@ -4,49 +4,49 @@ import "github.com/Regncon/conorganizer/components/icons"
 
 templ LoggedInAccount(email string) {
 	<style>
-    .logged-in-account {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: var(--spacing-5x) var(--spacing-2x);
-        align-items: center;
-        color: var(--color-text-soft);
+		.logged-in-account {
+			display: grid;
+			grid-template-columns: auto 1fr;
+			gap: var(--spacing-5x) var(--spacing-2x);
+			align-items: center;
+			color: var(--color-text-soft);
 
-        p {
-            margin: 0;
-        }
-    }
+			p {
+				margin: 0;
+			}
+		}
 
-    .logged-in-account-avatar {
-        display: inline-grid;
-        place-content: center;
-        inline-size: 2.5rem;
-        aspect-ratio: 1;
-        border-radius: 50%;
-        background-color: var(--color-text-soft-20);
-    }
+		.logged-in-account-avatar {
+			display: inline-grid;
+			place-content: center;
+			inline-size: 2.5rem;
+			aspect-ratio: 1;
+			border-radius: 50%;
+			background-color: var(--color-text-soft-20);
+		}
 
-    .logged-in-account-text {
-        display: grid;
-        min-inline-size: 0;
-    }
+		.logged-in-account-text {
+			display: grid;
+			min-inline-size: 0;
+		}
 
-    .logged-in-account-label {
-        font-size: var(--text-body-small);
-    }
+		.logged-in-account-label {
+			font-size: var(--text-body-small);
+		}
 
-    .logged-in-account-email {
-        font-weight: bold;
-        color: var(--color-text-strong);
-        overflow-wrap: anywhere;
-    }
+		.logged-in-account-email {
+			font-weight: bold;
+			color: var(--color-text-strong);
+			overflow-wrap: anywhere;
+		}
 
-    .logged-in-account-actions {
-        grid-column: 1 / -1;
-        display: flex;
-        flex-wrap: wrap;
-        place-content: end;
-        gap: var(--spacing-5x);
-    }
+		.logged-in-account-actions {
+			grid-column: 1 / -1;
+			display: flex;
+			flex-wrap: wrap;
+			place-content: end;
+			gap: var(--spacing-5x);
+		}
 	</style>
 	<div class="surface-pane logged-in-account">
 		if email != "" {

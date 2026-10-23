@@ -13,4 +13,4 @@ CI notes:
 
 - GitHub Actions runs lint and build/test on pull requests and on pushes to main.
 - Deploy runs only on push to main (via buildAndTest workflow).
-- Workflows generate templ files (templ v0.3.960) before lint/build; keep templ-generated files in mind when troubleshooting CI typecheck issues.
+- Workflows run `go tool templ generate` (the templ version pinned in go.mod) before lint/build; keep templ-generated files in mind when troubleshooting CI typecheck issues.

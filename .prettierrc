@@ -2,5 +2,13 @@
     "endOfLine": "lf",
     "printWidth": 120,
     "tabWidth": 4,
-    "useTabs": false
+    "useTabs": false,
+    "overrides": [
+        {
+            "files": "$TEMPL_PRETTIER_FILENAME",
+            "options": {
+                "parser": "html"
+            }
+        }
+    ]
 }

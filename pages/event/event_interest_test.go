@@ -943,9 +943,13 @@ func decodeInterestContent(t *testing.T, response *httptest.ResponseRecorder) no
 			actual.Assigned.Role = "GM"
 		}
 	}
-	if err := json.Unmarshal([]byte(wrapper.AttrOr("data-signals:selected-interest-level", "")), &actual.Interest); err != nil {
+	var signals struct {
+		SelectedInterestLevel *models.InterestLevel `json:"selectedInterestLevel"`
+	}
+	if err := json.Unmarshal([]byte(wrapper.AttrOr("data-signals", "")), &signals); err != nil || signals.SelectedInterestLevel == nil {
 		t.Fatalf("missing saved interest in content HTML: %v", err)
 	}
+	actual.Interest = *signals.SelectedInterestLevel
 	return actual
 }
 

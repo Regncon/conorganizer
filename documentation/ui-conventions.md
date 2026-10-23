@@ -21,6 +21,25 @@ The global `.card` class (`--level-1-background`, `border-radius-1x`, a shadow a
 
 Remove `.card` from `index.css` only after all of these have been migrated.
 
+### Looped components render their style once
+
+Most components keep a plain `<style>` block next to their markup, and that stays the default. The exception is a component that renders many times on one page, such as the ticket holder buttons in the interest dialog or the program pulje events on the profile page. Without help, every item repeats the whole style block. Those components wrap the block in a package-level `templ.NewOnceHandle()`:
+
+```templ
+var ticketHolderButtonStylesOnce = templ.NewOnceHandle()
+
+templ TicketHolderButton(currentBillettHolder BillettHolder) {
+	@ticketHolderButtonStylesOnce.Once() {
+		<style>
+			...
+		</style>
+	}
+	...
+}
+```
+
+The style tag then appears once per page instead of once per item. The handle is scoped to one top-level `Render` call, so a live update that renders a fragment on its own still carries the styles that fragment needs. Use the handle only when a component is rendered in a loop or by a parent that repeats it; a component rendered once per page does not need one. Today the handles sit on `TicketHolderButton`, `NameInitials`, `Initials`, `ProgramPuljeEvent`, `ProgramPuljeInterests`, `ProgramPuljeNoEvents` and `ProgramPuljeNoSeat`.
+
 ### Shared form and choice classes
 
 - `.label`, `.label-bold` and `.form-group` (the label + control + message stack) are global rules in `static/css/index.css`, so they work outside `components/formsubmission/` too.

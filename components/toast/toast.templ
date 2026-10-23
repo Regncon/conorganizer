@@ -42,9 +42,9 @@ const missingMessage = "Mangler toast-melding"
 // request receives non-empty feedbackErrors before its finished event.
 templ Render(message string, icon icons.IconType) {
 	{{
-	if message == "" {
-		message = missingMessage
-	}
+		if message == "" {
+			message = missingMessage
+		}
 	}}
 	<app-toast
 		class="toast-region"

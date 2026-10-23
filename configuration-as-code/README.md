@@ -26,7 +26,7 @@ Observability services:
 | Service | Address | Notes |
 | --- | --- | --- |
 | Grafana | `127.0.0.1:3400` | Public at `grafana.regncon.no` through Caddy |
-| Loki | `127.0.0.1:3500` | Not the Loki default `3100` |
+| Loki | `127.0.0.1:3500` | Not the Loki default `3100`. Data in `/var/lib/loki`, kept for 120 days (see [Loki storage](#loki-storage)) |
 | Promtail | `:9080` | No bind address set. Tails `/var/log/messages` and pushes to Loki |
 | Prometheus | `127.0.0.1:9090` | OS package, config from this repo |
 | node_exporter | `127.0.0.1:9100` | OS package, config from this repo |
@@ -42,6 +42,15 @@ The production repository is stored at:
 /srv/configuration-as-code-repo/conorganizer/configuration-as-code
 ```
 
+The checkout `/srv/configuration-as-code-repo/conorganizer` is kept on a detached `origin/main` and belongs to whichever admin last worked in it. Git refuses to run in a checkout owned by someone else, so before you run git there, take it over, and make sure it fetches over HTTPS. Both lines can be run every time:
+
+```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer
+git -C /srv/configuration-as-code-repo/conorganizer remote set-url origin https://github.com/Regncon/conorganizer.git
+```
+
+Run these, and the git commands after them, from your own login shell, not from a root shell (`sudo -i`, `sudo -s`, `sudo su`): there `$USER` is root, so the checkout would become root-owned. The repository is public, so the checkout fetches anonymously over HTTPS, needs no GitHub key on the server, and cannot push. The procedures in this README write git as plain `git`. The stow links keep working whoever owns the files: Caddy, Loki and the other services only need them to stay world-readable (see [Fix permissions](#fix-permissions)). Never commit or push from this checkout; change the repository through a pull request and move the checkout with `git fetch origin` and `git checkout --detach origin/main`. Before an admin's account is removed, take the checkout over from them (see [Remove a user](../hetzner/hetzner-admin.md#remove-a-user)).
+
 ## Stow packages
 
 | Package | Installs |
@@ -52,7 +61,7 @@ The production repository is stored at:
 | `loki` | `/etc/loki/config.yml` |
 | `prometheus` | `/etc/prometheus/prometheus.yml`, `/etc/prometheus/blackbox.yml` and `/etc/default/prometheus-node-exporter` |
 | `promtail` | `/etc/promtail/config.yml` |
-| `systemd` | `/etc/systemd/system/` units for the app instances, the backup services and timers, `loki.service` and `promtail.service` |
+| `systemd` | `/etc/systemd/system/` units for the app instances, the backup services and timers, `promtail.service`, and the `loki.service.d` drop-in. `loki.service` itself comes from the Loki package (see [Units that come from a package](#units-that-come-from-a-package)) |
 
 Prometheus, `prometheus-node-exporter` and `prometheus-blackbox-exporter` are installed as OS packages; only their config comes from the `prometheus` package. `/etc/default/prometheus-node-exporter` is the only `/etc/default` override in the repository. It binds node_exporter to `127.0.0.1:9100`, enables `--collector.systemd`, and uses a filesystem mount-point exclude that does not exclude `/mnt`, so the mounted volume is visible.
 
@@ -67,6 +76,64 @@ From the repository root:
 The script runs `sudo stow --dir=stow --target=/ --restow <package>` for these packages, in order: `scripts`, `caddy`, `grafana`, `loki`, `prometheus`, `promtail`, `systemd`. A missing package directory prints `Skipping missing Stow package: <name>` instead of failing. It then runs `sudo systemctl daemon-reload`.
 
 The script does not enable, start or restart any service. Restart the affected services yourself after a config change, and enable new units or timers with `sudo systemctl enable --now <unit>`.
+
+## Units that come from a package
+
+The repository does not stow `loki.service`. The Loki package installs `/etc/systemd/system/loki.service` itself, as an ordinary package file rather than a config file, and writes it again on every upgrade. When the repository stowed its own copy, each Loki upgrade replaced the stow link with the package's file. The next `stow --restow systemd` then stopped for every unit in the package with:
+
+```text
+cannot stow .../loki.service over existing target etc/systemd/system/loki.service since neither a link nor a directory and --adopt not specified
+```
+
+That happened on 2026-10-20. The repository's copy was byte for byte the same as the package's, so it never changed anything. Now the package owns `loki.service`, and the repository owns only the changes, in a drop-in.
+
+### Changing the Loki unit
+
+Don't edit `/etc/systemd/system/loki.service` on the server, and don't use `systemctl edit --full`; the next upgrade overwrites both. Plain `systemctl edit loki` is no better: `loki.service.d` is a stow link into the checkout, so its `override.conf` would end up in the checkout as an untracked file owned by root. Add a drop-in to the repository instead: a file in `configuration-as-code/stow/systemd/etc/systemd/system/loki.service.d/` whose name ends in `.conf`, with a `[Service]` section that holds only the settings to add or change. systemd merges every drop-in into the package's unit, and the package never touches them. `state-directory.conf` is the existing example.
+
+Most settings just need the new value. For example, to cap Loki's memory:
+
+```ini
+[Service]
+MemoryMax=600M
+Environment=GOMEMLIMIT=450MiB
+```
+
+`ExecStart` is a list, so a drop-in that changes the command has to clear the package's value first with an empty line:
+
+```ini
+[Service]
+ExecStart=
+ExecStart=/usr/bin/loki -config.file /etc/loki/config.yml -log.level=warn
+```
+
+To apply a drop-in, update the checkout (see [Repository location](#repository-location)), then run from the repository root:
+
+```bash
+sudo stow --dir=configuration-as-code/stow --target=/ --restow systemd
+sudo systemctl daemon-reload
+sudo systemctl restart loki
+```
+
+`systemctl cat loki --no-pager` shows the package's unit followed by every drop-in, and `systemctl show loki -p MemoryMax` shows the value in effect.
+
+The package's upgrade script does nothing (`upgrade()` in Loki's `tools/packaging/loki-postinstall.sh`). After `apt` upgrades Loki, run `sudo systemctl daemon-reload` and `sudo systemctl restart loki` yourself, then check with `systemctl cat loki --no-pager` that the drop-ins still fit the new unit.
+
+The same applies to any other unit a package installs. Before stowing a unit, check whether a package owns it: `dpkg -S /etc/systemd/system/<unit>` names the package if one does. `promtail.service` in the repository is byte for byte the unit the Promtail package installs at the same path, so it has the same problem. No new Promtail package is built anymore, so it stays until Promtail itself is removed. Units that no package provides, like `conorganizer-*.service` and the backup timers, stay complete files in the repository.
+
+### Switching an existing server
+
+Until this change, `/etc/systemd/system/loki.service` on the server was a stow link to the repository's copy, and on 2026-10-20 the package's own file was moved to `/root/loki.service.package-backup`. When the checkout no longer has `loki.service`, the link points at nothing. Loki keeps running, but after the next `systemctl daemon-reload` it can't be restarted and won't start at boot, and the next `stow --restow systemd` deletes the link. So move the package's file back right after updating the checkout, from `/srv/configuration-as-code-repo/conorganizer`:
+
+```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
+git fetch origin && git checkout --detach origin/main && sudo mv /root/loki.service.package-backup /etc/systemd/system/loki.service
+sudo systemctl daemon-reload
+sudo stow --dir=configuration-as-code/stow --target=/ --restow systemd
+ls -l /etc/systemd/system/loki.service
+```
+
+`mv` replaces the link, or takes its place if a restow has already deleted it. `ls -l` should show a plain file owned by root. Don't move it back before updating the checkout: while the checkout still has `loki.service`, `stow --restow systemd` stops on the plain file, as it did on 2026-10-20.
 
 ## Fix permissions
 
@@ -103,6 +170,66 @@ The SQLite backup runs `PRAGMA integrity_check` and checks that the `users` and 
 
 Log lines start with `conorganizer-sqlite-backup:` or `conorganizer-images-backup:` and end with `completed successfully` on success. The Grafana backup panels depend on these strings.
 
+Before logging `completed successfully`, each script writes Prometheus metrics to `/var/lib/prometheus/node-exporter/conorganizer-sqlite-backup.prom` or `conorganizer-images-backup.prom`, which node_exporter's textfile collector serves. They hold the time of the last successful backup and, from the SQLite backup, the database, WAL, backup and backup directory sizes. See [Backup Metrics](grafana-dashboards/README.md#backup-metrics).
+
+## Loki storage
+
+Loki stores its chunks, index and write-ahead log in `/var/lib/loki` on the root disk. The drop-in `loki.service.d/state-directory.conf` creates the folder for the `loki` user, with mode 0700 (`StateDirectory=loki`). It is a drop-in because the Loki package owns `loki.service` (see [Units that come from a package](#units-that-come-from-a-package)).
+
+The compactor deletes logs older than `retention_period` (120 days). Without `compactor.retention_enabled`, Loki ignores `retention_period` and keeps everything. Enabling retention also enables Loki's log-deletion API, without authentication. `deletion_mode: disabled` turns that API off, and retention does not need it.
+
+On `/tmp`, Loki grew about 15 MB a day over its first 30 hours. It grows less on quiet days and more while people run queries, because about half of what Loki stores is its own query logs. At 15 MB a day, 120 days comes to roughly 2 GB. That takes `/` from about 84% to about 89% used, just under the 90% red line of the "Root filesystem usage" panel, and no alert watches it. Run `sudo du -sh /var/lib/loki` a week after the move, and lower `retention_period` if Loki grows faster than 15 MB a day.
+
+Loki used to keep this data in `/tmp/loki`, because the repository's config started from the example file the Loki package installs (`cmd/loki/loki-local-config.yaml`). On this server `/tmp` is a 1 GB tmpfs in RAM, so every reboot wiped all logs. The originals in the systemd journal and `/var/log/syslog*` were never affected.
+
+### Moving from /tmp/loki
+
+To move without losing the logs collected since the last reboot, run all of this in one go, from `/srv/configuration-as-code-repo/conorganizer`. That checkout is kept on a detached `origin/main`; take it over first, then git runs as you (see [Repository location](#repository-location)). Updating the checkout switches `/etc/loki/config.yml` to `/var/lib/loki` at once, because it is a stow symlink into the checkout. If Loki restarted before systemd knew about the drop-in, it could not create its folder and would stay down. So stop Loki before you update the checkout, and don't update it past this change without running these steps.
+
+First check what the update brings, and that the installed Loki accepts the new config:
+
+```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
+cd /srv/configuration-as-code-repo/conorganizer
+git fetch origin
+git diff --stat HEAD origin/main -- configuration-as-code/stow
+git show origin/main:configuration-as-code/stow/loki/etc/loki/config.yml > /tmp/loki-config-new.yml
+/usr/bin/loki -config.file=/tmp/loki-config-new.yml -verify-config
+```
+
+The diff lists every stowed file the update changes. Changes to the Caddyfile or to other units take effect the next time those services reload.
+
+Then stop Loki, update the checkout, copy the data and start Loki again:
+
+```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
+sudo systemctl stop loki
+git checkout --detach origin/main
+test -e /var/lib/loki && echo "/var/lib/loki already exists: do not copy, check it first" || sudo cp -a /tmp/loki /var/lib/loki
+sudo stow --dir=configuration-as-code/stow --target=/ --restow loki systemd
+sudo systemctl daemon-reload
+sudo systemctl start loki
+```
+
+`cp -a` creates `/var/lib/loki` with the owner of `/tmp/loki`. The Loki package creates no `loki` group, so don't create the folder with `install -g loki`.
+
+If Loki does not start, `/tmp/loki` is untouched. To go back to the old path, run `git checkout HEAD@{1} -- configuration-as-code/stow/loki/etc/loki/config.yml`, then `sudo systemctl start loki`. The drop-in is harmless with the old path and can stay.
+
+Alloy retries each batch 10 times, with backoff growing from 0.5 s to 5 min, so nothing is dropped as long as Loki is back within about 4 minutes. The journal keeps every line either way. Check the result:
+
+```bash
+systemctl status loki --no-pager
+for i in $(seq 30); do curl -fsS http://127.0.0.1:3500/ready && break; sleep 2; done
+curl -fsS http://127.0.0.1:3500/config | grep -E 'path_prefix|working_directory|active_index_directory|retention_enabled|deletion_mode'
+sudo du -sh /var/lib/loki
+sudo journalctl -u loki -n 50 --no-pager -o cat | grep -E "level=(error|warn)"
+curl -fsS http://127.0.0.1:12345/metrics | grep '^loki_write_dropped_entries_total'
+```
+
+The last command should show only 0 values.
+
+In Grafana, logs from before the move should still be there. Re-import `grafana-dashboards/conorganizer-production-health.json` (see [Manual Import](grafana-dashboards/README.md#manual-import)), so the "Root filesystem usage" description no longer says Loki's data is in `/tmp/loki`. `/tmp/loki` can then be deleted, or left for the next reboot to clear.
+
 ## Caddy hostnames
 
 Hostnames in the checked-in Caddyfile:
@@ -114,11 +241,65 @@ Hostnames in the checked-in Caddyfile:
 | `demo.lekeplassen.regncon.no` | `127.0.0.1:19081` |
 | `restored.lekeplassen.regncon.no` | `127.0.0.1:19082` |
 | `grafana.regncon.no` | `127.0.0.1:3400` |
-| `meetup-january-2026.lekeplassen.regncon.no` | `127.0.0.1:8080` |
+| `regncon.no` | The Regncon website: the static files in `/opt/www.regncon.no/`, served with `file_server`, `templates` and `encode gzip`, see [The regncon.no website](#the-regnconno-website) |
+| `regncon.lekeplassen.regncon.no` | Same block as `regncon.no` |
+| `www.regncon.no` | Permanent (301) redirect of every request to `https://regncon.no{uri}` |
 
-The Caddyfile ends with `import /etc/caddy/sites-enabled/*.caddy`. That directory is not in the repository. `deploy/deploy.sh` writes one site file per PR preview there. The fixed environments (main, demo, restored) do not use it.
+The Caddyfile ends with `import /etc/caddy/sites-enabled/*.caddy`. That directory is not in the repository. `deploy/deploy.sh` writes one site file per PR preview there, and nothing else belongs there. The fixed environments (main, demo, restored) and the website do not use it.
 
 Blackbox probes and the TLS-expiry panels only check `https://main.lekeplassen.regncon.no/` and `https://grafana.regncon.no/`.
+
+### The regncon.no website
+
+The website on `regncon.no` is split between two repositories. The private repository [Regncon/nettside](https://github.com/Regncon/nettside) holds the site itself: static HTML, CSS and JS with no build step. Its workflow `.github/workflows/deploy.yml` rsyncs `src/` to `/opt/www.regncon.no/` on the server, as the `deploy` user, on every push to `master`. Nothing else writes to that directory, and each deploy makes it an exact copy of `src/`: a file added there by hand is deleted, and a file changed there by hand is overwritten, on the next push. Change the site in Regncon/nettside instead. The files are not in this repository, and this repository's CI never touches them.
+
+The Caddy block that serves the files is in this repository's Caddyfile, like every other fixed host. `templates` lets the pages use Caddy's template functions, `file_server` serves the files and `encode gzip` compresses the responses. Caddy hides the Caddyfile itself from every `file_server` it defines, so the block needs no `hide` directive.
+
+Nothing in this repository creates `/opt/www.regncon.no/` or lets nettside log in. On a new server, after `hetzner/scripts/setup_deploy_user.sh` has created `deploy`, create the directory owned by `deploy` (`sudo install -d -o deploy -g deploy -m 0755 /opt/www.regncon.no`). Owned, not only writable: rsync also sets the directory's own times and mode, which only the owner may do, so every nettside deploy would otherwise fail with exit code 23. Then put a key that `deploy` accepts into the `HETZNER_SSH_KEY` secret of nettside's `Production` environment. The setup script replaces `authorized_keys` with the key it generates, so either use that key or append nettside's own public key to `deploy`'s `authorized_keys` after the script has run. Finally, once `regncon.no` resolves to the new server, push a commit to nettside's `master` (`git commit --allow-empty` is enough): the workflow has no manual trigger, GitHub re-runs an old run only for 30 days, and the workflow connects to `deploy@regncon.no` and accepts whatever host key it finds there, so a run before the DNS switch deploys to the old server. Until then Caddy answers 404 on `regncon.no`.
+
+#### Moving the hand-made website file
+
+Until the block was added to the Caddyfile, it lived in a hand-made `/etc/caddy/sites-enabled/www.regncon.no.caddy` that no repository deployed, so a server rebuilt from this repository lost the hosts. This section applies while that file exists. `/etc/caddy/Caddyfile` is a stow link into the checkout, so updating the checkout past this change puts a second definition of the hosts on disk at once, and Caddy refuses a config that defines the same host twice. Until the hand-made file is gone, every Caddy reload fails, including the ones preview deploys and cleanups run, and a Caddy restart, a Caddy upgrade or a reboot leaves Caddy stopped with every host down. Moving the file before updating the checkout is wrong too: a reload in between drops the website. So do both in one sitting, and don't update the checkout past this change any other way.
+
+Start when no deploy or cleanup job is running in Actions. First look, without changing anything:
+
+```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
+cd /srv/configuration-as-code-repo/conorganizer
+sudo cat /etc/caddy/sites-enabled/www.regncon.no.caddy
+git fetch origin
+git diff --stat HEAD origin/main -- configuration-as-code/stow
+```
+
+The `cat` must show only the two website blocks that are now in the Caddyfile; anything else in the file has to move into the Caddyfile first. The diff should list only the Caddyfile. If it lists other stowed files, run their own procedures right after the checkout below, in the same sitting, because their own `checkout --detach origin/main` would also bring in this change (for a removed `loki.service`, see [Switching an existing server](#switching-an-existing-server)).
+
+Then update the checkout and move the file in one line, so that the file only moves when the website block really is on disk:
+
+```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
+old=$(git rev-parse HEAD); echo "$old"
+sudo -v
+git checkout --detach origin/main \
+ && grep -qxF 'regncon.no, regncon.lekeplassen.regncon.no {' /etc/caddy/Caddyfile \
+ && sudo mv /etc/caddy/sites-enabled/www.regncon.no.caddy /root/www.regncon.no.caddy.bak
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+curl -sS -o /dev/null -w '%{http_code}\n' https://regncon.no/
+```
+
+If the chained line stops before the `mv`, nothing live has changed and the validate and reload after it are harmless: fix the cause and run the block again. If validate or the reload fails, or curl prints anything but `200`, Caddy may still serve the old config, but the files on disk won't load, so put both back before leaving the server:
+
+```bash
+sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer   # take over the config checkout; git then runs as you
+sudo mv /root/www.regncon.no.caddy.bak /etc/caddy/sites-enabled/www.regncon.no.caddy
+git checkout "$old" -- configuration-as-code/stow/caddy/etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+Restoring only that file keeps everything else the update brought. `$old` must be from before this change; if the checkout had already been moved past it, use the last commit before this change instead. `origin/main` still defines the hosts, so fix the cause, or revert this change on main, before anyone updates the checkout again.
+
+A deploy or cleanup job that reloads Caddy between the `checkout` and the `mv` fails. Re-run it afterwards: `cleanup.sh` is idempotent and only then removes the app directory in `/opt/conorganizer/` it left behind. `sites-enabled` then holds only PR preview sites again, and once `regncon.no` answers `200`, `/root/www.regncon.no.caddy.bak` can be deleted.
 
 ## Maintenance mode
 

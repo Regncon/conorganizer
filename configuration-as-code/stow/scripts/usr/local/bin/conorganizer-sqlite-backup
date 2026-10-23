@@ -2,8 +2,11 @@
 set -euo pipefail
 
 sqlite_database_path="/mnt/HC_Volume_103911252/environments/main/database/events.db"
-backup_directory="/mnt/HC_Volume_103911252/backups/sqlite"
+sqlite_wal_path="${sqlite_database_path}-wal"
+backups_root_directory="/mnt/HC_Volume_103911252/backups"
+backup_directory="${backups_root_directory}/sqlite"
 backup_retention_days="14"
+metrics_file="/var/lib/prometheus/node-exporter/conorganizer-sqlite-backup.prom"
 
 timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 backup_file="${backup_directory}/events-${timestamp}.db"
@@ -60,5 +63,35 @@ find "$backup_directory" \
     -delete
 
 echo "conorganizer-sqlite-backup: created ${compressed_backup_file}"
+
+completed_at_seconds="$(date +%s)"
+backup_size_bytes="$(stat --format=%s "$compressed_backup_file")"
+database_size_bytes="$(stat --format=%s "$sqlite_database_path")"
+wal_size_bytes="$(stat --format=%s "$sqlite_wal_path" 2>/dev/null || echo 0)"
+# du exits 1 when the image backup deletes a file during the walk, but still prints the total.
+backups_root_size_bytes="$( { du --summarize --block-size=1 "$backups_root_directory" 2>/dev/null || true; } | cut --fields=1)"
+
+metrics_temporary_file="$(mktemp "${metrics_file}.XXXXXX")"
+cat > "$metrics_temporary_file" <<EOF
+# HELP conorganizer_sqlite_backup_last_success_timestamp_seconds Unix time when the last successful SQLite backup of main completed.
+# TYPE conorganizer_sqlite_backup_last_success_timestamp_seconds gauge
+conorganizer_sqlite_backup_last_success_timestamp_seconds ${completed_at_seconds}
+# HELP conorganizer_sqlite_backup_size_bytes Size of the newest compressed SQLite backup.
+# TYPE conorganizer_sqlite_backup_size_bytes gauge
+conorganizer_sqlite_backup_size_bytes ${backup_size_bytes}
+# HELP conorganizer_sqlite_db_size_bytes Size of main's events.db at the last successful backup.
+# TYPE conorganizer_sqlite_db_size_bytes gauge
+conorganizer_sqlite_db_size_bytes ${database_size_bytes}
+# HELP conorganizer_sqlite_wal_size_bytes Size of main's events.db-wal at the last successful backup, 0 when it does not exist.
+# TYPE conorganizer_sqlite_wal_size_bytes gauge
+conorganizer_sqlite_wal_size_bytes ${wal_size_bytes}
+# HELP conorganizer_backup_directory_size_bytes Disk space used by ${backups_root_directory}.
+# TYPE conorganizer_backup_directory_size_bytes gauge
+conorganizer_backup_directory_size_bytes ${backups_root_size_bytes}
+EOF
+# mktemp creates the file as 0600, and node_exporter reads it as the prometheus user.
+chmod 0644 "$metrics_temporary_file"
+mv "$metrics_temporary_file" "$metrics_file"
+
 echo "conorganizer-sqlite-backup: completed successfully"
 

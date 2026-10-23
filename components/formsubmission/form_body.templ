@@ -150,316 +150,309 @@ func currentUserDBID(ctx context.Context, db *sql.DB, logger *slog.Logger) (int6
 
 templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql.DB) {
 	<style>
-			/* Chrome drops native validation bubbles during smooth-scroll to invalid fields. */
-			html:has(.formsubmission-wrapper) {
-				scroll-behavior: auto;
-				scroll-padding-block-start: calc(var(--nav-height) + var(--spacing-4x));
+		/* Chrome drops native validation bubbles during smooth-scroll to invalid fields. */
+		html:has(.formsubmission-wrapper) {
+			scroll-behavior: auto;
+			scroll-padding-block-start: calc(var(--nav-height) + var(--spacing-4x));
+		}
+
+		.formsubmission-wrapper {
+			.input {
+				scroll-margin-block-start: calc(var(--nav-height) + var(--spacing-4x));
 			}
 
-			.formsubmission-wrapper {
-            .input {
-                scroll-margin-block-start: calc(var(--nav-height) + var(--spacing-4x));
-            }
+			> * + .form-card {
+				margin-block-start: 1rem;
+			}
 
-            > * + .form-card {
-                margin-block-start: 1rem;
-            }
+			.feedback-control-group {
+				display: grid;
+				gap: var(--spacing-1x);
+			}
 
-            .feedback-control-group {
-                display: grid;
-                gap: var(--spacing-1x);
-            }
+			:is(.form-group, .feedback-control-group):has(.feedback-error.is-visible) {
+				.input:not([type="checkbox"]) {
+					border-color: #dc3545;
+					box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 25%);
+				}
+			}
 
-            :is(.form-group, .feedback-control-group):has(.feedback-error.is-visible) {
-                .input:not([type="checkbox"]) {
-                    border-color: #DC3545;
-                    box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 25%);
-                }
-            }
+			.form-group-checkbox {
+				display: flex;
+				gap: 0.3rem;
+				place-items: center;
+			}
 
-            .form-group-checkbox {
-                display: flex;
-                gap: 0.3rem;
-                place-items: center;
-            }
+			.form-card {
+				display: grid;
 
-            .form-card {
-                display: grid;
+				.organizer-section {
+					display: grid;
+					gap: 1.25rem;
+				}
 
-                .organizer-section {
-                    display: grid;
-                    gap: 1.25rem;
-                }
+				.about-section {
+					display: grid;
+					gap: 1.25rem;
 
-                .about-section {
-                    display: grid;
-                    gap: 1.25rem;
+					.img {
+						display: flex;
+						flex-direction: column;
+						gap: 1.2rem;
 
-                    .img {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 1.2rem;
+						img {
+							width: 100%;
+							height: 100%;
+							border-radius: var(--border-radius-2x);
+							object-fit: cover;
+						}
+					}
 
-                        img {
-                            width: 100%;
-                            height: 100%;
-                            border-radius: var(--border-radius-2x);
-                            object-fit: cover;
-                        }
-                    }
+					.image-upload {
+						--image-upload-background-image: var(--image-upload-background-image-banner);
 
-                    .image-upload {
-                        --image-upload-background-image: var(--image-upload-background-image-banner);
+						container-type: inline-size;
+						gap: 0.5rem;
 
-                        container-type: inline-size;
-                        gap: 0.5rem;
+						.image-upload__icon,
+						.image-upload__button-icon {
+							display: inline-grid;
+							place-items: center;
+							flex: 0 0 auto;
+						}
 
-                        .image-upload__icon,
-                        .image-upload__button-icon {
-                            display: inline-grid;
-                            place-items: center;
-                            flex: 0 0 auto;
-                        }
+						.image-upload__panel {
+							display: grid;
 
-                        .image-upload__panel {
-                            display: grid;
+							&:not(.image-upload__panel--has-image) {
+								grid-template-rows: 100px auto;
+							}
 
-                            &:not(.image-upload__panel--has-image) {
-                                grid-template-rows: 100px auto;
-                            }
+							gap: var(--spacing-5x);
+							block-size: 100%;
+							padding: var(--spacing-4x);
+							place-content: space-between;
+							border: 1px solid var(--level-2-border);
+							border-radius: var(--border-radius-2x);
+							background: var(--level-2-background);
 
-                            gap: var(--spacing-5x);
-                            block-size: 100%;
-                            padding: var(--spacing-4x);
-                            place-content: space-between;
-                            border: 1px solid var(--level-2-border);
-                            border-radius: var(--border-radius-2x);
-                            background: var(--level-2-background);
+							.image-upload__content {
+								display: flex;
+								height: auto;
+								max-height: 102px;
+								gap: var(--spacing-2x);
+								place-items: center;
+								place-content: center;
 
+								.image-upload__icon {
+									inline-size: 2.5rem;
+									block-size: 2.5rem;
+								}
 
-                            .image-upload__content {
-                                display: flex;
-                                height: auto;
-                                max-height: 102px;
-                                gap: var(--spacing-2x);
-                                place-items: center;
-                                place-content: center;
+								.image-upload__text {
+									min-inline-size: 0;
+									margin: 0;
+									max-inline-size: 34rem;
+									color: var(--color-text-soft);
+									font-size: var(--text-body-small);
+									line-height: 1.35;
+								}
+							}
 
-                                .image-upload__icon {
-                                    inline-size: 2.5rem;
-                                    block-size: 2.5rem;
-                                }
+							.image-upload__button {
+								justify-self: end;
+								gap: var(--spacing-1x);
 
+								.image-upload__button-icon {
+									inline-size: 1.25rem;
+									block-size: 1.25rem;
+								}
+							}
+						}
 
-                                .image-upload__text {
-                                    min-inline-size: 0;
-                                    margin: 0;
-                                    max-inline-size: 34rem;
-                                    color: var(--color-text-soft);
-                                    font-size: var(--text-body-small);
-                                    line-height: 1.35;
-                                }
-                            }
+						.image-upload__panel--has-image {
+							grid-template-rows: 162px auto;
+							gap: 0;
+							place-content: end;
+							place-items: end;
+							overflow: hidden;
+							background:
+								linear-gradient(
+									hsl(from var(--bg-backdrop) h s l / 10%),
+									hsl(from var(--bg-backdrop) h s l / 45%)
+								),
+								var(--image-upload-background-image);
+							background-position: center;
+							background-size: cover;
+							height: 100%;
 
-                            .image-upload__button {
-                                justify-self: end;
-                                gap: var(--spacing-1x);
+							.image-upload__content {
+								display: none;
+							}
 
-                                .image-upload__button-icon {
-                                    inline-size: 1.25rem;
-                                    block-size: 1.25rem;
-                                }
-                            }
-                        }
+							.image-upload__button {
+								background-color: var(--level-3-background);
+							}
+						}
 
-                        .image-upload__panel--has-image {
-                            grid-template-rows: 162px auto;
-                            gap: 0;
-                            place-content: end;
-                            place-items: end;
-                            overflow: hidden;
-                            background:
-                                linear-gradient(
-                                    hsl(from var(--bg-backdrop) h s l / 10%),
-                                    hsl(from var(--bg-backdrop) h s l / 45%)
-                                ),
-                                var(--image-upload-background-image);
-                            background-position: center;
-                            background-size: cover;
-                            height: 100%;
+						@container (width <= 384px) {
+							.image-upload__panel {
+								padding: var(--spacing-3x);
+							}
 
-                            .image-upload__content {
-                                display: none;
-                            }
+							.image-upload__button {
+								justify-self: stretch;
+							}
+						}
+						@container (width <= 410px) {
+							.image-upload__panel--has-image {
+								--image-upload-background-image: var(--image-upload-background-image-card);
+							}
+						}
+					}
+				}
 
-                            .image-upload__button {
-                                background-color: var(--level-3-background);
-                            }
-                        }
+				.puljefordeling-section {
+					display: grid;
+					gap: 1.25rem;
+				}
+				.details-section {
+					display: grid;
+					gap: 1.25rem;
+				}
+				.checkbox-background {
+					background-color: var(--level-3-background);
+					border: 1px solid var(--level-3-border);
+					padding: 0.75rem 0.5rem;
+					border-radius: var(--border-radius-2x);
+				}
+			}
 
+			.submit-section {
+				display: grid;
+				grid-template-columns: 1fr;
+				gap: 1rem;
+				margin-block-start: 1rem;
+				min-height: 6.125rem;
+				place-content: center;
 
-                        @container (width <= 384px) {
-                            .image-upload__panel {
-                                padding: var(--spacing-3x);
-                            }
+				p {
+					margin: 0;
+					place-self: center;
+				}
+			}
 
-                            .image-upload__button {
-                                justify-self: stretch;
-                            }
+			@container formsubmission-css-container (width > 600px) {
+				.submit-section {
+					grid-template-columns: 1fr 200px;
+					gap: 2rem;
+				}
+			}
 
-                        }
-                        @container (width <= 410px) {
-                            .image-upload__panel--has-image {
-                                --image-upload-background-image: var(--image-upload-background-image-card);
-                            }
-                        }
-                    }
-                }
+			@container formsubmission-css-container (width > 920px) {
+				.form-card:is(:not(.submit-section)) {
+					display: block;
 
-                .puljefordeling-section {
-                    display: grid;
-                    gap: 1.25rem;
-                }
-                .details-section {
-                    display: grid;
-                    gap: 1.25rem;
-                }
-                .checkbox-background {
-                    background-color: var(--level-3-background);
-                    border: 1px solid var(--level-3-border);
-                    padding: 0.75rem 0.5rem;
-                    border-radius: var(--border-radius-2x);
-                }
-            }
+					.organizer-section {
+						display: flex;
+						gap: var(--spacing-5x);
+						.form-group {
+							gap: 0.5rem;
+							flex-grow: 1;
+						}
+					}
 
-            .submit-section {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 1rem;
-                margin-block-start: 1rem;
-                min-height: 6.125rem;
-                place-content: center;
+					.about-section {
+						margin-block-start: 1rem;
+						grid-template-columns: 0.5fr 0.5fr;
+						grid-template-areas:
+							"title img"
+							"intro img"
+							"type system"
+							"description description";
+						.title {
+							grid-area: title;
+						}
 
-                p {
-                    margin: 0;
-                    place-self: center;
-                }
-            }
+						.intro {
+							grid-area: intro;
+						}
 
-            @container formsubmission-css-container (width > 600px) {
-                .submit-section {
-                    grid-template-columns: 1fr 200px;
-                    gap: 2rem;
-                }
-            }
+						.type {
+							grid-area: type;
+						}
 
-            @container formsubmission-css-container (width > 920px) {
-                .form-card:is(:not(.submit-section)) {
-                    display: block;
+						.img {
+							grid-area: img;
+						}
 
-                    .organizer-section {
-                        display: flex;
-                        gap: var(--spacing-5x);
-                        .form-group {
-                            gap: 0.5rem;
-                            flex-grow: 1;
-                        }
-                    }
+						.system {
+							grid-area: system;
+						}
 
-                    .about-section {
-                        margin-block-start: 1rem;
-                        grid-template-columns: 0.5fr 0.5fr;
-                        grid-template-areas:
-                            "title img"
-                            "intro img"
-                            "type system"
-                            "description description";
-                        .title {
-                            grid-area: title;
-                        }
+						.description {
+							grid-area: description;
+						}
+					}
 
-                        .intro {
-                            grid-area: intro;
-                        }
+					.details-section {
+						grid-template-columns: minmax(7.5rem, 0.4fr) minmax(12.5rem, 0.6fr);
+						grid-template-areas:
+							"age-group age-group-description"
+							"duration duration-description"
+							"beginner-friendly beginner-friendly-description"
+							"english english-description"
+							"player-count player-count-description"
+							"other-notes other-notes";
 
-                        .type {
-                            grid-area: type;
-                        }
+						.age-group {
+							grid-area: age-group;
+						}
 
-                        .img {
-                            grid-area: img;
-                        }
+						.age-group-description {
+							grid-area: age-group-description;
+						}
 
-                        .system {
-                            grid-area: system;
-                        }
+						.duration {
+							grid-area: duration;
+						}
 
-                        .description {
-                            grid-area: description;
-                        }
-                    }
+						.duration-description {
+							grid-area: duration-description;
+						}
 
-                    .details-section {
-                        grid-template-columns: minmax(7.5rem, 0.4fr) minmax(
-                                12.5rem,
-                                0.6fr
-                            );
-                        grid-template-areas:
-                            "age-group age-group-description"
-                            "duration duration-description"
-                            "beginner-friendly beginner-friendly-description"
-                            "english english-description"
-                            "player-count player-count-description"
-                            "other-notes other-notes";
+						.beginner-friendly {
+							grid-area: beginner-friendly;
+						}
 
-                        .age-group {
-                            grid-area: age-group;
-                        }
+						.beginner-friendly-description {
+							grid-area: beginner-friendly-description;
+						}
 
-                        .age-group-description {
-                            grid-area: age-group-description;
-                        }
+						.can-be-english {
+							grid-area: can-be-english;
+						}
 
-                        .duration {
-                            grid-area: duration;
-                        }
+						.can-be-english-description {
+							grid-area: can-be-english-description;
+						}
 
-                        .duration-description {
-                            grid-area: duration-description;
-                        }
+						.player-count {
+							grid-area: player-count;
+						}
 
-                        .beginner-friendly {
-                            grid-area: beginner-friendly;
-                        }
+						.player-count-description {
+							grid-area: player-count-description;
+						}
 
-                        .beginner-friendly-description {
-                            grid-area: beginner-friendly-description;
-                        }
-
-                        .can-be-english {
-                            grid-area: can-be-english;
-                        }
-
-                        .can-be-english-description {
-                            grid-area: can-be-english-description;
-                        }
-
-                        .player-count {
-                            grid-area: player-count;
-                        }
-
-                        .player-count-description {
-                            grid-area: player-count-description;
-                        }
-
-                        .other-notes {
-                            grid-area: other-notes;
-                        }
-                    }
-                }
-            }
+						.other-notes {
+							grid-area: other-notes;
+						}
+					}
+				}
+			}
 		}
-		</style>
+	</style>
 	@statusCard(event, isAdmin)
 	if isAdmin {
 		@puljefordeling(event.ID, event.IsInPuljefordeling, db)

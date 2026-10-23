@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -486,6 +487,32 @@ func TestRoomAssignmentPicker_ExistsWhenPuljeHasNoEvents(t *testing.T) {
 	}
 }
 
+func TestRoomAssignmentPicker_SaysEventsFromOtherPuljerAreAddedToPulje(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt romfordelingen for en pulje.",
+		When:  "Når dialogen for å legge til arrangement i et rom rendres.",
+		Then:  "Så skal teksten si at arrangementer fra andre puljer blir lagt til i puljen, ikke publisert.",
+	})
+
+	// Given
+	expectedText := "Arrangementer fra andre puljer blir lagt til i denne puljen."
+	oldText := "lagt til og publisert i denne puljen"
+	db, logger := testutil.CreateTestDBAndLogger(t, "room_picker_other_pulje_text")
+	createRoomsPageRoom(t, db, "Amalie", "705", 7)
+
+	// When
+	doc := templtest.Render(t, RoomsAssignmentPage(db, logger, models.PuljeFredagKveld, nil))
+	actualText := doc.Find("#assignment-dialog").Text()
+
+	// Then
+	if !strings.Contains(actualText, expectedText) {
+		t.Fatalf("expected dialog text %q\nactual text: %s", expectedText, actualText)
+	}
+	if strings.Contains(actualText, oldText) {
+		t.Fatalf("expected old dialog text %q to be gone\nactual text: %s", oldText, actualText)
+	}
+}
+
 func TestRoomAssignmentPicker_IncludesApprovedEventsOutsidePulje(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "approved_events_outside_pulje")
 	seedRoomsPageLookups(t, db)
@@ -649,4 +676,27 @@ func insertRoomsPageEventPulje(t *testing.T, db *sql.DB, eventID string, puljeID
 		INSERT INTO relation_event_puljer(event_id, pulje_id, is_in_pulje, is_published, room_id)
 		VALUES(?, ?, 1, 1, ?)
 	`, eventID, puljeID, roomID)
+}
+
+func TestRoomsPublishControl_DeclaresPublishedStateAsJSONSignal(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en pulje der romfordelingen er publisert.",
+		When:  "Når publiseringskontrollen for rom rendres.",
+		Then:  "Så skal data-signals inneholde roomsPublished som JSON.",
+	})
+
+	// Given
+	expected := map[string]any{"roomsPublished": true}
+	db := testutil.CreateTestDB(t, "rooms_publish_control_signal")
+	insertRoomsPagePulje(t, db, models.PuljeFredagKveld)
+	testutil.MustExec(t, db, `UPDATE puljer SET rooms_published = 1 WHERE id = ?`, models.PuljeFredagKveld)
+
+	// When
+	doc := templtest.Render(t, roomsPublishControl(db, models.PuljeFredagKveld))
+
+	// Then
+	actual := templtest.SignalsObject(t, doc.Find(".rooms-publish-control"), "data-signals")
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("rooms published signals = %v, want %v", actual, expected)
+	}
 }

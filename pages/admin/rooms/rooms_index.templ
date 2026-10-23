@@ -21,8 +21,8 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 		if err := layouts.Base(
 			"Rom oversikt",
 			userInfo,
-            db,
-            logger,
+			db,
+			logger,
 			roomsIndex(RoomsPage(db, logger), "/"),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
@@ -49,8 +49,8 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 				if err := layouts.Base(
 					"Rom oversikt",
 					userInfo,
-                    db,
-                    logger,
+					db,
+					logger,
 					roomsIndex(RoomsAssignmentPage(db, logger, models.Pulje(puljeID), eventImageDir), puljeID),
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
@@ -69,110 +69,110 @@ templ roomsIndex(children templ.Component, puljeQuery models.Pulje) {
 	})
 	<div class="page-content-container flex flex-col">
 		<style>
-            .tabs {
-                display: flex;
-                overflow-x: auto;
-                margin-top: var(--responsive-page-section-spacing);
-                margin-bottom: -2px;
-                z-index: 2;
-            }
+			.tabs {
+				display: flex;
+				overflow-x: auto;
+				margin-top: var(--responsive-page-section-spacing);
+				margin-bottom: -2px;
+				z-index: 2;
+			}
 
-            .tabs a {
-                white-space: nowrap;
-                text-decoration: none;
-                padding: 0.75rem 1rem;
-                border: 2px solid transparent;
-                border-radius: var(--border-radius-2x) var(--border-radius-2x) 0 0;
-                color: var(--color-primary-text);
-                font-weight: 500;
-            }
+			.tabs a {
+				white-space: nowrap;
+				text-decoration: none;
+				padding: 0.75rem 1rem;
+				border: 2px solid transparent;
+				border-radius: var(--border-radius-2x) var(--border-radius-2x) 0 0;
+				color: var(--color-primary-text);
+				font-weight: 500;
+			}
 
-            .tabs a:hover {
-                color: var(--color-primary-hover);
-            }
+			.tabs a:hover {
+				color: var(--color-primary-hover);
+			}
 
-            .tabs a.active {
-                background: var(--level-1-background);
-                border-color: var(--color-primary);
-                border-bottom: none;
-                color: var(--color-primary);
-            }
+			.tabs a.active {
+				background: var(--level-1-background);
+				border-color: var(--color-primary);
+				border-bottom: none;
+				color: var(--color-primary);
+			}
 
-            .rooms-section {
-                display: flex;
-                flex-direction: column;
-                gap: var(--responsive-page-section-spacing);
-                border: 2px solid var(--color-primary);
-                border-radius: 0 0 var(--border-radius-2x) var(--border-radius-2x);
-                padding: var(--responsive-pane-padding);
-                background-color: var(--level-1-background);
-            }
+			.rooms-section {
+				display: flex;
+				flex-direction: column;
+				gap: var(--responsive-page-section-spacing);
+				border: 2px solid var(--color-primary);
+				border-radius: 0 0 var(--border-radius-2x) var(--border-radius-2x);
+				padding: var(--responsive-pane-padding);
+				background-color: var(--level-1-background);
+			}
 
-            dialog:open {
-                position: fixed;
-                inset: 0;
-                --dialog-width: min(32.5rem, calc(100% - 16px));
-                visibility: visible;
-                width: var(--dialog-width);
-                background-color: var(--level-1-background);
-                border: none;
-                border-radius: var(--border-radius-2x);
-                padding: var(--responsive-pane-padding);
-                box-shadow: var(--shadow-dialog);
-                outline:none;
+			dialog:open {
+				position: fixed;
+				inset: 0;
+				--dialog-width: min(32.5rem, calc(100% - 16px));
+				visibility: visible;
+				width: var(--dialog-width);
+				background-color: var(--level-1-background);
+				border: none;
+				border-radius: var(--border-radius-2x);
+				padding: var(--responsive-pane-padding);
+				box-shadow: var(--shadow-dialog);
+				outline: none;
 
-                &::backdrop {
-                    background: var(--bg-backdrop);
-                }
-                form {
-                    display: flex;
-                    flex-flow: column nowrap;
-                    gap: var(--spacing-2x);
+				&::backdrop {
+					background: var(--bg-backdrop);
+				}
+				form {
+					display: flex;
+					flex-flow: column nowrap;
+					gap: var(--spacing-2x);
 
-                    label {
-                        width: 100%
-                    }
+					label {
+						width: 100%;
+					}
 
-                    input[type="text"],
-                    input[type="number"] {
-                        width: 100%;
-                    }
-                    textarea {
-                        width: 100%;
-                        resize: vertical;
-                    }
-                    .button-group {
-                        display: flex;
-                        gap: var(--spacing-2x)
-                    }
+					input[type="text"],
+					input[type="number"] {
+						width: 100%;
+					}
+					textarea {
+						width: 100%;
+						resize: vertical;
+					}
+					.button-group {
+						display: flex;
+						gap: var(--spacing-2x);
+					}
 
-                    .button-group > button {
-                        flex: 1;
-                    }
+					.button-group > button {
+						flex: 1;
+					}
 
-                    .input-error {
-                        color: var(--color-error);
-                    }
-                    .input-error:empty {
-                        display: none;
-                    }
-                }
-            }
-            .modal-close-button {
-                position: absolute;
-                top: var(--spacing-2x);
-                right: var(--spacing-1x);
-                background: transparent;
-                border: none;
-                border-radius: 100%;
-                padding: 0;
-            }
-            .modal-close-button:hover {
-                background: var(--btn-ghost-hover-bg);
-            }
-        </style>
+					.input-error {
+						color: var(--color-error);
+					}
+					.input-error:empty {
+						display: none;
+					}
+				}
+			}
+			.modal-close-button {
+				position: absolute;
+				top: var(--spacing-2x);
+				right: var(--spacing-1x);
+				background: transparent;
+				border: none;
+				border-radius: 100%;
+				padding: 0;
+			}
+			.modal-close-button:hover {
+				background: var(--btn-ghost-hover-bg);
+			}
+		</style>
 		@roomNotesStyles()
-		<h1 class="page-heading" style="text-align: center;">Administrer rom og fordeling av events</h1>
+		<h1 class="page-heading" style="text-align: center">Administrer rom og fordeling av events</h1>
 		<div class="tabs">
 			<a role="button" href="/admin/rooms/" class={ templ.KV("active", puljeQuery == "/") }>Rediger rom</a>
 			for _,pulje := range models.AllPuljer() {

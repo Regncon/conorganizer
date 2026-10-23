@@ -17,67 +17,67 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 		return
 	}
 	<style>
-        .pulje-picker-container {
-            padding-bottom: var(--responsive-pane-padding);
-        }
-        .pulje-wrapper {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--spacing-2x);
+		.pulje-picker-container {
+			padding-bottom: var(--responsive-pane-padding);
+		}
+		.pulje-wrapper {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: var(--spacing-2x);
 
-            .card-clickable {
-                display: flex;
-                flex-direction: column;
-                gap: var(--spacing-1x);
-                border-radius: var(--border-radius-1x);
-                padding: var(--spacing-4x) var(--spacing-2x);
-                justify-content: center;
-                height: auto;
-                min-height: 3rem;
-                width: 100%;
-                place-items: center;
-                p + p {
-                    margin: 0;
-                }
-            }
+			.card-clickable {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-1x);
+				border-radius: var(--border-radius-1x);
+				padding: var(--spacing-4x) var(--spacing-2x);
+				justify-content: center;
+				height: auto;
+				min-height: 3rem;
+				width: 100%;
+				place-items: center;
+				p + p {
+					margin: 0;
+				}
+			}
 
-            .pulje-picker-status {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: var(--spacing-1x);
-                font-size: 11px;
-                line-height: 1.1;
-            }
+			.pulje-picker-status {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: var(--spacing-1x);
+				font-size: 11px;
+				line-height: 1.1;
+			}
 
-            .pulje-picker-status.status-warning {
+			.pulje-picker-status.status-warning {
 				color: var(--color-accent-yellow);
-            }
+			}
 
-            .pulje-picker-status.status-locked {
-                color: var(--color-accent-blue);
-            }
+			.pulje-picker-status.status-locked {
+				color: var(--color-accent-blue);
+			}
 
-            .pulje-picker-status.status-completed {
-                color: var(--color-accent-green);
-            }
-        }
+			.pulje-picker-status.status-completed {
+				color: var(--color-accent-green);
+			}
+		}
 
-        @container interest-dialog (width >= 30rem) {
-            .pulje-wrapper {
-                grid-template-columns: repeat(4, 1fr);
-                padding-inline: var(--border-outline-width);
+		@container interest-dialog (width >= 30rem) {
+			.pulje-wrapper {
+				grid-template-columns: repeat(4, 1fr);
+				padding-inline: var(--border-outline-width);
 
-                .card-clickable {
-                    display: grid;
-                    gap: var(--spacing-1x);
-                    text-align: center;
-                    height: auto;
-                    max-width: 7.125rem;
-                }
-            }
-        }
-    </style>
+				.card-clickable {
+					display: grid;
+					gap: var(--spacing-1x);
+					text-align: center;
+					height: auto;
+					max-width: 7.125rem;
+				}
+			}
+		}
+	</style>
 	if (len(puljer) > 1) {
 		<div class="pulje-picker-container">
 			<p class="label">Velg pulje for arrangementet</p>
@@ -91,23 +91,23 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 						data-class:selected={ fmt.Sprintf("$puljeId == '%s'", pulje.ID) }
 						data-on:click={ fmt.Sprintf("$puljeId = '%s'; %s", pulje.ID, puljeState.SignalPatch()) }
 					>
-                        <p>{ pulje.Name }</p>
-                        if puljeState.IsWarning() {
-                            <span class="pulje-picker-status status-warning">
-                                @icons.Icon(icons.Warning, icons.Size16)
-                                <span>Låser Snart</span>
-                            </span>
-                        } else if puljeState.IsLocked() {
-                            <span class="pulje-picker-status status-locked">
-                                @icons.Icon(icons.Lock, icons.Size16)
-                                <span>Pulje Låst</span>
-                            </span>
-                        } else if puljeState.IsCompleted() {
-                            <span class="pulje-picker-status status-completed">
-                                @icons.Icon(icons.ProgressComplete, icons.Size16)
-                                <span>Fordelt</span>
-                            </span>
-                        }
+						<p>{ pulje.Name }</p>
+						if puljeState.IsWarning() {
+							<span class="pulje-picker-status status-warning">
+								@icons.Icon(icons.Warning, icons.Size16)
+								<span>Låser Snart</span>
+							</span>
+						} else if puljeState.IsLocked() {
+							<span class="pulje-picker-status status-locked">
+								@icons.Icon(icons.Lock, icons.Size16)
+								<span>Pulje Låst</span>
+							</span>
+						} else if puljeState.IsCompleted() {
+							<span class="pulje-picker-status status-completed">
+								@icons.Icon(icons.ProgressComplete, icons.Size16)
+								<span>Fordelt</span>
+							</span>
+						}
 					</div>
 				}
 			</div>

@@ -6,7 +6,7 @@ The only exception is PR preview environments. On every PR deploy, `deploy/deplo
 
 ## Create a migration
 
-From the repository root, create a SQL migration with the same Goose version that CI uses:
+From the repository root, create a SQL migration with the same Goose version that CI uses (`GOOSE_VERSION` in `.github/workflows/buildAndTest.yml`; bump it there, here and in AGENTS.md together):
 
 ```console
 go run github.com/pressly/goose/v3/cmd/goose@v3.28.0 -dir migrations create <brief-description> sql
@@ -41,7 +41,7 @@ Most lookup and enum-like values stored in SQLite are capitalized strings, and s
 | `relation_events_players.role` | `Player`, `GM` |
 | `relation_billettholder_emails.kind` | `Ticket`, `Associated`, `Manual` |
 
-The convention is not universal: `relation_events_players.source` uses lowercase `manual` and `solver`. Use capitalized values for new enum-like columns. For the meaning of the event statuses, see [domeneordbok.md](../domeneordbok.md#arrangementstatus).
+The convention is not universal: `relation_events_players.source` uses lowercase `manual` and `solver`. Use capitalized values for new enum-like columns. For the meaning of the event statuses, see [event-status.md](event-status.md).
 
 ## Changing CHECK constraints
 
@@ -106,7 +106,7 @@ If `goose up` reports `no next version found` but the database is clearly behind
 sqlite3 database/events.db "SELECT id, version_id, is_applied, tstamp FROM goose_db_version ORDER BY id;"
 ```
 
-Goose reports this error when the table exists but has no applied rows. A database created from `initialize.sql` has the table but no rows.
+Goose reports this error when the table exists but has no applied rows. A database created from `schema.sql` has the table but no rows.
 
 To repair:
 

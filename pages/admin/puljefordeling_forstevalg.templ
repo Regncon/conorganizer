@@ -92,7 +92,7 @@ templ puljeParticipantList(participants []puljefordeling.PuljeParticipant) {
 						<span class="pulje-list-tag">Ville ha førstevalg her</span>
 					}
 					<span class="pulje-list-seat">
-						switch {
+						switch  {
 							case d.IsGM:
 								{ "Spilleder på " + d.EventTitle }
 							case d.EventTitle == "":
@@ -129,7 +129,9 @@ templ puljeForstevalgStyles() {
 			font: inherit;
 			text-align: start;
 			cursor: pointer;
-			transition: border-color 200ms ease, background-color 200ms ease;
+			transition:
+				border-color 200ms ease,
+				background-color 200ms ease;
 
 			&:hover,
 			&:focus-visible {

@@ -7,14 +7,14 @@ templ BreadcrumbNavButtons(previousNextData PreviousNext) {
 				<a
 					href={ templ.URL(previousNextData.PreviousUrl) }
 					class="btn btn--ghost"
-					style="max-width:5rem;"
+					style="max-width: 5rem"
 				>Forrige</a>
 			}
 			if previousNextData.NextUrl != "" {
 				<a
 					href={ templ.URL(previousNextData.NextUrl) }
 					class="btn btn--ghost"
-					style="max-width:5rem;"
+					style="max-width: 5rem"
 				>Neste</a>
 			}
 		</div>

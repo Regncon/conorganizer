@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "grafana-conorganizer": {
+      "command": "mcp-grafana",
+      "args": ["--disable-write", "--usage-stats=disabled"],
+      "env": {
+        "GRAFANA_URL": "https://grafana.regncon.no",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "${GRAFANA_SERVICE_ACCOUNT_TOKEN}"
+      }
+    }
+  }
+}

@@ -49,17 +49,6 @@ func billettholdereSearchRoute(
 	})
 }
 
-/*
-
-	<input
-		style="max-width: 30rem;"
-		data-bind-search
-		data-on-input__debounce.50ms="@get('/admin/billettholder/api/search/')"
-		placeholder="Search..."
-		type="text"
-	/>
-*/
-
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	{{
 		bilettholdere, err := billettholderService.GetBillettholdereWithFilters("", db, billettholderFilters)
@@ -77,7 +66,7 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	}
 	<div
 		id="billettholder-admin-container"
-		data-signals__ifmissing:billettholder-interest-open-dialog-id="''"
+		data-signals:billettholder-interest-open-dialog-id__ifmissing="''"
 	>
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
@@ -85,7 +74,7 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 			{Name: "Billettholdere", Url: ""},
 		})
 		<article class="page-content-container">
-			<div style="display: flex; gap: 1rem; align-items: center;">
+			<div style="display: flex; gap: 1rem; align-items: center">
 				<h1 class="page-heading">Billettholdere</h1>
 				<a
 					href="/admin/billettholder/add/"
@@ -101,10 +90,7 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 				<style>
 					.billettholder-admin-grid {
 						display: grid;
-						grid-template-columns: repeat(
-							auto-fit,
-							minmax(var(--mobile-min-width), 1fr)
-						);
+						grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
 						gap: 1rem;
 					}
 				</style>

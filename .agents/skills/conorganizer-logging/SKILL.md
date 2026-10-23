@@ -46,7 +46,7 @@ Read these first:
 - Log a failure once at the boundary that decides the outcome.
 - Lower-level helpers and services should usually wrap and return errors without logging when the caller will decide the response, retry, or degraded-mode behavior.
 - If a helper or service no longer logs after a migration, remove the unused `logger` parameter from its signature unless it is still needed for non-error logs in that function.
-- When you change a function signature, update all call sites in touched source files. If the function is called from generated `*_templ.go` files and you are not running `templ generate`, update those generated call sites too so the tree stays consistent.
+- When you change a function signature, update all call sites in touched source files. Generated `*_templ.go` files are gitignored and never edited by hand: fix calls in the `.templ` source and let the dev server regenerate them, or run `go tool templ generate` in a worktree.
 - Route handlers, background loop tops, stream consumers, and similar handling boundaries should log the final failure before returning a response or taking an operational decision.
 - If a lower layer already logs because it fully handled the failure locally, higher layers should not log the same error again; only log the new decision if that adds value.
 - If you know a lower layer already returned a useful wrapped `fmt.Errorf(...)`, prefer logging `logger.Error(err.Error())` at the handling boundary instead of wrapping again just to restate the same failure.

@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
@@ -237,12 +238,12 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 	}
 	{{ roomStatus := getRoomsPuljeByFloor(db, pulje.ID) }}
 	if len(roomStatus) == 0 {
-		<p style="color: red;">Klarte ikke å hente rom</p>
+		<p style="color: red">Klarte ikke å hente rom</p>
 	}
-	<div style="display: flex; gap: 1rem; align-items: center;">
-		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
+	<div style="display: flex; gap: 1rem; align-items: center">
+		<div style="display: flex; gap: 0.5rem; flex-direction: column">
 			<h3>{ pulje.Name } <span>({ pulje.TimeRange() })</span></h3>
-			<div style="display: flex; gap: 1rem;">
+			<div style="display: flex; gap: 1rem">
 				<div class="feedback-control-group">
 					<label class="checkbox-background form-group-checkbox">
 						<span>Legg til i pulje </span>
@@ -271,7 +272,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 					<label
 						class="form-group"
 						style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
-						data-signals={ fmt.Sprintf("{roomAssignment:  {%s: '%s'}}", pulje.ID, assignedRoomNonNullable) }
+						data-signals={ components.DataSignals(map[string]map[models.Pulje]string{"roomAssignment": {pulje.ID: assignedRoomNonNullable}}) }
 					>
 						<span class="label-bold color-strong">Legg til rom</span>
 						<select

@@ -31,6 +31,23 @@ A user who runs `go tool task download:*` locally (as `DB_SSH_USER`) must be
 able to run `conorganizer-export-db` and read the `main` and `demo`
 database files and `event-images` directories listed below.
 
+## Remove a user
+The config checkout `/srv/configuration-as-code-repo/conorganizer` belongs to
+whichever admin last worked in it, and root runs scripts that are stow links
+into it (see [Repository location](../configuration-as-code/README.md#repository-location)).
+Before removing an account, check who owns the checkout:
+
+```bash
+stat -c '%U:%G' /srv/configuration-as-code-repo/conorganizer
+```
+
+If it names that user or their group, take the checkout over first with
+`sudo chown -R "$USER": /srv/configuration-as-code-repo/conorganizer`.
+Otherwise the files keep a dangling UID and GID that the next account created
+with `useradd` can get, and with it ownership of scripts root runs. Then
+`sudo deluser <username>`. Never use `deluser --remove-all-files`: it would
+delete the checkout that `/etc` and `/usr/local/bin` link into.
+
 ## Deploy user
 `hetzner/scripts/setup_deploy_user.sh` creates the restricted `deploy` user
 that GitHub Actions deploys as. Its home is `/opt/conorganizer`, SSH login is

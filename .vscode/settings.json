@@ -8,7 +8,8 @@
     },
     "go.useLanguageServer": true,
     "[templ]": {
-        "editor.defaultFormatter": "a-h.templ"
+        "editor.defaultFormatter": "a-h.templ",
+        "editor.formatOnSave": true
     },
     "cSpell.words": [
         "appleboy",
@@ -29,6 +30,7 @@
         "DBUI",
         "descope",
         "devuser",
+        "domeneord",
         "domeneordbok",
         "enctype",
         "Erfaringsmessig",
@@ -40,6 +42,7 @@
         "fetchpriority",
         "formmethod",
         "formsubmission",
+        "Forstevalg",
         "gocache",
         "golangci",
         "GOMODCACHE",
@@ -73,6 +76,7 @@
         "println",
         "profilecomponent",
         "profileticketspage",
+        "Pujlearrangement",
         "randomblob",
         "requestctx",
         "roleplay",
