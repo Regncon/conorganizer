@@ -1,6 +1,6 @@
 # Live page skeleton
 
-Everything below comes from `pages/profile/tickets`, the cleanest live page in the repo. Sections 1 to 3 match the real files, except that the real `/api` sub-router is called `billettholderAdminRouter`. Section 4 is shortened, and section 5 reorders the real delete handler into the shape new code should have. Sections 6 and 7 use the fixture helpers that already exist in `pages/profile/tickets/billettholder_email_routes_test.go`. Sections 5 to 7 were compiled and run against the repo on 2026-10-18. Replace `profileTickets`/`profile-tickets` with your page and keep the structure.
+Everything below comes from `pages/profile/tickets`, the cleanest live page in the repo. Sections 1 to 3 match the real files, except that the real `/api` sub-router is called `billettholderAdminRouter`. Section 4 is shortened. Sections 5 and 7 rewrite the real delete and add-e-mail handlers into the shape new code should have. Sections 6, 8 and 9 use the fixture helpers that already exist in `pages/profile/tickets/billettholder_email_routes_test.go`. The Go code in sections 5 to 9 was compiled and run against the repo. Replace `profileTickets`/`profile-tickets` with your page and keep the structure.
 
 Contents:
 
@@ -10,8 +10,10 @@ Contents:
 4. The shared content component
 5. A mutation handler in the right order
 6. Route test with embedded NATS
-7. End-to-end: an open page re-renders after a mutation
-8. Doc rows to add
+7. Field errors the user should read
+8. Testing field errors
+9. End-to-end: an open page re-renders after a mutation
+10. Doc rows to add
 
 ## 1. Route setup: normal GET, `/api` stream, mutations
 
@@ -200,7 +202,7 @@ The client reads `$successMessage-42` as one signal name, which is why the card 
 
 ## 6. Route test with embedded NATS
 
-From `pages/admin/rooms_assignment_route_test.go` and the helper in `components/formsubmission/other_details_test.go`. Use it when the handler treats the broadcast as required. The helper returns the embedded server as well, for section 7.
+From `pages/admin/rooms_assignment_route_test.go` and the helper in `components/formsubmission/other_details_test.go`. Use it when the handler treats the broadcast as required. The helper returns the embedded server as well, for section 9.
 
 ```go
 func newTestLiveManager(t *testing.T) (*live.Manager, *embeddednats.Server) {
@@ -258,11 +260,261 @@ Imports: `github.com/delaneyj/toolbelt/embeddednats`, `github.com/gorilla/sessio
 
 `insertProfileRouteTestUser` gives user 7 the external id `profile-route-user-7`, and `userctx.GetUserRequestInfo(ctx).Id` is that external id, so the token must carry it. `authctx.WithUserToken` and `authctx.WithAdminUserToken` live in `service/authctx/test_support.go`.
 
-This test proves the write and that the required broadcast does not fail. It still passes without the `Broadcast` line, because the status and the row do not depend on it. Section 7 proves an open page re-renders.
+This test proves the write and that the required broadcast does not fail. It still passes without the `Broadcast` line, because the status and the row do not depend on it. Section 9 proves an open page re-renders.
 
 `&live.Manager{}` is enough only when the handler treats the broadcast as best effort, the test stops before the broadcast, or the test checks the broadcast-failure path on purpose; its `Broadcast` returns `unknown live bucket: ...` because no buckets were created.
 
-## 7. End-to-end: an open page re-renders after a mutation
+## 7. Field errors the user should read
+
+Section 5 rejects with `http.Error`, so the user only ever sees the trigger's fallback text. When the user can fix the problem and needs to know which one, answer 200 with an `errorfeedback` patch instead. The order stays the same as in section 5, with one branch added: validate before the write, and open the SSE only in the branch that patches. `http.Error` then stays available for everything before that, including a failed broadcast. This is the profile tickets add-e-mail handler in that shape:
+
+```go
+func addEmailToBillettholderRoute(router chi.Router, db *sql.DB, logger *slog.Logger, liveManager *live.Manager) {
+	logger = logger.With("component", "profile_tickets")
+	router.Post("/new-email/{id}/", func(w http.ResponseWriter, r *http.Request) {
+		billettholderID, err := strconv.Atoi(chi.URLParam(r, "id"))
+		if err != nil {
+			http.Error(w, "Ugyldig billettholder", http.StatusBadRequest)
+			return
+		}
+		signals := map[string]any{}
+		if err := datastar.ReadSignals(r, &signals); err != nil {
+			http.Error(w, "Klarte ikke å lese skjemadata", http.StatusBadRequest)
+			return
+		}
+		inputSignal := fmt.Sprintf("newEmail-%d", billettholderID)
+		email, _ := signals[inputSignal].(string)
+		email = strings.TrimSpace(email)
+		user := userctx.GetUserRequestInfo(r.Context())
+
+		linked, err := billettholderLinkedToUser(db, billettholderID, user.Id)
+		if err != nil {
+			logger.Error(fmt.Errorf("failed to check billettholder access: %w", err).Error(), "billettholder_id", billettholderID)
+			http.Error(w, "Noe gikk galt, prøv igjen", http.StatusInternalServerError)
+			return
+		}
+		if !linked {
+			http.Error(w, "Du har ikke tilgang", http.StatusForbidden)
+			return
+		}
+
+		feedbackKey := fmt.Sprintf("newEmail%d", billettholderID)
+		feedback := errorfeedback.New(feedbackKey)
+		if email == "" {
+			feedback.Set(feedbackKey, "Skriv inn en e-postadresse.")
+		} else {
+			onBillettholder, err := billettholderHasEmail(db, billettholderID, email)
+			if err != nil {
+				logger.Error(fmt.Errorf("failed to check existing billettholder e-mails: %w", err).Error(), "billettholder_id", billettholderID)
+				http.Error(w, "Noe gikk galt, prøv igjen", http.StatusInternalServerError)
+				return
+			}
+			if onBillettholder {
+				feedback.Set(feedbackKey, fmt.Sprintf("%s står allerede på denne billetten.", email))
+			}
+		}
+		if feedback.HasErrors() {
+			sse := datastar.NewSSE(w, r)
+			if err := feedback.Patch(sse); err != nil {
+				logger.Error(fmt.Errorf("failed to patch e-mail feedback: %w", err).Error(), "billettholder_id", billettholderID)
+			}
+			return
+		}
+
+		if err := addManualEmail(db, billettholderID, email); err != nil {
+			logger.Error(fmt.Errorf("failed to add billettholder e-mail: %w", err).Error(), "billettholder_id", billettholderID)
+			http.Error(w, "Noe gikk galt, prøv igjen", http.StatusInternalServerError)
+			return
+		}
+		if err := liveManager.Broadcast(r.Context(), live.BucketBillettholders); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast billettholder e-mail add: %w", err).Error(), "billettholder_id", billettholderID)
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+
+		sse := datastar.NewSSE(w, r)
+		response := feedback.Signals()
+		response[inputSignal] = ""
+		if err := sse.MarshalAndPatchSignals(response); err != nil {
+			logger.Error(fmt.Errorf("failed to patch e-mail signals: %w", err).Error(), "billettholder_id", billettholderID)
+		}
+	})
+}
+```
+
+Imports beyond section 5: `strings` and `github.com/Regncon/conorganizer/components/errorfeedback`.
+
+- Access is checked before validation. A field error sent before the access check would answer a user without access with 200, and a check that reads the database would tell them what is stored on a billettholder they may not see.
+- Read the signals into `map[string]any` or a struct. The browser sends every signal that does not start with `_`, and `RenderMessage` declares `feedbackErrors` as an object, so reading into `map[string]string`, as the real route does, makes `ReadSignals` return an error on every click.
+- `billettholderHasEmail` and `addManualEmail` stand for service code, like `billettholderLinkedToUser` in section 5. Check for duplicates in SQL with `email = ?`: the column is `COLLATE NOCASE`, so `Kari.Manuell@example.com` counts as a duplicate of `kari.manuell@example.com`, as in the real route. `addManualEmail` also links users through `checkIn.AssociateUsersWithBillettholderEmail`, as the real route does; adding a manual e-mail is one of the flows AGENTS.md allows to create links.
+- `errorfeedback.New(feedbackKey)` registers the one key this response owns. On the error path `Patch` sends the message. On success `feedback.Signals()` sends the same key as `""`, and the extra `inputSignal` entry empties the input; both go in one `MarshalAndPatchSignals` call. `error_feedback.js` already clears the trigger's own key when a request starts, so the server's `""` matters for keys other triggers set and for a trigger without `errorfeedback.Attrs`.
+- Nothing is written on the error path, so there is nothing to broadcast. On success the new e-mail reaches the card through the broadcast, on every open tab, not through this response.
+- The feedback key (`newEmail42`) and the input signal (`newEmail-42`) are different things: the key lives inside `$feedbackErrors`, the input value is its own per-card signal.
+- Validation messages are expected outcomes, so the handler does not log them; the conorganizer-logging skill has the rule.
+- Moving the real route to this shape changes what users see. The real card confirms with "Epostadressen … er lagt til" through `successMessage-{id}` and uses other wording for its errors, and `documentation/testing/profile-tickets.md`, `documentation/billettholdere.md` and `billettholder_email_routes_test.go` quote those texts. To keep the confirmation, add `successMessage-{id}` to the response map on success and set it to `""` on the error path. If the texts change, update those files and add negative `!strings.Contains` checks, as AGENTS.md asks. The real function is spelled `addEmailToBilettholderRoute`; use one name in the route setup, the handler and the tests.
+
+The matching markup in the card. Enter in the input and the button both start the request, so both carry the same feedback key:
+
+```templ
+<input
+	class="input"
+	type="email"
+	data-bind={ fmt.Sprintf("newEmail-%d", billettholder.ID) }
+	data-on:keydown={ fmt.Sprintf("if (evt.key === 'Enter') { evt.preventDefault(); @post('/profile/tickets/api/new-email/%d/') }", billettholder.ID) }
+	{ errorfeedback.Attrs(fmt.Sprintf("newEmail%d", billettholder.ID), "Klarte ikke å legge til e-postadressen. Prøv igjen.")... }
+/>
+<button
+	type="button"
+	class="btn btn--secondary"
+	data-on:click={ fmt.Sprintf("@post('/profile/tickets/api/new-email/%d/')", billettholder.ID) }
+	{ errorfeedback.Attrs(fmt.Sprintf("newEmail%d", billettholder.ID), "Klarte ikke å legge til e-postadressen. Prøv igjen.")... }
+>
+	Legg til
+</button>
+@errorfeedback.RenderMessage(fmt.Sprintf("newEmail%d", billettholder.ID))
+```
+
+The fallback text in `Attrs` covers the `http.Error` answers and a failed request; the handler's own messages cover what the user can fix.
+
+## 8. Testing field errors
+
+The feedback arrives in the `data: signals` lines of the SSE body. `feedbackErrors` is nested, so read each payload as `map[string]any`; the flat `profilePatchedSignals` helper in `billettholder_email_routes_test.go` cannot read it. `mergeSignalPatch` merges nested objects the way the browser does, so two patches that each carry `feedbackErrors` keep both keys. Send what the browser sends: every signal that does not start with `_`, including the `feedbackErrors` object. Test both paths: the error path shows the message and writes nothing, and the success path patches every key the response owns to `""`.
+
+```go
+func patchedSignals(t *testing.T, body string) map[string]any {
+	t.Helper()
+	signals := map[string]any{}
+	for line := range strings.SplitSeq(body, "\n") {
+		payload, ok := strings.CutPrefix(line, "data: signals ")
+		if !ok {
+			continue
+		}
+		patch := map[string]any{}
+		if err := json.Unmarshal([]byte(payload), &patch); err != nil {
+			t.Fatalf("failed to unmarshal Datastar signal patch %q: %v", payload, err)
+		}
+		mergeSignalPatch(signals, patch)
+	}
+	return signals
+}
+
+func mergeSignalPatch(signals map[string]any, patch map[string]any) {
+	for key, value := range patch {
+		nestedPatch, patchIsObject := value.(map[string]any)
+		nested, signalIsObject := signals[key].(map[string]any)
+		if patchIsObject && signalIsObject {
+			mergeSignalPatch(nested, nestedPatch)
+			continue
+		}
+		signals[key] = value
+	}
+}
+
+func patchedFeedbackError(t *testing.T, body string, key string) (string, bool) {
+	t.Helper()
+	feedbackErrors, _ := patchedSignals(t, body)["feedbackErrors"].(map[string]any)
+	message, ok := feedbackErrors[key].(string)
+	return message, ok
+}
+
+func postSignalsAsKari(t *testing.T, router http.Handler, path string, signalsJSON string) *httptest.ResponseRecorder {
+	t.Helper()
+	request := httptest.NewRequest(http.MethodPost, path, strings.NewReader(signalsJSON))
+	request.Header.Set("Content-Type", "application/json")
+	request = request.WithContext(authctx.WithUserToken(request.Context(), "profile-route-user-7", "kari.nordmann@example.com"))
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+	return recorder
+}
+
+func TestAddEmailRoute_WhenEmailIsAlreadyOnBillettholder_ShowsFieldError(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en billettholder knyttet til brukeren, der e-postadressen allerede står.",
+		When:  "Når brukeren legger til den samme adressen igjen.",
+		Then:  "Så forteller feltet hvorfor, og ingenting lagres.",
+	})
+
+	// Given
+	expectedMessage := "Kari.Manuell@example.com står allerede på denne billetten."
+	db, logger := testutil.CreateTestDBAndLogger(t, "profile_tickets_add_email_duplicate")
+	insertProfileRouteTestBillettholder(t, db, 42)
+	insertProfileRouteTestUser(t, db, 7, "kari.nordmann@example.com")
+	insertProfileRouteTestBillettholderUserAssociation(t, db, 42, 7)
+	insertProfileRouteTestEmail(t, db, 42, "kari.manuell@example.com", models.BillettholderEmailKindManual)
+	manager, _ := newTestLiveManager(t)
+	router := chi.NewRouter()
+	addEmailToBillettholderRoute(router, db, logger, manager)
+
+	// When
+	recorder := postSignalsAsKari(t, router, "/new-email/42/", `{"newEmail-42": "Kari.Manuell@example.com", "feedbackErrors": {"newEmail42": ""}}`)
+
+	// Then
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, recorder.Code, recorder.Body.String())
+	}
+	if message, _ := patchedFeedbackError(t, recorder.Body.String(), "newEmail42"); message != expectedMessage {
+		t.Fatalf("field error mismatch\nexpected: %q\nactual:   %q", expectedMessage, message)
+	}
+	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_billettholder_emails WHERE billettholder_id = 42`); got != 1 {
+		t.Fatalf("expected no new e-mail row, found %d rows", got)
+	}
+}
+
+func TestAddEmailRoute_WhenEmailIsNew_ClearsFieldErrorAndInput(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en billettholder knyttet til brukeren.",
+		When:  "Når brukeren legger til en ny e-postadresse.",
+		Then:  "Så lagres adressen, feltfeilen tømmes og feltet blir tomt.",
+	})
+
+	// Given
+	expectedEmail := "kari.ny@example.com"
+	db, logger := testutil.CreateTestDBAndLogger(t, "profile_tickets_add_email_new")
+	insertProfileRouteTestBillettholder(t, db, 42)
+	insertProfileRouteTestUser(t, db, 7, "kari.nordmann@example.com")
+	insertProfileRouteTestBillettholderUserAssociation(t, db, 42, 7)
+	manager, _ := newTestLiveManager(t)
+	router := chi.NewRouter()
+	addEmailToBillettholderRoute(router, db, logger, manager)
+
+	// When
+	recorder := postSignalsAsKari(t, router, "/new-email/42/", `{"newEmail-42": "kari.ny@example.com", "feedbackErrors": {"newEmail42": ""}}`)
+
+	// Then
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, recorder.Code, recorder.Body.String())
+	}
+	if message, patched := patchedFeedbackError(t, recorder.Body.String(), "newEmail42"); !patched || message != "" {
+		t.Fatalf("expected the field error to be cleared, got %q (patched: %v)", message, patched)
+	}
+	if input := patchedSignals(t, recorder.Body.String())["newEmail-42"]; input != "" {
+		t.Fatalf("expected the input to be emptied, got %v", input)
+	}
+	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_billettholder_emails WHERE billettholder_id = 42 AND email = ?`, expectedEmail); got != 1 {
+		t.Fatalf("expected the new e-mail to be saved once, found %d rows", got)
+	}
+}
+```
+
+Imports beyond section 6: `encoding/json` and `strings`.
+
+A recorder is enough for these tests: the handler reads its signals before any SSE is opened, so the body is intact. A handler that reads after `NewSSE` would still pass a recorder test and fail on a real server, because Go's HTTP/1 server discards the unread body once the headers are flushed. To catch that, post real signals to the route over the section 9 server, read the whole response, and check the row:
+
+```go
+response, err := server.Client().Post(server.URL+"/profile/tickets/api/new-email/42/", "application/json", strings.NewReader(`{"newEmail-42": "kari.ny@example.com", "feedbackErrors": {"newEmail42": ""}}`))
+if err != nil {
+	t.Fatal(err)
+}
+defer response.Body.Close()
+if _, err := io.ReadAll(response.Body); err != nil {
+	t.Fatal(err)
+}
+if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM relation_billettholder_emails WHERE billettholder_id = 42 AND email = ?`, "kari.ny@example.com"); got != 1 {
+	t.Fatalf("expected the e-mail to be saved over a real server, found %d rows", got)
+}
+```
+
+## 9. End-to-end: an open page re-renders after a mutation
 
 Open the stream for real, wait until it watches, mutate, and read the next patch. `httptest.NewRecorder` cannot do this, because `Stream` blocks until the request ends; use `httptest.NewServer`.
 
@@ -424,7 +676,7 @@ Extra imports: `bufio`, `database/sql`, `log/slog`, `strings`, `time`, `github.c
 
 Over `httptest.NewServer` the test's own request context never reaches the handler, so the user goes in through the router middleware. Without a token the renderer gets an empty user id, and `GetBillettholdere("")` then returns every billettholder, which hides access bugs. `waitUntilWatching` counts consumers on the bucket, so open only one stream per bucket in a test, or wait for the right number. Delete the `Broadcast` line once by hand and watch this test fail; that is the proof the handler broadcasts.
 
-## 8. Doc rows to add
+## 10. Doc rows to add
 
 In `documentation/live-update-lifecycle.md`:
 

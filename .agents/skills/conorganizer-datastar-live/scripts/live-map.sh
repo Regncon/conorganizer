@@ -3,8 +3,9 @@
 #   1. per live bucket, every Stream subscriber and every Broadcast call site
 #   2. every POST/PUT/DELETE/PATCH route that broadcasts only through a
 #      function it calls, at any depth, and every one that never broadcasts
-#   3. handlers and functions that call http.Error or ReadSignals after datastar.NewSSE
-#   4. Datastar attributes in the hyphen form the 1.0.4 client ignores
+#   3. handlers and functions that call http.Error or ReadSignals after datastar.NewSSE;
+#      a NewSSE in a block that returns counts only inside that block
+#   4. Datastar attributes the 1.0.4 client ignores or misreads
 #
 # It scans *.go and *.templ, skipping generated *_templ.go, *_test.go,
 # .claude/, node_modules/, tmp/ and backup-* folders. Handler and function
@@ -62,13 +63,24 @@ function code_of(line,    out, i, n, c, q) {
 	return out
 }
 function count(s, ch,    n) { n = gsub(ch, "", s); return n }
-function after_sse(code,    i, rest, found) {
-	i = index(code, "NewSSE(")
-	if (i == 0) return ""
-	rest = substr(code, i)
+function after_sse(code,    rest, i, j, n, c, d, returns, late, found) {
 	found = ""
-	if (index(rest, "http.Error(") > 0) found = "http.Error"
-	if (index(rest, "ReadSignals(") > 0) found = found (found == "" ? "" : ", ") "ReadSignals"
+	rest = code
+	while ((i = index(rest, "NewSSE(")) > 0) {
+		rest = substr(rest, i + 7)
+		n = length(rest); d = 0; returns = 0
+		for (j = 1; j <= n; j++) {
+			c = substr(rest, j, 1)
+			if (c == "{") d++
+			else if (c == "}" && --d < 0) break
+			else if (d == 0 && substr(rest, j, 6) == "return" && substr(rest, j - 1, 1) !~ /[A-Za-z0-9_]/ && substr(rest, j + 6, 1) !~ /[A-Za-z0-9_]/) returns = 1
+		}
+		late = returns ? substr(rest, 1, j - 1) : rest
+		if (index(late, "http.Error(") > 0 && index(found, "http.Error") == 0) found = found (found == "" ? "" : ", ") "http.Error"
+		if (index(late, "ReadSignals(") > 0 && index(found, "ReadSignals") == 0) found = found (found == "" ? "" : ", ") "ReadSignals"
+		if (!returns) break
+		rest = substr(rest, j)
+	}
 	return found
 }
 '

@@ -5,19 +5,30 @@ Two small conventions carry nearly all user feedback for Datastar requests. `com
 ## errorfeedback: server side
 
 ```go
-sse := datastar.NewSSE(w, r)
 feedback := errorfeedback.New("name", "email")   // every key this response owns
 if name == "" {
-	feedback.Set("name", "Name must be filled in.")
+	feedback.Set("name", "Navn må fylles ut.")
 }
 if feedback.HasErrors() {
-	return feedback.Patch(sse)                    // sends {"feedbackErrors": {"name": "...", "email": ""}}
+	sse := datastar.NewSSE(w, r)
+	if err := feedback.Patch(sse); err != nil {     // sends {"feedbackErrors": {"name": "...", "email": ""}}
+		logger.Error(fmt.Errorf("failed to patch field errors: %w", err).Error())
+	}
+	return
+}
+// write, broadcast, then:
+sse := datastar.NewSSE(w, r)
+if err := sse.MarshalAndPatchSignals(feedback.Signals()); err != nil {   // clears "name" and "email"
+	logger.Error(fmt.Errorf("failed to clear field errors: %w", err).Error())
 }
 ```
 
 - `New(keys...)` initializes each key to an empty string. `Patch` sends all of them, so keys you listed are cleared on the page when they have no new error. A key you did not list is left as it was, which is how a stale message survives a successful save.
-- `Set`, `Clear`, `HasErrors`, `Patch(sse)` and `Signals()` are the whole API. `Signals()` returns the `{"feedbackErrors": {...}}` map so you can merge it into one `MarshalAndPatchSignals` call together with other signals.
-- Because `Patch` needs the SSE, create it before the validation branch that reports field errors, and keep `http.Error` for the checks that come before `NewSSE` (malformed signals, missing ids, access).
+- `Set`, `Clear`, `HasErrors`, `Patch(sse)` and `Signals()` are the whole API. `Signals()` returns the `{"feedbackErrors": {...}}` map so you can merge it into one `MarshalAndPatchSignals` call together with other signals, such as emptying an input.
+- Check access before validation, so a user without access never gets a field error. Open the SSE only in the branch that patches. Validation that needs the database still runs before the write. `http.Error` then stays available for everything before an SSE is opened: malformed signals, missing ids, access, a failed write or broadcast. The full handler and its tests are in `references/live-page-skeleton.md` sections 7 and 8.
+- `error_feedback.js` already clears the trigger's own key when a request starts. The `""` the server sends on success clears the keys other triggers set and the key of a trigger without `errorfeedback.Attrs`.
+- The browser sends `feedbackErrors` with every request, as an object. Read signals into `map[string]any` or a struct; `map[string]string` makes `ReadSignals` return an error.
+- Validation messages are expected outcomes; don't log them as errors (conorganizer-logging skill).
 - On the feedback page, `/tilbakemelding/reset` patches a fresh form and then `newFeedbackErrors().Patch(sse)` explicitly, because the message elements use `__ifmissing` and would keep showing old errors otherwise.
 
 ## errorfeedback: markup
