@@ -5,7 +5,7 @@ description: Conorganizer's rules for Datastar and live updates (NATS buckets, S
 
 # Conorganizer Datastar Live
 
-One model runs the whole app: a mutation writes to SQLite, broadcasts a NATS bucket, and every open page subscribed to that bucket re-renders its live fragment over SSE from the database. Most bugs in this area are a missing or mis-targeted broadcast, a response written in the wrong order, or browser state that a morph wipes out. This skill keeps new code on that model. On main, AGENTS.md has the short version under "Live updates and Datastar"; this is the depth.
+One model runs the whole app: a mutation writes to SQLite, broadcasts a NATS bucket, and every open page subscribed to that bucket re-renders its live fragment over SSE from the database. Most bugs in this area are a missing or mis-targeted broadcast, a response written in the wrong order, or browser state that a morph wipes out. This skill keeps new code on that model. AGENTS.md has the short version under "Live updates and Datastar"; this is the depth.
 
 ## Read first
 
@@ -29,7 +29,7 @@ Versions: the bundled client is Datastar v1.0.4 (`static/datastar.js`) and the G
 Handler order, top to bottom:
 
 1. When the handler needs signals, `datastar.ReadSignals(r, &store)`. JSON tags are the camelCase signal names. GET and DELETE read the `datastar` query parameter, other methods read the body.
-2. Validate and check access, and reject with `http.Error(...)` here, while the response is untouched.
+2. Check access, then validate, and reject with `http.Error(...)` here, while the response is untouched. Input the user can fix is the exception: it gets a 200 `errorfeedback` patch (see below).
 3. Write to SQLite.
 4. `liveManager.Broadcast(r.Context(), buckets...)` for every bucket whose subscribers render the changed data.
 5. Only now `sse := datastar.NewSSE(w, r)`, and only if the request needs a signal patch, field feedback or a redirect. When nothing has to reach the requester because the live stream re-renders the page, answer `w.WriteHeader(http.StatusNoContent)`, as the pulje status routes do.
@@ -38,7 +38,9 @@ Handler order, top to bottom:
 
 `ReadSignals` must come before `NewSSE` too. When the headers are flushed, Go's HTTP/1 server discards the unread request body (`net/http`, `maxPostHandlerReadBytes`), so a POST or PUT that reads signals after `NewSSE` gets nothing on a real server. `httptest.NewRecorder` does not discard the body, so a recorder test hides this. Some older handlers break one of these orders; the live map lists them, so check a handler there before you copy it.
 
-An `http.Error` before `NewSSE` never shows its text. For a non-200 status the 1.0.4 client fires `started`, `error`, then `finished` and drops the body. A trigger with `errorfeedback.Attrs(key)` and a matching `RenderMessage` then shows a fallback message (its own, the form's default, or the generic one), and a toast indicator on it stays quiet; a trigger without a feedback key shows nothing at all. Give every mutation trigger that can fail a feedback key. When the user needs the specific reason ("Epostadressen finnes allerede"), answer 200 with an `errorfeedback` patch instead.
+An `http.Error` before `NewSSE` never shows its text. For a non-200 status the 1.0.4 client fires `started`, `error`, then `finished` and drops the body. A trigger with `errorfeedback.Attrs(key)` and a matching `RenderMessage` then shows a fallback message (its own, the form's default, or the generic one), and a toast indicator on it stays quiet; a trigger without a feedback key shows nothing at all. Give every mutation trigger that can fail a feedback key.
+
+When the user can fix the problem and needs the specific reason ("Epostadressen finnes allerede"), answer 200 with an `errorfeedback` patch instead. Keep the order above and add one branch: check access first, then validate before the write, and when there are errors, open the SSE, patch them and return without writing. A field error sent before the access check answers a user without access with 200, and a check that reads the database tells them about data they may not see. On success, write and broadcast, then open the SSE and patch `feedback.Signals()`, which sends every key the response owns as `""`. `http.Error` stays available for everything before an SSE is opened, a failed broadcast included. Read the signals into `map[string]any` or a struct: the browser also sends the `feedbackErrors` object, which `map[string]string` cannot hold. `references/live-page-skeleton.md` sections 7 and 8 have the handler and its tests.
 
 Choosing buckets:
 
@@ -95,7 +97,7 @@ Add a bucket only when no existing bucket's subscribers render the data, and bro
 
 Splitting or renaming a `.templ` file leaves the old `*_templ.go` behind until templ generates again. `go tool templ generate` deletes a generated file whose `.templ` is gone, so run it before you build or vet in a worktree.
 
-`references/live-page-skeleton.md` has the index route, the wrapper, the page renderer, the `/api` route, a mutation handler in the right order, an embedded-NATS route test and an end-to-end stream test, all based on `pages/profile/tickets`.
+`references/live-page-skeleton.md` has the index route, the wrapper, the page renderer, the `/api` route, a mutation handler in the right order, a handler that returns field errors, route tests for both, and an end-to-end stream test, all based on `pages/profile/tickets`.
 
 ## Datastar markup inside live HTML
 
@@ -113,7 +115,7 @@ Splitting or renaming a `.templ` file leaves the old `*_templ.go` behind until t
 
 ## Feedback to the user
 
-- Field errors: `feedback := errorfeedback.New("title", "intro")`, `feedback.Set(key, msg)`, `feedback.Patch(sse)`. Markup: `{ errorfeedback.Attrs("title")... }` on the trigger and `@errorfeedback.RenderMessage("title")` beside it. Keys you do not pass to `New` are never cleared; that is how old messages get stuck.
+- Field errors: `feedback := errorfeedback.New("title", "intro")`, `feedback.Set(key, msg)`, `feedback.Patch(sse)`, with the SSE opened only in the branch that patches (see "Add or change a mutation handler"). Markup: `{ errorfeedback.Attrs("title")... }` on the trigger and `@errorfeedback.RenderMessage("title")` beside it. Keys you do not pass to `New` are never cleared; that is how old messages get stuck.
 - Saved toast: `@toast.Render("Lagret", icons.ProgressComplete)` once per page, outside the live fragment, then the value form `data-indicator="toastTitle"` on each trigger. `toast.js` reads `el.dataset.indicator`, so `data-indicator:toast-title` never shows a toast. It shows when the request finishes without `error` or `retries-failed`. A backend `feedbackErrors` patch suppresses it only when it has a non-empty message for the trigger's own `errorfeedback.Attrs` key.
 - Per-request messages that are not field errors: patch plain signals, as `getTicketsErrorMessage` in `pages/profile/tickets/tickets_page.templ` does. Declare them kebab-case, `data-signals:get-tickets-error-message="''"`; that file writes `data-signals:getTicketsErrorMessage`, which declares `$getticketserrormessage`.
 
@@ -123,7 +125,8 @@ Details and the client-side lifecycle are in `references/errorfeedback-and-toast
 
 - A handler whose broadcast is required needs a real manager in its route test: embedded NATS plus `live.NewManager`, as in `pages/admin/rooms_assignment_route_test.go` and the `newMaxPlayersTestLiveManager` helper in `components/formsubmission/other_details_test.go`. `&live.Manager{}` has no buckets, so `Broadcast` returns `unknown live bucket`; it only fits handlers that treat the broadcast as best effort, tests that stop before it, or a test that checks the broadcast-failure path on purpose.
 - A route test that checks status and database still passes when the `Broadcast` line is deleted. To prove that another open page re-renders, open the stream over `httptest.NewServer`, read the first patch, wait until the stream's NATS watcher exists, then run the mutation and read the next patch. A broadcast between the first patch and the watcher start is missed by design, so a test without the wait is flaky. `references/live-page-skeleton.md` has the helpers.
-- Markup rules are asserted with `templtest.Render`, as `TestBillettholderCard_UsesDatastarStateForInterestDialogOpenState` does for the dialog attributes. On main, `templtest.SignalsObject` parses a JSON `data-signals` attribute and `templtest.SignalsAttrsWithModifierBeforeKey` finds `__ifmissing` written before the key; `pages/admin/puljefordeling_signals_test.go` uses both.
+- Server-side feedback is asserted from the response body: each `data: signals` line carries a JSON patch, and `feedbackErrors` is nested in it. Test the error path (message present, nothing written) and the success path (the key patched to `""`). `references/live-page-skeleton.md` section 8 has the helpers; the flat `profilePatchedSignals` helper cannot read the nested map.
+- Markup rules are asserted with `templtest.Render`, as `TestBillettholderCard_UsesDatastarStateForInterestDialogOpenState` does for the dialog attributes. `templtest.SignalsObject` parses a JSON `data-signals` attribute and `templtest.SignalsAttrsWithModifierBeforeKey` finds `__ifmissing` written before the key; `pages/admin/puljefordeling_signals_test.go` uses both.
 - `service/live/live_test.go` uses an in-memory fake KV. Keep NATS out of it.
 - Use `bdd.Behavior` and Given/When/Then sections as AGENTS.md describes.
 
@@ -159,13 +162,13 @@ Live logs carry `component=live`; the message table is under "Logging" in the li
 5. No `showModal()` or `command="show-modal"` dialog inside a live fragment without the signal pattern; `data-preserve-attr` on `<details>`; `data-ignore-morph` justified.
 6. Colon syntax with modifiers after the key, kebab-case keys, `_` prefix for browser-only signals, `__ifmissing` where state must survive a patch, `components.DataSignals` instead of hand-quoted JSON.
 7. No user text formatted into a Datastar expression; per-item signal names in markup that repeats.
-8. `errorfeedback.New` lists every key the response owns; every trigger that can fail has a feedback key; toasts use the value form of `data-indicator`.
+8. `errorfeedback.New` lists every key the response owns; every trigger that can fail has a feedback key; input the user can fix is rejected with a 200 `errorfeedback` patch that says why, not with `http.Error`; toasts use the value form of `data-indicator`.
 9. Route tests use embedded NATS when the broadcast is required; a test that passes with `&live.Manager{}` proves nothing about the broadcast.
 10. Doc tables updated: "Buckets", "Cross-bucket broadcasts", "Page subscriptions".
 
 ## References
 
-- `references/live-page-skeleton.md`: copy-ready index, page, `/api` and mutation code based on `pages/profile/tickets`, plus the embedded-NATS route test and the end-to-end stream test.
+- `references/live-page-skeleton.md`: copy-ready index, page, `/api` and mutation code based on `pages/profile/tickets`, a handler that returns field errors, the embedded-NATS route tests for both, and the end-to-end stream test.
 - `references/datastar-cheatsheet.md`: attributes, modifiers, actions and Go SDK calls for Datastar v1.0.4 and datastar-go v1.2.2, with one repo example each.
 - `references/morph-safety.md`: dialogs, `<details>`, `data-ignore-morph`, effects, the `datastar-fetch` hook, tooltips and user text in expressions.
 - `references/errorfeedback-and-toast.md`: the feedback and toast contract, server and browser side.
