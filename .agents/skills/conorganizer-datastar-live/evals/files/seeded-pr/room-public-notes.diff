@@ -1,0 +1,141 @@
+diff --git a/pages/admin/admin.go b/pages/admin/admin.go
+index 5eea969..f7f3556 100644
+--- a/pages/admin/admin.go
++++ b/pages/admin/admin.go
+@@ -227,6 +227,45 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
+ 
+ 					})
+ 
++					roomApiRouter.Put("/public-notes", func(w http.ResponseWriter, r *http.Request) {
++						sse := datastar.NewSSE(w, r)
++
++						roomID, err := strconv.Atoi(chi.URLParam(r, "id"))
++						if err != nil || roomID <= 0 {
++							http.Error(w, "Ugyldig rom", http.StatusBadRequest)
++							return
++						}
++
++						type Store struct {
++							PublicNotes string `json:"publicNotes"`
++						}
++						store := &Store{}
++						if err := datastar.ReadSignals(r, store); err != nil {
++							http.Error(w, "Klarte ikke å lese notatet", http.StatusBadRequest)
++							return
++						}
++						if len(store.PublicNotes) > 500 {
++							http.Error(w, "Notatet kan ikke være lengre enn 500 tegn", http.StatusBadRequest)
++							return
++						}
++
++						if _, roomErrors := roomService.UpdateRoomPartial(db, models.RoomInput{ID: roomID, PublicNotes: &store.PublicNotes}); roomErrors.HasErrors() {
++							logger.Error("failed to update room public notes", "room_id", roomID)
++							http.Error(w, "Klarte ikke å lagre notatet", http.StatusInternalServerError)
++							return
++						}
++
++						if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
++							logger.Error(fmt.Errorf("failed to broadcast room notes update: %w", err).Error(), "room_id", roomID)
++							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
++							return
++						}
++
++						if err := sse.ExecuteScript(fmt.Sprintf(`document.getElementById('room-notes-dialog-%d').close()`, roomID)); err != nil {
++							logger.Error("Failed to execute sse script", "error", err.Error())
++						}
++					})
++
+ 					roomApiRouter.Delete("/", func(w http.ResponseWriter, r *http.Request) {
+ 						// Validate id param from URL
+ 						idQuery := chi.URLParam(r, "id")
+diff --git a/pages/admin/rooms/rooms_page.templ b/pages/admin/rooms/rooms_page.templ
+index 6965148..04acebb 100644
+--- a/pages/admin/rooms/rooms_page.templ
++++ b/pages/admin/rooms/rooms_page.templ
+@@ -169,6 +169,32 @@ templ roomCard(room models.Room) {
+ 			class="btn btn--secondary room-edit"
+ 			data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d'); document.getElementById('room-dialog').showModal()", room.ID) }
+ 		>Rediger rom</button>
++		@roomPublicNotesQuickEdit(room)
++	</div>
++}
++
++templ roomPublicNotesQuickEdit(room models.Room) {
++	<div class="room-notes-quick-edit" data-signals:public-notes={ fmt.Sprintf("'%s'", room.PublicNotes) }>
++		<button
++			type="button"
++			class="btn btn--ghost"
++			data-on:click={ fmt.Sprintf("document.getElementById('room-notes-dialog-%d').showModal()", room.ID) }
++		>Rediger notat</button>
++		<dialog id={ fmt.Sprintf("room-notes-dialog-%d", room.ID) } closedby="any">
++			<h2>Notat for rom { room.RoomNumber }</h2>
++			<label>
++				Vises for alle som ser rommet
++				<textarea class="input" rows="4" data-bind:public-notes></textarea>
++			</label>
++			<span class="button-group">
++				<button type="button" class="btn btn--secondary" data-on:click="el.closest('dialog').close()">Avbryt</button>
++				<button
++					type="button"
++					class="btn btn--cta"
++					data-on-click={ fmt.Sprintf("@put('/admin/rooms/api/%d/public-notes')", room.ID) }
++				>Lagre</button>
++			</span>
++		</dialog>
+ 	</div>
+ }
+ 
+diff --git a/pages/admin/rooms_public_notes_route_test.go b/pages/admin/rooms_public_notes_route_test.go
+new file mode 100644
+index 0000000..c259a9e
+--- /dev/null
++++ b/pages/admin/rooms_public_notes_route_test.go
+@@ -0,0 +1,48 @@
++package admin
++
++import (
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"testing"
++
++	"github.com/Regncon/conorganizer/service/live"
++	"github.com/Regncon/conorganizer/testutil"
++	"github.com/Regncon/conorganizer/testutil/bdd"
++	"github.com/go-chi/chi/v5"
++)
++
++func TestRoomPublicNotes_SavesNotesForRoom(t *testing.T) {
++	bdd.Behavior(t, bdd.BDD{
++		Given: "Gitt et rom uten offentlig notat.",
++		When:  "Når en administrator lagrer et notat fra romkortet.",
++		Then:  "Så er notatet lagret på rommet.",
++	})
++
++	// Given
++	expectedNotes := "Nøkkel hentes i resepsjonen"
++	db, logger := testutil.CreateTestDBAndLogger(t, "room_public_notes_route")
++	testutil.MustExec(t, db, `INSERT INTO rooms(id,name,room_number,floor,max_concurrent_games) VALUES(42,'Andre','705',7,0)`)
++	router := chi.NewRouter()
++	if err := SetupAdminRoute(router, logger, &live.Manager{}, db, nil); err != nil {
++		t.Fatal(err)
++	}
++
++	// When
++	recorder := httptest.NewRecorder()
++	request := httptest.NewRequest(http.MethodPut, "/admin/rooms/api/42/public-notes", strings.NewReader(`{"publicNotes": "Nøkkel hentes i resepsjonen"}`))
++	request.Header.Set("Content-Type", "application/json")
++	router.ServeHTTP(recorder, request)
++
++	// Then
++	if recorder.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, recorder.Code, recorder.Body.String())
++	}
++	var actualNotes string
++	if err := db.QueryRow(`SELECT public_notes FROM rooms WHERE id = 42`).Scan(&actualNotes); err != nil {
++		t.Fatal(err)
++	}
++	if actualNotes != expectedNotes {
++		t.Fatalf("public notes mismatch\nexpected: %q\nactual:   %q", expectedNotes, actualNotes)
++	}
++}

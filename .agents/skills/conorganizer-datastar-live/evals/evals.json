@@ -1,0 +1,77 @@
+{
+  "skill_name": "conorganizer-datastar-live",
+  "evals": [
+    {
+      "id": 1,
+      "name": "unlink-billettholder-broadcast",
+      "prompt": "On /profile/tickets every billettholder card shows a ticket that is linked to my user. Add a \"Fjern fra min side\" button on each card that removes the link between the logged-in user and that billettholder (the row in relation_billettholdere_users), so the card goes away. Backend route plus templ markup, next to the existing e-mail routes in pages/profile/tickets. Don't add a migration.",
+      "expected_output": "A mutation route in pages/profile/tickets that checks the link belongs to the logged-in user through relation_billettholdere_users (never by e-mail), deletes it, then calls liveManager.Broadcast with live.BucketBillettholders so the card list, the header menu and admin billettholder pages re-render. Validation and http.Error happen before datastar.NewSSE; any user feedback goes through signals or errorfeedback. A button in the card markup triggers the request with Datastar colon syntax.",
+      "files": [],
+      "expectations": [
+        "A new mutation route in pages/profile/tickets deletes the row in relation_billettholdere_users for the logged-in user and the given billettholder",
+        "The route checks that the link belongs to the logged-in user by user id through relation_billettholdere_users, never by comparing e-mail addresses",
+        "After the durable delete succeeds the handler calls liveManager.Broadcast with live.BucketBillettholders",
+        "The handler never calls http.Error after datastar.NewSSE; validation and access failures are rejected before any SSE is created, or no SSE is created at all",
+        "The handler does not patch the card list or page content in the mutation response; the card disappears because the live stream re-renders the page after the broadcast",
+        "The card markup starts the request with Datastar colon syntax (for example data-on:click=\"@post(...)\" or @delete) and uses no hyphenated Datastar attributes such as data-on-click",
+        "The notes or code explain that other subscribers of the billettholders bucket (header menu, /profile, admin billettholder pages) re-render from the same broadcast",
+        "If a route test is included for the new handler, it builds a real live manager with embedded NATS and live.NewManager rather than &live.Manager{}"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "feedback-admin-live",
+      "prompt": "Admins on /admin/tilbakemeldinger/ have to reload to see new feedback. Make that list live like the other admin pages, so a submission from /tilbakemelding shows up without a reload, and a delete by one admin shows up for the others. Keep the ?om= category filter working.",
+      "expected_output": "A live wrapper with a stable id and data-init built with live.DatastarInit (carrying ?om=), a page renderer with the same top-level id, a Stream route under the admin router subscribed to a bucket that feedback mutations broadcast (a new bucket in service/live or a justified reuse), Broadcast calls in the feedback POST handler (liveManager threaded through router.go into SetupFeedbackRoute) and in the DELETE handler, full content rendered on the normal GET, and the Page subscriptions and Buckets tables in documentation/live-update-lifecycle.md updated.",
+      "files": [],
+      "expectations": [
+        "A GET SSE route for the feedback admin list calls liveManager.Stream with a live.Page that has Buckets and a Render function",
+        "The normal GET of /admin/tilbakemeldinger/ still renders the full feedback list in the first response (no placeholder-only wrapper that waits for the first SSE patch)",
+        "The live wrapper's data-init is built with live.DatastarInit or live.DatastarInitExpression, not a hand-written @get(...)",
+        "The wrapper rendered by the normal GET and the component rendered by the SSE route share the same top-level element id",
+        "The ?om= category filter is carried into the live endpoint URL and the renderer applies it on every re-render",
+        "The feedback submit handler in pages/feedback (POST /tilbakemelding) calls Broadcast on the chosen bucket after a successful save, with the live manager threaded through router.go into SetupFeedbackRoute",
+        "The DELETE /tilbakemeldinger/{id} handler calls Broadcast on the same bucket after the delete succeeds",
+        "If a new bucket is introduced it is added as a constant and to allBuckets in service/live/live.go; if an existing bucket is reused the choice is justified in the notes",
+        "documentation/live-update-lifecycle.md is updated: the Page subscriptions table gets the new page and the Buckets table lists the feedback broadcasters",
+        "Any route test for the submit or delete handler that reaches the broadcast uses embedded NATS and live.NewManager, or the handler treats the broadcast as best effort and the notes say so"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "confirm-dialog-in-live-card",
+      "prompt": "On the profile tickets page, deleting a manual e-mail from a billettholder card happens the moment you click the little x. Add a native <dialog> that asks \"Er du sikker på at du vil slette e-postadressen?\" with Avbryt and Slett buttons, and only send the delete request after Slett.",
+      "expected_output": "The dialog is either rendered outside the live fragment #profile-tickets-page-wrapper (for example in tickets_index.templ next to the live div, driven by a signal holding the email id and billettholder id) or, if kept inside the card, opened from a signal through data-effect with data-preserve-attr=\"open\" and data-on:close clearing the signal, with the signal declared with data-signals__ifmissing. The open button sets a signal; it does not call showModal() directly from data-on:click on markup inside the live fragment. The Slett button sends the existing POST /profile/tickets/api/delete-email/{id}/{emailID}/ request.",
+      "files": [],
+      "expectations": [
+        "A native <dialog> element with the text \"Er du sikker på at du vil slette e-postadressen?\" and buttons labelled Avbryt and Slett is added",
+        "The delete request to /profile/tickets/api/delete-email/{id}/{emailID}/ is only sent from the Slett button, not from the x button",
+        "No <dialog> that is opened with showModal() is rendered inside the live fragment #profile-tickets-page-wrapper (the markup the live stream re-renders), unless it follows the signal-driven pattern in the next assertion",
+        "Either the dialog is rendered outside the live fragment (for example in tickets_index.templ beside the live wrapper, with a signal carrying the billettholder and e-mail ids), or it stays inside the fragment and is driven by a signal: data-effect opens and closes it, data-on:close clears the signal, and it carries data-preserve-attr=\"open\"",
+        "The signal that controls the dialog is declared with data-signals__ifmissing (or components.DataSignals on an element outside the live fragment) so a live patch does not reset it",
+        "The notes or code comments give the morph risk (a live patch stripping the dialog's open attribute and leaving the page inert) as the reason for the chosen placement",
+        "All Datastar attributes use colon syntax (data-on:click, data-attr:..., data-signals:...), never data-on-click",
+        "If a test is added, it renders the templ component with templtest.Render and asserts the dialog attributes"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "review-seeded-room-notes-pr",
+      "prompt": "Review this PR before I merge it. It lets admins edit a room's public note straight from the room card on /admin/rooms/ instead of opening the full room dialog. The diff is in evals/files/seeded-pr/room-public-notes.diff (in this skill folder) and applies to the current HEAD. Give me the problems you find, most important first, each with file, line and the fix.",
+      "expected_output": "A prioritised review that finds the seven seeded live-update and Datastar defects: wrong bucket, http.Error after NewSSE, showModal dialog inside the live fragment, hyphen syntax on the save button, note text formatted into an expression, one global signal shared by every card, and a route test whose empty live manager hides the broken broadcast.",
+      "files": [
+        "evals/files/seeded-pr/room-public-notes.diff"
+      ],
+      "expectations": [
+        "Flags that the new PUT handler broadcasts only live.BucketEvents while /admin/rooms/, where the edit happens, streams only live.BucketRooms, so the admin's own page and other admins' rooms pages stay stale; asks for live.BucketRooms",
+        "Flags that datastar.NewSSE is created at the top of the handler, so the later http.Error calls cannot set their status and their text never reaches the user; asks to validate before NewSSE and to use errorfeedback or a signal patch for the 500-character message",
+        "Flags the per-card <dialog> opened with showModal() inside the live fragment #room-administration (RoomsPageContent), because a live patch strips its open attribute and can leave the page inert; proposes moving it outside the fragment or the signal-driven pattern with data-preserve-attr=\"open\"",
+        "Flags data-on-click on the Lagre button as hyphen syntax that Datastar 1.0.4 ignores, so the save request is never sent; asks for data-on:click",
+        "Flags room.PublicNotes interpolated into a Datastar expression with fmt.Sprintf(\"'%s'\"), which breaks on apostrophes or newlines and lets note text run as JavaScript; proposes JSON encoding or a data-* attribute",
+        "Flags that every room card declares the same global signal publicNotes (data-signals:public-notes and data-bind:public-notes), so the cards overwrite each other and the dialog shows or saves another room's note",
+        "Flags that the route test passes &live.Manager{}, so Broadcast always fails and the test still sees 200 only because NewSSE already flushed the status; asks for embedded NATS and live.NewManager",
+        "Raises no finding that contradicts the repo's real code or conventions, for example calling colon syntax wrong, inventing a bucket, or claiming the event page does not show public notes"
+      ]
+    }
+  ]
+}
