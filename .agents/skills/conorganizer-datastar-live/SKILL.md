@@ -112,6 +112,7 @@ Splitting or renaming a `.templ` file leaves the old `*_templ.go` behind until t
 - Adding a `<dialog>` to an existing live page: a dialog opened with `showModal()`, or with `commandfor` and `command="show-modal"`, must sit outside the live wrapper (a sibling in the `_index` templ is enough; the trigger may stay inside) or follow the signal pattern. `references/morph-safety.md` has both.
 - User text never goes into a Datastar expression through `fmt.Sprintf`; Go's `%q` is not JavaScript quoting. Put it in a `data-*` attribute and read `el.dataset.name` in the expression, or JSON-encode it with `templ.JSONString` or `components.DataSignals`.
 - Tooltips: only `data-tippy-content="..."`. `layouts/base.templ` delegates from `document.body`, so morphed elements keep their tooltips; per-element `tippy(...)` instances die with the morph.
+- Style blocks: a component rendered in a loop, or by a parent that repeats it, wraps its `<style>` in a package-level `templ.NewOnceHandle()`, as "Looped components render their style once" in `documentation/ui-conventions.md` describes. The handle is scoped to one `Render` call, and each live patch is its own call, so every patch carries the style once. Without the handle, every broadcast resends one style block per item. A component rendered once keeps a plain `<style>` block.
 
 ## Feedback to the user
 
@@ -161,7 +162,7 @@ Live logs carry `component=live`; the message table is under "Logging" in the li
 4. New live page: full content on GET, same wrapper id in `_index` and `_page`, `live.DatastarInit`, query state carried, access checked on the stream and every mutation.
 5. No `showModal()` or `command="show-modal"` dialog inside a live fragment without the signal pattern; `data-preserve-attr` on `<details>`; `data-ignore-morph` justified.
 6. Colon syntax with modifiers after the key, kebab-case keys, `_` prefix for browser-only signals, `__ifmissing` where state must survive a patch, `components.DataSignals` instead of hand-quoted JSON.
-7. No user text formatted into a Datastar expression; per-item signal names in markup that repeats.
+7. No user text formatted into a Datastar expression; per-item signal names in markup that repeats, and its `<style>` rendered once through `templ.NewOnceHandle()`.
 8. `errorfeedback.New` lists every key the response owns; every trigger that can fail has a feedback key; input the user can fix is rejected with a 200 `errorfeedback` patch that says why, not with `http.Error`; toasts use the value form of `data-indicator`.
 9. Route tests use embedded NATS when the broadcast is required; a test that passes with `&live.Manager{}` proves nothing about the broadcast.
 10. Doc tables updated: "Buckets", "Cross-bucket broadcasts", "Page subscriptions".
