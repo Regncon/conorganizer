@@ -233,7 +233,7 @@ Year-bound values change every festival:
 - "Regncon 2026" in pages/login/login.go
 
 ## Git
-- Commit subjects are imperative English and describe the user-visible outcome, keeping Norwegian domain words. No Co-Authored-By trailer.
+- Commit subjects are imperative English, capitalized, without a trailing period and at most 72 characters, describing the user-visible outcome and keeping Norwegian domain words. The body, after a blank line, says why rather than what; `Closes #NNN` goes last in the body, never in the subject; no Co-Authored-By trailer. PR titles follow the subject rule. The conorganizer-commits skill has the rest and a checker: `bash ".agents/skills/conorganizer-commits/scripts/check-commit-msg.sh"`.
 - Bring a branch up to date by merging main into it, not by rebasing.
 - Don't edit the preview block CI adds to the PR body (between the `preview-deployment-url` markers).
 
