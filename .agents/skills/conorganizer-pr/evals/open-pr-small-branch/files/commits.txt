@@ -1,0 +1,12 @@
+commit a800b936 (2026-09-26)
+Fix server don start if u dont download images
+
+
+commit ebea4973 (2026-09-26)
+Drop GNU-only tar flags that broke the image download on Mac
+
+
+commit fa838f28 (2026-09-26)
+attempt build of download script to also work on windows
+
+

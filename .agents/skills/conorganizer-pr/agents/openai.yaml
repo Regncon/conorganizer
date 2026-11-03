@@ -1,0 +1,4 @@
+interface:
+  display_name: "Conorganizer PR"
+  short_description: "Pull request titles and descriptions for conorganizer"
+  default_prompt: "Write or rewrite the title and description of a conorganizer pull request so the title names the outcome in at most 65 characters and the body stays short and plain."

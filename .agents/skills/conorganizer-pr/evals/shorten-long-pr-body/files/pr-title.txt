@@ -1,0 +1,1 @@
+Keep Loki's logs across reboots and delete them after 120 days

@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: open-pr-migration-branch
+expected_outcome: |
+  pr-title.txt holds one imperative English title that names the user-visible outcome (the scheduled NATS closing warning is replaced by an admin-controlled closing warning switch per pulje), keeps the domain word pulje, and does not start with the issue number or copy the branch slug. pr-body.md is short and plain: a summary of one to three sentences, a few bullets for the parallel changes, a tests line, and a rollout note saying the migration 20260920100000_add_pulje_closing_warning.sql must be run on main and demo by hand (documentation/migrations.md). No emoji, no attribution lines, no restating of the diff, no praise.
+context:
+  scaffold_script: place-files.sh

@@ -1,0 +1,16 @@
+commit 49cad714 (2026-10-21)
+Merge remote-tracking branch 'origin/main' into loki-persistent-storage
+
+# Conflicts:
+#	configuration-as-code/README.md
+#	configuration-as-code/grafana-dashboards/README.md
+
+commit 4564beca (2026-10-20)
+Keep Loki's logs across reboots and delete them after 120 days
+
+Loki stored everything in /tmp/loki, from the example config the Loki package installs. On the server /tmp is a 1 GB tmpfs in RAM, so every reboot wiped all logs in Loki. Its data now lives in /var/lib/loki on the root disk, created by a loki.service.d drop-in (StateDirectory, mode 0700). The drop-in survives package upgrades, which overwrite loki.service.
+
+retention_period: 120d never deleted anything, because the compactor's retention was off. It is now on, with deletion_mode: disabled so the unauthenticated delete API that retention enables stays closed.
+
+The configuration-as-code README explains the storage and has the one-off server steps: stop Loki before pulling, copy /tmp/loki with cp -a, restow, and check that nothing was dropped.
+
