@@ -1,6 +1,6 @@
 ---
 name: conorganizer-pr
-description: Conorganizer's rules for pull request titles and descriptions. Use whenever you open or edit a pull request, run gh pr create or gh pr edit, write or rewrite a PR title or body, or write the commit subject of a one-commit branch, since a squash merge puts that subject on main as the title. Also use when the user says open a PR, make a PR, write this up, shorten or fix the description, or that a PR text is too long, vague or off, and when you reach the end of a branch and a PR is the next step, even if nobody mentioned the PR text. Every PR here needs a title of at most 65 characters and a body under 200 words, and without this skill both come out two to five times too long.
+description: Conorganizer's rules for pull request titles and descriptions. Use whenever you open or edit a pull request, run gh pr create or gh pr edit, write or rewrite a PR title or body, or write the commit subject of a one-commit branch, since a squash merge puts that subject on main as the title. Also use when the user says open a PR, make a PR, write this up, shorten or fix the description, or that a PR text is too long, vague or off, and when you reach the end of a branch and a PR is the next step, even if nobody mentioned the PR text. Every PR here needs a title of at most 65 characters and a body of a few sentences under 120 words with no Tests section, and without this skill both come out three to six times too long.
 ---
 
 # Conorganizer PR
@@ -34,18 +34,17 @@ One line, at most 65 characters, so the merge commit subject with " (#NNN)" is a
 
 ## Body
 
-The body is the shortest text that tells a reviewer what changed and an admin what to run. Most PRs fit in 60 to 120 words; 200 is the ceiling, counted above the rollout section and the preview block, which are exempt. #653 and #611 in `references/examples.md` are the size to aim for.
+The body is the shortest text that tells a reviewer what changed and an admin what to run. Most PRs fit in 40 to 80 words; 120 is the ceiling, counted above the rollout section and the preview block, which are exempt. #611 in `references/examples.md` is the size to aim for, and agents given more room fill it, so write the short version first and add only what a reviewer would ask for.
 
 It has these parts, in this order, and nothing else:
 
 1. `Closes #NNN` alone on the first line when the PR closes an issue. A PR that only relates to one says so in the summary: "Follow-up to #699", "Stacked on #605".
-2. The summary, one to three sentences, no heading: what is different after the merge and, when it is not obvious, why: the bug as someone saw it and its cause, in a sentence. For a small PR this is most of the body.
-3. `## What changed`, only when the branch does several things in parallel: one bullet per change, one sentence each, naming where and what ("Romfordeling tab: a Publiser romfordeling switch per pulje"), at most six. A single change stays in the summary. Seven or more means the bullets are too fine or the branch too wide. No nested bullets, no bold lead-ins.
-4. `## Tests`, one to three lines: the test names or behaviours that prove the change, what was checked by hand, and what was not checked. Only what you ran or read in the branch's tests: when you did not run something, say so in a few words ("not run on Windows"), because a manual check inferred from a commit message is a claim nobody made. "The full suite and lint pass" is what CI shows, so leave it out, and never a checklist of things still to do.
-5. `## After merging`, only when someone has to act by hand; see Rollout steps.
-6. The preview block, which CI adds; see below.
+2. The summary, one to three sentences, no heading: what is different after the merge and, when it is not obvious, why: the bug as someone saw it and its cause, in a sentence. For most PRs this is the whole body.
+3. `## What changed`, only when one sentence cannot carry the change because the branch does several things in parallel: one bullet per change, one sentence each, at most four, each naming where the reader will notice it (a tab, a page, a dialog, a doc section) and what is different ("Romfordeling tab: a Publiser romfordeling switch per pulje"). Five or more means the bullets are too fine or the branch too wide. No nested bullets, no bold lead-ins.
+4. `## After merging`, only when someone has to act by hand; see Rollout steps.
+5. The preview block, which CI adds; see below.
 
-That is all. A known limit or follow-up that changes what the reviewer does gets one sentence at the end of the summary or one bullet ("Not in this PR: the image upload page GET still has no owner check."); the rest belongs in the docs, an issue or the review thread. The body carries no account of how the work was done (agents, review rounds, hours), no praise of the change, no emoji, no attribution line, and no walk through the diff file by file: the diff is one click away, the body says what it adds up to. Name a file only when the reader has to open it, such as the migration or the doc with the procedure; the reviewer sees the file list in the diff. Headings other than the three above are a sign a part has outgrown its sentence.
+That is all. There is no Tests section and no test name: CI shows what passed, and the test files are in the diff. Only when a check must still happen before the merge, such as a run on Windows nobody has done, one sentence at the end of the summary says so, and that sentence claims nothing you did not do yourself. A known limit or follow-up that changes what the reviewer does gets one sentence there too ("Not in this PR: the image upload page GET still has no owner check."); the rest belongs in the docs, an issue or the review thread. The body carries no account of how the work was done (agents, review rounds, hours), no praise of the change, no emoji, no attribution line, no checklist, and no walk through the diff file by file: the diff is one click away, the body says what it adds up to. Name a file only when the reader has to open it, such as the migration or the doc with the procedure. Headings other than the two above are a sign a part has outgrown its sentence.
 
 Language: English, with user-facing bokmål strings quoted as they appear ("Lagre fordeling", "Publiser romfordeling"). Screenshots are not required; the preview link CI adds covers UI changes.
 
@@ -58,7 +57,7 @@ Language: English, with user-facing bokmål strings quoted as they appear ("Lagr
 - Something everyone runs once, such as `go tool task setup:mcp`, or a dashboard to re-import.
 - `## Before merging` only when a check must pass first, such as a sudoers line or a service already in place.
 
-The rollout section does not count toward the 200 words, so a procedure that needs eight steps and a warning about their order gets them; the body above it still does. Nothing to run means no section: "No rollout steps needed" costs the reader a sentence for nothing.
+The rollout section does not count toward the 120 words, so a procedure that needs eight steps and a warning about their order gets them; the body above it still does. Nothing to run means no section: "No rollout steps needed" costs the reader a sentence for nothing.
 
 ## The preview block
 
@@ -90,12 +89,12 @@ gh pr view NNN --json body -q .body > body.md
 ## Check before you run gh
 
 1. Title at most 65 characters, capitalized verb first, the outcome, no number, slug or prefix.
-2. Body under 200 words above the rollout section and the preview block, and aimed at about 100: `wc -w body.md`.
-3. Only `## What changed`, `## Tests` and `## After merging` as headings, each present only when it has something to say.
+2. Body under 120 words above the rollout section and the preview block, and aimed at about 60: `wc -w body.md`.
+3. Only `## What changed` and `## After merging` as headings, each present only when it has something to say; at most four bullets.
 4. `Closes #NNN` exactly when the PR closes an issue.
 5. A rollout section exactly when a hand step exists, with migrations named by file.
-6. The tests lines say what was checked and what was not.
-7. Nothing about process, no emoji, no attribution, no praise, no file-by-file tour.
+6. No Tests section, no test names, no claim about a check you did not do.
+7. Nothing about process, no emoji, no attribution, no praise, no checklist, no file-by-file tour.
 8. On an edit, the preview block is unchanged.
 
 ## References

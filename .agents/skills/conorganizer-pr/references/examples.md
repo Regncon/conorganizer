@@ -14,7 +14,7 @@ The maintainers confirmed these picks on 2026-11-03 from the 60 merged PRs befor
 >
 > Covered by `TestSaveConfirmedDistribution_ClearsManualSeatOnEventNoLongerInPulje`.
 
-90 words. The title names the bug as the admin met it. The body is symptom, cause, fix, test, with no heading, because one change needs none.
+90 words. The title names the bug as the admin met it. The body is symptom, cause, fix, with no heading, because one change needs none. Under this skill the last line goes: the test is in the diff, and the body names no tests.
 
 ### #695 Stop serving meetup-january-2026.lekeplassen.regncon.no
 
@@ -42,7 +42,7 @@ The maintainers confirmed these picks on 2026-11-03 from the 60 merged PRs befor
 >
 > The `log` line shows every other configuration-as-code change the checkout picks up at the same time; apply their README steps if any are still pending.
 
-150 words around a six-line command block. The rollout section is the only long part, and it is the part an admin needs. Under this skill the headings would be the summary without a heading, `## What changed` and `## After merging`; the shape is the same.
+150 words around a six-line command block, 30 over this skill's ceiling: the Why paragraph would keep its first sentence and lose the rest. The rollout section is the part an admin needs. Under this skill the headings would be the summary without a heading, `## What changed` and `## After merging`; the shape is the same.
 
 ### #611 Add a publish switch for each pulje's room assignment
 
@@ -55,7 +55,7 @@ The maintainers confirmed these picks on 2026-11-03 from the 60 merged PRs befor
 >
 > Requires running the migration (goose up). Room assignments are hidden until each pulje is published.
 
-80 words. One bullet per parallel change, user-facing strings quoted as they appear, and the migration line. Under this skill the migration line names the file: "Run `20260928120000_rooms_published.sql` on main and demo by hand (documentation/migrations.md)."
+80 words, and the size to aim for. One bullet per parallel change, user-facing strings quoted as they appear, and the migration line. Under this skill the migration line names the file: "Run `20260928120000_rooms_published.sql` on main and demo by hand (documentation/migrations.md)."
 
 ## Three to avoid
 
@@ -69,21 +69,16 @@ Empty body. The branch slug as the title: issue number first, bokmål, no verb, 
 
 ### #671 Show backup age and SQLite sizes in Grafana from backup script metrics
 
-The title names the outcome but runs to 70 characters, five over the limit; "Show backup age and SQLite sizes in Grafana" (43) says the same. The body ran to about 850 words: `## Summary`, `## What changed` with three `###` subsections, a six-row metrics table, `## Testing` with five bullets, `## After merge, on the server`, and `## Known limits`, plus an account of the review process ("An adversarial review (3 reviewers, each finding checked by another agent) led to the `du` and WAL fixes above."). A reader needs the metrics, the dashboard change, the tests and the four server steps. The rest was already in the README the PR updated.
+The title names the outcome but runs to 70 characters, five over the limit; "Show backup age and SQLite sizes in Grafana" (43) says the same. The body ran to about 850 words: `## Summary`, `## What changed` with three `###` subsections, a six-row metrics table, `## Testing` with five bullets, `## After merge, on the server`, and `## Known limits`, plus an account of the review process ("An adversarial review (3 reviewers, each finding checked by another agent) led to the `du` and WAL fixes above."). A reader needs the metrics, the dashboard change and the four server steps. The rest was already in the README the PR updated.
 
-The same PR in this skill's shape, 170 words around the steps:
+The same PR in this skill's shape, 100 words above the steps:
 
-> Several panels in the production dashboards showed "No data" because nothing exported the `conorganizer_*` metrics they query. The two backup scripts now publish them through node_exporter's textfile collector, and the backup age panels from #670 read the last successful run instead of the last timer trigger.
+> Several panels in the production dashboards showed "No data" because nothing exported the `conorganizer_*` metrics they query. The two backup scripts now write them for node_exporter's textfile collector after each successful run, and the backup age panels from #670 read the last successful run instead of the last timer trigger.
 >
 > ## What changed
 >
-> - `conorganizer-sqlite-backup` writes its last-success time, the newest backup's size, the `events.db` and WAL sizes and the backup directory size to `/var/lib/prometheus/node-exporter/` after each run; `conorganizer-images-backup` writes its last-success time. A failed run writes nothing, so the age panels grow.
-> - Production Health: the two backup age panels read the new timestamps, and a "Backup directory size" panel joins them. Main Service Debugging drops "Optional" from its SQLite size panels.
-> - The dashboards README describes the metrics; `configuration-as-code/README.md` and `documentation/deployment.md` get a paragraph each.
->
-> ## Tests
->
-> Both scripts ran end to end in a sandbox with a stub `zstd`, with and without a WAL, and the files they wrote parse with node_exporter's text parser. The panel queries run against production Prometheus and return no data until the scripts are deployed.
+> - The SQLite backup publishes its last-success time, the backup, `events.db` and WAL sizes and the backup directory size; the image backup publishes its last-success time. A failed run writes nothing, so the age panels grow.
+> - Production Health gets a "Backup directory size" panel, and both dashboards stop calling these metrics optional.
 >
 > ## After merging, on the server
 >
