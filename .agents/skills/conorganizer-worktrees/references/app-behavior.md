@@ -69,4 +69,4 @@ Branch names in the merged history are mixed (`task/…`, `bug/651-…`, `featur
 
 ## 7. PR binding after the rename
 
-Recorded when this skill's PR was opened from `claude/worktree-skill`.
+`git push -u origin claude/worktree-skill` and `gh pr create --head claude/worktree-skill` from the renamed session worked without any extra step, and `ccd_pr get_status` right afterwards reported the PR as bound to this session (#703, head `claude/worktree-skill`, checks pending). So the app binds the PR the session creates regardless of the branch name it stored at creation. `get_session self` then shows `prNumber: 703` next to the unchanged `branch: claude/worktree-skill-2cec9f`; only that field stays stale.
