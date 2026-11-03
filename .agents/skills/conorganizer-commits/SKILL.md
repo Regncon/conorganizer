@@ -82,7 +82,7 @@ Run every message through the checker, then read the bodies.
 
 ## PR titles
 
-A PR title follows the subject rules, because GitHub makes it the merge commit's subject and appends " (#NNN)". Keep it under about 64 characters so the suffix fits in 72. The description has its own rules in the `conorganizer-pr` skill.
+A PR title follows the subject rules, because GitHub makes it the merge commit's subject and appends " (#NNN)". Keep it at 65 characters or fewer, so the seven-character suffix fits in 72. The description has its own rules in the `conorganizer-pr` skill.
 
 ## Checklist
 
