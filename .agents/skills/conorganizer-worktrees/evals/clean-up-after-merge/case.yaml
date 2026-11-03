@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: clean-up-after-merge
+expected_outcome: |
+  Fixture: a worktree .claude/worktrees/jolly-noether-4c1d2e on branch claude/jolly-noether-4c1d2e
+  created from main with no commits of its own and no remote branch; the run works from the main
+  checkout. The merge state is checked first (and the missing PR reported), then git worktree
+  remove without --force, git branch -d, and a check for a remote branch. No session is archived or
+  deleted, no other worktree or branch and no stash is touched.

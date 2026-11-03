@@ -1,0 +1,9 @@
+schema_version: "1.1"
+name: fix-generated-branch-name
+expected_outcome: |
+  Fixture: a worktree .claude/worktrees/mystifying-austin-ec57f7 on branch
+  claude/mystifying-austin-ec57f7 created from main, with no commits of its own; the run works
+  inside it. The branch is renamed in place with git branch -m to claude/<slug>
+  (claude/new-event-owner-checks or similar), or claude/<issue>-<slug> if a GitHub issue for the
+  task exists, after looking for one. The folder is not renamed. The reply says the app's session
+  record keeps the old name while git, the push and the PR use the new one. Nothing else changes.
