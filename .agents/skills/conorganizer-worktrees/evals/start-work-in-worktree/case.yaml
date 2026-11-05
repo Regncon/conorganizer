@@ -1,0 +1,9 @@
+schema_version: "1.1"
+name: start-work-in-worktree
+expected_outcome: |
+  Run from the main checkout. A new worktree .claude/worktrees/612-level-colors on branch
+  claude/612-level-colors, created from origin/main after a fetch. Inside it the templ code is
+  generated, .claude/skills is linked and go build passes, without go tool task test, task build,
+  make test or make check, and without touching the main checkout's generated files or database.
+  The reply names the path and the branch and says the main checkout stays on main. No CSS change,
+  no commit.

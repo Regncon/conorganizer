@@ -1,0 +1,4 @@
+interface:
+  display_name: "Conorganizer Worktrees"
+  short_description: "Branch names, setup and cleanup for git worktrees in conorganizer"
+  default_prompt: "Set up or clean up a conorganizer worktree, and name its branch claude/<issue>-<slug> instead of the generated name."
