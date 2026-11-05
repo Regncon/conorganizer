@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: commit-login-sync-retry
+expected_outcome: |
+  One new commit on login-sync-retry holding the retry change and its test. Its subject is imperative English, capitalized, without a trailing period and under 72 characters, and says what a user gets (the login sync keeps the tickets when CheckIn briefly answers 502), not "add retry loop". After a blank line, a body that explains why: CheckIn answers 502 for a few seconds after its deploys, and the sync dropped every ticket for people logging in right then. It does not list the diff (no "added a for loop", no "updated the test"). The last line is "Closes #712". No Co-Authored-By or Generated-with line.
+context:
+  scaffold_script: place-files.sh

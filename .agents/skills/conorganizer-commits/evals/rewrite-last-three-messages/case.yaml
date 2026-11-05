@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: rewrite-last-three-messages
+expected_outcome: |
+  The branch pulje-closing-warning still has four commits with the same diffs (git diff main..HEAD is unchanged and each commit's tree is the same), but the last three carry new messages, rewritten in place rather than only proposed. "fix the thing." becomes a capitalized imperative subject without a period that says what changed for users (no closing warning for a pulje without a closing time, which used to print year 0001). The "651 | Updated ..." commit loses the prefix and the past tense, fits in 72 characters, drops the Co-Authored-By line, and keeps the issue as "Closes #651" on the body's last line; its body says why (domeneordbok calls it interesse, not påmelding), not "changed text, changed color, fixed typo". The retry commit's body says why (a status broadcast sent while NATS was reconnecting was lost, so other admins kept the old status), not that a for loop was added. The first commit on the branch, "Hide pulje alerts one hour after the pulje starts", is left alone.
+context:
+  scaffold_script: place-files.sh

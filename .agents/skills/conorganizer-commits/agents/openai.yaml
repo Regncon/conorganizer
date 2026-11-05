@@ -1,0 +1,4 @@
+interface:
+  display_name: "Conorganizer Commits"
+  short_description: "Commit message rules, issue references and history rewriting for conorganizer"
+  default_prompt: "Write, rewrite or review commit messages in conorganizer so each subject is a capitalized imperative outcome under 72 characters and each body says why, with Closes #NNN last; run scripts/check-commit-msg.sh before committing."

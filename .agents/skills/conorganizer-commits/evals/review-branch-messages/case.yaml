@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: review-branch-messages
+expected_outcome: |
+  A review that leaves the history untouched and names the three messages that break the rules, with what is wrong in each: "fix the thing." (lowercase, trailing period, says nothing), "651 | Updated ..." (issue prefix, past tense, over 72 characters, a body that lists the diff, a Co-Authored-By line) and "Add retry to the pulje status broadcast" (a body that restates the diff instead of saying why). It proposes a replacement for each that follows the rules, puts the issue as "Closes #651" on the last line of that body, and does not flag "Hide pulje alerts one hour after the pulje starts", which is fine as it is.
+context:
+  scaffold_script: place-files.sh
