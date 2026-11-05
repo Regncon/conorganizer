@@ -10,6 +10,7 @@ RuntimeDirectory=conorganizer-restored
 
 EnvironmentFile=/etc/conorganizer/env
 Environment=PORT=19082
+Environment=HOST=127.0.0.1
 
 ExecStart=/opt/conorganizer/restored/conorganizer-restored \
   -dbp /mnt/HC_Volume_103911252/environments/restored/database/events.db \

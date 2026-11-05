@@ -123,6 +123,7 @@ best-effort basis with godotenv. Known keys:
 | `CHECKIN_KEY`, `CHECKIN_SECRET` | Optional. Checkin API credentials, read by `service/checkIn` |
 | `GOOSE_DRIVER`, `GOOSE_MIGRATION_DIR` | Optional Goose CLI convenience |
 | `PORT` | Optional. HTTP port, defaults to `8080` |
+| `HOST` | Optional. Address to listen on, defaults to every interface. The server units set `127.0.0.1` |
 | `LOG_LEVEL` | Optional. `DEBUG`, `INFO`, `WARN` or `ERROR`, defaults to `INFO` |
 
 The Descope project ID is not configuration: it is the hardcoded constant

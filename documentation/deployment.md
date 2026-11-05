@@ -18,7 +18,7 @@ There are two kinds of environments:
 | restored | `restored.lekeplassen.regncon.no` | 19082 | `conorganizer-restored.service` | `/opt/conorganizer/restored/` | `/mnt/HC_Volume_103911252/environments/restored/` |
 | PR preview | `<PR_NUMBER>-merge.lekeplassen.regncon.no` | 20000 + PR_NUMBER | `conorganizer-<PR_NUMBER>-merge.service` | `/opt/conorganizer/<PR_NUMBER>-merge/` | `/mnt/HC_Volume_103911252/environments/<PR_NUMBER>-merge/` |
 
-The fixed ports are set in the checked-in units with `Environment=PORT=...`. The app listens on `0.0.0.0:$PORT` and falls back to 8080 when `PORT` is unset. The fixed units read secrets from `EnvironmentFile=/etc/conorganizer/env`, except demo, which uses `/etc/conorganizer/demo-env`. Previews use `/etc/conorganizer/env`.
+The fixed ports are set in the checked-in units with `Environment=PORT=...`. The app listens on `$HOST:$PORT`; `PORT` falls back to 8080, and an unset or empty `HOST` means every interface (`0.0.0.0`), which local development and Docker rely on. Every server unit, the fixed ones and `deploy/conorganizer.service.tmpl`, sets `Environment=HOST=127.0.0.1`, so only Caddy on the same machine can reach the app and `http://<server-ip>:<port>` is refused. Caddy proxies every environment to `127.0.0.1:<port>`. Previews pick up a template change on their next deploy; the fixed units only change when the server's configuration-as-code checkout is restowed (see [Listen address](../configuration-as-code/README.md#listen-address)). The fixed units read secrets from `EnvironmentFile=/etc/conorganizer/env`, except demo, which uses `/etc/conorganizer/demo-env`. Previews use `/etc/conorganizer/env`.
 
 Each environment has the same layout:
 

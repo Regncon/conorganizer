@@ -17,7 +17,7 @@ Production runs on one Hetzner Ubuntu VPS. Caddy is the reverse proxy in front o
 | demo | `conorganizer-demo.service` | `19081` | `/mnt/HC_Volume_103911252/environments/demo/` | `/run/conorganizer-demo/nats` |
 | restored | `conorganizer-restored.service` | `19082` | `/mnt/HC_Volume_103911252/environments/restored/` | `/run/conorganizer-restored/nats` |
 
-Each data directory contains `database/events.db` and `event-images/`. The units run as `deploy:www-data` from `/opt/conorganizer/<env>/`. Main and restored read `/etc/conorganizer/env`; demo reads `/etc/conorganizer/demo-env`. These environment files are not in the repository.
+Each unit sets `Environment=HOST=127.0.0.1`, so the app only listens on loopback and is reached through Caddy (see [Listen address](#listen-address)). Each data directory contains `database/events.db` and `event-images/`. The units run as `deploy:www-data` from `/opt/conorganizer/<env>/`. Main and restored read `/etc/conorganizer/env`; demo reads `/etc/conorganizer/demo-env`. These environment files are not in the repository.
 
 Local backups are written to `/mnt/HC_Volume_103911252/backups/sqlite` and `/mnt/HC_Volume_103911252/backups/images` (see [Backups](#backups)).
 
@@ -229,6 +229,32 @@ curl -fsS http://127.0.0.1:12345/metrics | grep '^loki_write_dropped_entries_tot
 The last command should show only 0 values.
 
 In Grafana, logs from before the move should still be there. Re-import `grafana-dashboards/conorganizer-production-health.json` (see [Manual Import](grafana-dashboards/README.md#manual-import)), so the "Root filesystem usage" description no longer says Loki's data is in `/tmp/loki`. `/tmp/loki` can then be deleted, or left for the next reboot to clear.
+
+## Listen address
+
+The app units set `Environment=HOST=127.0.0.1`, and so does the PR preview template `deploy/conorganizer.service.tmpl`. Without it the app listens on every interface, and `http://46.62.159.49:<port>` answers from the internet over plain HTTP, past Caddy, TLS and the Caddy logs (issue #705). Caddy proxies to `127.0.0.1:<port>`, so nothing else needs to change.
+
+CI deploys the binary but never touches these units. After a change to them is merged, update the checkout from `/srv/configuration-as-code-repo/conorganizer`, restow and restart:
+
+```sh
+git fetch origin && git checkout --detach origin/main
+sudo stow --dir=configuration-as-code/stow --target=/ --restow systemd
+sudo systemctl daemon-reload
+sudo systemctl restart conorganizer-main conorganizer-demo
+systemctl is-active --quiet conorganizer-restored && sudo systemctl restart conorganizer-restored
+```
+
+Check that every app port is on loopback and that the public addresses still work:
+
+```sh
+ss -ltn | grep -E ':(1908[0-2]|2[0-9]{4}) '
+systemctl show conorganizer-main -p Environment
+curl -sS -o /dev/null -w '%{http_code}\n' https://main.lekeplassen.regncon.no/healthz
+```
+
+`ss` should list `127.0.0.1:<port>` for every environment, not `*:<port>` or `0.0.0.0:<port>`. A preview still on `*:<port>` gets the new unit on its PR's next push. From a machine outside the server, `curl -m 5 http://46.62.159.49:19080/` should fail with "Connection refused".
+
+The server's `ufw` does not block these ports today. A rule that only lets 22, 80 and 443 in would be a second layer, but it affects everything on the server, so it is a separate change.
 
 ## Caddy hostnames
 

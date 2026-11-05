@@ -10,6 +10,7 @@ RuntimeDirectory=conorganizer-%SAFE_NAME%
 
 EnvironmentFile=/etc/conorganizer/env
 Environment=PORT=%PORT%
+Environment=HOST=127.0.0.1
 
 ExecStart=/opt/conorganizer/%SAFE_NAME%/conorganizer-%SAFE_NAME% \
   -dbp /mnt/HC_Volume_103911252/environments/%SAFE_NAME%/database/events.db \

@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -57,27 +58,39 @@ func main() {
 		return "8080"
 	}
 
-	logger.Info("Starting server", "address", "0.0.0.0:"+getPort())
+	addr := listenAddress(os.Getenv("HOST"), getPort())
+
+	logger.Info("Starting server", "address", addr)
 	defer logger.Info("Stopping server")
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx, baseLogger, getPort(), eventImageDir, *natsStoreDir, db); err != nil {
+	if err := run(ctx, baseLogger, addr, eventImageDir, *natsStoreDir, db); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, natsStoreDir string, db *sql.DB) error {
+// listenAddress listens on every interface when host is empty, so Docker and
+// phones on the LAN can reach a dev server. Production sets HOST=127.0.0.1 so
+// only Caddy on the same machine can connect.
+func listenAddress(host, port string) string {
+	if host == "" {
+		host = "0.0.0.0"
+	}
+	return net.JoinHostPort(host, port)
+}
+
+func run(ctx context.Context, logger *slog.Logger, addr string, eventImageDir *string, natsStoreDir string, db *sql.DB) error {
 	g, ctx := errgroup.WithContext(ctx)
-	g.Go(startServer(ctx, logger, port, eventImageDir, natsStoreDir, db))
+	g.Go(startServer(ctx, logger, addr, eventImageDir, natsStoreDir, db))
 	if err := g.Wait(); err != nil {
 		return fmt.Errorf("error running server: %w", err)
 	}
 	return nil
 }
-func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, natsStoreDir string, db *sql.DB) func() error {
+func startServer(ctx context.Context, logger *slog.Logger, addr string, eventImageDir *string, natsStoreDir string, db *sql.DB) func() error {
 	return func() error {
 		baseLogger := logger
 		logger = logger.With("component", "http_server")
@@ -141,7 +154,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		}
 
 		srv := &http.Server{
-			Addr:    "0.0.0.0:" + port,
+			Addr:    addr,
 			Handler: router,
 		}
 

@@ -10,6 +10,7 @@ RuntimeDirectory=conorganizer-main
 
 EnvironmentFile=/etc/conorganizer/env
 Environment=PORT=19080
+Environment=HOST=127.0.0.1
 
 ExecStart=/opt/conorganizer/main/conorganizer-main \
   -dbp /mnt/HC_Volume_103911252/environments/main/database/events.db \
