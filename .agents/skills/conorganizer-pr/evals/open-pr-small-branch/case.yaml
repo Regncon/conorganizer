@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: open-pr-small-branch
+expected_outcome: |
+  pr-title.txt holds one imperative English title about the outcome (the download tasks work on Windows, running the script in the webserver container), not the sloppy commit subjects. pr-body.md is short: a summary of one to three sentences, bullets for the parallel changes (Windows runs the script in Docker, GNU-only tar flags dropped for Mac, .gitattributes LF rule, local-event-images .gitkeep), and a tests or how-it-was-checked line. No rollout section, because nothing has to be run on the server. No emoji, no attribution, no praise.
+context:
+  scaffold_script: place-files.sh

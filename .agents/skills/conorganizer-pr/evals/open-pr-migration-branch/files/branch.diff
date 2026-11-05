@@ -1,0 +1,1136 @@
+diff --git a/components/ticket_holder/ticket_holder.go b/components/ticket_holder/ticket_holder.go
+index e618be29..0edcc810 100644
+--- a/components/ticket_holder/ticket_holder.go
++++ b/components/ticket_holder/ticket_holder.go
+@@ -66,11 +66,10 @@ func (options BillettholderOptions) CanSwitchBillettholder() bool {
+ type PuljeInterestAvailability string
+ 
+ const (
+-	PuljeInterestOpen          PuljeInterestAvailability = "open"
+-	PuljeInterestWarning       PuljeInterestAvailability = "warning"
+-	PuljeInterestUrgentWarning PuljeInterestAvailability = "urgent-warning"
+-	PuljeInterestLocked        PuljeInterestAvailability = "locked"
+-	PuljeInterestCompleted     PuljeInterestAvailability = "completed"
++	PuljeInterestOpen      PuljeInterestAvailability = "open"
++	PuljeInterestWarning   PuljeInterestAvailability = "warning"
++	PuljeInterestLocked    PuljeInterestAvailability = "locked"
++	PuljeInterestCompleted PuljeInterestAvailability = "completed"
+ )
+ 
+ type PuljeInterestState struct {
+@@ -92,7 +91,7 @@ func (state PuljeInterestState) HasMessage() bool {
+ }
+ 
+ func (state PuljeInterestState) IsWarning() bool {
+-	return state.Availability == PuljeInterestWarning || state.Availability == PuljeInterestUrgentWarning
++	return state.Availability == PuljeInterestWarning
+ }
+ 
+ func (state PuljeInterestState) IsLocked() bool {
+@@ -138,24 +137,9 @@ func BuildPuljeInterestState(pulje models.PuljeRow, now time.Time) PuljeInterest
+ 		return state
+ 	}
+ 
+-	lockAt, hasLockAt := puljeLockAt(pulje)
+-	if !hasLockAt {
+-		return state
+-	}
+-
+-	urgentStartsAt := lockAt.Add(-30 * time.Minute)
+-	warningStartsAt := lockAt.Add(-2 * time.Hour)
+-	lockTimeLabel := lockAt.Format("15:04")
+-
+-	if !now.Before(urgentStartsAt) {
+-		state.Availability = PuljeInterestUrgentWarning
+-		state.Message = fmt.Sprintf("Puljen låses straks, kl %s. Gjør endringer nå hvis du vil endre interessen din.", lockTimeLabel)
+-		state.Priority = 3
+-		return state
+-	}
+-	if !now.Before(warningStartsAt) {
++	if pulje.ClosingWarningActive {
+ 		state.Availability = PuljeInterestWarning
+-		state.Message = fmt.Sprintf("Puljen låses snart, kl %s.", lockTimeLabel)
++		state.Message = "Viktig: Puljefordelingen stenger snart. Gjør endringer nå hvis du vil endre interessene dine."
+ 		state.Priority = 2
+ 		return state
+ 	}
+@@ -163,13 +147,6 @@ func BuildPuljeInterestState(pulje models.PuljeRow, now time.Time) PuljeInterest
+ 	return state
+ }
+ 
+-func puljeLockAt(pulje models.PuljeRow) (time.Time, bool) {
+-	if pulje.StartAt.IsZero() {
+-		return time.Time{}, false
+-	}
+-	return pulje.StartAt.TimeOrZero().Add(-30 * time.Minute), true
+-}
+-
+ func BuildSelectedPuljeInterestState(puljer []models.PuljeRow, puljeID string, now time.Time) PuljeInterestState {
+ 	for _, pulje := range puljer {
+ 		if string(pulje.ID) == puljeID {
+diff --git a/components/ticket_holder/ticket_holder_interest_picker.templ b/components/ticket_holder/ticket_holder_interest_picker.templ
+index 86470e4e..f70a1229 100644
+--- a/components/ticket_holder/ticket_holder_interest_picker.templ
++++ b/components/ticket_holder/ticket_holder_interest_picker.templ
+@@ -60,10 +60,6 @@ templ TicketHolderInterestPicker(
+ 			}
+ 
+ 			.pulje-status-message--warning {
+-				color: var(--color-warning, var(--color-error));
+-			}
+-
+-			.pulje-status-message--urgent-warning {
+ 				color: var(--color-error);
+ 			}
+ 
+@@ -92,7 +88,6 @@ templ TicketHolderInterestPicker(
+ 			class="pulje-status-message"
+ 			data-show="$puljeStatusMessage"
+ 			data-class:pulje-status-message--warning="$puljeAvailability === 'warning'"
+-			data-class:pulje-status-message--urgent-warning="$puljeAvailability === 'urgent-warning'"
+ 			data-class:pulje-status-message--locked="$puljeAvailability === 'locked'"
+ 			data-class:pulje-status-message--completed="$puljeAvailability === 'completed'"
+ 		>
+diff --git a/components/ticket_holder/ticket_holder_pulje_picker.templ b/components/ticket_holder/ticket_holder_pulje_picker.templ
+index e96b85f7..2d10e418 100644
+--- a/components/ticket_holder/ticket_holder_pulje_picker.templ
++++ b/components/ticket_holder/ticket_holder_pulje_picker.templ
+@@ -49,12 +49,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
+             }
+ 
+             .pulje-interest-state--warning {
+-                color: var(--color-warning, var(--color-error));
+-                border-color: currentColor;
+-            }
+-
+-            .pulje-interest-state--urgent-warning {
+-                color: var(--color-error);
++				color: var(--color-error);
+                 border-color: currentColor;
+             }
+ 
+@@ -111,8 +106,6 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
+ 								}
+ 								if puljeState.Availability == PuljeInterestWarning {
+ 									<span>Låses snart</span>
+-								} else if puljeState.Availability == PuljeInterestUrgentWarning {
+-									<span>Låses straks</span>
+ 								} else if puljeState.IsLocked() {
+ 									<span>Låst</span>
+ 								} else if puljeState.IsCompleted() {
+diff --git a/components/ticket_holder/ticket_holder_test.go b/components/ticket_holder/ticket_holder_test.go
+index f17a23f5..246fa515 100644
+--- a/components/ticket_holder/ticket_holder_test.go
++++ b/components/ticket_holder/ticket_holder_test.go
+@@ -130,9 +130,9 @@ func TestBuildPuljeInterestState_WhenPuljeIsLocked_ReturnsLockedStateAndDisables
+ 	}
+ }
+ 
+-func TestBuildPuljeInterestState_WhenOpenPuljeIsBeforeWarningWindow_ReturnsOpenStateWithoutWarning(t *testing.T) {
++func TestBuildPuljeInterestState_WhenOpenPuljeHasNoWarning_ReturnsOpenStateWithoutWarning(t *testing.T) {
+ 	bdd.Behavior(t, bdd.BDD{
+-		Given: "Gitt at en åpen pulje ikke nærmer seg låsing.",
++		Given: "Gitt at en åpen pulje ikke har et aktivt varsel.",
+ 		When:  "Når interessetilstanden bygges.",
+ 		Then:  "Så skal billettholderen ikke se noen låseadvarsel.",
+ 	})
+@@ -166,16 +166,16 @@ func TestBuildPuljeInterestState_WhenOpenPuljeIsBeforeWarningWindow_ReturnsOpenS
+ 	}
+ }
+ 
+-func TestBuildPuljeInterestState_WhenOpenPuljeIsInWarningWindow_ReturnsWarningWithLockTime(t *testing.T) {
++func TestBuildPuljeInterestState_WhenOpenPuljeHasActiveWarning_ReturnsWarning(t *testing.T) {
+ 	bdd.Behavior(t, bdd.BDD{
+-		Given: "Gitt at en åpen pulje nærmer seg låsing.",
++		Given: "Gitt at en åpen pulje har et aktivt stengevarsel.",
+ 		When:  "Når interessetilstanden bygges.",
+-		Then:  "Så skal billettholderen se en advarsel med tidspunktet puljen låses.",
++		Then:  "Så skal billettholderen se stengeadvarselen.",
+ 	})
+ 
+ 	// Given
+ 	expectedAvailability := PuljeInterestWarning
+-	expectedMessage := "Puljen låses snart, kl 18:00."
++	expectedMessage := "Viktig: Puljefordelingen stenger snart. Gjør endringer nå hvis du vil endre interessene dine."
+ 
+ 	pulje := buildPuljeInterestStateTestPulje(
+ 		t,
+@@ -184,6 +184,7 @@ func TestBuildPuljeInterestState_WhenOpenPuljeIsInWarningWindow_ReturnsWarningWi
+ 		models.PuljeStatusOpen,
+ 		"2026-10-09T18:30:00+02:00",
+ 	)
++	pulje.ClosingWarningActive = true
+ 	now := parsePuljeInterestStateTestTime(t, "2026-10-09T16:15:00+02:00")
+ 
+ 	// When
+@@ -198,49 +199,17 @@ func TestBuildPuljeInterestState_WhenOpenPuljeIsInWarningWindow_ReturnsWarningWi
+ 	}
+ }
+ 
+-func TestBuildPuljeInterestState_WhenOpenPuljeIsInUrgentWarningWindow_ReturnsUrgentWarningWithLockTime(t *testing.T) {
+-	bdd.Behavior(t, bdd.BDD{
+-		Given: "Gitt at en åpen pulje er svært nær låsing.",
+-		When:  "Når interessetilstanden bygges.",
+-		Then:  "Så skal billettholderen se en tydelig hasteadvarsel.",
+-	})
+-
+-	// Given
+-	expectedAvailability := PuljeInterestUrgentWarning
+-	expectedMessage := "Puljen låses straks, kl 18:00. Gjør endringer nå hvis du vil endre interessen din."
+-
+-	pulje := buildPuljeInterestStateTestPulje(
+-		t,
+-		models.PuljeFredagKveld,
+-		"Fredag kveld",
+-		models.PuljeStatusOpen,
+-		"2026-10-09T18:30:00+02:00",
+-	)
+-	now := parsePuljeInterestStateTestTime(t, "2026-10-09T17:45:00+02:00")
+-
+-	// When
+-	actualState := BuildPuljeInterestState(pulje, now)
+-
+-	// Then
+-	if actualState.Availability != expectedAvailability {
+-		t.Fatalf("pulje availability mismatch\nexpected: %s\nactual:   %s", expectedAvailability, actualState.Availability)
+-	}
+-	if actualState.Message != expectedMessage {
+-		t.Fatalf("urgent warning message mismatch\nexpected: %q\nactual:   %q", expectedMessage, actualState.Message)
+-	}
+-}
+-
+ func TestBuildMostUrgentPuljeInterestState_WhenWarningAndLockedPuljerExist_ReturnsWarningState(t *testing.T) {
+ 	bdd.Behavior(t, bdd.BDD{
+-		Given: "Gitt at noen puljer er låst og en åpen pulje snart låses.",
++		Given: "Gitt at noen puljer er låst og en åpen pulje har et aktivt varsel.",
+ 		When:  "Når den viktigste meldingen velges.",
+-		Then:  "Så skal tidsadvarselen vises i stedet for låst status.",
++		Then:  "Så skal stengeadvarselen vises i stedet for låst status.",
+ 	})
+ 
+ 	// Given
+ 	expectedHasState := true
+ 	expectedPuljeID := models.PuljeLordagMorgen
+-	expectedAvailability := PuljeInterestUrgentWarning
++	expectedAvailability := PuljeInterestWarning
+ 
+ 	now := parsePuljeInterestStateTestTime(t, "2026-10-10T09:15:00+02:00")
+ 	puljer := []models.PuljeRow{
+@@ -259,6 +228,7 @@ func TestBuildMostUrgentPuljeInterestState_WhenWarningAndLockedPuljerExist_Retur
+ 			"2026-10-10T10:00:00+02:00",
+ 		),
+ 	}
++	puljer[1].ClosingWarningActive = true
+ 
+ 	// When
+ 	actualState, actualHasState := BuildMostUrgentPuljeInterestState(puljer, now)
+diff --git a/documentation/live-update-lifecycle.md b/documentation/live-update-lifecycle.md
+index 5f11410d..8085a247 100644
+--- a/documentation/live-update-lifecycle.md
++++ b/documentation/live-update-lifecycle.md
+@@ -32,7 +32,6 @@ Client reuse mitigates repeated key retrieval but does not remove the upstream d
+ - Do not use inherited Northstar placeholder-state names in live update code.
+ - Live KV TTL is `26h`, giving a buffer over the current `24h` Gorilla session max age.
+ - NATS live connection state is ephemeral and does not need persistence across restarts.
+-- Scheduled NATS messages are rebuilt from the database on startup. Missed scheduled thresholds during downtime do not need catch-up broadcasts.
+ 
+ ## Terminology
+ 
+@@ -88,7 +87,7 @@ The bucket list should stay small. Pages may subscribe to multiple buckets when
+ 
+ | Bucket | Purpose | Typical broadcasters | Typical subscribers |
+ | --- | --- | --- | --- |
+-| `events` | Event, program, pulje, publishing, and event-form data. | Event form updates, event submission, approval changes, program publishing, pulje status updates, scheduled pulje threshold broadcasts. | Root page, event details, profile event list, profile event form, admin dashboard, admin approval, admin event edit. |
++| `events` | Event, program, pulje, publishing, and event-form data. | Event form updates, event submission, approval changes, program publishing, and pulje status updates. | Root page, event details, profile event list, profile event form, admin dashboard, admin approval, admin event edit. |
+ | `interests` | Interest choices, first-choice data, player/GM assignment state, and views that show who is interested in an event. | User interest updates, admin approval player assignment updates, first-choice and GM changes. | Event details, admin approval, admin billettholder filters, profile views that show interest or assignment state. |
+ | `billettholders` | Ticket holder and billettholder data. | Add/remove billettholder emails, ticket conversion, ticket fetch/check-in flows, billettholder admin updates. | Profile tickets, profile overview where ticket holders are shown, admin billettholder overview, add billettholder page, possibly event details if ticket holder choices are displayed. |
+ | `rooms` | Room data and room assignment choices. | Create, update, delete room; assign room to an event pulje. | Admin rooms, event form pages that show room assignment choices, admin event edit. |
+@@ -268,20 +267,6 @@ Recommended service tests:
+ 
+ Use embedded NATS in service integration tests. Keep page rendering, database setup, and auth out of the initial service tests by using a tiny test renderer.
+ 
+-## Scheduled NATS Messages
+-
+-Scheduled pulje broadcasts are not live connection state. They are derived jobs built from database pulje start times.
+-
+-Current behavior to preserve:
+-
+-- Create a scheduled stream for pulje warning thresholds.
+-- Rebuild future schedules from the database on startup.
+-- Ignore thresholds that are already in the past when startup runs.
+-- Do not replay missed threshold broadcasts after downtime.
+-- When a scheduled threshold fires while the app is running, broadcast the `events` bucket.
+-
+-This is sufficient because clients reconnect after a restart and receive a full page patch from the live endpoint.
+-
+ ## LLM Implementation Contract
+ 
+ This section is intentionally explicit for AI coding agents.
+@@ -302,7 +287,6 @@ When implementing or modifying live update code:
+ - Broadcast by looping every key in the target bucket and writing a fresh timestamp/nonce.
+ - Set live KV bucket TTL to `26h`.
+ - Keep live NATS connection state ephemeral; do not add persistent NATS storage for live update buckets.
+-- Scheduled NATS messages may use JetStream scheduling, but schedules must be rebuildable from durable database state.
+ - Keep bucket definitions centralized.
+ - Prefer broad buckets over premature fine-grained splitting unless the page/bucket matrix shows a real correctness issue.
+ - Pages that render data from multiple domains should subscribe to multiple buckets.
+diff --git a/migrations/20260920100000_add_pulje_closing_warning.sql b/migrations/20260920100000_add_pulje_closing_warning.sql
+new file mode 100644
+index 00000000..70eeec92
+--- /dev/null
++++ b/migrations/20260920100000_add_pulje_closing_warning.sql
+@@ -0,0 +1,6 @@
++-- +goose Up
++ALTER TABLE puljer
++ADD COLUMN closing_warning_active INTEGER NOT NULL DEFAULT 0 CHECK(closing_warning_active IN(0, 1));
++
++-- +goose Down
++ALTER TABLE puljer DROP COLUMN closing_warning_active;
+diff --git a/models/pulje-model.go b/models/pulje-model.go
+index 56f2572c..8c637cf2 100644
+--- a/models/pulje-model.go
++++ b/models/pulje-model.go
+@@ -81,11 +81,12 @@ func (status PuljeStatus) Label() string {
+ }
+ 
+ type PuljeRow struct {
+-	ID      Pulje       `json:"id"`
+-	Name    string      `json:"name"`
+-	Status  PuljeStatus `json:"status"`
+-	StartAt DBDateTime  `json:"start_at"`
+-	EndAt   DBDateTime  `json:"end_at"`
++	ID                   Pulje       `json:"id"`
++	Name                 string      `json:"name"`
++	Status               PuljeStatus `json:"status"`
++	ClosingWarningActive bool        `json:"closing_warning_active"`
++	StartAt              DBDateTime  `json:"start_at"`
++	EndAt                DBDateTime  `json:"end_at"`
+ }
+ 
+ func (pulje PuljeRow) TimeRange() string {
+diff --git a/pages/admin/puljefordeling.go b/pages/admin/puljefordeling.go
+index 89ebeacd..4c3b1750 100644
+--- a/pages/admin/puljefordeling.go
++++ b/pages/admin/puljefordeling.go
+@@ -17,7 +17,7 @@ var errPuljeNotFound = errors.New("pulje not found")
+ 
+ func getPuljer(db *sql.DB) ([]models.PuljeRow, error) {
+ 	const query = `
+-		SELECT id, name, status, start_at, end_at
++		SELECT id, name, status, closing_warning_active, start_at, end_at
+ 		FROM puljer
+ 		ORDER BY start_at ASC
+ 	`
+@@ -35,6 +35,7 @@ func getPuljer(db *sql.DB) ([]models.PuljeRow, error) {
+ 			&pulje.ID,
+ 			&pulje.Name,
+ 			&pulje.Status,
++			&pulje.ClosingWarningActive,
+ 			&pulje.StartAt,
+ 			&pulje.EndAt,
+ 		); err != nil {
+@@ -91,9 +92,13 @@ func puljeStatusUpdateAction(
+ }
+ 
+ func updatePuljeStatus(db *sql.DB, puljeID models.Pulje, status models.PuljeStatus) error {
+-	const query = `UPDATE puljer SET status = ? WHERE id = ?`
++	const query = `
++		UPDATE puljer
++		SET status = ?, closing_warning_active = CASE WHEN ? = 'Open' THEN closing_warning_active ELSE FALSE END
++		WHERE id = ?
++	`
+ 
+-	result, err := db.Exec(query, status, puljeID)
++	result, err := db.Exec(query, status, status, puljeID)
+ 	if err != nil {
+ 		return fmt.Errorf("update pulje %s status to %s: %w", puljeID, status, err)
+ 	}
+@@ -110,6 +115,27 @@ func updatePuljeStatus(db *sql.DB, puljeID models.Pulje, status models.PuljeStat
+ 	return nil
+ }
+ 
++func updatePuljeClosingWarning(db *sql.DB, puljeID models.Pulje, active bool) error {
++	result, err := db.Exec(
++		`UPDATE puljer
++		 SET closing_warning_active = CASE WHEN ? AND status = 'Open' THEN TRUE ELSE FALSE END
++		 WHERE id = ?`,
++		active,
++		puljeID,
++	)
++	if err != nil {
++		return fmt.Errorf("update pulje %s closing warning: %w", puljeID, err)
++	}
++	rowsAffected, err := result.RowsAffected()
++	if err != nil {
++		return fmt.Errorf("get rows affected for pulje %s closing warning update: %w", puljeID, err)
++	}
++	if rowsAffected == 0 {
++		return errPuljeNotFound
++	}
++	return nil
++}
++
+ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
+ 	logger = logger.With("component", "admin_puljefordeling")
+ 
+@@ -152,4 +178,36 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.
+ 
+ 		w.WriteHeader(http.StatusNoContent)
+ 	})
++
++	router.Put("/api/puljer/{puljeId}/closing-warning", func(w http.ResponseWriter, r *http.Request) {
++		puljeID, ok := models.ParsePulje(chi.URLParam(r, "puljeId"))
++		if !ok {
++			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
++			return
++		}
++
++		type Store struct {
++			ClosingWarningActive bool `json:"closingWarningActive"`
++		}
++		store := &Store{}
++		if err := datastar.ReadSignals(r, store); err != nil {
++			http.Error(w, err.Error(), http.StatusBadRequest)
++			return
++		}
++		if err := updatePuljeClosingWarning(db, puljeID, store.ClosingWarningActive); err != nil {
++			if errors.Is(err, errPuljeNotFound) {
++				http.Error(w, "Pulje not found", http.StatusNotFound)
++				return
++			}
++			logger.Error(err.Error(), "pulje_id", puljeID)
++			http.Error(w, "Failed to update pulje closing warning", http.StatusInternalServerError)
++			return
++		}
++		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
++			logger.Error(fmt.Errorf("failed to broadcast pulje closing warning update: %w", err).Error(), "pulje_id", puljeID)
++			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
++			return
++		}
++		w.WriteHeader(http.StatusNoContent)
++	})
+ }
+diff --git a/pages/admin/puljefordeling_tab.templ b/pages/admin/puljefordeling_tab.templ
+index ca22241d..932c6a32 100644
+--- a/pages/admin/puljefordeling_tab.templ
++++ b/pages/admin/puljefordeling_tab.templ
+@@ -671,6 +671,20 @@ templ puljeAgeWarningDialog() {
+ 
+ templ puljeStatusToggles(pulje models.PuljeRow) {
+ 	<div class="pulje-status-controls">
++		<label class="pulje-status-control">
++			<input
++				if pulje.ClosingWarningActive {
++					checked
++				}
++				if pulje.Status != models.PuljeStatusOpen {
++					disabled
++				}
++				data-on:click={ fmt.Sprintf("if (!confirm('Vil du endre varselet for %s?')) { evt.preventDefault(); } else { $closingWarningActive = evt.currentTarget.checked; @put('/admin/api/puljer/%s/closing-warning') }", pulje.Name, pulje.ID) }
++				type="checkbox"
++				class="checkbox input"
++			/>
++			<span>Vis advarsel om at puljefordeling stenger snart</span>
++		</label>
+ 		<label class="pulje-status-control">
+ 			<input
+ 				if puljeIsLocked(pulje.Status) {
+diff --git a/pages/admin/puljefordeling_tab_test.go b/pages/admin/puljefordeling_tab_test.go
+index 70ffdbdf..984780fd 100644
+--- a/pages/admin/puljefordeling_tab_test.go
++++ b/pages/admin/puljefordeling_tab_test.go
+@@ -251,11 +251,11 @@ func TestPuljefordelingTabContent_PinEmojiForManualWithoutInterest(t *testing.T)
+ 	}
+ }
+ 
+-func TestPuljeStatusToggles_ReflectLockedAndCompletedState(t *testing.T) {
++func TestPuljeStatusToggles_ReflectWarningLockedAndCompletedState(t *testing.T) {
+ 	bdd.Behavior(t, bdd.BDD{
+ 		Given: "Gitt en pulje som er publisert (Completed).",
+ 		When:  "Når status-bryterne rendres.",
+-		Then:  "Så skal begge bryterne være avkrysset.",
++		Then:  "Så skal lukking og publisering være avkrysset, og varselet være deaktivert.",
+ 	})
+ 
+ 	// Given
+@@ -269,6 +269,44 @@ func TestPuljeStatusToggles_ReflectLockedAndCompletedState(t *testing.T) {
+ 	if checked.Length() != 2 {
+ 		t.Fatalf("expected both toggles checked for Completed pulje, got %d checked", checked.Length())
+ 	}
++	if got := doc.Find("input[type=checkbox][disabled]").Length(); got != 1 {
++		t.Fatalf("expected closing warning toggle to be disabled for Completed pulje, got %d disabled toggles", got)
++	}
++}
++
++func TestPuljeStatusToggles_ReflectsActiveClosingWarning(t *testing.T) {
++	row := models.PuljeRow{
++		ID:                   models.PuljeFredagKveld,
++		Name:                 "Fredag Kveld",
++		Status:               models.PuljeStatusOpen,
++		ClosingWarningActive: true,
++	}
++
++	doc := templtest.Render(t, puljeStatusToggles(row))
++	warning := doc.Find("input[type=checkbox]").Eq(0)
++	if warning.Length() != 1 || !warning.Is("[checked]") {
++		t.Fatal("expected active closing warning toggle to be checked")
++	}
++}
++
++func TestUpdatePuljeStatus_ClosingClearsActiveWarning(t *testing.T) {
++	db, _ := testutil.CreateTestDBAndLogger(t, "puljefordeling_closing_warning_clears")
++	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
++
++	if err := updatePuljeClosingWarning(db, models.PuljeFredagKveld, true); err != nil {
++		t.Fatalf("activate closing warning: %v", err)
++	}
++	if err := updatePuljeStatus(db, models.PuljeFredagKveld, models.PuljeStatusLocked); err != nil {
++		t.Fatalf("lock pulje: %v", err)
++	}
++
++	var active bool
++	if err := db.QueryRow(`SELECT closing_warning_active FROM puljer WHERE id = ?`, models.PuljeFredagKveld).Scan(&active); err != nil {
++		t.Fatalf("load closing warning: %v", err)
++	}
++	if active {
++		t.Fatal("expected locking a pulje to clear its closing warning")
++	}
+ }
+ 
+ // seedPinnedParticipant pins one participant into an event with the given age
+diff --git a/pages/event/event.go b/pages/event/event.go
+index e8679619..5160a0aa 100644
+--- a/pages/event/event.go
++++ b/pages/event/event.go
+@@ -14,9 +14,7 @@ import (
+ 	"github.com/Regncon/conorganizer/service/live"
+ 	"github.com/Regncon/conorganizer/service/userctx"
+ 	"github.com/a-h/templ"
+-	"github.com/delaneyj/toolbelt/embeddednats"
+ 	"github.com/go-chi/chi/v5"
+-	"github.com/nats-io/nats.go/jetstream"
+ 	datastar "github.com/starfederation/datastar-go/datastar"
+ )
+ 
+@@ -55,24 +53,11 @@ func interestErrorMessageFromError(err error) string {
+ 	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
+ }
+ 
+-func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
++func SetupEventRoute(router chi.Router, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
+ 	logger = logger.With("component", "event")
+-	nc, err := ns.Client()
+-	if err != nil {
+-		return fmt.Errorf("error creating nats client: %w", err)
+-	}
+-
+-	js, err := jetstream.New(nc)
+-	if err != nil {
+-		return fmt.Errorf("error creating jetstream client: %w", err)
+-	}
+-
+-	if err := setupPuljeScheduledBroadcasts(context.Background(), js, liveManager, db, logger); err != nil {
+-		return fmt.Errorf("error setting up pulje scheduled broadcasts: %w", err)
+-	}
+ 
+ 	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
+-	eventLayoutRoute(router, db, logger, eventImageDir, err)
++	eventLayoutRoute(router, db, logger, eventImageDir, nil)
+ 
+ 	router.Route("/event/api", func(eventApiRouter chi.Router) {
+ 		eventApiRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
+diff --git a/pages/event/event_interest_panel.templ b/pages/event/event_interest_panel.templ
+index 478555c6..3ec802be 100644
+--- a/pages/event/event_interest_panel.templ
++++ b/pages/event/event_interest_panel.templ
+@@ -53,11 +53,7 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, sele
+         }
+ 
+         .event-interest-helper.pulje-interest-state--warning {
+-            color: var(--color-warning, var(--color-error));
+-        }
+-
+-        .event-interest-helper.pulje-interest-state--urgent-warning {
+-            color: var(--color-error);
++			color: var(--color-error);
+         }
+ 
+         .event-interest-helper.pulje-interest-state--locked {
+diff --git a/pages/event/event_interest_test.go b/pages/event/event_interest_test.go
+index ca312e61..149c74a6 100644
+--- a/pages/event/event_interest_test.go
++++ b/pages/event/event_interest_test.go
+@@ -11,9 +11,9 @@ import (
+ 	"github.com/Regncon/conorganizer/testutil/templtest"
+ )
+ 
+-func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *testing.T) {
++func TestEventInterestPanel_WhenClosingWarningIsActive_RendersWarningState(t *testing.T) {
+ 	bdd.Behavior(t, bdd.BDD{
+-		Given: "Gitt at den planlagte varselmeldingen for en åpen pulje har blitt sendt.",
++		Given: "Gitt at en åpen pulje har et aktivt stengevarsel.",
+ 		When:  "Når interessepanelet rendres på nytt.",
+ 		Then:  "Så skal billettholderen se varselstatus ved knappen.",
+ 	})
+@@ -21,7 +21,7 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
+ 	// Given
+ 	expectedHelperVisible := true
+ 	expectedHelperClass := "pulje-interest-state--warning"
+-	expectedMessagePart := "låses snart"
++	expectedMessagePart := "stenger snart"
+ 	expectedExternalLinkIconVisible := true
+ 
+ 	now := time.Now()
+@@ -33,6 +33,7 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
+ 			now.Add(2*time.Hour),
+ 		),
+ 	}
++	puljer[0].ClosingWarningActive = true
+ 
+ 	// When
+ 	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeFredagKveld), true, true))
+@@ -57,9 +58,9 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
+ 	}
+ }
+ 
+-func TestEventInterestPanel_WhenCurrentTimeIsBeforeWarningThreshold_RendersNoWarningState(t *testing.T) {
++func TestEventInterestPanel_WhenClosingWarningIsInactive_RendersNoWarningState(t *testing.T) {
+ 	bdd.Behavior(t, bdd.BDD{
+-		Given: "Gitt at en åpen pulje ikke nærmer seg låsing.",
++		Given: "Gitt at en åpen pulje ikke har et aktivt stengevarsel.",
+ 		When:  "Når interessepanelet rendres.",
+ 		Then:  "Så skal ingen låseadvarsel vises ved knappen.",
+ 	})
+@@ -87,17 +88,17 @@ func TestEventInterestPanel_WhenCurrentTimeIsBeforeWarningThreshold_RendersNoWar
+ 	}
+ }
+ 
+-func TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarningState(t *testing.T) {
++func TestEventInterestPanel_WhenSelectedPuljeHasActiveWarning_RendersWarningState(t *testing.T) {
+ 	bdd.Behavior(t, bdd.BDD{
+-		Given: "Gitt at den planlagte hastevarselmeldingen for en åpen pulje har blitt sendt.",
++		Given: "Gitt at den valgte åpne puljen har et aktivt stengevarsel.",
+ 		When:  "Når interessepanelet rendres.",
+ 		Then:  "Så skal statusen for den valgte puljen vises ved knappen.",
+ 	})
+ 
+ 	// Given
+ 	expectedHelperVisible := true
+-	expectedHelperClass := "pulje-interest-state--urgent-warning"
+-	expectedMessagePart := "låses straks"
++	expectedHelperClass := "pulje-interest-state--warning"
++	expectedMessagePart := "stenger snart"
+ 
+ 	now := time.Now()
+ 	puljer := []models.PuljeRow{
+@@ -114,6 +115,7 @@ func TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarn
+ 			now.Add(45*time.Minute),
+ 		),
+ 	}
++	puljer[1].ClosingWarningActive = true
+ 
+ 	// When
+ 	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeLordagMorgen), true, true))
+diff --git a/pages/event/event_rooms_browser_test.go b/pages/event/event_rooms_browser_test.go
+index 1c182b3c..940c65bc 100644
+--- a/pages/event/event_rooms_browser_test.go
++++ b/pages/event/event_rooms_browser_test.go
+@@ -29,7 +29,7 @@ func TestEventRoomBrowserFixture(t *testing.T) {
+ 	manager, err := live.NewManager(context.Background(),ns,sessions.NewCookieStore([]byte("room-group-fixture-only-secret")))
+ 	if err != nil { t.Fatal(err) }
+ 	router := chi.NewRouter()
+-	if err := SetupEventRoute(router,ns,manager,db,testutil.NewTestLogger(),nil); err != nil { t.Fatal(err) }
++	if err := SetupEventRoute(router,manager,db,testutil.NewTestLogger(),nil); err != nil { t.Fatal(err) }
+ 	router.Handle("/static/*",http.StripPrefix("/static/",http.FileServer(http.Dir("../../static"))))
+ 	router.Post("/fixture/{action}",func(w http.ResponseWriter,r *http.Request){
+ 		bucket := live.BucketRooms
+diff --git a/pages/event/pulje_scheduled_broadcast.go b/pages/event/pulje_scheduled_broadcast.go
+deleted file mode 100644
+index ebd3f018..00000000
+--- a/pages/event/pulje_scheduled_broadcast.go
++++ /dev/null
+@@ -1,152 +0,0 @@
+-package event
+-
+-import (
+-	"context"
+-	"database/sql"
+-	"encoding/json"
+-	"fmt"
+-	"log/slog"
+-	"time"
+-
+-	"github.com/Regncon/conorganizer/models"
+-	"github.com/Regncon/conorganizer/service/live"
+-	puljerService "github.com/Regncon/conorganizer/service/puljer"
+-	"github.com/nats-io/nats.go/jetstream"
+-)
+-
+-const (
+-	puljeScheduledBroadcastStream          = "EVENT_PULJE_SCHEDULES"
+-	puljeScheduledBroadcastScheduleSubject = "events.pulje.schedule"
+-	puljeScheduledBroadcastTargetSubject   = "events.pulje.schedule.due"
+-	puljeScheduledBroadcastConsumer        = "events-pulje-schedule-broadcast"
+-)
+-
+-type puljeScheduledBroadcast struct {
+-	PuljeID    models.Pulje `json:"pulje_id"`
+-	Threshold  string       `json:"threshold"`
+-	ScheduleAt time.Time    `json:"schedule_at"`
+-}
+-
+-func setupPuljeScheduledBroadcasts(ctx context.Context, js jetstream.JetStream, liveManager *live.Manager, db *sql.DB, logger *slog.Logger) error {
+-	stream, err := js.CreateOrUpdateStream(ctx, puljeScheduledBroadcastStreamConfig())
+-	if err != nil {
+-		return fmt.Errorf("create pulje schedule stream: %w", err)
+-	}
+-
+-	consumer, err := stream.CreateOrUpdateConsumer(ctx, puljeScheduledBroadcastConsumerConfig())
+-	if err != nil {
+-		return fmt.Errorf("create pulje schedule consumer: %w", err)
+-	}
+-
+-	if _, err := consumer.Consume(func(msg jetstream.Msg) {
+-		if err := liveManager.Broadcast(context.Background(), live.BucketEvents); err != nil {
+-			logger.Error(fmt.Errorf("failed to broadcast scheduled pulje update: %w", err).Error())
+-			if nakErr := msg.NakWithDelay(10 * time.Second); nakErr != nil {
+-				logger.Error(fmt.Errorf("failed to nack scheduled pulje update: %w", nakErr).Error())
+-			}
+-			return
+-		}
+-		if err := msg.Ack(); err != nil {
+-			logger.Error(fmt.Errorf("failed to ack scheduled pulje update: %w", err).Error())
+-		}
+-	}, jetstream.ConsumeErrHandler(func(_ jetstream.ConsumeContext, err error) {
+-		logger.Error(fmt.Errorf("pulje scheduled update consumer error: %w", err).Error())
+-	})); err != nil {
+-		return fmt.Errorf("consume pulje schedule messages: %w", err)
+-	}
+-
+-	puljer, err := puljerService.GetAllPuljer(db)
+-	if err != nil {
+-		return fmt.Errorf("load puljer for scheduling: %w", err)
+-	}
+-
+-	for _, broadcast := range buildPuljeScheduledBroadcasts(puljer, time.Now()) {
+-		payload, err := json.Marshal(broadcast)
+-		if err != nil {
+-			return fmt.Errorf("marshal pulje scheduled broadcast: %w", err)
+-		}
+-		if _, err := js.Publish(
+-			ctx,
+-			puljeScheduledBroadcastScheduleSubject,
+-			payload,
+-			jetstream.WithScheduleAt(broadcast.ScheduleAt),
+-			jetstream.WithScheduleTarget(puljeScheduledBroadcastTargetSubject),
+-			jetstream.WithMsgID(puljeScheduledBroadcastMessageID(broadcast)),
+-		); err != nil {
+-			return fmt.Errorf("schedule pulje %s %s broadcast at %s: %w", broadcast.PuljeID, broadcast.Threshold, broadcast.ScheduleAt.Format(time.RFC3339), err)
+-		}
+-		logger.Debug(
+-			"Scheduled pulje event page update",
+-			"pulje_id", broadcast.PuljeID,
+-			"threshold", broadcast.Threshold,
+-			"schedule_at", broadcast.ScheduleAt.Format(time.RFC3339),
+-		)
+-	}
+-
+-	return nil
+-}
+-
+-func puljeScheduledBroadcastStreamConfig() jetstream.StreamConfig {
+-	return jetstream.StreamConfig{
+-		Name:              puljeScheduledBroadcastStream,
+-		Description:       "Scheduled event page updates for pulje warning thresholds",
+-		Subjects:          []string{puljeScheduledBroadcastScheduleSubject, puljeScheduledBroadcastTargetSubject},
+-		AllowMsgSchedules: true,
+-		Retention:         jetstream.LimitsPolicy,
+-		Storage:           jetstream.MemoryStorage,
+-		MaxAge:            400 * 24 * time.Hour,
+-		MaxBytes:          1024 * 1024,
+-		Duplicates:        400 * 24 * time.Hour,
+-	}
+-}
+-
+-func puljeScheduledBroadcastConsumerConfig() jetstream.ConsumerConfig {
+-	return jetstream.ConsumerConfig{
+-		Name:          puljeScheduledBroadcastConsumer,
+-		Durable:       puljeScheduledBroadcastConsumer,
+-		Description:   "Broadcasts event page updates when pulje warning thresholds are reached",
+-		FilterSubject: puljeScheduledBroadcastTargetSubject,
+-		AckPolicy:     jetstream.AckExplicitPolicy,
+-		MemoryStorage: true,
+-	}
+-}
+-
+-func buildPuljeScheduledBroadcasts(puljer []models.PuljeRow, now time.Time) []puljeScheduledBroadcast {
+-	broadcasts := make([]puljeScheduledBroadcast, 0, len(puljer)*2)
+-
+-	for _, pulje := range puljer {
+-		if pulje.StartAt.IsZero() {
+-			continue
+-		}
+-
+-		lockAt := pulje.StartAt.TimeOrZero().Add(-30 * time.Minute)
+-		warningAt := lockAt.Add(-2 * time.Hour)
+-		urgentAt := lockAt.Add(-30 * time.Minute)
+-
+-		if warningAt.After(now) {
+-			broadcasts = append(broadcasts, puljeScheduledBroadcast{
+-				PuljeID:    pulje.ID,
+-				Threshold:  "warning",
+-				ScheduleAt: warningAt,
+-			})
+-		}
+-		if urgentAt.After(now) {
+-			broadcasts = append(broadcasts, puljeScheduledBroadcast{
+-				PuljeID:    pulje.ID,
+-				Threshold:  "urgent",
+-				ScheduleAt: urgentAt,
+-			})
+-		}
+-	}
+-
+-	return broadcasts
+-}
+-
+-func puljeScheduledBroadcastMessageID(broadcast puljeScheduledBroadcast) string {
+-	return fmt.Sprintf(
+-		"pulje-schedule:%s:%s:%s",
+-		broadcast.PuljeID,
+-		broadcast.Threshold,
+-		broadcast.ScheduleAt.UTC().Format(time.RFC3339),
+-	)
+-}
+diff --git a/pages/event/pulje_scheduled_broadcast_test.go b/pages/event/pulje_scheduled_broadcast_test.go
+deleted file mode 100644
+index 6a5c6020..00000000
+--- a/pages/event/pulje_scheduled_broadcast_test.go
++++ /dev/null
+@@ -1,126 +0,0 @@
+-package event
+-
+-import (
+-	"reflect"
+-	"testing"
+-	"time"
+-
+-	"github.com/Regncon/conorganizer/models"
+-	"github.com/Regncon/conorganizer/testutil/bdd"
+-	"github.com/nats-io/nats.go/jetstream"
+-)
+-
+-func TestPuljeScheduledBroadcastJetStreamConfig_UsesMemoryStorage(t *testing.T) {
+-	bdd.Behavior(t, bdd.BDD{
+-		Given: "Given the pulje scheduled broadcast JetStream configuration.",
+-		When:  "When the stream and consumer configs are built.",
+-		Then:  "Then both the scheduled stream and durable consumer keep state in memory.",
+-	})
+-
+-	// Given
+-	expectedStreamStorage := jetstream.MemoryStorage
+-	expectedConsumerMemoryStorage := true
+-
+-	// When
+-	streamConfig := puljeScheduledBroadcastStreamConfig()
+-	consumerConfig := puljeScheduledBroadcastConsumerConfig()
+-
+-	// Then
+-	if streamConfig.Storage != expectedStreamStorage {
+-		t.Fatalf("stream storage mismatch\nexpected: %s\nactual:   %s", expectedStreamStorage, streamConfig.Storage)
+-	}
+-	if consumerConfig.MemoryStorage != expectedConsumerMemoryStorage {
+-		t.Fatalf("expected consumer memory storage to be enabled")
+-	}
+-}
+-
+-func TestBuildPuljeScheduledBroadcasts_SchedulesWarningAndUrgentThresholdsButNotLockTime(t *testing.T) {
+-	bdd.Behavior(t, bdd.BDD{
+-		Given: "Gitt at en pulje starter senere enn varslingsvinduene.",
+-		When:  "Når planlagte puljeoppdateringer bygges.",
+-		Then:  "Så skal bare varsel og hastevarsel planlegges.",
+-	})
+-
+-	// Given
+-	expectedBroadcasts := []expectedPuljeScheduledBroadcast{
+-		{PuljeID: models.PuljeFredagKveld, Threshold: "warning", ScheduleAt: "2026-10-09T16:00:00+02:00"},
+-		{PuljeID: models.PuljeFredagKveld, Threshold: "urgent", ScheduleAt: "2026-10-09T17:30:00+02:00"},
+-	}
+-
+-	now := parsePuljeScheduledBroadcastTestTime(t, "2026-10-09T15:00:00+02:00")
+-	puljer := []models.PuljeRow{
+-		buildEventInterestTestPulje(
+-			models.PuljeFredagKveld,
+-			"Fredag kveld",
+-			models.PuljeStatusOpen,
+-			parsePuljeScheduledBroadcastTestTime(t, "2026-10-09T18:30:00+02:00"),
+-		),
+-	}
+-
+-	// When
+-	actualBroadcasts := normalizePuljeScheduledBroadcasts(buildPuljeScheduledBroadcasts(puljer, now))
+-
+-	// Then
+-	if !reflect.DeepEqual(expectedBroadcasts, actualBroadcasts) {
+-		t.Fatalf("scheduled broadcasts mismatch\nexpected: %#v\nactual:   %#v", expectedBroadcasts, actualBroadcasts)
+-	}
+-}
+-
+-func TestBuildPuljeScheduledBroadcasts_WhenWarningIsPast_OnlySchedulesFutureUrgentThreshold(t *testing.T) {
+-	bdd.Behavior(t, bdd.BDD{
+-		Given: "Gitt at varselgrensen allerede har passert.",
+-		When:  "Når planlagte puljeoppdateringer bygges.",
+-		Then:  "Så skal bare fremtidige terskler planlegges.",
+-	})
+-
+-	// Given
+-	expectedBroadcasts := []expectedPuljeScheduledBroadcast{
+-		{PuljeID: models.PuljeFredagKveld, Threshold: "urgent", ScheduleAt: "2026-10-09T17:30:00+02:00"},
+-	}
+-
+-	now := parsePuljeScheduledBroadcastTestTime(t, "2026-10-09T16:30:00+02:00")
+-	puljer := []models.PuljeRow{
+-		buildEventInterestTestPulje(
+-			models.PuljeFredagKveld,
+-			"Fredag kveld",
+-			models.PuljeStatusOpen,
+-			parsePuljeScheduledBroadcastTestTime(t, "2026-10-09T18:30:00+02:00"),
+-		),
+-	}
+-
+-	// When
+-	actualBroadcasts := normalizePuljeScheduledBroadcasts(buildPuljeScheduledBroadcasts(puljer, now))
+-
+-	// Then
+-	if !reflect.DeepEqual(expectedBroadcasts, actualBroadcasts) {
+-		t.Fatalf("scheduled broadcasts mismatch\nexpected: %#v\nactual:   %#v", expectedBroadcasts, actualBroadcasts)
+-	}
+-}
+-
+-type expectedPuljeScheduledBroadcast struct {
+-	PuljeID    models.Pulje
+-	Threshold  string
+-	ScheduleAt string
+-}
+-
+-func normalizePuljeScheduledBroadcasts(broadcasts []puljeScheduledBroadcast) []expectedPuljeScheduledBroadcast {
+-	normalized := make([]expectedPuljeScheduledBroadcast, 0, len(broadcasts))
+-	for _, broadcast := range broadcasts {
+-		normalized = append(normalized, expectedPuljeScheduledBroadcast{
+-			PuljeID:    broadcast.PuljeID,
+-			Threshold:  broadcast.Threshold,
+-			ScheduleAt: broadcast.ScheduleAt.Format(time.RFC3339),
+-		})
+-	}
+-	return normalized
+-}
+-
+-func parsePuljeScheduledBroadcastTestTime(t *testing.T, value string) time.Time {
+-	t.Helper()
+-
+-	parsed, err := time.Parse(time.RFC3339, value)
+-	if err != nil {
+-		t.Fatalf("failed to parse test time %q: %v", value, err)
+-	}
+-	return parsed
+-}
+diff --git a/router.go b/router.go
+index f150d7b8..aaad94e3 100644
+--- a/router.go
++++ b/router.go
+@@ -73,7 +73,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, authenticatedRouter,
+ 		printfriendly.PrintFriendlyRoute(authenticatedRouter, db, eventImageDir, logger),
+ 		admin.SetupAdminRoute(routerAdmin, logger, liveManager, db, eventImageDir),
+ 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, liveManager, logger, db),
+-		event.SetupEventRoute(authenticatedRouter, ns, liveManager, db, logger, eventImageDir),
++		event.SetupEventRoute(authenticatedRouter, liveManager, db, logger, eventImageDir),
+ 		login.SetupAuthRoute(publicRouter, authenticatedRouter, db, logger, sessionValidator),
+ 		profilepage.SetupProfileRoute(isLoggedInRouter, liveManager, db, eventImageDir, logger),
+ 	); err != nil {
+diff --git a/schema.sql b/schema.sql
+index 3a8d59aa..7c432638 100644
+--- a/schema.sql
++++ b/schema.sql
+@@ -65,18 +65,6 @@ CREATE TABLE relation_event_puljer(
+   FOREIGN KEY(pulje_id) REFERENCES puljer(id) ON UPDATE CASCADE,
+   FOREIGN KEY(room_id) REFERENCES rooms(id) ON DELETE SET NULL
+ ) STRICT;
+-CREATE TABLE relation_events_players(
+-  event_id TEXT NOT NULL,
+-  pulje_id TEXT NOT NULL,
+-  billettholder_id INTEGER NOT NULL,
+-  role TEXT NOT NULL DEFAULT 'Player' CHECK(role IN('Player', 'GM')),
+-  inserted_at TEXT DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+-  source TEXT NOT NULL DEFAULT 'manual' CHECK(source IN('manual','solver')),
+-  PRIMARY KEY(billettholder_id, event_id, pulje_id, role),
+-  FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
+-  FOREIGN KEY(event_id) REFERENCES events(id),
+-  FOREIGN KEY(pulje_id) REFERENCES puljer(id)
+-) STRICT;
+ CREATE TABLE "interests"(
+   billettholder_id INTEGER NOT NULL,
+   event_id TEXT NOT NULL,
+@@ -128,6 +116,7 @@ CREATE TABLE "events"(
+   status_changed_by_id INTEGER,
+   status_changed_at TEXT,
+   status_changed_action TEXT,
++  is_in_puljefordeling INTEGER NOT NULL DEFAULT 0 CHECK(is_in_puljefordeling IN(0, 1)),
+   FOREIGN KEY(created_by_id) REFERENCES users(id) ON DELETE SET NULL,
+   FOREIGN KEY(updated_by_id) REFERENCES users(id) ON DELETE SET NULL,
+   FOREIGN KEY(status_changed_by_id) REFERENCES users(id) ON DELETE SET NULL,
+@@ -190,30 +179,6 @@ FROM
+     billettholdere AS b
+     LEFT JOIN relation_billettholder_emails AS e ON b.id = e.billettholder_id
+ /* v_billettholder_emails(billettholder_id,first_name,last_name,ticket_type_id,ticket_type,is_over_18,order_id,ticket_id,billettholder_created_at,billettholder_updated_at,email_id,email,kind,email_created_at,email_updated_at) */;
+-CREATE VIEW v_event_puljer_active AS
+-SELECT
+-    ep.event_id,
+-    ep.pulje_id,
+-    ep.room_id,
+-    r.room_number,
+-    r.name AS room_name,
+-    r.floor AS room_floor,
+-    r.max_concurrent_games AS room_max_concurrent_games,
+-    r.notes AS room_notes,
+-    r.is_disabled AS room_is_disabled,
+-    p.name AS pulje_name,
+-    p.start_at AS pulje_start_at,
+-    p.end_at AS pulje_end_at,
+-    ep.is_in_pulje,
+-    ep.is_published
+-FROM
+-    relation_event_puljer ep
+-    JOIN puljer p ON p.id = ep.pulje_id
+-    LEFT JOIN rooms r ON r.id = ep.room_id
+-WHERE
+-    ep.is_in_pulje = 1
+-    AND ep.is_published = 1
+-/* v_event_puljer_active(event_id,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at,is_in_pulje,is_published) */;
+ CREATE TABLE program_publishing_state(
+   id INTEGER NOT NULL PRIMARY KEY CHECK(id = 1),
+   is_published INTEGER NOT NULL DEFAULT 0 CHECK(is_published IN(0, 1))
+@@ -224,45 +189,22 @@ CREATE TABLE "puljer"(
+   status TEXT NOT NULL DEFAULT 'Open' CHECK(status IN('Open', 'Locked', 'Completed')),
+   start_at TEXT NOT NULL,
+   end_at TEXT NOT NULL,
++  closing_warning_active INTEGER NOT NULL DEFAULT 0 CHECK(closing_warning_active IN(0, 1)),
+   FOREIGN KEY(status) REFERENCES pulje_statuses(status) ON UPDATE CASCADE
+ ) STRICT;
+-CREATE VIEW v_events_by_pulje_active AS
+-SELECT
+-    e.id AS id,
+-    e.title,
+-    e.intro,
+-    e.description,
+-    e.system,
+-    e.event_type,
+-    e.age_group,
+-    e.event_runtime,
+-    e.host_name,
+-    e.user_id,
+-    e.email,
+-    e.phone_number,
+-    e.max_players,
+-    e.beginner_friendly,
+-    e.can_be_run_in_english,
+-    e.notes,
+-    e.status,
+-    e.created_at,
+-    ep.is_published AS is_published,
+-    ep.pulje_id,
+-    ep.room_id,
+-    r.room_number,
+-    r.name AS room_name,
+-    r.floor AS room_floor,
+-    r.max_concurrent_games AS room_max_concurrent_games,
+-    r.notes AS room_notes,
+-    r.is_disabled AS room_is_disabled,
+-    p.name AS pulje_name,
+-    p.start_at AS pulje_start_at,
+-    p.end_at AS pulje_end_at
+-FROM events e
+-INNER JOIN relation_event_puljer ep ON ep.event_id = e.id
+-INNER JOIN puljer p ON p.id = ep.pulje_id
+-LEFT JOIN rooms r ON r.id = ep.room_id
+-WHERE
+-    e.status = 'Annonsert'
+-    AND ep.is_in_pulje = 1
+-/* v_events_by_pulje_active(id,title,intro,description,system,event_type,age_group,event_runtime,host_name,user_id,email,phone_number,max_players,beginner_friendly,can_be_run_in_english,notes,status,created_at,is_published,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at) */;
++CREATE TABLE "relation_events_players"(
++  event_id TEXT NOT NULL,
++  pulje_id TEXT NOT NULL,
++  billettholder_id INTEGER NOT NULL,
++  role TEXT NOT NULL DEFAULT 'Player' CHECK(role IN('Player', 'GM')),
++  inserted_at TEXT DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
++  source TEXT NOT NULL DEFAULT 'manual' CHECK(source IN('manual', 'solver')),
++  PRIMARY KEY(billettholder_id, event_id, pulje_id, role),
++  FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
++  FOREIGN KEY(event_id) REFERENCES events(id),
++  FOREIGN KEY(pulje_id) REFERENCES puljer(id)
++) STRICT;
++CREATE VIEW v_events_by_pulje_active AS SELECT e.id AS id, e.title, e.intro, e.description, e.system, e.event_type, e.age_group, e.event_runtime, e.host_name, e.user_id, e.email, e.phone_number, e.max_players, e.beginner_friendly, e.can_be_run_in_english, e.notes, e.status, e.created_at, e.is_in_puljefordeling AS is_in_puljefordeling, ep.is_published AS is_published, ep.pulje_id, ep.room_id, r.room_number, r.name AS room_name, r.floor AS room_floor, r.max_concurrent_games AS room_max_concurrent_games, r.notes AS room_notes, r.is_disabled AS room_is_disabled, p.name AS pulje_name, p.start_at AS pulje_start_at, p.end_at AS pulje_end_at FROM events e INNER JOIN relation_event_puljer ep ON ep.event_id = e.id INNER JOIN puljer p ON p.id = ep.pulje_id LEFT JOIN rooms r ON r.id = ep.room_id WHERE e.status = 'Annonsert' AND ep.is_in_pulje = 1
++/* v_events_by_pulje_active(id,title,intro,description,system,event_type,age_group,event_runtime,host_name,user_id,email,phone_number,max_players,beginner_friendly,can_be_run_in_english,notes,status,created_at,is_in_puljefordeling,is_published,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at) */;
++CREATE VIEW v_event_puljer_active AS SELECT ep.event_id, ep.pulje_id, ep.room_id, r.room_number, r.name AS room_name, r.floor AS room_floor, r.max_concurrent_games AS room_max_concurrent_games, r.notes AS room_notes, r.is_disabled AS room_is_disabled, p.name AS pulje_name, p.start_at AS pulje_start_at, p.end_at AS pulje_end_at, ep.is_in_pulje, ep.is_published FROM relation_event_puljer ep JOIN puljer p ON p.id = ep.pulje_id LEFT JOIN rooms r ON r.id = ep.room_id WHERE ep.is_in_pulje = 1
++/* v_event_puljer_active(event_id,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at,is_in_pulje,is_published) */;
+diff --git a/service/puljefordeling/emulate.go b/service/puljefordeling/emulate.go
+index cf9c5fab..ec150336 100644
+--- a/service/puljefordeling/emulate.go
++++ b/service/puljefordeling/emulate.go
+@@ -302,7 +302,7 @@ func assignedPlayers(
+ 
+ func loadPuljer(db emulationQuerier) ([]models.PuljeRow, error) {
+ 	const query = `
+-		SELECT id, name, status, start_at, end_at
++		SELECT id, name, status, closing_warning_active, start_at, end_at
+ 		FROM puljer
+ 		ORDER BY start_at ASC
+ 	`
+@@ -315,7 +315,7 @@ func loadPuljer(db emulationQuerier) ([]models.PuljeRow, error) {
+ 	var puljer []models.PuljeRow
+ 	for rows.Next() {
+ 		var p models.PuljeRow
+-		if err := rows.Scan(&p.ID, &p.Name, &p.Status, &p.StartAt, &p.EndAt); err != nil {
++		if err := rows.Scan(&p.ID, &p.Name, &p.Status, &p.ClosingWarningActive, &p.StartAt, &p.EndAt); err != nil {
+ 			return nil, fmt.Errorf("scan pulje row: %w", err)
+ 		}
+ 		puljer = append(puljer, p)
+diff --git a/service/puljer/puljer.go b/service/puljer/puljer.go
+index 13784226..58849cb5 100644
+--- a/service/puljer/puljer.go
++++ b/service/puljer/puljer.go
+@@ -9,7 +9,7 @@ import (
+ 
+ func GetActivePuljeForEvent(eventID string, db *sql.DB) ([]models.PuljeRow, error) {
+ 	const query = `
+-		SELECT p.id, p.name, p.status, p.start_at, p.end_at
++		SELECT p.id, p.name, p.status, p.closing_warning_active, p.start_at, p.end_at
+ 		FROM puljer p
+ 		JOIN relation_event_puljer ep ON p.id = ep.pulje_id
+ 		WHERE ep.event_id = ? AND ep.is_in_pulje = TRUE AND ep.is_published = TRUE
+@@ -27,7 +27,7 @@ func GetActivePuljeForEvent(eventID string, db *sql.DB) ([]models.PuljeRow, erro
+ 
+ func GetAllPuljer(db *sql.DB) ([]models.PuljeRow, error) {
+ 	const query = `
+-		SELECT id, name, status, start_at, end_at
++		SELECT id, name, status, closing_warning_active, start_at, end_at
+ 		FROM puljer
+ 		ORDER BY start_at ASC
+ 	`
+@@ -67,7 +67,8 @@ func scanPulje(rows *sql.Rows) ([]models.PuljeRow, error) {
+ 			startAt, endAt models.DBDateTime
+ 		)
+ 
+-		if err := rows.Scan(&id, &name, &status, &startAt, &endAt); err != nil {
++		var closingWarningActive bool
++		if err := rows.Scan(&id, &name, &status, &closingWarningActive, &startAt, &endAt); err != nil {
+ 			return nil, fmt.Errorf("scan pulje row: %w", err)
+ 		}
+ 
+@@ -75,6 +76,7 @@ func scanPulje(rows *sql.Rows) ([]models.PuljeRow, error) {
+ 		if err != nil {
+ 			return nil, err
+ 		}
++		pulje.ClosingWarningActive = closingWarningActive
+ 
+ 		puljer = append(puljer, pulje)
+ 	}

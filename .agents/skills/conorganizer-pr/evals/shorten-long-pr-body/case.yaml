@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: shorten-long-pr-body
+expected_outcome: |
+  pr-body.md is a short plain body: a summary of one to three sentences (Loki kept its data in /tmp, a RAM disk wiped on reboot, and retention was off; it now stores in /var/lib/loki with 120-day retention on), bullets for the config and the systemd drop-in, a tests line that says verify-config runs on the server as the first step, and a rollout section that keeps the server steps in order with the warning to stop Loki before moving the checkout. The CI preview block between the preview-deployment-url markers is kept byte for byte at the end. The Size section, the review-workflow account and the Follow-up section are dropped or folded into one sentence. The 62-character title is unchanged.
+context:
+  scaffold_script: place-files.sh

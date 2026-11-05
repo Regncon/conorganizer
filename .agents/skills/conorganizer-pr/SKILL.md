@@ -1,0 +1,102 @@
+---
+name: conorganizer-pr
+description: Conorganizer's rules for pull request titles and descriptions. Use whenever you open or edit a pull request, run gh pr create or gh pr edit, write or rewrite a PR title or body, or write the commit subject of a one-commit branch, since a squash merge puts that subject on main as the title. Also use when the user says open a PR, make a PR, write this up, shorten or fix the description, or that a PR text is too long, vague or off, and when you reach the end of a branch and a PR is the next step, even if nobody mentioned the PR text. Every PR here needs a title of at most 65 characters and a body of a few sentences under 120 words with no Tests section, and without this skill both come out three to six times too long.
+---
+
+# Conorganizer PR
+
+The repository merges with the PR title as the commit subject and the PR body as the commit message, so what you write here is what `git log` on main shows for good. People read the title in a list and the body once, at review time or months later when something breaks. A title that names the outcome and a body a reader finishes in a minute serve both. AGENTS.md "Git" has the base rules (imperative English, the user-visible outcome, Norwegian domain words, no Co-Authored-By, merge main rather than rebase, leave the CI preview block alone); this skill is the shape of the title and body on top of them. `references/examples.md` holds the merged PRs the maintainers picked as the model, and three to avoid.
+
+## Before you write
+
+- Read the whole branch, not the last commit: `git log --format='%s%n%b' main..HEAD`, `git diff main...HEAD --stat`, and the diff itself for anything you did not write in this session. Describe the diff against main: a change that a later commit on the branch undid never happened as far as the reader is concerned.
+- Say in one sentence what a user or admin sees differently after the merge. That sentence is the title and the opening of the body. When it will not fit in one sentence, the branch does two things: tell the user and offer to split before writing a list title.
+- Find the hand steps: a new file in `migrations/` (CI migrates only PR previews; main and demo are migrated by hand), a change under `configuration-as-code/`, `hetzner/` or `deploy/` that the server picks up only after a checkout move, restow or reload, a setup task everyone runs again, a dashboard to re-import. Each becomes a line in the rollout section, and nothing else does.
+
+## Title
+
+One line, at most 65 characters, so the merge commit subject with " (#NNN)" is at most 72. Count it: `printf '%s' "$title" | wc -m`.
+
+- It follows the commit subject rule, because a merge turns it into the commit subject plus " (#NNN)": capitalized first word, imperative, verb first (Add, Let, Show, Fix, Stop, Keep, Require, Remove), no trailing period.
+- It names the outcome someone sees, not the mechanism: "Let admins print a QR code to the feedback form", not "Add qrcode package and admin route".
+- Norwegian domain words are ordinary words, lowercase mid-title (pulje, billettholdere, puljefordeling); page and product names keep their casing (Puljeoppsett, Adminverktøy, Min side, Datastar).
+- No issue number, branch slug, "Fix:" or "feat:" prefix, Title Case, trailing period or emoji. GitHub adds "(#NNN)" at merge, and the issue goes in the body.
+- Not a list. "Fix templ in place: v0.3.1070, Prettier formatting, fmt check in CI, once-rendered looped styles" is four outcomes; name the one the reader cares about most and let the bullets carry the rest, or split the PR.
+- A one-commit PR that is squash-merged gets its commit subject on main, not the PR title, so that subject must say the same thing as the title.
+
+| Before | After |
+| --- | --- |
+| 583 bug kartene som vises i kart modalene er i light mode | Show the room maps in dark mode in the map dialogs |
+| move kontoistillinger down and some small refactoring | Move Kontoadministrasjon to the bottom of Min side |
+| 615 migration i ci | Let CI run migrations for PR previews |
+| Fix: Names with spaces | Put a space between first and last name on the ticket card |
+| Last-Minute UI Polish and Cleanup | One PR per fix, or the biggest one named: Colour event status tags after the annonsert rename |
+
+## Body
+
+The body is the shortest text that tells a reviewer what changed and an admin what to run. Most PRs fit in 40 to 80 words; 120 is the ceiling, counted above the rollout section and the preview block, which are exempt. #611 in `references/examples.md` is the size to aim for, and agents given more room fill it, so write the short version first and add only what a reviewer would ask for.
+
+It has these parts, in this order, and nothing else:
+
+1. `Closes #NNN` alone on the first line when the PR closes an issue. A PR that only relates to one says so in the summary: "Follow-up to #699", "Stacked on #605".
+2. The summary, one to three sentences, no heading: what is different after the merge and, when it is not obvious, why: the bug as someone saw it and its cause, in a sentence. For most PRs this is the whole body.
+3. `## What changed`, only when one sentence cannot carry the change because the branch does several things in parallel: one bullet per change, one sentence each, at most four, each naming where the reader will notice it (a tab, a page, a dialog, a doc section) and what is different ("Romfordeling tab: a Publiser romfordeling switch per pulje"). Five or more means the bullets are too fine or the branch too wide. No nested bullets, no bold lead-ins.
+4. `## After merging`, only when someone has to act by hand; see Rollout steps.
+5. The preview block, which CI adds; see below.
+
+That is all. There is no Tests section and no test name: CI shows what passed, and the test files are in the diff. Only when a check must still happen before the merge, such as a run on Windows nobody has done, one sentence at the end of the summary says so, and that sentence claims nothing you did not do yourself. A known limit or follow-up that changes what the reviewer does gets one sentence there too ("Not in this PR: the image upload page GET still has no owner check."); the rest belongs in the docs, an issue or the review thread. The body carries no account of how the work was done (agents, review rounds, hours), no praise of the change, no emoji, no attribution line, no checklist, and no walk through the diff file by file: the diff is one click away, the body says what it adds up to. Name a file only when the reader has to open it, such as the migration or the doc with the procedure. Headings other than the two above are a sign a part has outgrown its sentence.
+
+Language: English, with user-facing bokmål strings quoted as they appear ("Lagre fordeling", "Publiser romfordeling"). Screenshots are not required; the preview link CI adds covers UI changes.
+
+## Rollout steps
+
+`## After merging` (or `## On the server, after merging`) exists only when the merge alone does not finish the change:
+
+- A migration: name the file and point at the procedure, in one line: "Run `20260926120000_feedback.sql` on main and demo by hand (documentation/migrations.md)."
+- Server config under `configuration-as-code/`, `hetzner/` or `deploy/`: the commands as one fenced block, or as numbered steps when a step needs a word of context, in order, with the one line that shows they worked. Take them from the README section the PR updates instead of inventing a procedure: the checkout moves with `git fetch origin` and `git checkout --detach origin/main`, Caddy changes need `caddy validate` before `systemctl reload caddy`, stowed files need `stow --restow <package>`. Never name a server account, because the repository is public; when the README you copy from still names one, write that step as plain `git` from your own login shell, as "Repository location" in `configuration-as-code/README.md` does.
+- Something everyone runs once, such as `go tool task setup:mcp`, or a dashboard to re-import.
+- `## Before merging` only when a check must pass first, such as a sudoers line or a service already in place.
+
+The rollout section does not count toward the 120 words, so a procedure that needs eight steps and a warning about their order gets them; the body above it still does. Nothing to run means no section: "No rollout steps needed" costs the reader a sentence for nothing.
+
+## The preview block
+
+After the first preview deploy, CI appends this to the body and skips it on later deploys when it is already there:
+
+```
+<!-- preview-deployment-url:start -->
+## Preview deployment
+
+_Added automatically by CI_
+
+🔗 https://NNN-merge.lekeplassen.regncon.no
+<!-- preview-deployment-url:end -->
+```
+
+`gh pr edit --body-file` replaces the whole body, so fetch the current one, change the text above the block, and keep the block byte for byte at the end:
+
+```bash
+gh pr view NNN --json body -q .body > body.md
+```
+
+## Writing it with gh
+
+- Put the body in a file outside the repository and pass `--body-file`; backticks and `$` inside `--body "..."` are eaten by the shell, on Git Bash especially.
+- Create: `gh pr create --base main --title "$title" --body-file body.md`. Add `--draft` when a server rollout has to be staged before the merge.
+- Edit: `gh pr edit NNN --title "$title" --body-file body.md`, after the fetch above.
+- Then read it back once with `gh pr view NNN --json title,body -q '.title, .body'`; what you see is what main's history will carry.
+
+## Check before you run gh
+
+1. Title at most 65 characters, capitalized verb first, the outcome, no number, slug or prefix.
+2. Body under 120 words above the rollout section and the preview block, and aimed at about 60: `wc -w body.md`.
+3. Only `## What changed` and `## After merging` as headings, each present only when it has something to say; at most four bullets.
+4. `Closes #NNN` exactly when the PR closes an issue.
+5. A rollout section exactly when a hand step exists, with migrations named by file.
+6. No Tests section, no test names, no claim about a check you did not do.
+7. Nothing about process, no emoji, no attribution, no praise, no checklist, no file-by-file tour.
+8. On an edit, the preview block is unchanged.
+
+## References
+
+- `references/examples.md`: the three merged PRs the maintainers picked as the model, three to avoid with what is wrong in each, and #671's body rewritten to this shape.
